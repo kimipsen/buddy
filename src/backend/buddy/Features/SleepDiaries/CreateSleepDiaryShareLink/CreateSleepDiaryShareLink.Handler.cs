@@ -1,3 +1,4 @@
+using buddy.Common.Security;
 using buddy.Common;
 using buddy.Common.Validation;
 using buddy.Features.Guardians;
@@ -30,7 +31,7 @@ public static class CreateSleepDiaryShareLinkHandler
 
         // Works before any night is logged: the shared view simply shows an empty diary until the
         // guardian fills it in, and always reflects current data (no snapshot at share time).
-        var (token, hash) = SleepDiaryShareSecret.Generate();
+        var (token, hash) = ShareSecret.Generate();
         var id = SleepDiaryShareTokenId.New();
         var now = DateTimeOffset.UtcNow;
 

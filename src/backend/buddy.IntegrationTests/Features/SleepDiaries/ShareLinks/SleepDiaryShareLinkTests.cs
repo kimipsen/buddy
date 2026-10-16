@@ -1,3 +1,4 @@
+using buddy.Common.Security;
 using buddy.Features.SleepDiaries;
 using buddy.Features.Users;
 using buddy.IntegrationTests.Features.Guardians;
@@ -119,7 +120,7 @@ public sealed class SleepDiaryShareLinkTests(BuddyApiFixture fixture)
 
         // The API refuses a past expiry, so the expired link is written straight to the store.
         var store = fixture.Host.Services.GetRequiredService<ISleepDiaryShareTokenEventStore>();
-        var (plaintext, hash) = SleepDiaryShareSecret.Generate();
+        var (plaintext, hash) = ShareSecret.Generate();
         var id = SleepDiaryShareTokenId.New();
         await store.CreateAsync(
             id,

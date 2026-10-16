@@ -1,3 +1,4 @@
+using buddy.Common.Security;
 using buddy.Common;
 using buddy.Features.Guardians;
 
@@ -21,7 +22,7 @@ public static class CreateMealPlanIcalTokenHandler
             return access.ToDeniedResult<IssuedMealPlanIcalToken>();
         }
 
-        var (token, hash) = IcalToken.Generate();
+        var (token, hash) = ShareSecret.Generate();
         var tokenId = IcalTokenId.New();
         var now = DateTimeOffset.UtcNow;
 

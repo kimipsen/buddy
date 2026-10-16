@@ -7,6 +7,11 @@ namespace buddy.Features.Medicines;
 // current aggregate state on every call. See
 // docs/backend/analysis/medicine-schedules.md#dose-expansion--medicinedoseexpansion for why this
 // deliberately resolves no time zone, unlike the calendar equivalent.
+//
+// includeStoppedHistory (the doctor visit summary) adds a stopped schedule's recorded doses --
+// Taken or Skipped in its DoseLog -- but never expands it: MedicineScheduleStopped carries no stop
+// date, so expanding would invent Pending doses up to `to`
+// (docs/backend/analysis/doctor-visit-summary.md, Question 6).
 public static class MedicineDoseExpansion
 {
     public static async Task<IReadOnlyCollection<MedicineDoseOccurrence>> ExpandAsync(
@@ -14,7 +19,8 @@ public static class MedicineDoseExpansion
         DateOnly from,
         DateOnly to,
         IMedicineEventStore medicines,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool includeStoppedHistory = false)
     {
         var medicineIds = await medicines.ListIdsForChildAsync(childId, cancellationToken);
         var occurrences = new List<MedicineDoseOccurrence>();
@@ -23,8 +29,22 @@ public static class MedicineDoseExpansion
         {
             var events = await medicines.ReadAsync(medicineId, cancellationToken);
 
-            if (MedicineSchedule.Rehydrate(events) is not { IsStopped: false } schedule)
+            if (MedicineSchedule.Rehydrate(events) is not { } schedule)
             {
+                continue;
+            }
+
+            if (schedule.IsStopped)
+            {
+                if (includeStoppedHistory)
+                {
+                    occurrences.AddRange(schedule.DoseLog
+                        .Where(d => d.Key.Date >= from && d.Key.Date <= to && d.Value != DoseStatus.Pending)
+                        .Select(d => new MedicineDoseOccurrence(
+                            schedule.Id, schedule.Name, schedule.Dosage, schedule.Icon.Value, schedule.Color.Value,
+                            d.Key.Date, d.Key.Time, d.Value)));
+                }
+
                 continue;
             }
 

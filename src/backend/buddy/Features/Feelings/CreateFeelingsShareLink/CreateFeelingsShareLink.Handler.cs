@@ -1,3 +1,4 @@
+using buddy.Common.Security;
 using buddy.Common;
 using buddy.Common.Validation;
 using buddy.Features.Guardians;
@@ -30,7 +31,7 @@ public static class CreateFeelingsShareLinkHandler
         }
 
         // Works before any check-in exists: the shared view reads current data on every request.
-        var (token, hash) = FeelingsShareSecret.Generate();
+        var (token, hash) = ShareSecret.Generate();
         var id = FeelingsShareTokenId.New();
         var now = time.GetUtcNow();
 

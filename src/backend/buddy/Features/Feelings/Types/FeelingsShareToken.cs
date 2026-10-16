@@ -1,6 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
-
 using buddy.Common.Aggregates;
 using buddy.Features.Users;
 
@@ -43,23 +40,4 @@ public sealed record FeelingsShareToken(
         FeelingsShareTokenRevoked => token with { IsRevoked = true },
         FeelingsShareTokenCreated => throw EventReplay.AlreadyStarted(nameof(FeelingsShareToken), @event.EventType)
     };
-}
-
-// The third copy of these dozen lines, after IcalToken and SleepDiaryShareSecret: vertical slices
-// here prefer local duplication over a cross-feature dependency, and promoting all three to Common
-// is a separate refactor (feelings-check-in.md, Decisions). Only the hash is ever persisted.
-public static class FeelingsShareSecret
-{
-    private const int TokenSizeInBytes = 32;
-
-    public static (string Token, string Hash) Generate()
-    {
-        var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(TokenSizeInBytes))
-            .TrimEnd('=').Replace('+', '-').Replace('/', '_');
-
-        return (token, Hash(token));
-    }
-
-    public static string Hash(string token) =>
-        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
 }

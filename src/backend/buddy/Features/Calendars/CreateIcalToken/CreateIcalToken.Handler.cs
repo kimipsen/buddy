@@ -1,3 +1,4 @@
+using buddy.Common.Security;
 using buddy.Common;
 using buddy.Features.Groups;
 
@@ -24,7 +25,7 @@ public static class CreateIcalTokenHandler
             return access.ToDeniedResult<IssuedIcalToken>();
         }
 
-        var (token, hash) = IcalToken.Generate();
+        var (token, hash) = ShareSecret.Generate();
         var tokenId = IcalTokenId.New();
 
         await calendars.AppendAsync(

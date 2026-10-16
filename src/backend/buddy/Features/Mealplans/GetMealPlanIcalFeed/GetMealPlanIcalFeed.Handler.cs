@@ -1,3 +1,4 @@
+using buddy.Common.Security;
 using buddy.Common;
 
 namespace buddy.Features.Mealplans;
@@ -26,7 +27,7 @@ public static class GetMealPlanIcalFeedHandler
             return new Result<string>.NotFound();
         }
 
-        if (plan.FindMatchingToken(IcalToken.Hash(query.Token)) is null)
+        if (plan.FindMatchingToken(ShareSecret.Hash(query.Token)) is null)
         {
             return new Result<string>.NotFound();
         }

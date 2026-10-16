@@ -1,3 +1,4 @@
+using buddy.Common.Security;
 using buddy.Common;
 using buddy.Common.Validation;
 using buddy.Features.Users;
@@ -22,7 +23,7 @@ public static class GetSharedSleepDiaryHandler
             return new Result<SharedSleepDiary>.Validation(problem);
         }
 
-        var link = await shareTokens.FindByHashAsync(SleepDiaryShareSecret.Hash(query.Token), cancellationToken);
+        var link = await shareTokens.FindByHashAsync(ShareSecret.Hash(query.Token), cancellationToken);
 
         // Unknown, revoked and expired all look the same to an anonymous reader, by design.
         if (link is null || !SleepDiaryShareLinks.IsLive(link, DateTimeOffset.UtcNow))

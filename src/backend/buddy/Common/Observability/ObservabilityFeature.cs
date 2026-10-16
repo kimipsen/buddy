@@ -30,7 +30,7 @@ public static class ObservabilityFeature
 
     public const string OtlpEndpointKey = "OTEL_EXPORTER_OTLP_ENDPOINT";
 
-    // A route parameter with this name is a secret (IcalToken, SleepDiaryShareSecret, group shares).
+    // A route parameter with this name is a secret (ShareSecret links, group shares).
     private const string SecretRouteParameter = "token";
 
     // ActivitySource and Meter names: Npgsql covers every Marten query, Wolverine every handler.

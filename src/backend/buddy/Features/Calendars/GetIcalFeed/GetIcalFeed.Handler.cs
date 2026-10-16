@@ -1,3 +1,4 @@
+using buddy.Common.Security;
 using buddy.Common;
 using buddy.Features.TaskLibrary;
 
@@ -28,7 +29,7 @@ public static class GetIcalFeedHandler
             return new Result<string>.NotFound();
         }
 
-        if (calendar.FindMatchingToken(IcalToken.Hash(query.Token)) is null)
+        if (calendar.FindMatchingToken(ShareSecret.Hash(query.Token)) is null)
         {
             return new Result<string>.NotFound();
         }

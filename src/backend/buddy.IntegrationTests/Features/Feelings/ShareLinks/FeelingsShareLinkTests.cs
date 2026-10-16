@@ -1,3 +1,4 @@
+using buddy.Common.Security;
 using buddy.Features.Feelings;
 using buddy.Features.Users;
 using buddy.IntegrationTests.Features.Guardians;
@@ -115,7 +116,7 @@ public sealed class FeelingsShareLinkTests(BuddyApiFixture fixture)
 
         // The API refuses a past expiry, so the expired link is written straight to the store.
         var store = fixture.Host.Services.GetRequiredService<IFeelingsShareTokenEventStore>();
-        var (plaintext, hash) = FeelingsShareSecret.Generate();
+        var (plaintext, hash) = ShareSecret.Generate();
         var id = FeelingsShareTokenId.New();
         await store.CreateAsync(
             id,
