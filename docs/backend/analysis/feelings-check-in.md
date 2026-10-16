@@ -274,8 +274,8 @@ FeelingCheckIn(
   the same store `GetSharedSleepDiaryHandler` already reads
   ([GetSharedSleepDiary.Handler.cs](../../../src/backend/buddy/Features/SleepDiaries/GetSharedSleepDiary/GetSharedSleepDiary.Handler.cs)).
   `RecordedAt` keeps the real instant for the undo window. Unlike the sleep diary's open question,
-  the time zone is settled here. "Now" comes from an injected `TimeProvider` (registered as
-  `TimeProvider.System` by `AddFeelingsFeature`; it's the first handler in Buddy to take one), so
+  the time zone is settled here. "Now" comes from an injected `TimeProvider` (registered once as
+  `TimeProvider.System` in `Program.cs`, like every other handler's clock), so
   the undo-window tests run on a fake clock instead of sleeping.
 - **Self-report or observation is derived, not stored**: `LoggedBy == ChildId`. The trend and the
   share view draw the two differently (filled vs outlined). A doctor needs to know whether the child
@@ -581,8 +581,8 @@ CreateFeelingsShareLinkRequest(DateTimeOffset? ExpiresAt = null)
 ## Wiring and feature flag
 
 - `AddFeelingsFeature` after `AddUsersFeature` and `AddGuardiansFeature` (it reads both stores),
-  with its own OpenAPI document `feelings`, Marten schema `feelings`, the eraser and exporter, and
-  `TimeProvider.System` (`TryAddSingleton`, so a test host can swap in a fake clock).
+  with its own OpenAPI document `feelings`, Marten schema `feelings`, and the eraser and exporter.
+  `TimeProvider.System` is registered in `Program.cs`, not here (a test host can swap in a fake clock).
   `MapFeelingsFeature` inside `if (features.Feelings) { ... }` in
   [Program.cs](../../../src/backend/buddy/Program.cs), next to the `SleepDiary` block.
 - `FeatureOptions.Feelings` (default on), a `Feelings` argument in `Effective()` and a field on
