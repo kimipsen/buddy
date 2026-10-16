@@ -6,6 +6,27 @@
 
 ## Open
 
+### Backend unit tests as the primary test source (2026-10-16)
+
+Running the backend suite often makes the devcontainer run out of memory. Plan in
+[Backend unit tests](docs/backend/analysis/backend-unit-tests.md); settle its open questions
+(`TimeProvider` in handlers, committed generated code) before phase 4.
+
+- [ ] **Phase 0: stop the out-of-memory errors.** Measure one run; dispose every
+      `CreateHostAsync` host (including failed-startup ones); move them to their own collection;
+      pre-generate Marten/Wolverine code; cap Keycloak's heap and container memory.
+- [ ] **Phase 1: split the projects.** Add `buddy.UnitTests` (no Docker), move the ~25 pure test
+      files and golden files, make `task test:backend` unit-only and add
+      `task test:backend:integration`; update CI and CLAUDE.md.
+- [ ] **Phase 2: test infrastructure.** In-memory fakes for the 27 event stores, store contract
+      tests against fakes and Marten, event builders, recording fakes for Keycloak, mail and AI.
+- [ ] **Phase 3: validators and pure domain.** The 93 validators, aggregate `Rehydrate`, and the
+      authorization helpers.
+- [ ] **Phase 4: handlers, domain by domain.** `TimeProvider` plus one test class per handler for
+      each of the 19 feature folders; trim duplicated integration tests.
+- [ ] **Phase 5: tooling.** Run Stryker against the unit project; update `backend-feature`,
+      `claude-backend`, `mutation-fix-backend` and `feature-from-analysis`.
+
 ### Tools for families with ADHD and autism (2026-10-11)
 
 Ideas for new features beyond what Buddy already has. The four marked **(start here)** and the
