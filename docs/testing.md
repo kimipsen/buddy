@@ -193,8 +193,10 @@ verified scoping instructions and expected runtime characteristics.
     audit warnings (NU1901-NU1904) are errors under `TreatWarningsAsErrors`.
     Lift a vulnerable transitive package with a pin in the "Transitive security
     pins" group of `src/backend/Directory.Packages.props`.
-  - **npm**: `npm audit --audit-level=moderate` in `src/frontend/buddy` and
-    `themes/buddy/build`, dev dependencies included.
+  - **npm**: `audit-ci --moderate` in `src/frontend/buddy` and
+    `themes/buddy/build`, dev dependencies included. Advisories with no
+    patched release are allowlisted in `.github/workflows/security-scan.yml`
+    with a reason (currently `GHSA-vfj7-8cjw-p6xm`, braces).
   - **Container images**: builds the API, web and Keycloak images and scans
     them with Trivy. Every finding is uploaded to Security → Code scanning
     (category `trivy-<image>`); the job fails on high or critical ones that
