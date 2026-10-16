@@ -11,6 +11,7 @@ public static class DeletePrintTemplateHandler
         IPrintTemplateEventStore store,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -24,7 +25,7 @@ public static class DeletePrintTemplateHandler
             return loaded.Reraise<PrintTemplate, Unit>();
         }
 
-        var deleted = new PrintTemplateDeleted(template.Id, userId, DateTimeOffset.UtcNow);
+        var deleted = new PrintTemplateDeleted(template.Id, userId, time.GetUtcNow());
 
         await store.AppendAsync(template.Id, [deleted], PrintTemplateIndexDocument.From(PrintTemplate.Advance(template, deleted)), cancellationToken);
 

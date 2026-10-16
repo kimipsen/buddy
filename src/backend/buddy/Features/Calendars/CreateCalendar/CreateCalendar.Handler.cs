@@ -12,6 +12,7 @@ public static class CreateCalendarHandler
         IValidator<CreateCalendar> validator,
         ICalendarEventStore calendars,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -33,7 +34,7 @@ public static class CreateCalendarHandler
         }
 
         var calendarId = CalendarId.New();
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var created = new CalendarCreatedForGroup(calendarId, command.GroupId, command.Name, command.Icon, command.TimeZoneId, now);
 
         var events = await calendars.CreateAsync(calendarId, [created], cancellationToken);

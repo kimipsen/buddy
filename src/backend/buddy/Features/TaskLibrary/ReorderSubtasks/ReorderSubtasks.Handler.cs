@@ -10,6 +10,7 @@ public static class ReorderSubtasksHandler
         ReorderSubtasks command,
         ITaskTemplateEventStore templates,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -35,7 +36,7 @@ public static class ReorderSubtasksHandler
                 ValidationProblem.Of("NewOrder must contain exactly the template's current subtasks, each exactly once."));
         }
 
-        var reordered = new SubtasksReordered(command.TemplateId, command.NewOrder, userId, DateTimeOffset.UtcNow);
+        var reordered = new SubtasksReordered(command.TemplateId, command.NewOrder, userId, time.GetUtcNow());
 
         await templates.AppendAsync(command.TemplateId, [reordered], cancellationToken);
 

@@ -9,6 +9,7 @@ public static class ArchiveTaskTemplateHandler
         ArchiveTaskTemplate command,
         ITaskTemplateEventStore templates,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -23,7 +24,7 @@ public static class ArchiveTaskTemplateHandler
         // Every write past creation is 404 once archived, so a pending suggestion could never be
         // resolved again: decline them in the same append, so the child sees "not added this time"
         // (docs/backend/analysis/packing-checklists.md, Question 8).
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         TaskTemplateEvent[] events =
         [
             .. loaded.Template.Suggestions

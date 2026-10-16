@@ -13,6 +13,7 @@ public static class ConfigureGoalPostsHandler
         IValidator<ConfigureGoalPosts> validator,
         IProgressEventStore progress,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -39,7 +40,7 @@ public static class ConfigureGoalPostsHandler
             return new Result<ProgressSummary>.Success(ProgressSummary.From(current));
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var configured = new GoalPostsConfigured(id, command.GoalPosts, now);
 
         if (current is null)

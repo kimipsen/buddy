@@ -9,7 +9,7 @@ namespace buddy.Features.Guardians;
 public static class UpdateChildLanguageHandler
 {
     public static async Task<Result<ChildSummary>> Handle(
-        UpdateChildLanguage command, IValidator<UpdateChildLanguage> validator, IGuardianLinkEventStore guardianLinks, IUserEventStore users, CancellationToken cancellationToken)
+        UpdateChildLanguage command, IValidator<UpdateChildLanguage> validator, IGuardianLinkEventStore guardianLinks, IUserEventStore users, TimeProvider time, CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
@@ -37,7 +37,7 @@ public static class UpdateChildLanguageHandler
 
         if (child.Language != command.Language)
         {
-            var languageUpdated = new LanguageUpdated(command.ChildId, child.Language, command.Language, DateTimeOffset.UtcNow);
+            var languageUpdated = new LanguageUpdated(command.ChildId, child.Language, command.Language, time.GetUtcNow());
             await users.AppendAsync(command.ChildId, [languageUpdated], cancellationToken);
             child = child with { Language = command.Language };
         }

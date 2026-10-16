@@ -21,6 +21,7 @@ public static class ReplacePrintTemplateBabysitterColorsHandler
         ICalendarEventStore calendars,
         IWorkLocationScheduleEventStore workLocations,
         IBabysitterListEventStore babysitters,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -49,7 +50,7 @@ public static class ReplacePrintTemplateBabysitterColorsHandler
             return new Result<PrintTemplateResponse>.Validation(ValidationProblem.Of(referenceError));
         }
 
-        var replaced = new PrintTemplateBabysitterColorsReplaced(template.Id, template.BabysitterColors, command.Colors, userId, DateTimeOffset.UtcNow);
+        var replaced = new PrintTemplateBabysitterColorsReplaced(template.Id, template.BabysitterColors, command.Colors, userId, time.GetUtcNow());
 
         await store.AppendAsync(template.Id, [replaced], index: null, cancellationToken);
 

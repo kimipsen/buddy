@@ -11,6 +11,7 @@ public static class ShareMedicineWithGroupHandler
         IMedicineSharingEventStore sharing,
         IGuardianLinkEventStore guardians,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -38,7 +39,7 @@ public static class ShareMedicineWithGroupHandler
             return groupAccess.ToDeniedResult<Unit>();
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var sharingId = await sharing.FindIdForChildAsync(command.ChildId, cancellationToken);
 
         if (sharingId is null)

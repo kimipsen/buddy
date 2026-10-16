@@ -9,6 +9,7 @@ public static class TransferCalendarToGroupHandler
         TransferCalendarToGroup command,
         ICalendarEventStore calendars,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -52,7 +53,7 @@ public static class TransferCalendarToGroupHandler
 
         await calendars.AppendAsync(
             command.CalendarId,
-            [new CalendarTransferredToGroup(command.CalendarId, command.NewGroupId, userId, DateTimeOffset.UtcNow)],
+            [new CalendarTransferredToGroup(command.CalendarId, command.NewGroupId, userId, time.GetUtcNow())],
             cancellationToken);
 
         return new Result<Unit>.Success(Unit.Value);

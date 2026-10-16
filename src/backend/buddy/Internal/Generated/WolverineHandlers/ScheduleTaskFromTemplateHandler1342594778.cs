@@ -3,6 +3,7 @@
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.Features.TaskLibrary;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -10,13 +11,15 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class ScheduleTaskFromTemplateHandler1342594778 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Calendars.ICalendarEventStore _calendarEventStore;
         private readonly buddy.Features.Calendars.ICalendarItemEventStore _calendarItemEventStore;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
         private readonly buddy.Features.TaskLibrary.ITaskTemplateEventStore _taskTemplateEventStore;
 
-        public ScheduleTaskFromTemplateHandler1342594778(buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Calendars.ICalendarItemEventStore calendarItemEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.TaskLibrary.ITaskTemplateEventStore taskTemplateEventStore)
+        public ScheduleTaskFromTemplateHandler1342594778(System.TimeProvider timeProvider, buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Calendars.ICalendarItemEventStore calendarItemEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.TaskLibrary.ITaskTemplateEventStore taskTemplateEventStore)
         {
+            _timeProvider = timeProvider;
             _calendarEventStore = calendarEventStore;
             _calendarItemEventStore = calendarItemEventStore;
             _groupEventStore = groupEventStore;
@@ -36,7 +39,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Calendars.ScheduleTaskFromTemplateHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Calendars.ScheduleTaskFromTemplateHandler.Handle(scheduleTaskFromTemplate, scheduleTaskFromTemplateValidator, _calendarEventStore, _calendarItemEventStore, _taskTemplateEventStore, _groupEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Calendars.ScheduleTaskFromTemplateHandler.Handle(scheduleTaskFromTemplate, scheduleTaskFromTemplateValidator, _calendarEventStore, _calendarItemEventStore, _taskTemplateEventStore, _groupEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

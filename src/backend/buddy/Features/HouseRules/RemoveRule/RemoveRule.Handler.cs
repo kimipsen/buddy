@@ -11,6 +11,7 @@ public static class RemoveRuleHandler
         IRuleBookEventStore books,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var access = await HouseRulesAuthorization.CheckManage(command.Scope, command.UserId, groups, guardians, cancellationToken);
@@ -30,7 +31,7 @@ public static class RemoveRuleHandler
         {
             await books.AppendAsync(
                 command.Scope.BookId,
-                [new RuleRemoved(command.Scope.BookId, rule.Id, rule.Content, command.UserId, DateTimeOffset.UtcNow)],
+                [new RuleRemoved(command.Scope.BookId, rule.Id, rule.Content, command.UserId, time.GetUtcNow())],
                 cancellationToken);
         }
 

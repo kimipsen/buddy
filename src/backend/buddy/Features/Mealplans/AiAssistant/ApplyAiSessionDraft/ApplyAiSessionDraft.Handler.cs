@@ -12,6 +12,7 @@ public static class ApplyAiSessionDraftHandler
         IMealPlanEventStore mealPlans,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -45,7 +46,7 @@ public static class ApplyAiSessionDraftHandler
         {
             var assignResult = await AssignMealToSlotHandler.AssignForChildAsync(
                 command.ChildId, entry.Key.Date, entry.Key.Slot, entry.Value, "Proposed by the AI assistant.", userId,
-                mealPlans, meals, guardians, cancellationToken);
+                mealPlans, meals, guardians, time, cancellationToken);
 
             if (assignResult is not Result<MealPlanEntry>.Success)
             {
@@ -53,7 +54,7 @@ public static class ApplyAiSessionDraftHandler
             }
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         await sessions.AppendAsync(sessionId, [new AiSessionApplied(sessionId, userId, now)], cancellationToken);
 
         MealplanAiSessionEvent[] allEvents = [.. existingEvents, new AiSessionApplied(sessionId, userId, now)];

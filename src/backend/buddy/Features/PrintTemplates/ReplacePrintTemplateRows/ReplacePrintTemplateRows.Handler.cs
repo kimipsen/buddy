@@ -19,6 +19,7 @@ public static class ReplacePrintTemplateRowsHandler
         IGuardianLinkEventStore guardians,
         ICalendarEventStore calendars,
         IWorkLocationScheduleEventStore workLocations,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -50,7 +51,7 @@ public static class ReplacePrintTemplateRowsHandler
             return new Result<PrintTemplateResponse>.Validation(ValidationProblem.Of(referenceError));
         }
 
-        var replaced = new PrintTemplateRowsReplaced(template.Id, template.Rows, after, userId, DateTimeOffset.UtcNow);
+        var replaced = new PrintTemplateRowsReplaced(template.Id, template.Rows, after, userId, time.GetUtcNow());
 
         await store.AppendAsync(template.Id, [replaced], index: null, cancellationToken);
 

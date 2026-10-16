@@ -40,12 +40,13 @@ public static class CreateGroupHandler
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
         IUserEventStore users,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var ownerId = command.UserId;
 
         var groupId = GroupId.New();
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var created = new GroupCreated(groupId, ownerId, command.Name, DefaultCalendarPolicy, DefaultMealplanPolicy, DefaultMedicinePolicy, now);
 
         var events = await groups.CreateAsync(groupId, [created], cancellationToken);

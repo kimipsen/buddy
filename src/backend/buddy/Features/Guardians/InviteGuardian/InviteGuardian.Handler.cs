@@ -13,6 +13,7 @@ public static class InviteGuardianHandler
         IUserEventStore users,
         IEmailSender emailSender,
         ILogger<InviteGuardian> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -36,7 +37,7 @@ public static class InviteGuardianHandler
         // Deliberately no "does an account exist for this email" check -- same
         // no-email-to-user-lookup design as InviteToGroupHandler.
         var normalizedEmail = GuardianInviteDocument.NormalizeEmail(command.Email);
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var existingInvite = await invites.FindPendingInviteAsync(command.ChildId, normalizedEmail, cancellationToken);
 
         if (ResendCooldown.IsActive(existingInvite?.CreatedAt, now))

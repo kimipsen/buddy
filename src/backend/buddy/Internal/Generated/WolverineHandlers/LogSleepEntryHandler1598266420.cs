@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Guardians;
 using buddy.Features.SleepDiaries;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -9,11 +10,13 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class LogSleepEntryHandler1598266420 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.SleepDiaries.ISleepDiaryEventStore _sleepDiaryEventStore;
 
-        public LogSleepEntryHandler1598266420(buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.SleepDiaries.ISleepDiaryEventStore sleepDiaryEventStore)
+        public LogSleepEntryHandler1598266420(System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.SleepDiaries.ISleepDiaryEventStore sleepDiaryEventStore)
         {
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _sleepDiaryEventStore = sleepDiaryEventStore;
         }
@@ -31,7 +34,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.SleepDiaries.LogSleepEntryHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.SleepDiaries.LogSleepEntryHandler.Handle(logSleepEntry, logSleepEntryValidator, _sleepDiaryEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.SleepDiaries.LogSleepEntryHandler.Handle(logSleepEntry, logSleepEntryValidator, _sleepDiaryEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

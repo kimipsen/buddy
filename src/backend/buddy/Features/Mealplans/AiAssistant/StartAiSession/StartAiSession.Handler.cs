@@ -17,6 +17,7 @@ public static class StartAiSessionHandler
         IMealEventStore meals,
         IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -69,7 +70,7 @@ public static class StartAiSessionHandler
             }
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         // Starting a new session supersedes whatever the family's current one is -- see
         // AiSessionResolution for why "current" means "latest across the family", not a single

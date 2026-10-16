@@ -13,6 +13,7 @@ public static class CreateTaskTemplateHandler
         IValidator<CreateTaskTemplate> validator,
         ITaskTemplateEventStore templates,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -30,7 +31,7 @@ public static class CreateTaskTemplateHandler
         }
 
         var templateId = TaskTemplateId.New();
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         var created = new TaskTemplateCreated(templateId, command.ChildId, userId, command.Name, command.Icon, command.Color, now, command.Kind);
         var options = new ChecklistOptions(command.EveningBeforeFrom);

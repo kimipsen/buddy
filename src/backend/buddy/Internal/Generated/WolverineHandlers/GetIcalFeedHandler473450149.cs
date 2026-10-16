@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Calendars;
 using buddy.Features.TaskLibrary;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -9,12 +10,14 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class GetIcalFeedHandler473450149 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Calendars.ICalendarEventStore _calendarEventStore;
         private readonly buddy.Features.Calendars.ICalendarItemEventStore _calendarItemEventStore;
         private readonly buddy.Features.TaskLibrary.ITaskTemplateEventStore _taskTemplateEventStore;
 
-        public GetIcalFeedHandler473450149(buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Calendars.ICalendarItemEventStore calendarItemEventStore, buddy.Features.TaskLibrary.ITaskTemplateEventStore taskTemplateEventStore)
+        public GetIcalFeedHandler473450149(System.TimeProvider timeProvider, buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Calendars.ICalendarItemEventStore calendarItemEventStore, buddy.Features.TaskLibrary.ITaskTemplateEventStore taskTemplateEventStore)
         {
+            _timeProvider = timeProvider;
             _calendarEventStore = calendarEventStore;
             _calendarItemEventStore = calendarItemEventStore;
             _taskTemplateEventStore = taskTemplateEventStore;
@@ -32,7 +35,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Calendars.GetIcalFeedHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Calendars.GetIcalFeedHandler.Handle(getIcalFeed, _calendarEventStore, _calendarItemEventStore, _taskTemplateEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Calendars.GetIcalFeedHandler.Handle(getIcalFeed, _calendarEventStore, _calendarItemEventStore, _taskTemplateEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

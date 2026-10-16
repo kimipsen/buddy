@@ -13,6 +13,7 @@ public static class SuggestChecklistItemHandler
         IValidator<SuggestChecklistItem> validator,
         ITaskTemplateEventStore templates,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -52,7 +53,7 @@ public static class SuggestChecklistItemHandler
         }
 
         var suggested = new ChecklistItemSuggested(
-            command.TemplateId, ChecklistSuggestionId.New(), command.Title, command.Weekdays, command.UserId, DateTimeOffset.UtcNow);
+            command.TemplateId, ChecklistSuggestionId.New(), command.Title, command.Weekdays, command.UserId, time.GetUtcNow());
 
         await templates.AppendAsync(command.TemplateId, [suggested], cancellationToken);
 

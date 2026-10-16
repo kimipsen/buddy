@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Guardians;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -10,11 +11,13 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class RevokeGuardianLinkHandler1406021476 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Guardians.RevokeGuardianLink> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
 
-        public RevokeGuardianLinkHandler1406021476(Microsoft.Extensions.Logging.ILogger<buddy.Features.Guardians.RevokeGuardianLink> loggerForMessage, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore)
+        public RevokeGuardianLinkHandler1406021476(Microsoft.Extensions.Logging.ILogger<buddy.Features.Guardians.RevokeGuardianLink> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
         }
 
@@ -30,7 +33,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Guardians.RevokeGuardianLinkHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Guardians.RevokeGuardianLinkHandler.Handle(revokeGuardianLink, _guardianLinkEventStore, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Guardians.RevokeGuardianLinkHandler.Handle(revokeGuardianLink, _guardianLinkEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

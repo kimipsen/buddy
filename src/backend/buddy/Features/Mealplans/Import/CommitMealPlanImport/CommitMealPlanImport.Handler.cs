@@ -40,6 +40,7 @@ public static class CommitMealPlanImportHandler
         IMealPlanEventStore mealPlans,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -55,7 +56,7 @@ public static class CommitMealPlanImportHandler
         }
 
         return await ImportForChildAsync(
-            command.ChildId, command.UserId, command.Format, command.Entries, command.ArchiveSingleUse, mealPlans, meals, guardians, cancellationToken);
+            command.ChildId, command.UserId, command.Format, command.Entries, command.ArchiveSingleUse, mealPlans, meals, guardians, time, cancellationToken);
     }
 
     // Shared with CommitMealPlanImportForGroupHandler -- see CreateMealHandler.CreateForChildAsync.
@@ -68,6 +69,7 @@ public static class CommitMealPlanImportHandler
         IMealPlanEventStore mealPlans,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var familyMealIds = await MealFamilyResolution.ResolveFamilyMealIdsAsync(childId, guardians, meals, cancellationToken);
@@ -96,7 +98,7 @@ public static class CommitMealPlanImportHandler
             return new Result<MealPlanImportResult>.Success(new MealPlanImportResult(null, 0, 0, 0, skipped));
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var recentCutoff = DateOnly.FromDateTime(now.UtcDateTime).AddDays(-SingleUseRecentDays);
 
         // One new meal per normalized name, named after its first spelling.
@@ -151,6 +153,7 @@ public static class CommitMealPlanImportForGroupHandler
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -166,6 +169,6 @@ public static class CommitMealPlanImportForGroupHandler
         }
 
         return await CommitMealPlanImportHandler.ImportForChildAsync(
-            access.AnchorChildId, command.UserId, command.Format, command.Entries, command.ArchiveSingleUse, mealPlans, meals, guardians, cancellationToken);
+            access.AnchorChildId, command.UserId, command.Format, command.Entries, command.ArchiveSingleUse, mealPlans, meals, guardians, time, cancellationToken);
     }
 }

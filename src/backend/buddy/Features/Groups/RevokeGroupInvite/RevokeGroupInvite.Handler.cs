@@ -4,7 +4,7 @@ namespace buddy.Features.Groups;
 
 public static class RevokeGroupInviteHandler
 {
-    public static async Task<Result<Unit>> Handle(RevokeGroupInvite command, IGroupEventStore groups, ILogger<RevokeGroupInvite> logger, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(RevokeGroupInvite command, IGroupEventStore groups, ILogger<RevokeGroupInvite> logger, TimeProvider time, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -44,7 +44,7 @@ public static class RevokeGroupInviteHandler
 
         await groups.AppendAsync(
             command.GroupId,
-            [new GroupInviteRevoked(command.GroupId, invite.Id, userId, DateTimeOffset.UtcNow)],
+            [new GroupInviteRevoked(command.GroupId, invite.Id, userId, time.GetUtcNow())],
             cancellationToken);
 
         logger.GroupInviteRevoked(invite.Id, command.GroupId.Value, userId.Value);

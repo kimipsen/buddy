@@ -9,6 +9,7 @@ public static class ClearMedicineEffectNoteHandler
         ClearMedicineEffectNote command,
         IMedicineEffectLogEventStore effectLogs,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var access = await MedicineAuthorization.CheckManage(command.ChildId, command.UserId, guardians, cancellationToken);
@@ -27,7 +28,7 @@ public static class ClearMedicineEffectNoteHandler
             return new Result<Unit>.Success(Unit.Value);
         }
 
-        await effectLogs.AppendAsync(id, [new MedicineEffectNoteCleared(id, command.Date, before, command.UserId, DateTimeOffset.UtcNow)], cancellationToken);
+        await effectLogs.AppendAsync(id, [new MedicineEffectNoteCleared(id, command.Date, before, command.UserId, time.GetUtcNow())], cancellationToken);
 
         return new Result<Unit>.Success(Unit.Value);
     }

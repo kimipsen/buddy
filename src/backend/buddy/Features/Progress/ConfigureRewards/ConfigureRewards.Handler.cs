@@ -15,6 +15,7 @@ public static class ConfigureRewardsHandler
         IValidator<ConfigureRewards> validator,
         IProgressEventStore progress,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -56,7 +57,7 @@ public static class ConfigureRewardsHandler
             return new Result<ProgressSummary>.Success(ProgressSummary.From(current));
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var configured = new RewardsConfigured(id, rewards, command.UserId, now);
 
         if (existing is null)

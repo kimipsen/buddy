@@ -15,6 +15,7 @@ public static class SetProviderApiKeyHandler
         IGuardianLinkEventStore guardians,
         IApiKeyCipher cipher,
         ILogger<SetProviderApiKey> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -31,7 +32,7 @@ public static class SetProviderApiKeyHandler
             return access.ToDeniedResult<AiProviderSettings>();
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var key = StoredApiKey.Create(command.ApiKey, cipher, userId, now);
 
         var credentialId = await MealFamilyResolution.ResolveFamilyAiCredentialIdAsync(command.ChildId, userId, guardians, credentials, cancellationToken);

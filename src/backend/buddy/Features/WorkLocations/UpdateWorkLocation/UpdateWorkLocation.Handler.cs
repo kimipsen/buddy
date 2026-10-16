@@ -14,6 +14,7 @@ public static class UpdateWorkLocationHandler
         IValidator<UpdateWorkLocation> validator,
         IWorkLocationScheduleEventStore store,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -30,7 +31,7 @@ public static class UpdateWorkLocationHandler
             return access.ToDeniedResult<WorkLocationSummary>();
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var loaded = await WorkLocationScheduleWriter.LoadAsync(store, userId, now, cancellationToken);
 
         // Archived locations can't be edited -- they only exist so old references keep resolving.

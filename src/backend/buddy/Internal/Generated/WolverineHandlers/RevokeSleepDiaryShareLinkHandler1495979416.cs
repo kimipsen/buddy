@@ -3,6 +3,7 @@
 using buddy.Features.Guardians;
 using buddy.Features.SleepDiaries;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -11,12 +12,14 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class RevokeSleepDiaryShareLinkHandler1495979416 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.SleepDiaries.RevokeSleepDiaryShareLink> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.SleepDiaries.ISleepDiaryShareTokenEventStore _sleepDiaryShareTokenEventStore;
 
-        public RevokeSleepDiaryShareLinkHandler1495979416(Microsoft.Extensions.Logging.ILogger<buddy.Features.SleepDiaries.RevokeSleepDiaryShareLink> loggerForMessage, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.SleepDiaries.ISleepDiaryShareTokenEventStore sleepDiaryShareTokenEventStore)
+        public RevokeSleepDiaryShareLinkHandler1495979416(Microsoft.Extensions.Logging.ILogger<buddy.Features.SleepDiaries.RevokeSleepDiaryShareLink> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.SleepDiaries.ISleepDiaryShareTokenEventStore sleepDiaryShareTokenEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _sleepDiaryShareTokenEventStore = sleepDiaryShareTokenEventStore;
         }
@@ -33,7 +36,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.SleepDiaries.RevokeSleepDiaryShareLinkHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.SleepDiaries.RevokeSleepDiaryShareLinkHandler.Handle(revokeSleepDiaryShareLink, _sleepDiaryShareTokenEventStore, _guardianLinkEventStore, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.SleepDiaries.RevokeSleepDiaryShareLinkHandler.Handle(revokeSleepDiaryShareLink, _sleepDiaryShareTokenEventStore, _guardianLinkEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

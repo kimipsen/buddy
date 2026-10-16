@@ -17,6 +17,7 @@ public static class SetItemWarningOverrideHandler
         ICalendarItemEventStore items,
         ICalendarEventStore calendars,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -49,7 +50,7 @@ public static class SetItemWarningOverrideHandler
                 return new SetItemWarningOverrideOutcome.TooManyOverrides();
             }
 
-            var now = DateTimeOffset.UtcNow;
+            var now = time.GetUtcNow();
             await settings.SaveAsync(
                 current, exists, new ItemWarningOverrideSet(current.Id, command.ItemId, before, after, command.UserId, now), now, cancellationToken);
             current = current with { ItemOverrides = current.ItemOverrides.SetItem(command.ItemId, after) };

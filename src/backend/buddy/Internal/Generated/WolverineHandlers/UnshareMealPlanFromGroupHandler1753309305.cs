@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Guardians;
 using buddy.Features.Mealplans;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -9,11 +10,13 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class UnshareMealPlanFromGroupHandler1753309305 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.Mealplans.IMealPlanEventStore _mealPlanEventStore;
 
-        public UnshareMealPlanFromGroupHandler1753309305(buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Mealplans.IMealPlanEventStore mealPlanEventStore)
+        public UnshareMealPlanFromGroupHandler1753309305(System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Mealplans.IMealPlanEventStore mealPlanEventStore)
         {
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _mealPlanEventStore = mealPlanEventStore;
         }
@@ -30,7 +33,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Mealplans.UnshareMealPlanFromGroupHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Mealplans.UnshareMealPlanFromGroupHandler.Handle(unshareMealPlanFromGroup, _mealPlanEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Mealplans.UnshareMealPlanFromGroupHandler.Handle(unshareMealPlanFromGroup, _mealPlanEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

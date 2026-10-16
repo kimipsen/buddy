@@ -10,6 +10,7 @@ public static class AcceptGuardianInviteHandler
         IUserEventStore users,
         IGuardianLinkEventStore guardians,
         ILogger<AcceptGuardianInvite> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -31,7 +32,7 @@ public static class AcceptGuardianInviteHandler
             return new AcceptGuardianInviteOutcome.Success();
         }
 
-        if (invite.Status != GuardianInviteStatus.Pending || invite.ExpiresAt < DateTimeOffset.UtcNow)
+        if (invite.Status != GuardianInviteStatus.Pending || invite.ExpiresAt < time.GetUtcNow())
         {
             return new AcceptGuardianInviteOutcome.NotFound();
         }
@@ -57,7 +58,7 @@ public static class AcceptGuardianInviteHandler
             return new EmailNotVerified("Verify your email address before accepting this invite.");
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var inviteId = new GuardianInviteId(invite.Id);
         var linkId = GuardianLinkId.New();
         var linked = new GuardianLinked(linkId, new UserId(invite.ChildId), userId, invite.Kind, now);

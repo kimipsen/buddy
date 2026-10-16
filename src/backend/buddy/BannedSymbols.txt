@@ -1,0 +1,5 @@
+P:System.DateTimeOffset.UtcNow;Inject TimeProvider and call GetUtcNow(), so tests can control the clock
+P:System.DateTimeOffset.Now;Inject TimeProvider and call GetUtcNow() (or GetLocalNow() for the server's zone)
+P:System.DateTime.UtcNow;Inject TimeProvider and call GetUtcNow().UtcDateTime
+P:System.DateTime.Now;Inject TimeProvider and call GetUtcNow()
+P:System.DateTime.Today;Inject TimeProvider and derive the date from GetUtcNow() in the relevant time zone

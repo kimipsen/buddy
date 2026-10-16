@@ -15,6 +15,7 @@ public static class CreateMealHandler
         IValidator<CreateMeal> validator,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -31,7 +32,7 @@ public static class CreateMealHandler
             return access.ToDeniedResult<Meal>();
         }
 
-        var meal = await CreateForChildAsync(command.ChildId, userId, command.Name, command.Description, command.Icon, command.Color, meals, cancellationToken);
+        var meal = await CreateForChildAsync(command.ChildId, userId, command.Name, command.Description, command.Icon, command.Color, meals, time, cancellationToken);
 
         return new Result<Meal>.Success(meal);
     }
@@ -42,10 +43,10 @@ public static class CreateMealHandler
     // new meal is indexed under childId regardless of which route created it, same as any
     // guardian-created meal.
     internal static async Task<Meal> CreateForChildAsync(
-        UserId childId, UserId createdBy, string name, string description, Icon icon, Color color, IMealEventStore meals, CancellationToken cancellationToken)
+        UserId childId, UserId createdBy, string name, string description, Icon icon, Color color, IMealEventStore meals, TimeProvider time, CancellationToken cancellationToken)
     {
         var mealId = MealId.New();
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         var created = new MealCreated(mealId, childId, createdBy, name, description, icon, color, now);
 

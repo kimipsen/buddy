@@ -5,7 +5,7 @@ namespace buddy.Features.Users;
 
 public static class ResendEmailVerificationHandler
 {
-    public static async Task<ResendEmailVerificationOutcome> Handle(ResendEmailVerification command, IUserEventStore events, IEmailSender emailSender, CancellationToken cancellationToken)
+    public static async Task<ResendEmailVerificationOutcome> Handle(ResendEmailVerification command, IUserEventStore events, IEmailSender emailSender, TimeProvider time, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -22,7 +22,7 @@ public static class ResendEmailVerificationHandler
             return new ResendEmailVerificationOutcome.AlreadyVerified();
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         var lastSentAt = user.EmailVerification is EmailVerification.Pending pending ? pending.RequestedAt : (DateTimeOffset?)null;
 

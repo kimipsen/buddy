@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Groups;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -10,11 +11,13 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class RevokeGroupInviteHandler1259066429 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Groups.RevokeGroupInvite> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
 
-        public RevokeGroupInviteHandler1259066429(Microsoft.Extensions.Logging.ILogger<buddy.Features.Groups.RevokeGroupInvite> loggerForMessage, buddy.Features.Groups.IGroupEventStore groupEventStore)
+        public RevokeGroupInviteHandler1259066429(Microsoft.Extensions.Logging.ILogger<buddy.Features.Groups.RevokeGroupInvite> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Groups.IGroupEventStore groupEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _groupEventStore = groupEventStore;
         }
 
@@ -30,7 +33,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Groups.RevokeGroupInviteHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Groups.RevokeGroupInviteHandler.Handle(revokeGroupInvite, _groupEventStore, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Groups.RevokeGroupInviteHandler.Handle(revokeGroupInvite, _groupEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

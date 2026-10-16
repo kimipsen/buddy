@@ -17,6 +17,7 @@ public static class GetIcalFeedHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         ITaskTemplateEventStore templates,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var calendarEvents = await calendars.ReadAsync(query.CalendarId, cancellationToken);
@@ -34,12 +35,12 @@ public static class GetIcalFeedHandler
             return new Result<string>.NotFound();
         }
 
-        var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.UtcDateTime);
+        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         var from = today.AddDays(-LookBehind.Days);
         var to = today.AddDays(LookAhead.Days);
 
         var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar.TimeZoneId, calendar.Icon, from, to, items, templates, includeSkipped: false, cancellationToken);
 
-        return new Result<string>.Success(IcalFeedWriter.Write(calendar.Name, occurrences));
+        return new Result<string>.Success(IcalFeedWriter.Write(calendar.Name, occurrences, time));
     }
 }

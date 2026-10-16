@@ -29,6 +29,7 @@ internal static class FirstThenTransitions
         IFirstThenBoardEventStore boards,
         IGuardianLinkEventStore guardians,
         IUserEventStore users,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var access = childId is { } managed
@@ -66,7 +67,7 @@ internal static class FirstThenTransitions
                 throw new UnreachableException("A FirstThen transition appended to a board that doesn't exist.");
             }
 
-            var @event = toEvent(id, current, DateTimeOffset.UtcNow);
+            var @event = toEvent(id, current, time.GetUtcNow());
             await boards.AppendAsync(id, [@event], cancellationToken);
             board = FirstThenBoard.Advance(board, @event);
         }

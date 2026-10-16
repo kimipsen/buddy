@@ -10,6 +10,7 @@ public static class ClearMealSlotHandler
         ClearMealSlot command,
         IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -21,13 +22,13 @@ public static class ClearMealSlotHandler
             return access.ToDeniedResult<Unit>();
         }
 
-        return await ClearForChildAsync(command.ChildId, command.Date, command.Slot, userId, mealPlans, guardians, cancellationToken);
+        return await ClearForChildAsync(command.ChildId, command.Date, command.Slot, userId, mealPlans, guardians, time, cancellationToken);
     }
 
     // Shared with ClearMealSlotForGroupHandler -- see CreateMealHandler.CreateForChildAsync for
     // the same pattern and rationale.
     internal static async Task<Result<Unit>> ClearForChildAsync(
-        UserId childId, DateOnly date, MealSlot slot, UserId modifiedBy, IMealPlanEventStore mealPlans, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+        UserId childId, DateOnly date, MealSlot slot, UserId modifiedBy, IMealPlanEventStore mealPlans, IGuardianLinkEventStore guardians, TimeProvider time, CancellationToken cancellationToken)
     {
         var mealPlanId = await MealFamilyResolution.ResolveFamilyMealPlanIdAsync(childId, guardians, mealPlans, cancellationToken);
 
@@ -46,7 +47,7 @@ public static class ClearMealSlotHandler
             return new Result<Unit>.Success(Unit.Value);
         }
 
-        await mealPlans.AppendAsync(mealPlanId, [new MealSlotCleared(mealPlanId, date, slot, before, modifiedBy, DateTimeOffset.UtcNow)], cancellationToken);
+        await mealPlans.AppendAsync(mealPlanId, [new MealSlotCleared(mealPlanId, date, slot, before, modifiedBy, time.GetUtcNow())], cancellationToken);
 
         return new Result<Unit>.Success(Unit.Value);
     }

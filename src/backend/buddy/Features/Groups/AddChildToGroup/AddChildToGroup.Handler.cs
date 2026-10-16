@@ -9,6 +9,7 @@ public static class AddChildToGroupHandler
         AddChildToGroup command,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -49,7 +50,7 @@ public static class AddChildToGroupHandler
         // since a child has no business becoming a group Owner/Admin.
         await groups.AppendAsync(
             command.GroupId,
-            [new GroupMemberRoleGranted(command.GroupId, command.ChildId, GroupRole.Member, userId, DateTimeOffset.UtcNow)],
+            [new GroupMemberRoleGranted(command.GroupId, command.ChildId, GroupRole.Member, userId, time.GetUtcNow())],
             cancellationToken);
 
         return new Result<Unit>.Success(Unit.Value);

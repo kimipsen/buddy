@@ -14,6 +14,7 @@ public static class CompleteFirstThenFirstHandler
         IFirstThenBoardEventStore boards,
         IGuardianLinkEventStore guardians,
         IUserEventStore users,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -37,6 +38,6 @@ public static class CompleteFirstThenFirstHandler
             boards,
             guardians,
             users,
-            cancellationToken);
+            time, cancellationToken);
     }
 }

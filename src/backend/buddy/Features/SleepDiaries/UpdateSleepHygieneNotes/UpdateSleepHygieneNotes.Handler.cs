@@ -13,6 +13,7 @@ public static class UpdateSleepHygieneNotesHandler
         IValidator<UpdateSleepHygieneNotes> validator,
         ISleepDiaryEventStore diaries,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -36,7 +37,7 @@ public static class UpdateSleepHygieneNotesHandler
             return new Result<Unit>.Success(Unit.Value);
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var updated = new SleepHygieneNotesUpdated(id, before, command.Notes, command.UserId, now);
 
         if (events.Count == 0)

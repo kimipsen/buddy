@@ -7,7 +7,7 @@ using Marten;
 
 namespace buddy.Features.Users;
 
-public sealed class MartenUserEventStore(IUsersStore store) : IUserEventStore
+public sealed class MartenUserEventStore(IUsersStore store, TimeProvider time) : IUserEventStore
 {
     public async Task<KeycloakIdentity?> FindIdentityAsync(KeycloakSubject keycloakSubject, CancellationToken cancellationToken)
     {
@@ -43,14 +43,14 @@ public sealed class MartenUserEventStore(IUsersStore store) : IUserEventStore
         }
 
         await using var session = store.LightweightSession();
-        session.AppendTracked(userId.Value, [new UserErased(userId, DateTimeOffset.UtcNow)]);
+        session.AppendTracked(userId.Value, [new UserErased(userId, time.GetUtcNow())]);
         await session.SaveChangesAsync(cancellationToken);
     }
 
     public async Task RecordErasureAsync(UserId userId, CancellationToken cancellationToken)
     {
         await using var session = store.LightweightSession();
-        session.Store(new ErasureLedgerEntry(userId.Value, DateTimeOffset.UtcNow));
+        session.Store(new ErasureLedgerEntry(userId.Value, time.GetUtcNow()));
         await session.SaveChangesAsync(cancellationToken);
     }
 

@@ -16,6 +16,7 @@ public static class LogMedicineEffectNoteHandler
         IMedicineEventStore medicines,
         IGuardianLinkEventStore guardians,
         IUserEventStore users,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -30,7 +31,7 @@ public static class LogMedicineEffectNoteHandler
             return access.ToDeniedResult<MedicineEffectNoteResponse>();
         }
 
-        if (await MedicineEffectNotes.ChildTodayAsync(command.ChildId, users, cancellationToken) is not { } today)
+        if (await MedicineEffectNotes.ChildTodayAsync(command.ChildId, users, time, cancellationToken) is not { } today)
         {
             return new Result<MedicineEffectNoteResponse>.NotFound();
         }
@@ -41,7 +42,7 @@ public static class LogMedicineEffectNoteHandler
         }
 
         var id = MedicineEffectLogId.ForChild(command.ChildId);
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var schedules = await MedicineEffectNotes.LoadSchedulesAsync(command.ChildId, medicines, cancellationToken);
 
         var events = await effectLogs.ReadAsync(id, cancellationToken);

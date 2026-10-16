@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -9,11 +10,13 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class AddChildToGroupHandler1954138864 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
 
-        public AddChildToGroupHandler1954138864(buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore)
+        public AddChildToGroupHandler1954138864(System.TimeProvider timeProvider, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore)
         {
+            _timeProvider = timeProvider;
             _groupEventStore = groupEventStore;
             _guardianLinkEventStore = guardianLinkEventStore;
         }
@@ -30,7 +33,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Groups.AddChildToGroupHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Groups.AddChildToGroupHandler.Handle(addChildToGroup, _groupEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Groups.AddChildToGroupHandler.Handle(addChildToGroup, _groupEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

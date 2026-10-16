@@ -43,7 +43,7 @@ internal static class MedicineEffectNotes
                 .Select(time => new RegimenDoseResponse(time, schedule.DoseLog.GetValueOrDefault((date, time), DoseStatus.Pending)))];
 
     // "Today" on the child's own wall clock (User.TimeZoneId). Null for an unknown or deleted child.
-    public static async Task<DateOnly?> ChildTodayAsync(UserId childId, IUserEventStore users, CancellationToken cancellationToken)
+    public static async Task<DateOnly?> ChildTodayAsync(UserId childId, IUserEventStore users, TimeProvider time, CancellationToken cancellationToken)
     {
         var child = await users.FindSnapshotAsync(childId, cancellationToken);
 
@@ -52,7 +52,7 @@ internal static class MedicineEffectNotes
             return null;
         }
 
-        var local = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(child.TimeZoneId.Value));
+        var local = TimeZoneInfo.ConvertTime(time.GetUtcNow(), TimeZoneInfo.FindSystemTimeZoneById(child.TimeZoneId.Value));
 
         return DateOnly.FromDateTime(local.DateTime);
     }

@@ -3,6 +3,7 @@
 using buddy.Features.SleepDiaries;
 using buddy.Features.Users;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -11,13 +12,15 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class GetSharedSleepDiaryHandler1418133324 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.SleepDiaries.GetSharedSleepDiary> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.SleepDiaries.ISleepDiaryEventStore _sleepDiaryEventStore;
         private readonly buddy.Features.SleepDiaries.ISleepDiaryShareTokenEventStore _sleepDiaryShareTokenEventStore;
         private readonly buddy.Features.Users.IUserEventStore _userEventStore;
 
-        public GetSharedSleepDiaryHandler1418133324(Microsoft.Extensions.Logging.ILogger<buddy.Features.SleepDiaries.GetSharedSleepDiary> loggerForMessage, buddy.Features.SleepDiaries.ISleepDiaryEventStore sleepDiaryEventStore, buddy.Features.SleepDiaries.ISleepDiaryShareTokenEventStore sleepDiaryShareTokenEventStore, buddy.Features.Users.IUserEventStore userEventStore)
+        public GetSharedSleepDiaryHandler1418133324(Microsoft.Extensions.Logging.ILogger<buddy.Features.SleepDiaries.GetSharedSleepDiary> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.SleepDiaries.ISleepDiaryEventStore sleepDiaryEventStore, buddy.Features.SleepDiaries.ISleepDiaryShareTokenEventStore sleepDiaryShareTokenEventStore, buddy.Features.Users.IUserEventStore userEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _sleepDiaryEventStore = sleepDiaryEventStore;
             _sleepDiaryShareTokenEventStore = sleepDiaryShareTokenEventStore;
             _userEventStore = userEventStore;
@@ -36,7 +39,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.SleepDiaries.GetSharedSleepDiaryHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.SleepDiaries.GetSharedSleepDiaryHandler.Handle(getSharedSleepDiary, getSharedSleepDiaryValidator, _sleepDiaryShareTokenEventStore, _sleepDiaryEventStore, _userEventStore, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.SleepDiaries.GetSharedSleepDiaryHandler.Handle(getSharedSleepDiary, getSharedSleepDiaryValidator, _sleepDiaryShareTokenEventStore, _sleepDiaryEventStore, _userEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

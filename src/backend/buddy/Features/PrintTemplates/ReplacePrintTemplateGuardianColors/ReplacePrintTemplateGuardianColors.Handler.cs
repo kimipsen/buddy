@@ -19,6 +19,7 @@ public static class ReplacePrintTemplateGuardianColorsHandler
         IGuardianLinkEventStore guardians,
         ICalendarEventStore calendars,
         IWorkLocationScheduleEventStore workLocations,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -47,7 +48,7 @@ public static class ReplacePrintTemplateGuardianColorsHandler
             return new Result<PrintTemplateResponse>.Validation(ValidationProblem.Of(referenceError));
         }
 
-        var replaced = new PrintTemplateGuardianColorsReplaced(template.Id, template.GuardianColors, command.Colors, userId, DateTimeOffset.UtcNow);
+        var replaced = new PrintTemplateGuardianColorsReplaced(template.Id, template.GuardianColors, command.Colors, userId, time.GetUtcNow());
 
         await store.AppendAsync(template.Id, [replaced], index: null, cancellationToken);
 

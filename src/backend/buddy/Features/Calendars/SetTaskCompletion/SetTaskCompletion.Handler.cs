@@ -18,6 +18,7 @@ public static class SetTaskCompletionHandler
         IGroupEventStore groups,
         IMessageBus bus,
         ILogger<SetTaskCompletion> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -73,7 +74,7 @@ public static class SetTaskCompletionHandler
             return access.ToDeniedResult<CalendarItem>();
         }
 
-        if (ValidateNotFuture(command, calendar, template) is { } futureError)
+        if (ValidateNotFuture(command, calendar, template, time) is { } futureError)
         {
             return futureError;
         }
@@ -93,7 +94,7 @@ public static class SetTaskCompletionHandler
             return new Result<CalendarItem>.Success(item);
         }
 
-        var completionChanged = new TaskCompletionChanged(command.ItemId, command.OccurrenceDate, before, command.IsCompleted, userId, DateTimeOffset.UtcNow, command.Target);
+        var completionChanged = new TaskCompletionChanged(command.ItemId, command.OccurrenceDate, before, command.IsCompleted, userId, time.GetUtcNow(), command.Target);
 
         await items.AppendAsync(command.ItemId, [completionChanged], cancellationToken);
 
@@ -150,7 +151,7 @@ public static class SetTaskCompletionHandler
     // exception: it can be packed the evening before, so tomorrow's occurrence is allowed too
     // (docs/backend/analysis/packing-checklists.md, Question 4). When to *show* it is the client's
     // choice (ChecklistOptions.EveningBeforeFrom); the server only bounds it to one day ahead.
-    private static Result<CalendarItem>? ValidateNotFuture(SetTaskCompletion command, Calendar calendar, TaskTemplate? template)
+    private static Result<CalendarItem>? ValidateNotFuture(SetTaskCompletion command, Calendar calendar, TaskTemplate? template, TimeProvider time)
     {
         if (!command.IsCompleted)
         {
@@ -158,7 +159,7 @@ public static class SetTaskCompletionHandler
         }
 
         var zone = TimeZoneInfo.FindSystemTimeZoneById(calendar.TimeZoneId.Value);
-        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, zone).Date);
+        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(time.GetUtcNow(), zone).Date);
 
         var latest = template is { Kind: TaskTemplateKind.Checklist } ? today.AddDays(1) : today;
 

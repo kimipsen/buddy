@@ -9,6 +9,7 @@ public static class DeclineChecklistSuggestionHandler
         DeclineChecklistSuggestion command,
         ITaskTemplateEventStore templates,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var resolved = await TaskTemplateAccess.ResolveForManageAsync(command.TemplateId, command.UserId, templates, guardians, cancellationToken);
@@ -24,6 +25,6 @@ public static class DeclineChecklistSuggestionHandler
             ChecklistSuggestionStatus.Declined,
             now => [new ChecklistItemSuggestionDeclined(command.TemplateId, command.SuggestionId, command.UserId, now)],
             templates,
-            cancellationToken);
+            time, cancellationToken);
     }
 }

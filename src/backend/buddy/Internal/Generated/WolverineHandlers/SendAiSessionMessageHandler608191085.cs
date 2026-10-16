@@ -7,6 +7,7 @@ using buddy.Features.Mealplans;
 using buddy.Features.TaskLibrary;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -16,6 +17,7 @@ namespace Internal.Generated.WolverineHandlers
     {
         private readonly Microsoft.Extensions.DependencyInjection.IServiceScopeFactory _serviceScopeFactory;
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Mealplans.SendAiSessionMessage> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Calendars.ICalendarEventStore _calendarEventStore;
         private readonly buddy.Features.Calendars.ICalendarItemEventStore _calendarItemEventStore;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
@@ -27,10 +29,11 @@ namespace Internal.Generated.WolverineHandlers
         private readonly buddy.Features.Mealplans.IMealPlanEventStore _mealPlanEventStore;
         private readonly buddy.Features.TaskLibrary.ITaskTemplateEventStore _taskTemplateEventStore;
 
-        public SendAiSessionMessageHandler608191085(Microsoft.Extensions.DependencyInjection.IServiceScopeFactory serviceScopeFactory, Microsoft.Extensions.Logging.ILogger<buddy.Features.Mealplans.SendAiSessionMessage> loggerForMessage, buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Calendars.ICalendarItemEventStore calendarItemEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Mealplans.IAiCredentialEventStore aiCredentialEventStore, buddy.Features.Mealplans.IAiSessionEventStore aiSessionEventStore, buddy.Features.Mealplans.IApiKeyCipher apiKeyCipher, buddy.Features.Mealplans.IMealEventStore mealEventStore, buddy.Features.Mealplans.IMealPlanEventStore mealPlanEventStore, buddy.Features.TaskLibrary.ITaskTemplateEventStore taskTemplateEventStore)
+        public SendAiSessionMessageHandler608191085(Microsoft.Extensions.DependencyInjection.IServiceScopeFactory serviceScopeFactory, Microsoft.Extensions.Logging.ILogger<buddy.Features.Mealplans.SendAiSessionMessage> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Calendars.ICalendarItemEventStore calendarItemEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Mealplans.IAiCredentialEventStore aiCredentialEventStore, buddy.Features.Mealplans.IAiSessionEventStore aiSessionEventStore, buddy.Features.Mealplans.IApiKeyCipher apiKeyCipher, buddy.Features.Mealplans.IMealEventStore mealEventStore, buddy.Features.Mealplans.IMealPlanEventStore mealPlanEventStore, buddy.Features.TaskLibrary.ITaskTemplateEventStore taskTemplateEventStore)
         {
             _serviceScopeFactory = serviceScopeFactory;
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _calendarEventStore = calendarEventStore;
             _calendarItemEventStore = calendarItemEventStore;
             _groupEventStore = groupEventStore;
@@ -60,7 +63,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Mealplans.SendAiSessionMessageHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Mealplans.SendAiSessionMessageHandler.Handle(sendAiSessionMessage, sendAiSessionMessageValidator, _aiSessionEventStore, _aiCredentialEventStore, _mealEventStore, _mealPlanEventStore, _guardianLinkEventStore, _apiKeyCipher, aiProviderRegistry, _calendarEventStore, _calendarItemEventStore, _taskTemplateEventStore, _groupEventStore, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Mealplans.SendAiSessionMessageHandler.Handle(sendAiSessionMessage, sendAiSessionMessageValidator, _aiSessionEventStore, _aiCredentialEventStore, _mealEventStore, _mealPlanEventStore, _guardianLinkEventStore, _apiKeyCipher, aiProviderRegistry, _calendarEventStore, _calendarItemEventStore, _taskTemplateEventStore, _groupEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

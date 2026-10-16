@@ -1,7 +1,7 @@
 namespace buddy.Features.Mealplans;
 
 // Runs AiSessionRetention shortly after startup and then once a day.
-public sealed class AiSessionRetentionService(IServiceScopeFactory scopeFactory, ILogger<AiSessionRetentionService> logger) : BackgroundService
+public sealed class AiSessionRetentionService(IServiceScopeFactory scopeFactory, ILogger<AiSessionRetentionService> logger, TimeProvider time) : BackgroundService
 {
     private static readonly TimeSpan FirstSweepDelay = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan Interval = TimeSpan.FromDays(1);
@@ -19,7 +19,7 @@ public sealed class AiSessionRetentionService(IServiceScopeFactory scopeFactory,
                 try
                 {
                     await using var scope = scopeFactory.CreateAsyncScope();
-                    await scope.ServiceProvider.GetRequiredService<AiSessionRetention>().EraseExpiredAsync(DateTimeOffset.UtcNow, stoppingToken);
+                    await scope.ServiceProvider.GetRequiredService<AiSessionRetention>().EraseExpiredAsync(time.GetUtcNow(), stoppingToken);
                 }
                 catch (Exception exception) when (exception is not OperationCanceledException)
                 {

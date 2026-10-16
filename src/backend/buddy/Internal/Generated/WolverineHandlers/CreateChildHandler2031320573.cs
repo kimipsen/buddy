@@ -4,6 +4,7 @@ using buddy.Features.Guardians;
 using buddy.Features.Users;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -13,13 +14,15 @@ namespace Internal.Generated.WolverineHandlers
     {
         private readonly Microsoft.Extensions.DependencyInjection.IServiceScopeFactory _serviceScopeFactory;
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Guardians.CreateChild> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.Users.IUserEventStore _userEventStore;
 
-        public CreateChildHandler2031320573(Microsoft.Extensions.DependencyInjection.IServiceScopeFactory serviceScopeFactory, Microsoft.Extensions.Logging.ILogger<buddy.Features.Guardians.CreateChild> loggerForMessage, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Users.IUserEventStore userEventStore)
+        public CreateChildHandler2031320573(Microsoft.Extensions.DependencyInjection.IServiceScopeFactory serviceScopeFactory, Microsoft.Extensions.Logging.ILogger<buddy.Features.Guardians.CreateChild> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Users.IUserEventStore userEventStore)
         {
             _serviceScopeFactory = serviceScopeFactory;
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _userEventStore = userEventStore;
         }
@@ -41,7 +44,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Guardians.CreateChildHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Guardians.CreateChildHandler.Handle(createChild, createChildValidator, keycloakAdminClient, _guardianLinkEventStore, _userEventStore, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Guardians.CreateChildHandler.Handle(createChild, createChildValidator, keycloakAdminClient, _guardianLinkEventStore, _userEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

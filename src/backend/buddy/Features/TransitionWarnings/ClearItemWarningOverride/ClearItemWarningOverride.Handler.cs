@@ -11,6 +11,7 @@ public static class ClearItemWarningOverrideHandler
         ClearItemWarningOverride command,
         ITransitionWarningSettingsEventStore settings,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var access = await TransitionWarningsAuthorization.CheckManage(command.ChildId, command.UserId, guardians, cancellationToken);
@@ -24,7 +25,7 @@ public static class ClearItemWarningOverrideHandler
 
         if (current.ItemOverrides.GetValueOrDefault(command.ItemId) is { } before)
         {
-            var now = DateTimeOffset.UtcNow;
+            var now = time.GetUtcNow();
             await settings.SaveAsync(
                 current, exists, new ItemWarningOverrideCleared(current.Id, command.ItemId, before, command.UserId, now), now, cancellationToken);
         }

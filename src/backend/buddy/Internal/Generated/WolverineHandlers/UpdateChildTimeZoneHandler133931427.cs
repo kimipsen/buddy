@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Guardians;
 using buddy.Features.Users;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -9,11 +10,13 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class UpdateChildTimeZoneHandler133931427 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.Users.IUserEventStore _userEventStore;
 
-        public UpdateChildTimeZoneHandler133931427(buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Users.IUserEventStore userEventStore)
+        public UpdateChildTimeZoneHandler133931427(System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Users.IUserEventStore userEventStore)
         {
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _userEventStore = userEventStore;
         }
@@ -31,7 +34,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Guardians.UpdateChildTimeZoneHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Guardians.UpdateChildTimeZoneHandler.Handle(updateChildTimeZone, updateChildTimeZoneValidator, _guardianLinkEventStore, _userEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Guardians.UpdateChildTimeZoneHandler.Handle(updateChildTimeZone, updateChildTimeZoneValidator, _guardianLinkEventStore, _userEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

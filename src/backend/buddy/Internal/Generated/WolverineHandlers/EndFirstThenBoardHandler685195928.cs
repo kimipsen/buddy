@@ -3,6 +3,7 @@
 using buddy.Features.FirstThen;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -10,12 +11,14 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class EndFirstThenBoardHandler685195928 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.FirstThen.IFirstThenBoardEventStore _firstThenBoardEventStore;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.Users.IUserEventStore _userEventStore;
 
-        public EndFirstThenBoardHandler685195928(buddy.Features.FirstThen.IFirstThenBoardEventStore firstThenBoardEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Users.IUserEventStore userEventStore)
+        public EndFirstThenBoardHandler685195928(System.TimeProvider timeProvider, buddy.Features.FirstThen.IFirstThenBoardEventStore firstThenBoardEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Users.IUserEventStore userEventStore)
         {
+            _timeProvider = timeProvider;
             _firstThenBoardEventStore = firstThenBoardEventStore;
             _guardianLinkEventStore = guardianLinkEventStore;
             _userEventStore = userEventStore;
@@ -34,7 +37,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.FirstThen.EndFirstThenBoardHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.FirstThen.EndFirstThenBoardHandler.Handle(endFirstThenBoard, endFirstThenBoardValidator, _firstThenBoardEventStore, _guardianLinkEventStore, _userEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.FirstThen.EndFirstThenBoardHandler.Handle(endFirstThenBoard, endFirstThenBoardValidator, _firstThenBoardEventStore, _guardianLinkEventStore, _userEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

@@ -16,6 +16,7 @@ public static class ScheduleTaskFromTemplateHandler
         ICalendarItemEventStore items,
         ITaskTemplateEventStore templates,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -89,7 +90,7 @@ public static class ScheduleTaskFromTemplateHandler
         var dueDate = new DueDate(command.StartDate, command.StartTime, IsAllDay: false);
 
         var itemId = CalendarItemId.New();
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         var created = new TemplateTaskItemCreated(
             itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, dueDate, command.Recurrence, now,

@@ -5,7 +5,7 @@ namespace buddy.Features.Progress;
 public static class ApproveRewardRequestHandler
 {
     public static async Task<RewardRequestOutcome> Handle(
-        ApproveRewardRequest command, IProgressEventStore progress, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+        ApproveRewardRequest command, IProgressEventStore progress, IGuardianLinkEventStore guardians, TimeProvider time, CancellationToken cancellationToken)
     {
         var access = await ProgressAuthorization.CheckManage(command.ChildId, command.UserId, guardians, cancellationToken);
 
@@ -20,6 +20,6 @@ public static class ApproveRewardRequestHandler
             RewardRequestStatus.Approved,
             (id, now) => new RewardRequestApproved(id, command.RequestId, command.UserId, now),
             progress,
-            cancellationToken);
+            time, cancellationToken);
     }
 }

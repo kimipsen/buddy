@@ -13,6 +13,7 @@ public static class RateMealHandler
         IValidator<RateMeal> validator,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -56,7 +57,7 @@ public static class RateMealHandler
             return new Result<Meal>.Success(meal);
         }
 
-        var after = new MealRating(command.Stars, command.Comment, DateTimeOffset.UtcNow);
+        var after = new MealRating(command.Stars, command.Comment, time.GetUtcNow());
 
         await meals.AppendAsync(command.MealId, [new MealRated(command.MealId, userId, after, after.RatedAt)], cancellationToken);
 

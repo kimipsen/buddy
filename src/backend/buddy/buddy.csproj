@@ -10,10 +10,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- APIs the build rejects (RS0030), with what to use instead. -->
+    <AdditionalFiles Include="BannedSymbols.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Ical.Net" />
     <PackageReference Include="MailKit" />
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
     <PackageReference Include="MinVer" PrivateAssets="all" />
     <PackageReference Include="Marten" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />

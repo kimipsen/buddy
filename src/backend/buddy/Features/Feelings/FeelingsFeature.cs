@@ -10,7 +10,6 @@ using JasperFx.Events.Projections;
 
 using Marten;
 
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 using Npgsql;
 
@@ -41,9 +40,6 @@ public static class FeelingsFeature
     public static IServiceCollection AddFeelingsFeature(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddBuddyOpenApiDocument(OpenApiDocumentName);
-
-        // "Now" for the undo window and the child's local clock; tests swap in a fake one.
-        services.TryAddSingleton(TimeProvider.System);
 
         // Shared process-wide pool -- see PostgresDataSource.
         services.AddPostgresDataSource(configuration);

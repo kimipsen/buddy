@@ -11,6 +11,7 @@ public static class ClearMealSlotForGroupHandler
         IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var resolved = await MealplanGroupAccess.ResolveManageAsync(command.GroupId, command.UserId, groups, mealPlans, cancellationToken);
@@ -20,6 +21,6 @@ public static class ClearMealSlotForGroupHandler
             return resolved.Reraise<MealplanGroupAccess.Resolved, Unit>();
         }
 
-        return await ClearMealSlotHandler.ClearForChildAsync(access.AnchorChildId, command.Date, command.Slot, command.UserId, mealPlans, guardians, cancellationToken);
+        return await ClearMealSlotHandler.ClearForChildAsync(access.AnchorChildId, command.Date, command.Slot, command.UserId, mealPlans, guardians, time, cancellationToken);
     }
 }

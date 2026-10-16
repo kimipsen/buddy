@@ -5,7 +5,7 @@ namespace buddy.Features.Calendars;
 
 public static class RevokeIcalTokenHandler
 {
-    public static async Task<Result<Unit>> Handle(RevokeIcalToken command, ICalendarEventStore calendars, IGroupEventStore groups, ILogger<RevokeIcalToken> logger, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(RevokeIcalToken command, ICalendarEventStore calendars, IGroupEventStore groups, ILogger<RevokeIcalToken> logger, TimeProvider time, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -31,7 +31,7 @@ public static class RevokeIcalTokenHandler
 
         await calendars.AppendAsync(
             command.CalendarId,
-            [new IcalTokenRevoked(command.CalendarId, command.TokenId, userId, DateTimeOffset.UtcNow)],
+            [new IcalTokenRevoked(command.CalendarId, command.TokenId, userId, time.GetUtcNow())],
             cancellationToken);
 
         logger.IcalTokenRevoked(command.TokenId.Value, command.CalendarId.Value, userId.Value);

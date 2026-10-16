@@ -15,6 +15,7 @@ public static class EditRuleHandler
         IRuleBookEventStore books,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -51,7 +52,7 @@ public static class EditRuleHandler
             rule.Revision + 1,
             command.RequireReacknowledgement,
             command.UserId,
-            DateTimeOffset.UtcNow);
+            time.GetUtcNow());
 
         await books.AppendAsync(command.Scope.BookId, [edited], cancellationToken);
 

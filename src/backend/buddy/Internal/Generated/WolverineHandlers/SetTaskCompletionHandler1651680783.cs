@@ -4,6 +4,7 @@ using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.Features.TaskLibrary;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -12,14 +13,16 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class SetTaskCompletionHandler1651680783 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Calendars.SetTaskCompletion> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Calendars.ICalendarEventStore _calendarEventStore;
         private readonly buddy.Features.Calendars.ICalendarItemEventStore _calendarItemEventStore;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
         private readonly buddy.Features.TaskLibrary.ITaskTemplateEventStore _taskTemplateEventStore;
 
-        public SetTaskCompletionHandler1651680783(Microsoft.Extensions.Logging.ILogger<buddy.Features.Calendars.SetTaskCompletion> loggerForMessage, buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Calendars.ICalendarItemEventStore calendarItemEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.TaskLibrary.ITaskTemplateEventStore taskTemplateEventStore)
+        public SetTaskCompletionHandler1651680783(Microsoft.Extensions.Logging.ILogger<buddy.Features.Calendars.SetTaskCompletion> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Calendars.ICalendarItemEventStore calendarItemEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.TaskLibrary.ITaskTemplateEventStore taskTemplateEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _calendarEventStore = calendarEventStore;
             _calendarItemEventStore = calendarItemEventStore;
             _groupEventStore = groupEventStore;
@@ -38,7 +41,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Calendars.SetTaskCompletionHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Calendars.SetTaskCompletionHandler.Handle(setTaskCompletion, _calendarEventStore, _calendarItemEventStore, _taskTemplateEventStore, _groupEventStore, context, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Calendars.SetTaskCompletionHandler.Handle(setTaskCompletion, _calendarEventStore, _calendarItemEventStore, _taskTemplateEventStore, _groupEventStore, context, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

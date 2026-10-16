@@ -16,7 +16,7 @@ public static class MealPlanIcalFeedWriter
 {
     private static readonly TimeSpan EventDuration = TimeSpan.FromMinutes(30);
 
-    public static string Write(MealPlan plan, IReadOnlyCollection<MealPlanEntry> entries)
+    public static string Write(MealPlan plan, IReadOnlyCollection<MealPlanEntry> entries, TimeProvider timeProvider)
     {
         var calendar = new IcsCalendar();
         IcalSubscription.Describe(calendar, "Meal Plan");
@@ -24,7 +24,7 @@ public static class MealPlanIcalFeedWriter
         // Start of the UTC day, not UtcNow: an unchanged feed must render byte-identically within a
         // day or its ETag never matches. The feed window rolls daily anyway (see
         // docs/backend/analysis/conditional-get-etags.md).
-        var stamp = new CalDateTime(DateTime.UtcNow.Date, "UTC");
+        var stamp = new CalDateTime(timeProvider.GetUtcNow().UtcDateTime.Date, "UTC");
 
         foreach (var entry in entries)
         {

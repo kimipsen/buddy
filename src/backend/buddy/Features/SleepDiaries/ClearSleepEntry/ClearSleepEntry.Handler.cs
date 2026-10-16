@@ -9,6 +9,7 @@ public static class ClearSleepEntryHandler
         ClearSleepEntry command,
         ISleepDiaryEventStore diaries,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var access = await SleepDiaryAuthorization.CheckManage(command.ChildId, command.UserId, guardians, cancellationToken);
@@ -28,7 +29,7 @@ public static class ClearSleepEntryHandler
             return new Result<Unit>.Success(Unit.Value);
         }
 
-        await diaries.AppendAsync(id, [new SleepEntryCleared(id, command.Date, before, command.UserId, DateTimeOffset.UtcNow)], cancellationToken);
+        await diaries.AppendAsync(id, [new SleepEntryCleared(id, command.Date, before, command.UserId, time.GetUtcNow())], cancellationToken);
 
         return new Result<Unit>.Success(Unit.Value);
     }

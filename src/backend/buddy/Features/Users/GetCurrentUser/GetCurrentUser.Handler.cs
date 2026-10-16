@@ -6,7 +6,7 @@ namespace buddy.Features.Users;
 
 public static class GetOrCreateUserHandler
 {
-    public static async Task<Result<User>> Handle(GetOrCreateUser command, IUserEventStore events, IEmailSender emailSender, ILogger<GetOrCreateUser> logger, CancellationToken cancellationToken)
+    public static async Task<Result<User>> Handle(GetOrCreateUser command, IUserEventStore events, IEmailSender emailSender, ILogger<GetOrCreateUser> logger, TimeProvider time, CancellationToken cancellationToken)
     {
         var identity = await events.FindIdentityAsync(command.Subject, cancellationToken);
 
@@ -24,7 +24,7 @@ public static class GetOrCreateUserHandler
             return existingUser.IsDeleted ? new Result<User>.NotFound() : new Result<User>.Success(existingUser);
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var email = command.EmailVerified
             ? Email.Verified(command.Email ?? "")
             : Email.Unverified(command.Email ?? "");

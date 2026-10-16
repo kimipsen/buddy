@@ -4,11 +4,11 @@ namespace buddy.Features.Groups;
 
 public static class PreviewGroupInviteHandler
 {
-    public static async Task<Result<GroupInvitePreview>> Handle(PreviewGroupInvite query, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<Result<GroupInvitePreview>> Handle(PreviewGroupInvite query, IGroupEventStore groups, TimeProvider time, CancellationToken cancellationToken)
     {
         var invite = await groups.FindInviteByTokenAsync(query.Token, cancellationToken);
 
-        if (invite is null || invite.Status != GroupInviteStatus.Pending || invite.ExpiresAt < DateTimeOffset.UtcNow)
+        if (invite is null || invite.Status != GroupInviteStatus.Pending || invite.ExpiresAt < time.GetUtcNow())
         {
             return new Result<GroupInvitePreview>.NotFound();
         }

@@ -16,6 +16,7 @@ public static class CreatePrintTemplateHandler
         IPrintTemplateEventStore store,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -40,7 +41,7 @@ public static class CreatePrintTemplateHandler
 
         var id = PrintTemplateId.New();
         var name = command.Name.Trim();
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         PrintTemplateEvent created = command.GroupId is { } ownerGroupId
             ? new PrintTemplateCreatedForGroup(id, ownerGroupId, name, userId, now)

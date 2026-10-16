@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Guardians;
 using buddy.Features.WorkLocations;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -9,11 +10,13 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class SetWorkLocationOverridesHandler1896323821 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.WorkLocations.IWorkLocationScheduleEventStore _workLocationScheduleEventStore;
 
-        public SetWorkLocationOverridesHandler1896323821(buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.WorkLocations.IWorkLocationScheduleEventStore workLocationScheduleEventStore)
+        public SetWorkLocationOverridesHandler1896323821(System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.WorkLocations.IWorkLocationScheduleEventStore workLocationScheduleEventStore)
         {
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _workLocationScheduleEventStore = workLocationScheduleEventStore;
         }
@@ -31,7 +34,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.WorkLocations.SetWorkLocationOverridesHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.WorkLocations.SetWorkLocationOverridesHandler.Handle(setWorkLocationOverrides, setWorkLocationOverridesValidator, _workLocationScheduleEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.WorkLocations.SetWorkLocationOverridesHandler.Handle(setWorkLocationOverrides, setWorkLocationOverridesValidator, _workLocationScheduleEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

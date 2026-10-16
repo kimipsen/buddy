@@ -18,6 +18,7 @@ public static class VerifyEmailHandler
         IUserEventStore events,
         IKeycloakAdminClient keycloak,
         ILogger<VerifyEmail> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -49,7 +50,7 @@ public static class VerifyEmailHandler
             return new Result<User>.Validation(ValidationProblem.Of("The verification token is invalid."));
         }
 
-        if (DateTimeOffset.UtcNow > pending.ExpiresAt)
+        if (time.GetUtcNow() > pending.ExpiresAt)
         {
             logger.EmailVerificationRejected(userId.Value, "token expired");
             return new Result<User>.Validation(ValidationProblem.Of("The verification token has expired."));
@@ -65,7 +66,7 @@ public static class VerifyEmailHandler
             return new Result<User>.Validation(ValidationProblem.Of("The verification token is invalid."));
         }
 
-        await events.AppendAsync(userId, [new EmailVerified(userId, DateTimeOffset.UtcNow)], cancellationToken);
+        await events.AppendAsync(userId, [new EmailVerified(userId, time.GetUtcNow())], cancellationToken);
 
         logger.EmailVerified(userId.Value);
 

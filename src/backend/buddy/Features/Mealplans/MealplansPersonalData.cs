@@ -17,7 +17,8 @@ public sealed class MealplansPersonalDataEraser(
     IMealEventStore meals,
     IAiCredentialEventStore credentials,
     IAiSessionEventStore sessions,
-    IGuardianLinkEventStore guardians) : IPersonalDataEraser
+    IGuardianLinkEventStore guardians,
+    TimeProvider time) : IPersonalDataEraser
 {
     public Type Store => typeof(IMealplansStore);
 
@@ -90,7 +91,7 @@ public sealed class MealplansPersonalDataEraser(
             return;
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         List<AiProviderCredentialEvent> removals = [];
 
         foreach (var (provider, key) in credential.Providers.Where(p => p.Value.AddedBy == guardianId))

@@ -35,6 +35,7 @@ public static class SendAiSessionMessageHandler
         ITaskTemplateEventStore taskTemplates,
         IGroupEventStore groups,
         ILogger<SendAiSessionMessage> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -119,11 +120,11 @@ public static class SendAiSessionMessageHandler
         var systemPrompt = AiSessionPromptBuilder.Build(session, selection.Meals, started);
 
         List<AiChatMessage> history = [.. AiSessionHistoryBuilder.Build(existingEvents), new AiChatMessage(AiChatMessageRole.User, command.Text, [])];
-        List<MealplanAiSessionEvent> newEvents = [new AiUserMessageSent(sessionId, command.Text, userId, DateTimeOffset.UtcNow)];
+        List<MealplanAiSessionEvent> newEvents = [new AiUserMessageSent(sessionId, command.Text, userId, time.GetUtcNow())];
 
         var toolLoopResult = await RunToolLoopAsync(
             apiKey, chatClient, systemPrompt, history, newEvents, sessionId, session, offeredMealIds, userId, started.ChildId,
-            calendars, calendarItems, taskTemplates, groups, guardians, activeProvider, logger, cancellationToken);
+            calendars, calendarItems, taskTemplates, groups, guardians, activeProvider, logger, time, cancellationToken);
 
         if (toolLoopResult is not Result<string>.Success(var finalText))
         {
@@ -133,7 +134,7 @@ public static class SendAiSessionMessageHandler
                 : throw new UnreachableException($"Unexpected tool loop result: {toolLoopResult.GetType().Name}.");
         }
 
-        newEvents.Add(new AiAssistantMessageRecorded(sessionId, finalText, DateTimeOffset.UtcNow));
+        newEvents.Add(new AiAssistantMessageRecorded(sessionId, finalText, time.GetUtcNow()));
 
         await sessions.AppendAsync(sessionId, newEvents, cancellationToken);
 
@@ -166,6 +167,7 @@ public static class SendAiSessionMessageHandler
         IGuardianLinkEventStore guardians,
         AiProvider provider,
         ILogger logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var finalText = "";
@@ -191,7 +193,7 @@ public static class SendAiSessionMessageHandler
             }
 
             List<AiToolInvocation> turnInvocations = [];
-            var now = DateTimeOffset.UtcNow;
+            var now = time.GetUtcNow();
 
             foreach (var toolCall in completion.ToolCalls)
             {

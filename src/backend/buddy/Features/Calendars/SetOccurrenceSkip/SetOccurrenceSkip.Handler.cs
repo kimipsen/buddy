@@ -11,6 +11,7 @@ public static class SetOccurrenceSkipHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var calendar = Calendar.Rehydrate(await calendars.ReadAsync(command.CalendarId, cancellationToken));
@@ -63,7 +64,7 @@ public static class SetOccurrenceSkipHandler
             return new Result<CalendarItem>.Success(item);
         }
 
-        var skipChanged = new OccurrenceSkipChanged(command.ItemId, command.OccurrenceDate, before, command.IsSkipped, command.UserId, DateTimeOffset.UtcNow);
+        var skipChanged = new OccurrenceSkipChanged(command.ItemId, command.OccurrenceDate, before, command.IsSkipped, command.UserId, time.GetUtcNow());
 
         await items.AppendAsync(command.ItemId, [skipChanged], cancellationToken);
 

@@ -10,6 +10,7 @@ public static class StopMedicineScheduleHandler
         StopMedicineSchedule command,
         IMedicineEventStore medicines,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -21,14 +22,14 @@ public static class StopMedicineScheduleHandler
             return access.ToDeniedResult<Unit>();
         }
 
-        var stopped = await StopForChildAsync(command.ChildId, command.MedicineId, userId, medicines, cancellationToken);
+        var stopped = await StopForChildAsync(command.ChildId, command.MedicineId, userId, medicines, time, cancellationToken);
 
         return stopped ? new Result<Unit>.Success(Unit.Value) : new Result<Unit>.NotFound();
     }
 
     // Shared with StopMedicineScheduleForGroupHandler -- everything past authorization is
     // identical. False means no matching, non-stopped schedule for this child.
-    internal static async Task<bool> StopForChildAsync(UserId childId, MedicineId medicineId, UserId modifiedBy, IMedicineEventStore medicines, CancellationToken cancellationToken)
+    internal static async Task<bool> StopForChildAsync(UserId childId, MedicineId medicineId, UserId modifiedBy, IMedicineEventStore medicines, TimeProvider time, CancellationToken cancellationToken)
     {
         var events = await medicines.ReadAsync(medicineId, cancellationToken);
         var schedule = MedicineSchedule.Rehydrate(events);
@@ -38,7 +39,7 @@ public static class StopMedicineScheduleHandler
             return false;
         }
 
-        await medicines.AppendAsync(medicineId, [new MedicineScheduleStopped(medicineId, modifiedBy, DateTimeOffset.UtcNow)], cancellationToken);
+        await medicines.AppendAsync(medicineId, [new MedicineScheduleStopped(medicineId, modifiedBy, time.GetUtcNow())], cancellationToken);
 
         return true;
     }

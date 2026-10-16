@@ -11,6 +11,7 @@ public static class InviteToGroupHandler
         IEmailSender emailSender,
         FrontendLinks links,
         ILogger<InviteToGroup> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (command.Role == GroupRole.Owner)
@@ -41,7 +42,7 @@ public static class InviteToGroupHandler
         // (see the comment on GroupInviteCreated). AcceptGroupInvite is where the invited email
         // is ever compared against a real account, and only against the caller's own.
         var normalizedEmail = GroupInviteDocument.NormalizeEmail(command.Email);
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var existingInvite = await groups.FindPendingInviteAsync(command.GroupId, normalizedEmail, cancellationToken);
 
         if (ResendCooldown.IsActive(existingInvite?.CreatedAt, now))

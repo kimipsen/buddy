@@ -40,7 +40,7 @@ public sealed class ShiftSleepEntryDatesCommand : JasperFxAsyncCommand<ShiftSlee
             ids = await session.Query<SleepDiarySnapshot>().Select(s => s.Id).ToListAsync();
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = host.Services.GetRequiredService<TimeProvider>().GetUtcNow();
         var (moved, skipped) = (0, 0);
         Console.WriteLine($"{(input.ApplyFlag ? "Applying" : "Dry run")}: entries logged before {loggedBefore:O}, {ids.Count} diaries.");
 

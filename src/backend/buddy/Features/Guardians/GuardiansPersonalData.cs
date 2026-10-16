@@ -12,7 +12,8 @@ namespace buddy.Features.Guardians;
 public sealed class GuardiansPersonalDataEraser(
     IUsersStore store,
     IGuardianLinkEventStore links,
-    IGuardianInviteEventStore invites) : IPersonalDataEraser
+    IGuardianInviteEventStore invites,
+    TimeProvider time) : IPersonalDataEraser
 {
     public Type Store => typeof(IUsersStore);
 
@@ -50,7 +51,7 @@ public sealed class GuardiansPersonalDataEraser(
     private Task RevokeLinkAsync(GuardianLinkDocument link, CancellationToken cancellationToken)
     {
         var linkId = new GuardianLinkId(link.GuardianLinkId);
-        return links.AppendAsync(linkId, [new GuardianRevoked(linkId, DateTimeOffset.UtcNow)], cancellationToken);
+        return links.AppendAsync(linkId, [new GuardianRevoked(linkId, time.GetUtcNow())], cancellationToken);
     }
 
     private async Task EraseInvitesAsync(
@@ -71,7 +72,7 @@ public sealed class GuardiansPersonalDataEraser(
 
             if (document.Status == GuardianInviteStatus.Pending)
             {
-                await invites.AppendAsync(inviteId, [new GuardianInviteRevoked(inviteId, erasedBy, DateTimeOffset.UtcNow)], cancellationToken);
+                await invites.AppendAsync(inviteId, [new GuardianInviteRevoked(inviteId, erasedBy, time.GetUtcNow())], cancellationToken);
             }
 
             await store.MaskStreamAsync(document.Id, cancellationToken);

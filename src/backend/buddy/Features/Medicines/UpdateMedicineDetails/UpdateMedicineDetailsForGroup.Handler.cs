@@ -14,6 +14,7 @@ public static class UpdateMedicineDetailsForGroupHandler
         IMedicineEventStore medicines,
         IMedicineSharingEventStore sharing,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -29,6 +30,6 @@ public static class UpdateMedicineDetailsForGroupHandler
         }
 
         return await UpdateMedicineDetailsHandler.UpdateForChildAsync(
-            command.ChildId, command.MedicineId, command.UserId, command.Name, command.Dosage, command.Icon, command.Color, medicines, cancellationToken);
+            command.ChildId, command.MedicineId, command.UserId, command.Name, command.Dosage, command.Icon, command.Color, medicines, time, cancellationToken);
     }
 }

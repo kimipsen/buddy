@@ -4,6 +4,7 @@ using buddy.Email;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -12,14 +13,16 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class InviteGuardianHandler59594857 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Guardians.InviteGuardian> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Email.IEmailSender _emailSender;
         private readonly buddy.Features.Guardians.IGuardianInviteEventStore _guardianInviteEventStore;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.Users.IUserEventStore _userEventStore;
 
-        public InviteGuardianHandler59594857(Microsoft.Extensions.Logging.ILogger<buddy.Features.Guardians.InviteGuardian> loggerForMessage, buddy.Email.IEmailSender emailSender, buddy.Features.Guardians.IGuardianInviteEventStore guardianInviteEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Users.IUserEventStore userEventStore)
+        public InviteGuardianHandler59594857(Microsoft.Extensions.Logging.ILogger<buddy.Features.Guardians.InviteGuardian> loggerForMessage, System.TimeProvider timeProvider, buddy.Email.IEmailSender emailSender, buddy.Features.Guardians.IGuardianInviteEventStore guardianInviteEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Users.IUserEventStore userEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _emailSender = emailSender;
             _guardianInviteEventStore = guardianInviteEventStore;
             _guardianLinkEventStore = guardianLinkEventStore;
@@ -38,7 +41,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Guardians.InviteGuardianHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Guardians.InviteGuardianHandler.Handle(inviteGuardian, _guardianLinkEventStore, _guardianInviteEventStore, _userEventStore, _emailSender, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Guardians.InviteGuardianHandler.Handle(inviteGuardian, _guardianLinkEventStore, _guardianInviteEventStore, _userEventStore, _emailSender, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

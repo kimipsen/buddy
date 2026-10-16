@@ -71,6 +71,11 @@ builder.Host.UseWolverine(opts =>
 });
 
 // Add services to the container.
+
+// The one source of "now": handlers and services take a TimeProvider instead of reading
+// DateTimeOffset.UtcNow (banned in BannedSymbols.txt), so tests can swap in a fake clock.
+builder.Services.AddSingleton(TimeProvider.System);
+
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new StronglyTypedIdJsonConverterFactory());

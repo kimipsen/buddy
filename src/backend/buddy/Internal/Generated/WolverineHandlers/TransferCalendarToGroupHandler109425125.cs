@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -9,11 +10,13 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class TransferCalendarToGroupHandler109425125 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Calendars.ICalendarEventStore _calendarEventStore;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
 
-        public TransferCalendarToGroupHandler109425125(buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore)
+        public TransferCalendarToGroupHandler109425125(System.TimeProvider timeProvider, buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore)
         {
+            _timeProvider = timeProvider;
             _calendarEventStore = calendarEventStore;
             _groupEventStore = groupEventStore;
         }
@@ -30,7 +33,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Calendars.TransferCalendarToGroupHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Calendars.TransferCalendarToGroupHandler.Handle(transferCalendarToGroup, _calendarEventStore, _groupEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Calendars.TransferCalendarToGroupHandler.Handle(transferCalendarToGroup, _calendarEventStore, _groupEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

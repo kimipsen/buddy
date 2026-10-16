@@ -14,6 +14,7 @@ public static class SetFirstThenBoardHandler
         IFirstThenBoardEventStore boards,
         IGuardianLinkEventStore guardians,
         IUserEventStore users,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -40,7 +41,7 @@ public static class SetFirstThenBoardHandler
             return new FirstThenWriteOutcome.BoardChanged(current);
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         // Always a full overwrite into Waiting, from any state -- a new board even when the cards are
         // the same, because the First hasn't been done again yet.

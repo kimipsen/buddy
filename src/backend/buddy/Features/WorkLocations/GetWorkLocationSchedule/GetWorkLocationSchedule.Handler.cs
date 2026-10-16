@@ -9,6 +9,7 @@ public static class GetWorkLocationScheduleHandler
         GetWorkLocationSchedule query,
         IWorkLocationScheduleEventStore store,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = query.UserId;
@@ -22,7 +23,7 @@ public static class GetWorkLocationScheduleHandler
 
         // No stream yet reads as the same empty schedule WorkLocationScheduleStarted would fold to.
         var schedule = await store.FindSnapshotAsync(WorkLocationScheduleId.ForGuardian(query.GuardianId), cancellationToken)
-            ?? WorkLocationSchedule.Empty(query.GuardianId, DateTimeOffset.UtcNow);
+            ?? WorkLocationSchedule.Empty(query.GuardianId, time.GetUtcNow());
 
         return new Result<WorkLocationScheduleResponse>.Success(WorkLocationScheduleResponse.From(schedule));
     }

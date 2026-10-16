@@ -16,6 +16,7 @@ public static class GetSharedSleepDiaryHandler
         ISleepDiaryEventStore diaries,
         IUserEventStore users,
         ILogger<GetSharedSleepDiary> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(query, cancellationToken) is { } problem)
@@ -26,7 +27,7 @@ public static class GetSharedSleepDiaryHandler
         var link = await shareTokens.FindByHashAsync(ShareSecret.Hash(query.Token), cancellationToken);
 
         // Unknown, revoked and expired all look the same to an anonymous reader, by design.
-        if (link is null || !SleepDiaryShareLinks.IsLive(link, DateTimeOffset.UtcNow))
+        if (link is null || !SleepDiaryShareLinks.IsLive(link, time.GetUtcNow()))
         {
             return new Result<SharedSleepDiary>.NotFound();
         }

@@ -14,6 +14,7 @@ public static class CreateChildHandler
         IGuardianLinkEventStore guardianLinks,
         IUserEventStore users,
         ILogger<CreateChild> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -45,7 +46,7 @@ public static class CreateChildHandler
             KeycloakCreateUserResult.UsernameUnavailable => throw new InvalidOperationException("Username availability changed while creating the Keycloak user."),
         };
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var childId = UserId.New();
         var linkId = GuardianLinkId.New();
 

@@ -14,6 +14,7 @@ public static class UpdateItemDetailsHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -54,7 +55,7 @@ public static class UpdateItemDetailsHandler
             return new Result<CalendarItem>.Success(item);
         }
 
-        await items.AppendAsync(command.ItemId, [new ItemDetailsUpdated(command.ItemId, before, after, userId, DateTimeOffset.UtcNow)], cancellationToken);
+        await items.AppendAsync(command.ItemId, [new ItemDetailsUpdated(command.ItemId, before, after, userId, time.GetUtcNow())], cancellationToken);
 
         return new Result<CalendarItem>.Success(item with { Title = command.Title, Icon = command.Icon, Color = command.Color, LastModifiedBy = userId });
     }

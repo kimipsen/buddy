@@ -3,6 +3,7 @@
 using buddy.Features.Users;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -12,12 +13,14 @@ namespace Internal.Generated.WolverineHandlers
     {
         private readonly Microsoft.Extensions.DependencyInjection.IServiceScopeFactory _serviceScopeFactory;
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Users.VerifyEmail> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Users.IUserEventStore _userEventStore;
 
-        public VerifyEmailHandler1858121996(Microsoft.Extensions.DependencyInjection.IServiceScopeFactory serviceScopeFactory, Microsoft.Extensions.Logging.ILogger<buddy.Features.Users.VerifyEmail> loggerForMessage, buddy.Features.Users.IUserEventStore userEventStore)
+        public VerifyEmailHandler1858121996(Microsoft.Extensions.DependencyInjection.IServiceScopeFactory serviceScopeFactory, Microsoft.Extensions.Logging.ILogger<buddy.Features.Users.VerifyEmail> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Users.IUserEventStore userEventStore)
         {
             _serviceScopeFactory = serviceScopeFactory;
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _userEventStore = userEventStore;
         }
 
@@ -38,7 +41,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Users.VerifyEmailHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Users.VerifyEmailHandler.Handle(verifyEmail, verifyEmailValidator, _userEventStore, keycloakAdminClient, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Users.VerifyEmailHandler.Handle(verifyEmail, verifyEmailValidator, _userEventStore, keycloakAdminClient, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

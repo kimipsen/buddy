@@ -11,6 +11,7 @@ public static class SetActiveProviderHandler
         IAiCredentialEventStore credentials,
         IGuardianLinkEventStore guardians,
         ILogger<SetActiveProvider> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -45,7 +46,7 @@ public static class SetActiveProviderHandler
             return new Result<AiProviderSettings>.Success(AiProviderSettings.FromCredential(existing));
         }
 
-        var changed = new ActiveProviderChanged(credentialId, command.Provider, userId, DateTimeOffset.UtcNow);
+        var changed = new ActiveProviderChanged(credentialId, command.Provider, userId, time.GetUtcNow());
         await credentials.AppendAsync(credentialId, [changed], cancellationToken);
 
         logger.AiActiveProviderChanged(command.ChildId.Value, command.Provider, userId.Value);

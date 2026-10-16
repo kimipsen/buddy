@@ -13,6 +13,7 @@ public static class LogSleepEntryHandler
         IValidator<LogSleepEntry> validator,
         ISleepDiaryEventStore diaries,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -29,7 +30,7 @@ public static class LogSleepEntryHandler
 
         var id = SleepDiaryId.ForChild(command.ChildId);
         var after = command.ToEntry();
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         var events = await diaries.ReadAsync(id, cancellationToken);
 

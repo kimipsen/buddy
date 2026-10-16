@@ -12,7 +12,8 @@ namespace buddy.Features.Feelings;
 public sealed class FeelingsPersonalDataEraser(
     IFeelingsStore store,
     IFeelingsShareTokenEventStore shareTokens,
-    IGuardianLinkEventStore guardians) : IPersonalDataEraser
+    IGuardianLinkEventStore guardians,
+    TimeProvider time) : IPersonalDataEraser
 {
     public Type Store => typeof(IFeelingsStore);
 
@@ -31,7 +32,7 @@ public sealed class FeelingsPersonalDataEraser(
                     && await shareTokens.FindSnapshotAsync(tokenId, cancellationToken) is { } token
                     && token.CreatedBy == guardian.UserId)
                 {
-                    await shareTokens.AppendAsync(tokenId, [new FeelingsShareTokenRevoked(tokenId, guardian.UserId, DateTimeOffset.UtcNow)], cancellationToken);
+                    await shareTokens.AppendAsync(tokenId, [new FeelingsShareTokenRevoked(tokenId, guardian.UserId, time.GetUtcNow())], cancellationToken);
                 }
             }
         }

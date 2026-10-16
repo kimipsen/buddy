@@ -11,6 +11,7 @@ public static class ListSleepDiaryShareLinksHandler
         ListSleepDiaryShareLinks query,
         ISleepDiaryShareTokenEventStore shareTokens,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var access = await SleepDiaryAuthorization.CheckManage(query.ChildId, query.UserId, guardians, cancellationToken);
@@ -20,7 +21,7 @@ public static class ListSleepDiaryShareLinksHandler
             return access.ToDeniedResult<IReadOnlyCollection<SleepDiaryShareLinkSummary>>();
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var documents = await shareTokens.ListForChildAsync(query.ChildId, cancellationToken);
 
         return new Result<IReadOnlyCollection<SleepDiaryShareLinkSummary>>.Success(

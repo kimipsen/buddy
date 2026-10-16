@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Guardians;
 using buddy.Features.Medicines;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -9,11 +10,13 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class ClearMedicineEffectNoteHandler1969288734 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.Medicines.IMedicineEffectLogEventStore _medicineEffectLogEventStore;
 
-        public ClearMedicineEffectNoteHandler1969288734(buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Medicines.IMedicineEffectLogEventStore medicineEffectLogEventStore)
+        public ClearMedicineEffectNoteHandler1969288734(System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Medicines.IMedicineEffectLogEventStore medicineEffectLogEventStore)
         {
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _medicineEffectLogEventStore = medicineEffectLogEventStore;
         }
@@ -30,7 +33,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Medicines.ClearMedicineEffectNoteHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Medicines.ClearMedicineEffectNoteHandler.Handle(clearMedicineEffectNote, _medicineEffectLogEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Medicines.ClearMedicineEffectNoteHandler.Handle(clearMedicineEffectNote, _medicineEffectLogEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

@@ -122,7 +122,7 @@ public sealed partial class WeeklyNoteImportFormat : IMealPlanImportFormat
             {
                 if (_year is not { } year)
                 {
-                    return ValidationProblem.Of($"Line {lineNumber}: a week comes before any year. Add a year line such as 'Madplan {DateTime.UtcNow.Year}' above it.");
+                    return ValidationProblem.Of($"Line {lineNumber}: a week comes before any year. Add a year line ('Madplan' followed by the year) above it.");
                 }
 
                 StartWeek(lineNumber, year, int.Parse(weekMatch.Groups["week"].Value, CultureInfo.InvariantCulture));
@@ -153,7 +153,7 @@ public sealed partial class WeeklyNoteImportFormat : IMealPlanImportFormat
 
             if (_year is null)
             {
-                return ValidationProblem.Of($"Line {lineNumber}: a day comes before any year. Add a year line such as 'Madplan {DateTime.UtcNow.Year}' above it.");
+                return ValidationProblem.Of($"Line {lineNumber}: a day comes before any year. Add a year line ('Madplan' followed by the year) above it.");
             }
 
             _lastPosition = position;

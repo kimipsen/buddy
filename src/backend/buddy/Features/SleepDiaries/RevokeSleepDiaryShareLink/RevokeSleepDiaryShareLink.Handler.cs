@@ -10,6 +10,7 @@ public static class RevokeSleepDiaryShareLinkHandler
         ISleepDiaryShareTokenEventStore shareTokens,
         IGuardianLinkEventStore guardians,
         ILogger<RevokeSleepDiaryShareLink> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var access = await SleepDiaryAuthorization.CheckManage(command.ChildId, command.UserId, guardians, cancellationToken);
@@ -35,7 +36,7 @@ public static class RevokeSleepDiaryShareLinkHandler
 
         await shareTokens.AppendAsync(
             command.ShareLinkId,
-            [new SleepDiaryShareTokenRevoked(command.ShareLinkId, command.UserId, DateTimeOffset.UtcNow)],
+            [new SleepDiaryShareTokenRevoked(command.ShareLinkId, command.UserId, time.GetUtcNow())],
             cancellationToken);
 
         logger.ShareLinkRevoked(command.ShareLinkId.Value, command.ChildId.Value, command.UserId.Value);

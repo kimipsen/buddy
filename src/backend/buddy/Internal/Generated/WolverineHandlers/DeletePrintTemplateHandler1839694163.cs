@@ -3,6 +3,7 @@
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.PrintTemplates;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -10,12 +11,14 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class DeletePrintTemplateHandler1839694163 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.PrintTemplates.IPrintTemplateEventStore _printTemplateEventStore;
 
-        public DeletePrintTemplateHandler1839694163(buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.PrintTemplates.IPrintTemplateEventStore printTemplateEventStore)
+        public DeletePrintTemplateHandler1839694163(System.TimeProvider timeProvider, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.PrintTemplates.IPrintTemplateEventStore printTemplateEventStore)
         {
+            _timeProvider = timeProvider;
             _groupEventStore = groupEventStore;
             _guardianLinkEventStore = guardianLinkEventStore;
             _printTemplateEventStore = printTemplateEventStore;
@@ -33,7 +36,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.PrintTemplates.DeletePrintTemplateHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.PrintTemplates.DeletePrintTemplateHandler.Handle(deletePrintTemplate, _printTemplateEventStore, _groupEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.PrintTemplates.DeletePrintTemplateHandler.Handle(deletePrintTemplate, _printTemplateEventStore, _groupEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

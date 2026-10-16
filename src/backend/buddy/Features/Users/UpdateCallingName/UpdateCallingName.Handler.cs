@@ -11,6 +11,7 @@ public static class UpdateCallingNameHandler
         UpdateCallingName command,
         IValidator<UpdateCallingName> validator,
         IUserEventStore events,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -33,7 +34,7 @@ public static class UpdateCallingNameHandler
             return new Result<User>.Success(user);
         }
 
-        var callingNameUpdated = new CallingNameUpdated(userId, user.CallingName, command.CallingName, DateTimeOffset.UtcNow);
+        var callingNameUpdated = new CallingNameUpdated(userId, user.CallingName, command.CallingName, time.GetUtcNow());
         await events.AppendAsync(userId, [callingNameUpdated], cancellationToken);
 
         return new Result<User>.Success(user with { CallingName = command.CallingName });

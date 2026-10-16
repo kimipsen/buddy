@@ -137,7 +137,7 @@ A read-backward query (`OrderByDescending(e => e.Version).Take(n).ToListAsync()`
   4. Load, decide, append (only if changed), return `Success`.
 - Validator: `sealed class <UseCase>Validator : AbstractValidator<<UseCase>>`, structural rules only. Auto-registered by `AddValidatorsFromAssemblyContaining<Program>()`. DB-backed rules stay in the handler (see `docs/backend/analysis/validation-rules.md`).
 - Handlers can call other handlers via an injected `IMessageBus` (`SetTaskCompletion.Handler.cs`).
-- Timestamps: `DateTimeOffset.UtcNow` once per handler, reused across the events it emits.
+- Timestamps: take a `TimeProvider time` parameter (Wolverine injects the singleton registered in `Program.cs`) and call `time.GetUtcNow()` once per handler, reused across the events it emits. Services take it through their constructor, static helpers as a parameter from their caller. `DateTimeOffset.UtcNow`, `DateTime.UtcNow/Now/Today` are banned in the API project (`buddy/BannedSymbols.txt`, build error RS0030), so tests can swap in a fake clock.
 
 ## 7. Result pattern and endpoints
 

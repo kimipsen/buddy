@@ -13,6 +13,7 @@ public static class AddBabysitterHandler
         IValidator<AddBabysitter> validator,
         IBabysitterListEventStore store,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -42,7 +43,7 @@ public static class AddBabysitterHandler
             return new Result<BabysitterSummary>.Validation(ValidationProblem.Of("A babysitter with this name already exists."));
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var babysitterId = BabysitterId.New();
         var added = new BabysitterAdded(loaded.List.Id, babysitterId, name, FreeText.Normalize(command.ContactInfo), now);
         var list = await BabysitterListWriter.SaveAsync(store, loaded, [added], now, cancellationToken);

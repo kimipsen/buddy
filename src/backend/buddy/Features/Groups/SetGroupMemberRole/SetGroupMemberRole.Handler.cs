@@ -4,7 +4,7 @@ namespace buddy.Features.Groups;
 
 public static class SetGroupMemberRoleHandler
 {
-    public static async Task<Result<Unit>> Handle(SetGroupMemberRole command, IGroupEventStore groups, ILogger<SetGroupMemberRole> logger, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(SetGroupMemberRole command, IGroupEventStore groups, ILogger<SetGroupMemberRole> logger, TimeProvider time, CancellationToken cancellationToken)
     {
         if (command.Role == GroupRole.Owner)
         {
@@ -37,7 +37,7 @@ public static class SetGroupMemberRoleHandler
 
         await groups.AppendAsync(
             command.GroupId,
-            [new GroupMemberRoleGranted(command.GroupId, command.MemberId, command.Role, userId, DateTimeOffset.UtcNow)],
+            [new GroupMemberRoleGranted(command.GroupId, command.MemberId, command.Role, userId, time.GetUtcNow())],
             cancellationToken);
 
         logger.GroupMemberRoleSet(command.MemberId.Value, command.GroupId.Value, command.Role, userId.Value);

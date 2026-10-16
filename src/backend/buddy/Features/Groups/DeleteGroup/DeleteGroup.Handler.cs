@@ -12,7 +12,7 @@ public static class DeleteGroupHandler
     // atomicity here: CalendarAuthorization's resolution already treats a deleted/unresolvable
     // group as "no access" for everyone, so nobody retains access via this group in the window
     // between GroupDeleted and its calendars being individually marked deleted.
-    public static async Task<Result<Unit>> Handle(DeleteGroup command, IGroupEventStore groups, ICalendarEventStore calendars, ILogger<DeleteGroup> logger, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(DeleteGroup command, IGroupEventStore groups, ICalendarEventStore calendars, ILogger<DeleteGroup> logger, TimeProvider time, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -31,14 +31,14 @@ public static class DeleteGroupHandler
             return access.ToDeniedResult<Unit>();
         }
 
-        await groups.AppendAsync(command.GroupId, [new GroupDeleted(command.GroupId, userId, DateTimeOffset.UtcNow)], cancellationToken);
+        await groups.AppendAsync(command.GroupId, [new GroupDeleted(command.GroupId, userId, time.GetUtcNow())], cancellationToken);
 
         var owned = await calendars.ListOwnedByGroupsAsync([command.GroupId], cancellationToken);
 
         foreach (var calendar in owned)
         {
             var calendarId = new CalendarId(calendar.Id);
-            await calendars.AppendAsync(calendarId, [new CalendarDeleted(calendarId, userId, DateTimeOffset.UtcNow)], cancellationToken);
+            await calendars.AppendAsync(calendarId, [new CalendarDeleted(calendarId, userId, time.GetUtcNow())], cancellationToken);
         }
 
         logger.GroupDeleted(command.GroupId.Value, userId.Value, owned.Count);

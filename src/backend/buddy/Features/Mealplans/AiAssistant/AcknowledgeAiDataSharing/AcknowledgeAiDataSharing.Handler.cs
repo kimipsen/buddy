@@ -13,6 +13,7 @@ public static class AcknowledgeAiDataSharingHandler
         IAiCredentialEventStore credentials,
         IGuardianLinkEventStore guardians,
         ILogger<AcknowledgeAiDataSharing> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -39,7 +40,7 @@ public static class AcknowledgeAiDataSharingHandler
             return new Result<AiProviderSettings>.Success(AiProviderSettings.FromCredential(credential));
         }
 
-        AiProviderCredentialEvent[] acknowledged = [new AiDataSharingAcknowledged(credentialId, userId, DateTimeOffset.UtcNow)];
+        AiProviderCredentialEvent[] acknowledged = [new AiDataSharingAcknowledged(credentialId, userId, time.GetUtcNow())];
         await credentials.AppendAsync(credentialId, acknowledged, cancellationToken);
 
         logger.AiDataSharingAcknowledged(command.ChildId.Value, userId.Value);

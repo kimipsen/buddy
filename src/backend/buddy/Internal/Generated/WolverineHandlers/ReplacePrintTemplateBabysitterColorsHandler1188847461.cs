@@ -6,6 +6,7 @@ using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.PrintTemplates;
 using buddy.Features.WorkLocations;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -13,6 +14,7 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class ReplacePrintTemplateBabysitterColorsHandler1188847461 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Babysitters.IBabysitterListEventStore _babysitterListEventStore;
         private readonly buddy.Features.Calendars.ICalendarEventStore _calendarEventStore;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
@@ -20,8 +22,9 @@ namespace Internal.Generated.WolverineHandlers
         private readonly buddy.Features.PrintTemplates.IPrintTemplateEventStore _printTemplateEventStore;
         private readonly buddy.Features.WorkLocations.IWorkLocationScheduleEventStore _workLocationScheduleEventStore;
 
-        public ReplacePrintTemplateBabysitterColorsHandler1188847461(buddy.Features.Babysitters.IBabysitterListEventStore babysitterListEventStore, buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.PrintTemplates.IPrintTemplateEventStore printTemplateEventStore, buddy.Features.WorkLocations.IWorkLocationScheduleEventStore workLocationScheduleEventStore)
+        public ReplacePrintTemplateBabysitterColorsHandler1188847461(System.TimeProvider timeProvider, buddy.Features.Babysitters.IBabysitterListEventStore babysitterListEventStore, buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.PrintTemplates.IPrintTemplateEventStore printTemplateEventStore, buddy.Features.WorkLocations.IWorkLocationScheduleEventStore workLocationScheduleEventStore)
         {
+            _timeProvider = timeProvider;
             _babysitterListEventStore = babysitterListEventStore;
             _calendarEventStore = calendarEventStore;
             _groupEventStore = groupEventStore;
@@ -43,7 +46,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.PrintTemplates.ReplacePrintTemplateBabysitterColorsHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.PrintTemplates.ReplacePrintTemplateBabysitterColorsHandler.Handle(replacePrintTemplateBabysitterColors, replacePrintTemplateBabysitterColorsValidator, _printTemplateEventStore, _groupEventStore, _guardianLinkEventStore, _calendarEventStore, _workLocationScheduleEventStore, _babysitterListEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.PrintTemplates.ReplacePrintTemplateBabysitterColorsHandler.Handle(replacePrintTemplateBabysitterColors, replacePrintTemplateBabysitterColorsValidator, _printTemplateEventStore, _groupEventStore, _guardianLinkEventStore, _calendarEventStore, _workLocationScheduleEventStore, _babysitterListEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

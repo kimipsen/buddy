@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Guardians;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -10,12 +11,14 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class RevokeGuardianInviteHandler949807409 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Guardians.RevokeGuardianInvite> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianInviteEventStore _guardianInviteEventStore;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
 
-        public RevokeGuardianInviteHandler949807409(Microsoft.Extensions.Logging.ILogger<buddy.Features.Guardians.RevokeGuardianInvite> loggerForMessage, buddy.Features.Guardians.IGuardianInviteEventStore guardianInviteEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore)
+        public RevokeGuardianInviteHandler949807409(Microsoft.Extensions.Logging.ILogger<buddy.Features.Guardians.RevokeGuardianInvite> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianInviteEventStore guardianInviteEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _guardianInviteEventStore = guardianInviteEventStore;
             _guardianLinkEventStore = guardianLinkEventStore;
         }
@@ -32,7 +35,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Guardians.RevokeGuardianInviteHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Guardians.RevokeGuardianInviteHandler.Handle(revokeGuardianInvite, _guardianLinkEventStore, _guardianInviteEventStore, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Guardians.RevokeGuardianInviteHandler.Handle(revokeGuardianInvite, _guardianLinkEventStore, _guardianInviteEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

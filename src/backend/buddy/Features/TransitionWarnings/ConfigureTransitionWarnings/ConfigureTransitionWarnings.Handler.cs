@@ -18,6 +18,7 @@ public static class ConfigureTransitionWarningsHandler
         ICalendarItemEventStore items,
         ICalendarEventStore calendars,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -39,7 +40,7 @@ public static class ConfigureTransitionWarningsHandler
         // hours and overrides, so switching back on restores them.
         if (after != current.Defaults)
         {
-            var now = DateTimeOffset.UtcNow;
+            var now = time.GetUtcNow();
             await settings.SaveAsync(
                 current, exists, new TransitionWarningDefaultsConfigured(current.Id, current.Defaults, after, command.UserId, now), now, cancellationToken);
             current = current with { Defaults = after };

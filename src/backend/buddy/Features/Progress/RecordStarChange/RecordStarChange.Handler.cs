@@ -2,7 +2,7 @@ namespace buddy.Features.Progress;
 
 public static class RecordStarChangeHandler
 {
-    public static async Task Handle(RecordStarChange command, IProgressEventStore progress, CancellationToken cancellationToken)
+    public static async Task Handle(RecordStarChange command, IProgressEventStore progress, TimeProvider time, CancellationToken cancellationToken)
     {
         var id = ProgressId.ForChild(command.ChildId);
         var existingEvents = await progress.ReadAsync(id, cancellationToken);
@@ -19,7 +19,7 @@ public static class RecordStarChangeHandler
             return;
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var newEvents = new List<ProgressEvent>();
 
         if (existing is null)

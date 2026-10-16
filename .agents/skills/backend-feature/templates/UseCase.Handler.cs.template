@@ -1,7 +1,7 @@
 // -> src/backend/buddy/Features/{{Domain}}/{{UseCase}}/{{UseCase}}.Handler.cs
 // Derived from Medicines/UpdateMedicineDetails + SetDoseStatus. Wolverine discovers the static
 // class by its *Handler name and the static Handle method; every parameter after the message is
-// resolved from DI (stores, IValidator<T>) or is the CancellationToken.
+// resolved from DI (stores, IValidator<T>, TimeProvider) or is the CancellationToken.
 using buddy.Common;
 using buddy.Common.Validation;
 using buddy.Features.Guardians;
@@ -18,6 +18,7 @@ public static class {{UseCase}}Handler
         IValidator<{{UseCase}}> validator,
         {{EventStore}} store,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         // 1. Structural validation first.
@@ -51,7 +52,7 @@ public static class {{UseCase}}Handler
             return new Result<{{Aggregate}}>.Success(aggregate);
         }
 
-        var changed = new {{Event}}(command.{{AggregateId}}, aggregate.Name, command.Name, command.UserId, DateTimeOffset.UtcNow);
+        var changed = new {{Event}}(command.{{AggregateId}}, aggregate.Name, command.Name, command.UserId, time.GetUtcNow());
         await store.AppendAsync(command.{{AggregateId}}, [changed], cancellationToken);
 
         // Reuse the aggregate's own fold instead of hand-copying fields with `with { ... }`.

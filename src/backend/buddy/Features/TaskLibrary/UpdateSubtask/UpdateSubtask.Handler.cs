@@ -13,6 +13,7 @@ public static class UpdateSubtaskHandler
         IValidator<UpdateSubtask> validator,
         ITaskTemplateEventStore templates,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -48,7 +49,7 @@ public static class UpdateSubtaskHandler
             return new Result<TaskTemplate>.Success(loaded.Template);
         }
 
-        var updated = new SubtaskUpdated(command.TemplateId, command.SubtaskId, before, after, userId, DateTimeOffset.UtcNow);
+        var updated = new SubtaskUpdated(command.TemplateId, command.SubtaskId, before, after, userId, time.GetUtcNow());
 
         await templates.AppendAsync(command.TemplateId, [updated], cancellationToken);
 

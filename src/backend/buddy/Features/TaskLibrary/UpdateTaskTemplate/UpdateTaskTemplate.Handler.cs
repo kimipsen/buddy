@@ -13,6 +13,7 @@ public static class UpdateTaskTemplateHandler
         IValidator<UpdateTaskTemplate> validator,
         ITaskTemplateEventStore templates,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -37,7 +38,7 @@ public static class UpdateTaskTemplateHandler
             return new Result<TaskTemplate>.Success(loaded.Template);
         }
 
-        var updated = new TaskTemplateDetailsUpdated(command.TemplateId, before, after, userId, DateTimeOffset.UtcNow);
+        var updated = new TaskTemplateDetailsUpdated(command.TemplateId, before, after, userId, time.GetUtcNow());
 
         await templates.AppendAsync(command.TemplateId, [updated], cancellationToken);
 

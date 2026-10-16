@@ -3,6 +3,7 @@
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -11,12 +12,14 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class DeleteGroupHandler408954615 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Groups.DeleteGroup> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Calendars.ICalendarEventStore _calendarEventStore;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
 
-        public DeleteGroupHandler408954615(Microsoft.Extensions.Logging.ILogger<buddy.Features.Groups.DeleteGroup> loggerForMessage, buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore)
+        public DeleteGroupHandler408954615(Microsoft.Extensions.Logging.ILogger<buddy.Features.Groups.DeleteGroup> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _calendarEventStore = calendarEventStore;
             _groupEventStore = groupEventStore;
         }
@@ -33,7 +36,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Groups.DeleteGroupHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Groups.DeleteGroupHandler.Handle(deleteGroup, _groupEventStore, _calendarEventStore, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Groups.DeleteGroupHandler.Handle(deleteGroup, _groupEventStore, _calendarEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

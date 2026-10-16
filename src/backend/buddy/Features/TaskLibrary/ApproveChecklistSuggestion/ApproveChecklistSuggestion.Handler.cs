@@ -13,6 +13,7 @@ public static class ApproveChecklistSuggestionHandler
         IValidator<ApproveChecklistSuggestion> validator,
         ITaskTemplateEventStore templates,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var resolved = await TaskTemplateAccess.ResolveForManageAsync(command.TemplateId, command.UserId, templates, guardians, cancellationToken);
@@ -54,6 +55,6 @@ public static class ApproveChecklistSuggestionHandler
                 ];
             },
             templates,
-            cancellationToken);
+            time, cancellationToken);
     }
 }

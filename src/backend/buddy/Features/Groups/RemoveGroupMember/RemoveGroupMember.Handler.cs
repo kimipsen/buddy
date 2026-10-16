@@ -4,7 +4,7 @@ namespace buddy.Features.Groups;
 
 public static class RemoveGroupMemberHandler
 {
-    public static async Task<Result<Unit>> Handle(RemoveGroupMember command, IGroupEventStore groups, ILogger<RemoveGroupMember> logger, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(RemoveGroupMember command, IGroupEventStore groups, ILogger<RemoveGroupMember> logger, TimeProvider time, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -36,7 +36,7 @@ public static class RemoveGroupMemberHandler
 
         await groups.AppendAsync(
             command.GroupId,
-            [new GroupMemberRoleRevoked(command.GroupId, command.MemberId, userId, DateTimeOffset.UtcNow)],
+            [new GroupMemberRoleRevoked(command.GroupId, command.MemberId, userId, time.GetUtcNow())],
             cancellationToken);
 
         logger.GroupMemberRemoved(command.MemberId.Value, command.GroupId.Value, userId.Value);

@@ -16,6 +16,7 @@ public static class RevertMealPlanImportHandler
         IMealPlanEventStore mealPlans,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var access = await MealplanAuthorization.CheckManage(command.ChildId, command.UserId, guardians, cancellationToken);
@@ -25,7 +26,7 @@ public static class RevertMealPlanImportHandler
             return access.ToDeniedResult<Unit>();
         }
 
-        return await RevertForChildAsync(command.ChildId, command.ImportId, command.UserId, mealPlans, meals, guardians, cancellationToken);
+        return await RevertForChildAsync(command.ChildId, command.ImportId, command.UserId, mealPlans, meals, guardians, time, cancellationToken);
     }
 
     internal static async Task<Result<Unit>> RevertForChildAsync(
@@ -35,6 +36,7 @@ public static class RevertMealPlanImportHandler
         IMealPlanEventStore mealPlans,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var mealPlanId = await MealFamilyResolution.ResolveFamilyMealPlanIdAsync(childId, guardians, mealPlans, cancellationToken);
@@ -56,7 +58,7 @@ public static class RevertMealPlanImportHandler
             return new Result<Unit>.Success(Unit.Value);
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         var cleared = MealPlanImportHistory.EntriesStillFrom(events, importId)
             .Select(entry => (MealPlanEvent)new MealSlotCleared(mealPlanId, entry.Date, entry.Slot, entry.Assignment, revertedBy, now))
@@ -89,6 +91,7 @@ public static class RevertMealPlanImportForGroupHandler
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var resolved = await MealplanGroupAccess.ResolveManageAsync(command.GroupId, command.UserId, groups, mealPlans, cancellationToken);
@@ -99,6 +102,6 @@ public static class RevertMealPlanImportForGroupHandler
         }
 
         return await RevertMealPlanImportHandler.RevertForChildAsync(
-            access.AnchorChildId, command.ImportId, command.UserId, mealPlans, meals, guardians, cancellationToken);
+            access.AnchorChildId, command.ImportId, command.UserId, mealPlans, meals, guardians, time, cancellationToken);
     }
 }

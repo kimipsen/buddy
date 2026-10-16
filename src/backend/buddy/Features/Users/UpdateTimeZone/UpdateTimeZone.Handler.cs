@@ -11,6 +11,7 @@ public static class UpdateTimeZoneHandler
         UpdateTimeZone command,
         IValidator<UpdateTimeZone> validator,
         IUserEventStore events,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -33,7 +34,7 @@ public static class UpdateTimeZoneHandler
             return new Result<User>.Success(user);
         }
 
-        var timeZoneUpdated = new TimeZoneUpdated(userId, user.TimeZoneId, command.TimeZoneId, DateTimeOffset.UtcNow);
+        var timeZoneUpdated = new TimeZoneUpdated(userId, user.TimeZoneId, command.TimeZoneId, time.GetUtcNow());
         await events.AppendAsync(userId, [timeZoneUpdated], cancellationToken);
 
         return new Result<User>.Success(user with { TimeZoneId = command.TimeZoneId });

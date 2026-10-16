@@ -6,7 +6,7 @@ namespace buddy.Features.Guardians;
 public static class UpdateChildVisualTimersHandler
 {
     public static async Task<Result<ChildSummary>> Handle(
-        UpdateChildVisualTimers command, IGuardianLinkEventStore guardianLinks, IUserEventStore users, CancellationToken cancellationToken)
+        UpdateChildVisualTimers command, IGuardianLinkEventStore guardianLinks, IUserEventStore users, TimeProvider time, CancellationToken cancellationToken)
     {
         // Collapsed to NotFound rather than Forbidden -- same "can't distinguish no-such-child from
         // not-your-child" precedent UpdateChildLanguageHandler follows for this exact lookup.
@@ -27,7 +27,7 @@ public static class UpdateChildVisualTimersHandler
 
         if (child.ShowVisualTimers != command.ShowVisualTimers)
         {
-            var updated = new ShowVisualTimersUpdated(command.ChildId, child.ShowVisualTimers, command.ShowVisualTimers, DateTimeOffset.UtcNow);
+            var updated = new ShowVisualTimersUpdated(command.ChildId, child.ShowVisualTimers, command.ShowVisualTimers, time.GetUtcNow());
             await users.AppendAsync(command.ChildId, [updated], cancellationToken);
             child = child with { ShowVisualTimers = command.ShowVisualTimers };
         }

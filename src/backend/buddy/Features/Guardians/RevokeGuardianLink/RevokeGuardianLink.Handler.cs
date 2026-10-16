@@ -4,7 +4,7 @@ namespace buddy.Features.Guardians;
 
 public static class RevokeGuardianLinkHandler
 {
-    public static async Task<Result<Unit>> Handle(RevokeGuardianLink command, IGuardianLinkEventStore guardianLinks, ILogger<RevokeGuardianLink> logger, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(RevokeGuardianLink command, IGuardianLinkEventStore guardianLinks, ILogger<RevokeGuardianLink> logger, TimeProvider time, CancellationToken cancellationToken)
     {
         var guardianId = command.GuardianId;
 
@@ -17,7 +17,7 @@ public static class RevokeGuardianLinkHandler
 
         await guardianLinks.AppendAsync(
             new GuardianLinkId(link.GuardianLinkId),
-            [new GuardianRevoked(new GuardianLinkId(link.GuardianLinkId), DateTimeOffset.UtcNow)],
+            [new GuardianRevoked(new GuardianLinkId(link.GuardianLinkId), time.GetUtcNow())],
             cancellationToken);
 
         logger.GuardianLinkRevoked(guardianId.Value, command.ChildId.Value);

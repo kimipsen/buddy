@@ -3,6 +3,7 @@
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.Medicines;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -10,12 +11,14 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class ShareMedicineWithGroupHandler182055876 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.Medicines.IMedicineSharingEventStore _medicineSharingEventStore;
 
-        public ShareMedicineWithGroupHandler182055876(buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Medicines.IMedicineSharingEventStore medicineSharingEventStore)
+        public ShareMedicineWithGroupHandler182055876(System.TimeProvider timeProvider, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Medicines.IMedicineSharingEventStore medicineSharingEventStore)
         {
+            _timeProvider = timeProvider;
             _groupEventStore = groupEventStore;
             _guardianLinkEventStore = guardianLinkEventStore;
             _medicineSharingEventStore = medicineSharingEventStore;
@@ -33,7 +36,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Medicines.ShareMedicineWithGroupHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Medicines.ShareMedicineWithGroupHandler.Handle(shareMedicineWithGroup, _medicineSharingEventStore, _guardianLinkEventStore, _groupEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Medicines.ShareMedicineWithGroupHandler.Handle(shareMedicineWithGroup, _medicineSharingEventStore, _guardianLinkEventStore, _groupEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

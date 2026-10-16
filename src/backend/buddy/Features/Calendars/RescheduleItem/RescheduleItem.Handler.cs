@@ -13,6 +13,7 @@ public static class RescheduleItemHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -40,7 +41,7 @@ public static class RescheduleItemHandler
             return new Result<CalendarItem>.NotFound();
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         // The timing must match the item's own case: an event is rescheduled with a new span, a
         // task with a new due date (its assignee and source are kept).

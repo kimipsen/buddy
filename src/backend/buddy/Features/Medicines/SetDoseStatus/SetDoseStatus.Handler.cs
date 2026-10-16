@@ -11,6 +11,7 @@ public static class SetDoseStatusHandler
         SetDoseStatus command,
         IMedicineEventStore medicines,
         IGuardianLinkEventStore guardians,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -22,12 +23,13 @@ public static class SetDoseStatusHandler
             return access.ToDeniedResult<MedicineDoseOccurrence>();
         }
 
-        return await SetForChildAsync(command.ChildId, command.MedicineId, command.Date, command.Time, command.Status, userId, medicines, cancellationToken);
+        return await SetForChildAsync(command.ChildId, command.MedicineId, command.Date, command.Time, command.Status, userId, medicines, timeProvider, cancellationToken);
     }
 
     // Shared with SetDoseStatusForGroupHandler -- everything past authorization is identical.
+    // `time` is the dose's time of day, so the clock is `timeProvider` here.
     internal static async Task<Result<MedicineDoseOccurrence>> SetForChildAsync(
-        UserId childId, MedicineId medicineId, DateOnly date, TimeOnly time, DoseStatus status, UserId modifiedBy, IMedicineEventStore medicines, CancellationToken cancellationToken)
+        UserId childId, MedicineId medicineId, DateOnly date, TimeOnly time, DoseStatus status, UserId modifiedBy, IMedicineEventStore medicines, TimeProvider timeProvider, CancellationToken cancellationToken)
     {
         var events = await medicines.ReadAsync(medicineId, cancellationToken);
         var schedule = MedicineSchedule.Rehydrate(events);
@@ -52,7 +54,7 @@ public static class SetDoseStatusHandler
         {
             await medicines.AppendAsync(
                 medicineId,
-                [new DoseStatusChanged(medicineId, date, time, before, status, modifiedBy, DateTimeOffset.UtcNow)],
+                [new DoseStatusChanged(medicineId, date, time, before, status, modifiedBy, timeProvider.GetUtcNow())],
                 cancellationToken);
         }
 

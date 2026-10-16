@@ -10,6 +10,7 @@ public static class DeleteItemHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -37,7 +38,7 @@ public static class DeleteItemHandler
             return new Result<Unit>.NotFound();
         }
 
-        await items.AppendAsync(command.ItemId, [new ItemDeleted(command.ItemId, userId, DateTimeOffset.UtcNow)], cancellationToken);
+        await items.AppendAsync(command.ItemId, [new ItemDeleted(command.ItemId, userId, time.GetUtcNow())], cancellationToken);
 
         return new Result<Unit>.Success(Unit.Value);
     }

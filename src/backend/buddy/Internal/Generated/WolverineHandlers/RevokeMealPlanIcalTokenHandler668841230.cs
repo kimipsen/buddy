@@ -3,6 +3,7 @@
 using buddy.Features.Guardians;
 using buddy.Features.Mealplans;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -11,12 +12,14 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class RevokeMealPlanIcalTokenHandler668841230 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Mealplans.RevokeMealPlanIcalToken> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.Mealplans.IMealPlanEventStore _mealPlanEventStore;
 
-        public RevokeMealPlanIcalTokenHandler668841230(Microsoft.Extensions.Logging.ILogger<buddy.Features.Mealplans.RevokeMealPlanIcalToken> loggerForMessage, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Mealplans.IMealPlanEventStore mealPlanEventStore)
+        public RevokeMealPlanIcalTokenHandler668841230(Microsoft.Extensions.Logging.ILogger<buddy.Features.Mealplans.RevokeMealPlanIcalToken> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Mealplans.IMealPlanEventStore mealPlanEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _mealPlanEventStore = mealPlanEventStore;
         }
@@ -33,7 +36,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Mealplans.RevokeMealPlanIcalTokenHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Mealplans.RevokeMealPlanIcalTokenHandler.Handle(revokeMealPlanIcalToken, _mealPlanEventStore, _guardianLinkEventStore, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Mealplans.RevokeMealPlanIcalTokenHandler.Handle(revokeMealPlanIcalToken, _mealPlanEventStore, _guardianLinkEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

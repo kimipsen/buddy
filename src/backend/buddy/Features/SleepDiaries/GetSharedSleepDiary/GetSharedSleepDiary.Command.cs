@@ -7,9 +7,9 @@ public sealed record GetSharedSleepDiary(string Token, DateOnly From, DateOnly T
     // The paper form this mirrors covers 14 days; that's the default window, ending today.
     public const int DefaultDays = 14;
 
-    public static GetSharedSleepDiary FromRequest(string token, DateOnly? from, DateOnly? to)
+    public static GetSharedSleepDiary FromRequest(string token, DateOnly? from, DateOnly? to, TimeProvider time)
     {
-        var end = to ?? from?.AddDays(DefaultDays - 1) ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var end = to ?? from?.AddDays(DefaultDays - 1) ?? DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         var start = from ?? end.AddDays(-(DefaultDays - 1));
 
         return new GetSharedSleepDiary(token, start, end);

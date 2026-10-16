@@ -11,6 +11,7 @@ public static class CreateMealPlanIcalTokenHandler
         IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
         ILogger<CreateMealPlanIcalToken> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -24,7 +25,7 @@ public static class CreateMealPlanIcalTokenHandler
 
         var (token, hash) = ShareSecret.Generate();
         var tokenId = IcalTokenId.New();
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         var existingMealPlanId = await MealFamilyResolution.ResolveFamilyMealPlanIdAsync(command.ChildId, guardians, mealPlans, cancellationToken);
 

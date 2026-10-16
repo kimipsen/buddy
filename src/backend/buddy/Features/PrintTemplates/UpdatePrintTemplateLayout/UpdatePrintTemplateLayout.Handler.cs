@@ -15,6 +15,7 @@ public static class UpdatePrintTemplateLayoutHandler
         IPrintTemplateEventStore store,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -44,7 +45,7 @@ public static class UpdatePrintTemplateLayoutHandler
             template.DefaultStartWeekday, command.DefaultStartWeekday,
             template.ShowWeekNumber, command.ShowWeekNumber,
             userId,
-            DateTimeOffset.UtcNow);
+            time.GetUtcNow());
 
         await store.AppendAsync(template.Id, [changed], index: null, cancellationToken);
 

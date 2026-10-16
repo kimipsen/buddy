@@ -14,6 +14,7 @@ public static class CreateMedicineScheduleForGroupHandler
         IMedicineEventStore medicines,
         IMedicineSharingEventStore sharing,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -29,7 +30,7 @@ public static class CreateMedicineScheduleForGroupHandler
         }
 
         var schedule = await CreateMedicineScheduleHandler.CreateForChildAsync(
-            command.ChildId, command.UserId, command.Name, command.Dosage, command.Icon, command.Color, command.Times, command.StartDate, command.EndDate, medicines, cancellationToken);
+            command.ChildId, command.UserId, command.Name, command.Dosage, command.Icon, command.Color, command.Times, command.StartDate, command.EndDate, medicines, time, cancellationToken);
 
         return new Result<MedicineSchedule>.Success(schedule);
     }

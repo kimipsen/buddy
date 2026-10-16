@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Guardians;
 using buddy.Features.SleepDiaries;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -9,11 +10,13 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class ListSleepDiaryShareLinksHandler514488771 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.SleepDiaries.ISleepDiaryShareTokenEventStore _sleepDiaryShareTokenEventStore;
 
-        public ListSleepDiaryShareLinksHandler514488771(buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.SleepDiaries.ISleepDiaryShareTokenEventStore sleepDiaryShareTokenEventStore)
+        public ListSleepDiaryShareLinksHandler514488771(System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.SleepDiaries.ISleepDiaryShareTokenEventStore sleepDiaryShareTokenEventStore)
         {
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _sleepDiaryShareTokenEventStore = sleepDiaryShareTokenEventStore;
         }
@@ -30,7 +33,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.SleepDiaries.ListSleepDiaryShareLinksHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.SleepDiaries.ListSleepDiaryShareLinksHandler.Handle(listSleepDiaryShareLinks, _sleepDiaryShareTokenEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.SleepDiaries.ListSleepDiaryShareLinksHandler.Handle(listSleepDiaryShareLinks, _sleepDiaryShareTokenEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

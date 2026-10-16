@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Babysitters;
 using buddy.Features.Guardians;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -9,11 +10,13 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class ArchiveBabysitterHandler237942338 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Babysitters.IBabysitterListEventStore _babysitterListEventStore;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
 
-        public ArchiveBabysitterHandler237942338(buddy.Features.Babysitters.IBabysitterListEventStore babysitterListEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore)
+        public ArchiveBabysitterHandler237942338(System.TimeProvider timeProvider, buddy.Features.Babysitters.IBabysitterListEventStore babysitterListEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore)
         {
+            _timeProvider = timeProvider;
             _babysitterListEventStore = babysitterListEventStore;
             _guardianLinkEventStore = guardianLinkEventStore;
         }
@@ -30,7 +33,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Babysitters.ArchiveBabysitterHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Babysitters.ArchiveBabysitterHandler.Handle(archiveBabysitter, _babysitterListEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Babysitters.ArchiveBabysitterHandler.Handle(archiveBabysitter, _babysitterListEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

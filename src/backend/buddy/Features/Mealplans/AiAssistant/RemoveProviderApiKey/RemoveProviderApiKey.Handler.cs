@@ -10,6 +10,7 @@ public static class RemoveProviderApiKeyHandler
         IAiCredentialEventStore credentials,
         IGuardianLinkEventStore guardians,
         ILogger<RemoveProviderApiKey> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -38,7 +39,7 @@ public static class RemoveProviderApiKeyHandler
             return new Result<AiProviderSettings>.Success(AiProviderSettings.FromCredential(existing));
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         List<AiProviderCredentialEvent> newEvents = [new ProviderApiKeyRemoved(credentialId, command.Provider, userId, now)];
 
         if (existing.ActiveProvider == command.Provider)

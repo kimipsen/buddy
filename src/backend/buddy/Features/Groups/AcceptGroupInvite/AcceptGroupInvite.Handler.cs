@@ -4,7 +4,7 @@ namespace buddy.Features.Groups;
 
 public static class AcceptGroupInviteHandler
 {
-    public static async Task<AcceptGroupInviteOutcome> Handle(AcceptGroupInvite command, IGroupEventStore groups, IUserEventStore users, ILogger<AcceptGroupInvite> logger, CancellationToken cancellationToken)
+    public static async Task<AcceptGroupInviteOutcome> Handle(AcceptGroupInvite command, IGroupEventStore groups, IUserEventStore users, ILogger<AcceptGroupInvite> logger, TimeProvider time, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -29,7 +29,7 @@ public static class AcceptGroupInviteHandler
             }
         }
 
-        if (invite.Status != GroupInviteStatus.Pending || invite.ExpiresAt < DateTimeOffset.UtcNow)
+        if (invite.Status != GroupInviteStatus.Pending || invite.ExpiresAt < time.GetUtcNow())
         {
             return new AcceptGroupInviteOutcome.NotFound();
         }
@@ -70,7 +70,7 @@ public static class AcceptGroupInviteHandler
             return new AcceptGroupInviteOutcome.NotFound();
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         await groups.AppendAsync(
             groupId,

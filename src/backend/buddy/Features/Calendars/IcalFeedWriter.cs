@@ -17,7 +17,7 @@ namespace buddy.Features.Calendars;
 // by name with our own Calendar aggregate and CalendarEvent union.
 public static class IcalFeedWriter
 {
-    public static string Write(string calendarName, IReadOnlyCollection<CalendarItemOccurrence> occurrences)
+    public static string Write(string calendarName, IReadOnlyCollection<CalendarItemOccurrence> occurrences, TimeProvider time)
     {
         var calendar = new IcsCalendar();
         IcalSubscription.Describe(calendar, calendarName);
@@ -25,7 +25,7 @@ public static class IcalFeedWriter
         // Start of the UTC day, not UtcNow: an unchanged feed must render byte-identically within a
         // day or its ETag never matches. The feed window rolls daily anyway (see
         // docs/backend/analysis/conditional-get-etags.md).
-        var stamp = new CalDateTime(DateTime.UtcNow.Date, "UTC");
+        var stamp = new CalDateTime(time.GetUtcNow().UtcDateTime.Date, "UTC");
 
         foreach (var occurrence in occurrences)
         {

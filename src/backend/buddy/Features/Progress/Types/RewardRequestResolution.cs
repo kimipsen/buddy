@@ -13,6 +13,7 @@ public static class RewardRequestResolution
         RewardRequestStatus target,
         Func<ProgressId, DateTimeOffset, ProgressEvent> resolution,
         IProgressEventStore progress,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var id = ProgressId.ForChild(childId);
@@ -40,7 +41,7 @@ public static class RewardRequestResolution
             return new RewardRequestOutcome.InsufficientStars();
         }
 
-        var @event = resolution(id, DateTimeOffset.UtcNow);
+        var @event = resolution(id, time.GetUtcNow());
         await progress.AppendAsync(id, [@event], cancellationToken);
 
         return new RewardRequestOutcome.Success(ProgressSummary.From(ChildProgress.Advance(current, @event)));

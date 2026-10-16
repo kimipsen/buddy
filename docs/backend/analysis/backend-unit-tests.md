@@ -1,8 +1,9 @@
 # Backend unit tests as the primary test source
 
 Status: Phase 0 implemented (2026-10-16): pre-generated Wolverine handler code, shared extra test
-hosts and a Keycloak memory cap; a full backend run now peaks under 1 GB in the test process. Phases
-1-5 (the unit test project) are proposed, not yet implemented.
+hosts and a Keycloak memory cap; a full backend run now peaks under 1 GB in the test process. The clock
+(Question 4) is implemented too: all production code takes an injected `TimeProvider`. Phases 1-5
+(the unit test project) are proposed, not yet implemented.
 
 ## Context
 
@@ -203,11 +204,13 @@ provider registry each get one recording fake.
 
 ## Question 4: how do handlers get the current time?
 
-**Decision: inject `TimeProvider` into every handler that reads the clock, following the 25 files
-that already do (the Feelings and VisitSummaries features). Do it one domain at a time, when that
-domain gets its unit tests, not as one large rewrite.**
+**Decision (implemented 2026-10-16): inject `TimeProvider` into everything that reads the clock,
+following the 25 files that already did (the Feelings and VisitSummaries features), in one change
+rather than one domain at a time, and ban the static clock in the API project so it can't return.**
 
-128 handler files call `DateTimeOffset.UtcNow` or `DateTime.UtcNow` directly. A unit test can work
+128 handler files called `DateTimeOffset.UtcNow` or `DateTime.UtcNow` directly, plus 22 other
+classes (personal-data erasers, the idempotency repository, the iCal feed writers, a validator, a
+background service and a few static helpers). A unit test can work
 around that by asserting that a timestamp falls between two readings of the clock, but every
 undo-window, expiry, "today" and share-link-expiry rule needs a fixed clock to be tested at its
 boundaries.
@@ -241,13 +244,30 @@ public static async Task<Result<CalendarItem>> Handle(
     var now = time.GetUtcNow();
 ```
 
-Blast radius: 128 handler files gain one parameter. Wolverine resolves it from the container, so
-no endpoint changes. `TimeProvider.System` is registered once in `Program.cs` instead of in
-`FeelingsFeature` (`services.TryAddSingleton(TimeProvider.System)`). Unit tests use
-`Microsoft.Extensions.TimeProvider.Testing`'s `FakeTimeProvider`.
+What shipped:
 
-This changes production code. It changes no behaviour, but under the CLAUDE.md rule ("ask before
-changing production code") it needs the user's go-ahead. See the open questions.
+- **Handlers** (about 140, including the group variants and the shared `...ForChildAsync` helpers
+  they call) take `TimeProvider time` before the `CancellationToken`. Wolverine resolves it from the
+  container, so no endpoint changed; the pre-generated handler code was regenerated
+  (`task codegen:backend`). Where a handler already had a local named `time` (a meal slot's or a
+  dose's `TimeOnly`), the parameter is `timeProvider`.
+- **Services** (the erasers, `IdempotencyKeyRepository`, `MartenUserEventStore`, `UserErasure`,
+  `PersonalDataExport`, `AiSessionRetentionService`, `CreateSleepDiaryShareLinkValidator`) take it
+  through their constructor; **static helpers** (the iCal feed writers, the First-Then, reward and
+  checklist-suggestion resolutions, `MedicineEffectNotes.ChildTodayAsync`,
+  `GetSharedSleepDiary.FromRequest`) take it as a parameter.
+- `TimeProvider.System` is registered once in `Program.cs` instead of in `FeelingsFeature`, which a
+  feature flag can turn off.
+- `buddy/BannedSymbols.txt` with `Microsoft.CodeAnalysis.BannedApiAnalyzers` bans
+  `DateTimeOffset.UtcNow`/`Now` and `DateTime.UtcNow`/`Now`/`Today` in the API project: using one
+  is build error RS0030. The test project may still read the real clock.
+- One visible text changed: the meal plan import's "a week/day comes before any year" error
+  suggested `'Madplan <current year>'`; it now says "('Madplan' followed by the year)", so the
+  parser needs no clock.
+
+Behaviour is unchanged in production. Integration tests that replace `TimeProvider`
+(`UndoWindowTests`) now move the clock for every handler on their host, not just Feelings. Unit
+tests will use `Microsoft.Extensions.TimeProvider.Testing`'s `FakeTimeProvider`.
 
 ## Question 5: what stays an integration test?
 
@@ -306,28 +326,28 @@ persistence and HTTP wiring, and CI has the resources to run them.
 
 ## Phases
 
-| Phase                            | Work                                                                                                                                                            | Done when                                                                      |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| 0. Stop the out-of-memory errors | Done: measured; pre-generated handler code with a CI check; extra hosts shared per class; Keycloak heap and container cap                                       | A full integration run completes in the devcontainer, with peaks recorded here |
-| 1. Split the projects            | `buddy.UnitTests`; move the ~25 pure files and golden files; `InternalsVisibleTo`; task, CI and CLAUDE.md changes                                               | `task test:backend` runs without Docker                                        |
-| 2. Test infrastructure           | Generic in-memory store core, 27 fakes, store contract tests in both projects, event builders, recording fakes for Keycloak/mail/AI                             | Contract tests pass against fakes and Marten                                   |
-| 3. Validators and pure domain    | 93 validator test classes; `Rehydrate` for each aggregate; authorization helpers                                                                                | Every validator rule has a passing and a failing case                          |
-| 4. Handlers, domain by domain    | `TimeProvider` in that domain's handlers; one test class per handler covering each `Result<T>` branch and the events written; trim duplicated integration tests | All 19 feature folders covered                                                 |
-| 5. Tooling                       | Stryker on the unit project; update `backend-feature`, `claude-backend`, `mutation-fix-backend`, `feature-from-analysis` and their description evals            | A Stryker run on one slice takes minutes, not a quarter of an hour             |
+| Phase                            | Work                                                                                                                                                 | Done when                                                                      |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| 0. Stop the out-of-memory errors | Done: measured; pre-generated handler code with a CI check; extra hosts shared per class; Keycloak heap and container cap                            | A full integration run completes in the devcontainer, with peaks recorded here |
+| 1. Split the projects            | `buddy.UnitTests`; move the ~25 pure files and golden files; `InternalsVisibleTo`; task, CI and CLAUDE.md changes                                    | `task test:backend` runs without Docker                                        |
+| 2. Test infrastructure           | Generic in-memory store core, 27 fakes, store contract tests in both projects, event builders, recording fakes for Keycloak/mail/AI                  | Contract tests pass against fakes and Marten                                   |
+| 3. Validators and pure domain    | 93 validator test classes; `Rehydrate` for each aggregate; authorization helpers                                                                     | Every validator rule has a passing and a failing case                          |
+| 4. Handlers, domain by domain    | One test class per handler covering each `Result<T>` branch and the events written; trim duplicated integration tests                                | All 19 feature folders covered                                                 |
+| 5. Tooling                       | Stryker on the unit project; update `backend-feature`, `claude-backend`, `mutation-fix-backend`, `feature-from-analysis` and their description evals | A Stryker run on one slice takes minutes, not a quarter of an hour             |
 
 Phase 0 has landed (see Question 1). Phase 4 can run in parallel,
 one worktree per domain, once phase 2 has landed.
 
 ## Failure and edge-case behavior
 
-| Case                                                         | Behavior                                                                                                     |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| A fake's index lookup differs from the Marten document       | The shared store contract test fails in one of the two projects                                              |
-| A new endpoint ships with unit tests only                    | `EndpointCoverageTests` still fails in the integration run (CI)                                              |
-| A new event type ships without a golden file                 | `EventGoldenFileCoverageTests` still fails; it moves to the unit project                                     |
-| A developer runs only `task test:backend` locally            | Wiring bugs are caught by CI's integration run, not locally; `feature-from-analysis` runs both before "done" |
-| A handler is changed and still reads `DateTimeOffset.UtcNow` | A source test in the unit project fails for handlers in domains that already moved to `TimeProvider`         |
-| Two worktrees run backend tests at once                      | Unit tests have no shared state; integration tests already get their own Testcontainers per run              |
+| Case                                                   | Behavior                                                                                                     |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| A fake's index lookup differs from the Marten document | The shared store contract test fails in one of the two projects                                              |
+| A new endpoint ships with unit tests only              | `EndpointCoverageTests` still fails in the integration run (CI)                                              |
+| A new event type ships without a golden file           | `EventGoldenFileCoverageTests` still fails; it moves to the unit project                                     |
+| A developer runs only `task test:backend` locally      | Wiring bugs are caught by CI's integration run, not locally; `feature-from-analysis` runs both before "done" |
+| New code reads `DateTimeOffset.UtcNow`                 | The build fails with RS0030 (`buddy/BannedSymbols.txt`)                                                      |
+| Two worktrees run backend tests at once                | Unit tests have no shared state; integration tests already get their own Testcontainers per run              |
 
 ## Estimate
 
@@ -344,14 +364,12 @@ one worktree per domain, once phase 2 has landed.
 | Cause of out-of-memory errors | Runtime handler compilation in every API host, not the test count; pre-generated code is committed (phase 0) |
 | Where unit tests live         | A new `buddy.UnitTests` project with no Docker dependency, so the compiler enforces the boundary             |
 | What a unit test fakes        | Hand-written in-memory event stores kept honest by contract tests; no mocking library                        |
-| The clock                     | `TimeProvider`, injected one domain at a time, following Feelings and VisitSummaries                         |
+| The clock                     | `TimeProvider` everywhere, injected in one change; the static clock is banned (implemented)                  |
 | What stays integration        | One happy path per endpoint, auth, persistence, HTTP concerns, email and the meta coverage tests             |
 | How suites run                | `task test:backend` = unit; `task test:backend:integration` on demand; CI runs both                          |
 
 ## Remaining open questions
 
-- **May handlers be changed to take `TimeProvider`?** It's a production-code change across 128
-  files, with no change in behaviour. Lean: yes, one domain at a time in phase 4.
 - **Should the pre-commit hook run the backend unit tests?** They should take seconds once moved.
   Lean: run them only when staged files include `src/backend/**`.
 - **Coverage gate.** The integration suite has no coverage threshold today. Lean: none until phase

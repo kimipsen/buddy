@@ -9,6 +9,7 @@ public static class ArchiveBabysitterHandler
         ArchiveBabysitter command,
         IBabysitterListEventStore store,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -31,7 +32,7 @@ public static class ArchiveBabysitterHandler
         // (see docs/backend/analysis/babysitters.md, Question 3).
         if (!babysitter.IsArchived)
         {
-            var now = DateTimeOffset.UtcNow;
+            var now = time.GetUtcNow();
             await BabysitterListWriter.SaveAsync(store, loaded, [new BabysitterArchived(loaded.List.Id, babysitter.Id, now)], now, cancellationToken);
         }
 

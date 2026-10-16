@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Email;
 using buddy.Features.Users;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -9,11 +10,13 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class ResendEmailVerificationHandler2059037833 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Email.IEmailSender _emailSender;
         private readonly buddy.Features.Users.IUserEventStore _userEventStore;
 
-        public ResendEmailVerificationHandler2059037833(buddy.Email.IEmailSender emailSender, buddy.Features.Users.IUserEventStore userEventStore)
+        public ResendEmailVerificationHandler2059037833(System.TimeProvider timeProvider, buddy.Email.IEmailSender emailSender, buddy.Features.Users.IUserEventStore userEventStore)
         {
+            _timeProvider = timeProvider;
             _emailSender = emailSender;
             _userEventStore = userEventStore;
         }
@@ -30,7 +33,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Users.ResendEmailVerificationHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Users.ResendEmailVerificationHandler.Handle(resendEmailVerification, _userEventStore, _emailSender, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Users.ResendEmailVerificationHandler.Handle(resendEmailVerification, _userEventStore, _emailSender, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

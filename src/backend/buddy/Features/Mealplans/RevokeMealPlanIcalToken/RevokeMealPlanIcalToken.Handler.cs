@@ -10,6 +10,7 @@ public static class RevokeMealPlanIcalTokenHandler
         IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
         ILogger<RevokeMealPlanIcalToken> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -38,7 +39,7 @@ public static class RevokeMealPlanIcalTokenHandler
 
         await mealPlans.AppendAsync(
             mealPlanId,
-            [new MealPlanIcalTokenRevoked(mealPlanId, command.TokenId, userId, DateTimeOffset.UtcNow)],
+            [new MealPlanIcalTokenRevoked(mealPlanId, command.TokenId, userId, time.GetUtcNow())],
             cancellationToken);
 
         logger.MealPlanIcalTokenRevoked(command.TokenId.Value, mealPlanId.Value, userId.Value);

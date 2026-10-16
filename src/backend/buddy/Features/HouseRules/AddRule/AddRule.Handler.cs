@@ -15,6 +15,7 @@ public static class AddRuleHandler
         IRuleBookEventStore books,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -41,7 +42,7 @@ public static class AddRuleHandler
         }
 
         var id = command.Scope.BookId;
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var added = new RuleAdded(id, RuleId.New(), command.Title, command.Body, command.UserId, now);
         RuleBookEvent[] appended;
 

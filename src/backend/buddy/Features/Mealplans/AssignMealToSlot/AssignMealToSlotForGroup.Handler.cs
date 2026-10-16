@@ -16,6 +16,7 @@ public static class AssignMealToSlotForGroupHandler
         IGuardianLinkEventStore guardians,
         IGroupEventStore groups,
         IValidator<AssignMealToSlotForGroup> validator,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -31,6 +32,6 @@ public static class AssignMealToSlotForGroupHandler
         }
 
         return await AssignMealToSlotHandler.AssignForChildAsync(
-            access.AnchorChildId, command.Date, command.Slot, command.MealId, command.Notes, command.UserId, mealPlans, meals, guardians, cancellationToken);
+            access.AnchorChildId, command.Date, command.Slot, command.MealId, command.Notes, command.UserId, mealPlans, meals, guardians, time, cancellationToken);
     }
 }

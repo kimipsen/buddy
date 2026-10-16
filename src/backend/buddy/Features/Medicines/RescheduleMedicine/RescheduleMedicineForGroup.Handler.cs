@@ -14,6 +14,7 @@ public static class RescheduleMedicineForGroupHandler
         IMedicineEventStore medicines,
         IMedicineSharingEventStore sharing,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -29,6 +30,6 @@ public static class RescheduleMedicineForGroupHandler
         }
 
         return await RescheduleMedicineHandler.RescheduleForChildAsync(
-            command.ChildId, command.MedicineId, command.UserId, command.Times, command.StartDate, command.EndDate, medicines, cancellationToken);
+            command.ChildId, command.MedicineId, command.UserId, command.Times, command.StartDate, command.EndDate, medicines, time, cancellationToken);
     }
 }

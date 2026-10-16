@@ -16,6 +16,7 @@ public static class UpdateMealDetailsForGroupHandler
         IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -31,6 +32,6 @@ public static class UpdateMealDetailsForGroupHandler
         }
 
         return await UpdateMealDetailsHandler.UpdateForChildAsync(
-            access.AnchorChildId, command.MealId, command.UserId, command.Name, command.Description, command.Icon, command.Color, meals, guardians, cancellationToken);
+            access.AnchorChildId, command.MealId, command.UserId, command.Name, command.Description, command.Icon, command.Color, meals, guardians, time, cancellationToken);
     }
 }

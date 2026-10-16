@@ -3,6 +3,7 @@
 using buddy.Email;
 using buddy.Features.Users;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -11,12 +12,14 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class UpdateEmailHandler1425347952 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Users.UpdateEmail> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Email.IEmailSender _emailSender;
         private readonly buddy.Features.Users.IUserEventStore _userEventStore;
 
-        public UpdateEmailHandler1425347952(Microsoft.Extensions.Logging.ILogger<buddy.Features.Users.UpdateEmail> loggerForMessage, buddy.Email.IEmailSender emailSender, buddy.Features.Users.IUserEventStore userEventStore)
+        public UpdateEmailHandler1425347952(Microsoft.Extensions.Logging.ILogger<buddy.Features.Users.UpdateEmail> loggerForMessage, System.TimeProvider timeProvider, buddy.Email.IEmailSender emailSender, buddy.Features.Users.IUserEventStore userEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _emailSender = emailSender;
             _userEventStore = userEventStore;
         }
@@ -34,7 +37,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Users.UpdateEmailHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Users.UpdateEmailHandler.Handle(updateEmail, updateEmailValidator, _userEventStore, _emailSender, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Users.UpdateEmailHandler.Handle(updateEmail, updateEmailValidator, _userEventStore, _emailSender, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

@@ -12,6 +12,7 @@ internal static class ChecklistSuggestionResolution
         ChecklistSuggestionStatus target,
         Func<DateTimeOffset, TaskTemplateEvent[]> events,
         ITaskTemplateEventStore templates,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (loaded.Template.FindSuggestion(suggestionId) is not { } suggestion)
@@ -29,7 +30,7 @@ internal static class ChecklistSuggestionResolution
             return new ChecklistSuggestionOutcome.AlreadyResolved();
         }
 
-        var newEvents = events(DateTimeOffset.UtcNow);
+        var newEvents = events(time.GetUtcNow());
 
         await templates.AppendAsync(loaded.Template.Id, newEvents, cancellationToken);
 

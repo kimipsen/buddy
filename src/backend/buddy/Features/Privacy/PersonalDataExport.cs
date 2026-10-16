@@ -12,7 +12,8 @@ public sealed class PersonalDataExport(
     IUserEventStore users,
     IGuardianLinkEventStore guardians,
     IEnumerable<IPersonalDataExporter> exporters,
-    ILogger<PersonalDataExport> logger)
+    ILogger<PersonalDataExport> logger,
+    TimeProvider time)
 {
     public async Task<PersonalDataExportDocument> ExportAsync(UserId userId, CancellationToken cancellationToken)
     {
@@ -36,7 +37,7 @@ public sealed class PersonalDataExport(
 
         logger.PersonalDataExported(userId.Value, subject.Children.Count);
 
-        return new PersonalDataExportDocument(DateTimeOffset.UtcNow, userId.Value, sections);
+        return new PersonalDataExportDocument(time.GetUtcNow(), userId.Value, sections);
     }
 }
 

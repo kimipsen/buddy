@@ -3,6 +3,7 @@
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -10,12 +11,14 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class CreateGroupHandler943912766 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.Users.IUserEventStore _userEventStore;
 
-        public CreateGroupHandler943912766(buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Users.IUserEventStore userEventStore)
+        public CreateGroupHandler943912766(System.TimeProvider timeProvider, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Users.IUserEventStore userEventStore)
         {
+            _timeProvider = timeProvider;
             _groupEventStore = groupEventStore;
             _guardianLinkEventStore = guardianLinkEventStore;
             _userEventStore = userEventStore;
@@ -33,7 +36,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Groups.CreateGroupHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Groups.CreateGroupHandler.Handle(createGroup, _groupEventStore, _guardianLinkEventStore, _userEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Groups.CreateGroupHandler.Handle(createGroup, _groupEventStore, _guardianLinkEventStore, _userEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

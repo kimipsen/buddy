@@ -10,7 +10,7 @@ namespace buddy.Common.Idempotency;
 
 // Stored response bodies are encrypted with Data Protection: a body can hold personal data, such as
 // the temporary password CreateChild returns, and sits in the database for up to 24 hours.
-public sealed class IdempotencyKeyRepository(IIdempotencyStore store, IDataProtectionProvider dataProtection)
+public sealed class IdempotencyKeyRepository(IIdempotencyStore store, IDataProtectionProvider dataProtection, TimeProvider time)
 {
     private readonly IDataProtector _protector = dataProtection.CreateProtector("buddy.idempotency.response.v1");
 
@@ -29,7 +29,7 @@ public sealed class IdempotencyKeyRepository(IIdempotencyStore store, IDataProte
     {
         var record = new IdempotencyRecord(
             IdempotencyRecord.BuildId(userId, key), userId, key, fingerprint,
-            Response: null, DateTimeOffset.UtcNow);
+            Response: null, time.GetUtcNow());
 
         await using var session = store.LightweightSession();
         session.Insert(record);
@@ -102,7 +102,7 @@ public sealed class IdempotencyKeyRepository(IIdempotencyStore store, IDataProte
     // claimable again. Runs in bounded batches so one pass never holds an unbounded transaction.
     public async Task<int> DeleteExpiredAsync(TimeSpan completedRetention, TimeSpan inProgressTimeout, CancellationToken cancellationToken)
     {
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var completedCutoff = now - completedRetention;
         var inProgressCutoff = now - inProgressTimeout;
         var totalDeleted = 0;

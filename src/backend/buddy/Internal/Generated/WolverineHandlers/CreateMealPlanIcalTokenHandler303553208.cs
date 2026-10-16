@@ -3,6 +3,7 @@
 using buddy.Features.Guardians;
 using buddy.Features.Mealplans;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -11,12 +12,14 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class CreateMealPlanIcalTokenHandler303553208 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Mealplans.CreateMealPlanIcalToken> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.Mealplans.IMealPlanEventStore _mealPlanEventStore;
 
-        public CreateMealPlanIcalTokenHandler303553208(Microsoft.Extensions.Logging.ILogger<buddy.Features.Mealplans.CreateMealPlanIcalToken> loggerForMessage, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Mealplans.IMealPlanEventStore mealPlanEventStore)
+        public CreateMealPlanIcalTokenHandler303553208(Microsoft.Extensions.Logging.ILogger<buddy.Features.Mealplans.CreateMealPlanIcalToken> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Mealplans.IMealPlanEventStore mealPlanEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _mealPlanEventStore = mealPlanEventStore;
         }
@@ -33,7 +36,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Mealplans.CreateMealPlanIcalTokenHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Mealplans.CreateMealPlanIcalTokenHandler.Handle(createMealPlanIcalToken, _mealPlanEventStore, _guardianLinkEventStore, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Mealplans.CreateMealPlanIcalTokenHandler.Handle(createMealPlanIcalToken, _mealPlanEventStore, _guardianLinkEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

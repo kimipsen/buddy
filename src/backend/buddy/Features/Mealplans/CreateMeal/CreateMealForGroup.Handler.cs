@@ -16,6 +16,7 @@ public static class CreateMealForGroupHandler
         IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -31,7 +32,7 @@ public static class CreateMealForGroupHandler
         }
 
         var meal = await CreateMealHandler.CreateForChildAsync(
-            access.AnchorChildId, command.UserId, command.Name, command.Description, command.Icon, command.Color, meals, cancellationToken);
+            access.AnchorChildId, command.UserId, command.Name, command.Description, command.Icon, command.Color, meals, time, cancellationToken);
 
         return new Result<Meal>.Success(meal);
     }

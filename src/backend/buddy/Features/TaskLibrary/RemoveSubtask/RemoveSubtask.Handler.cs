@@ -9,6 +9,7 @@ public static class RemoveSubtaskHandler
         RemoveSubtask command,
         ITaskTemplateEventStore templates,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -27,7 +28,7 @@ public static class RemoveSubtaskHandler
 
         await templates.AppendAsync(
             command.TemplateId,
-            [new SubtaskRemoved(command.TemplateId, command.SubtaskId, userId, DateTimeOffset.UtcNow)],
+            [new SubtaskRemoved(command.TemplateId, command.SubtaskId, userId, time.GetUtcNow())],
             cancellationToken);
 
         return new Result<Unit>.Success(Unit.Value);

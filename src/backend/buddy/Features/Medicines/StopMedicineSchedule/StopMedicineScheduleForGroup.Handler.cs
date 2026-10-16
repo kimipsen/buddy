@@ -10,6 +10,7 @@ public static class StopMedicineScheduleForGroupHandler
         IMedicineEventStore medicines,
         IMedicineSharingEventStore sharing,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var resolved = await MedicineGroupAccess.ResolveAsync(command.GroupId, command.ChildId, command.UserId, groups, sharing, cancellationToken);
@@ -19,7 +20,7 @@ public static class StopMedicineScheduleForGroupHandler
             return resolved;
         }
 
-        var stopped = await StopMedicineScheduleHandler.StopForChildAsync(command.ChildId, command.MedicineId, command.UserId, medicines, cancellationToken);
+        var stopped = await StopMedicineScheduleHandler.StopForChildAsync(command.ChildId, command.MedicineId, command.UserId, medicines, time, cancellationToken);
 
         return stopped ? new Result<Unit>.Success(Unit.Value) : new Result<Unit>.NotFound();
     }

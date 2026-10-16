@@ -15,6 +15,7 @@ public static class GetMealPlanIcalFeedHandler
         GetMealPlanIcalFeed query,
         IMealPlanEventStore mealPlans,
         IMealEventStore meals,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var planEvents = await mealPlans.ReadAsync(query.MealPlanId, cancellationToken);
@@ -32,12 +33,12 @@ public static class GetMealPlanIcalFeedHandler
             return new Result<string>.NotFound();
         }
 
-        var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.UtcDateTime);
+        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         var from = today.AddDays(-LookBehind.Days);
         var to = today.AddDays(LookAhead.Days);
 
         var entries = await MealPlanExpansion.ExpandFromPlanAsync(plan, from, to, meals, null, cancellationToken);
 
-        return new Result<string>.Success(MealPlanIcalFeedWriter.Write(plan, entries));
+        return new Result<string>.Success(MealPlanIcalFeedWriter.Write(plan, entries, time));
     }
 }

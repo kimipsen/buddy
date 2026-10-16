@@ -9,6 +9,7 @@ public static class ClearPickupHandler
         ClearPickup command,
         IPickupScheduleEventStore pickups,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -38,7 +39,7 @@ public static class ClearPickupHandler
             return new Result<Unit>.Success(Unit.Value);
         }
 
-        await pickups.AppendAsync(scheduleId, [new PickupCleared(scheduleId, command.Date, command.Slot, before, userId, DateTimeOffset.UtcNow)], cancellationToken);
+        await pickups.AppendAsync(scheduleId, [new PickupCleared(scheduleId, command.Date, command.Slot, before, userId, time.GetUtcNow())], cancellationToken);
 
         return new Result<Unit>.Success(Unit.Value);
     }

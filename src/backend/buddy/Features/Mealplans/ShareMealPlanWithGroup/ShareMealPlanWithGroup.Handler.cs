@@ -11,6 +11,7 @@ public static class ShareMealPlanWithGroupHandler
         IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -38,7 +39,7 @@ public static class ShareMealPlanWithGroupHandler
             return groupAccess.ToDeniedResult<Unit>();
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var mealPlanId = await MealFamilyResolution.ResolveFamilyMealPlanIdAsync(command.ChildId, guardians, mealPlans, cancellationToken);
 
         if (mealPlanId is null)

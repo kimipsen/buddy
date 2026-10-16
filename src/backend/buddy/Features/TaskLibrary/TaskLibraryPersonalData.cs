@@ -10,7 +10,7 @@ namespace buddy.Features.TaskLibrary;
 // gdpr-data-protection.md. A list that passes to an heir keeps the erased child's suggestions out of
 // the heir's hands: pending ones are withdrawn and every suggestion title is masked; items a
 // guardian approved stay, they are the family's list (docs/backend/analysis/packing-checklists.md).
-public sealed class TaskLibraryPersonalDataEraser(ITaskLibraryStore store, ITaskTemplateEventStore templates) : IPersonalDataEraser
+public sealed class TaskLibraryPersonalDataEraser(ITaskLibraryStore store, ITaskTemplateEventStore templates, TimeProvider time) : IPersonalDataEraser
 {
     public Type Store => typeof(ITaskLibraryStore);
 
@@ -48,7 +48,7 @@ public sealed class TaskLibraryPersonalDataEraser(ITaskLibraryStore store, ITask
             return;
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         TaskTemplateEvent[] withdrawn =
         [
             .. template.Suggestions

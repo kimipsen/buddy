@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Guardians;
 using buddy.Features.Medicines;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -9,11 +10,13 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class StopMedicineScheduleHandler2092338637 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.Medicines.IMedicineEventStore _medicineEventStore;
 
-        public StopMedicineScheduleHandler2092338637(buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Medicines.IMedicineEventStore medicineEventStore)
+        public StopMedicineScheduleHandler2092338637(System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Medicines.IMedicineEventStore medicineEventStore)
         {
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _medicineEventStore = medicineEventStore;
         }
@@ -30,7 +33,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Medicines.StopMedicineScheduleHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Medicines.StopMedicineScheduleHandler.Handle(stopMedicineSchedule, _medicineEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Medicines.StopMedicineScheduleHandler.Handle(stopMedicineSchedule, _medicineEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

@@ -12,7 +12,8 @@ namespace buddy.Features.Calendars;
 public sealed class CalendarsPersonalDataEraser(
     ICalendarsStore store,
     ICalendarEventStore calendars,
-    ICalendarItemEventStore items) : IPersonalDataEraser
+    ICalendarItemEventStore items,
+    TimeProvider time) : IPersonalDataEraser
 {
     public Type Store => typeof(ICalendarsStore);
 
@@ -42,7 +43,7 @@ public sealed class CalendarsPersonalDataEraser(
 
             if (await items.FindSnapshotAsync(id, cancellationToken) is { IsDeleted: false })
             {
-                await items.AppendAsync(id, [new ItemDeleted(id, child.UserId, DateTimeOffset.UtcNow)], cancellationToken);
+                await items.AppendAsync(id, [new ItemDeleted(id, child.UserId, time.GetUtcNow())], cancellationToken);
             }
 
             await store.MaskStreamAsync<CalendarItemSnapshot>(itemId, cancellationToken);
@@ -54,7 +55,7 @@ public sealed class CalendarsPersonalDataEraser(
         foreach (var membership in await calendars.ListForUserAsync(userId, cancellationToken))
         {
             var calendarId = new CalendarId(membership.CalendarId);
-            await calendars.AppendAsync(calendarId, [new MemberRoleRevoked(calendarId, userId, userId, DateTimeOffset.UtcNow)], cancellationToken);
+            await calendars.AppendAsync(calendarId, [new MemberRoleRevoked(calendarId, userId, userId, time.GetUtcNow())], cancellationToken);
         }
     }
 

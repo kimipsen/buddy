@@ -4,7 +4,7 @@ namespace buddy.Features.Users;
 
 public static class UpdateNameHandler
 {
-    public static async Task<Result<User>> Handle(UpdateName command, IUserEventStore events, CancellationToken cancellationToken)
+    public static async Task<Result<User>> Handle(UpdateName command, IUserEventStore events, TimeProvider time, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -21,7 +21,7 @@ public static class UpdateNameHandler
             return new Result<User>.Success(user);
         }
 
-        var nameUpdated = new NameUpdated(userId, user.Name, command.Name, DateTimeOffset.UtcNow);
+        var nameUpdated = new NameUpdated(userId, user.Name, command.Name, time.GetUtcNow());
         await events.AppendAsync(userId, [nameUpdated], cancellationToken);
 
         return new Result<User>.Success(user with { Name = command.Name });

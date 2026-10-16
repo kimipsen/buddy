@@ -11,6 +11,7 @@ public static class UpdateLanguageHandler
         UpdateLanguage command,
         IValidator<UpdateLanguage> validator,
         IUserEventStore events,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -33,7 +34,7 @@ public static class UpdateLanguageHandler
             return new Result<User>.Success(user);
         }
 
-        var languageUpdated = new LanguageUpdated(userId, user.Language, command.Language, DateTimeOffset.UtcNow);
+        var languageUpdated = new LanguageUpdated(userId, user.Language, command.Language, time.GetUtcNow());
         await events.AppendAsync(userId, [languageUpdated], cancellationToken);
 
         return new Result<User>.Success(user with { Language = command.Language });

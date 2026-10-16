@@ -15,6 +15,7 @@ public static class AcknowledgeRuleHandler
         IRuleBookEventStore books,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -63,7 +64,7 @@ public static class AcknowledgeRuleHandler
 
         await books.AppendAsync(
             command.Scope.BookId,
-            [new RuleAcknowledged(command.Scope.BookId, rule.Id, childId, command.Revision, command.UserId, DateTimeOffset.UtcNow)],
+            [new RuleAcknowledged(command.Scope.BookId, rule.Id, childId, command.Revision, command.UserId, time.GetUtcNow())],
             cancellationToken);
 
         return new AcknowledgeRuleOutcome.Success();

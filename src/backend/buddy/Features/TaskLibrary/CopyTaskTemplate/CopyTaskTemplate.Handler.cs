@@ -13,6 +13,7 @@ public static class CopyTaskTemplateHandler
         IValidator<CopyTaskTemplate> validator,
         ITaskTemplateEventStore templates,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -40,7 +41,7 @@ public static class CopyTaskTemplateHandler
 
         var source = loaded.Template;
         var copyId = TaskTemplateId.New();
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         // Built from the existing events: a copy is an ordinary new template. Every item gets a fresh
         // id, so the two lists never share a completion key; suggestions stay with the source child.

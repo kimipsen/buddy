@@ -11,7 +11,8 @@ namespace buddy.Features.SleepDiaries;
 public sealed class SleepDiariesPersonalDataEraser(
     ISleepDiariesStore store,
     ISleepDiaryShareTokenEventStore shareTokens,
-    IGuardianLinkEventStore guardians) : IPersonalDataEraser
+    IGuardianLinkEventStore guardians,
+    TimeProvider time) : IPersonalDataEraser
 {
     public Type Store => typeof(ISleepDiariesStore);
 
@@ -30,7 +31,7 @@ public sealed class SleepDiariesPersonalDataEraser(
                     && await shareTokens.FindSnapshotAsync(tokenId, cancellationToken) is { } token
                     && token.CreatedBy == guardian.UserId)
                 {
-                    await shareTokens.AppendAsync(tokenId, [new SleepDiaryShareTokenRevoked(tokenId, guardian.UserId, DateTimeOffset.UtcNow)], cancellationToken);
+                    await shareTokens.AppendAsync(tokenId, [new SleepDiaryShareTokenRevoked(tokenId, guardian.UserId, time.GetUtcNow())], cancellationToken);
                 }
             }
         }

@@ -9,6 +9,7 @@ public static class UpdateMealSlotTimesHandler
         UpdateMealSlotTimes command,
         IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -20,7 +21,7 @@ public static class UpdateMealSlotTimesHandler
             return access.ToDeniedResult<Unit>();
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = timeProvider.GetUtcNow();
         var mealPlanId = await MealFamilyResolution.ResolveFamilyMealPlanIdAsync(command.ChildId, guardians, mealPlans, cancellationToken);
 
         if (mealPlanId is null)

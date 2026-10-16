@@ -15,6 +15,7 @@ public static class CreateMedicineScheduleHandler
         IValidator<CreateMedicineSchedule> validator,
         IMedicineEventStore medicines,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -32,7 +33,7 @@ public static class CreateMedicineScheduleHandler
         }
 
         var schedule = await CreateForChildAsync(
-            command.ChildId, userId, command.Name, command.Dosage, command.Icon, command.Color, command.Times, command.StartDate, command.EndDate, medicines, cancellationToken);
+            command.ChildId, userId, command.Name, command.Dosage, command.Icon, command.Color, command.Times, command.StartDate, command.EndDate, medicines, time, cancellationToken);
 
         return new Result<MedicineSchedule>.Success(schedule);
     }
@@ -52,10 +53,11 @@ public static class CreateMedicineScheduleHandler
         DateOnly startDate,
         DateOnly? endDate,
         IMedicineEventStore medicines,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var medicineId = MedicineId.New();
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         var created = new MedicineScheduleCreated(medicineId, childId, createdBy, name, dosage, icon, color, times, startDate, endDate, now);
 

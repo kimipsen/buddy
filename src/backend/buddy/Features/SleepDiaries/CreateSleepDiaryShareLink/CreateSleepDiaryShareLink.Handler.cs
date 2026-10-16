@@ -15,6 +15,7 @@ public static class CreateSleepDiaryShareLinkHandler
         ISleepDiaryShareTokenEventStore shareTokens,
         IGuardianLinkEventStore guardians,
         ILogger<CreateSleepDiaryShareLink> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -33,7 +34,7 @@ public static class CreateSleepDiaryShareLinkHandler
         // guardian fills it in, and always reflects current data (no snapshot at share time).
         var (token, hash) = ShareSecret.Generate();
         var id = SleepDiaryShareTokenId.New();
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         await shareTokens.CreateAsync(
             id,

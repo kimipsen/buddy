@@ -15,6 +15,7 @@ public static class UpdateMealDetailsHandler
         IValidator<UpdateMealDetails> validator,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -31,14 +32,14 @@ public static class UpdateMealDetailsHandler
             return access.ToDeniedResult<Meal>();
         }
 
-        return await UpdateForChildAsync(command.ChildId, command.MealId, userId, command.Name, command.Description, command.Icon, command.Color, meals, guardians, cancellationToken);
+        return await UpdateForChildAsync(command.ChildId, command.MealId, userId, command.Name, command.Description, command.Icon, command.Color, meals, guardians, time, cancellationToken);
     }
 
     // Shared with UpdateMealDetailsForGroupHandler -- see CreateMealHandler.CreateForChildAsync
     // for the same pattern and rationale.
     internal static async Task<Result<Meal>> UpdateForChildAsync(
         UserId childId, MealId mealId, UserId modifiedBy, string name, string description, Icon icon, Color color,
-        IMealEventStore meals, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+        IMealEventStore meals, IGuardianLinkEventStore guardians, TimeProvider time, CancellationToken cancellationToken)
     {
         var events = await meals.ReadAsync(mealId, cancellationToken);
         var meal = Meal.Rehydrate(events);
@@ -63,7 +64,7 @@ public static class UpdateMealDetailsHandler
             return new Result<Meal>.Success(meal);
         }
 
-        await meals.AppendAsync(mealId, [new MealDetailsUpdated(mealId, before, after, modifiedBy, DateTimeOffset.UtcNow)], cancellationToken);
+        await meals.AppendAsync(mealId, [new MealDetailsUpdated(mealId, before, after, modifiedBy, time.GetUtcNow())], cancellationToken);
 
         return new Result<Meal>.Success(meal with { Name = name, Description = description, Icon = icon, Color = color, LastModifiedBy = modifiedBy });
     }

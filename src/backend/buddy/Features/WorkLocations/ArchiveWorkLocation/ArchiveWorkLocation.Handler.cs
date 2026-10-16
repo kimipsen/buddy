@@ -9,6 +9,7 @@ public static class ArchiveWorkLocationHandler
         ArchiveWorkLocation command,
         IWorkLocationScheduleEventStore store,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -20,7 +21,7 @@ public static class ArchiveWorkLocationHandler
             return access.ToDeniedResult<Unit>();
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var loaded = await WorkLocationScheduleWriter.LoadAsync(store, userId, now, cancellationToken);
 
         if (loaded.Schedule.FindLocation(command.LocationId) is not { } location)

@@ -12,6 +12,7 @@ public static class ArchiveMealForGroupHandler
         IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var resolved = await MealplanGroupAccess.ResolveManageAsync(command.GroupId, command.UserId, groups, mealPlans, cancellationToken);
@@ -21,6 +22,6 @@ public static class ArchiveMealForGroupHandler
             return resolved.Reraise<MealplanGroupAccess.Resolved, Unit>();
         }
 
-        return await ArchiveMealHandler.ArchiveForChildAsync(access.AnchorChildId, command.MealId, command.UserId, meals, guardians, cancellationToken);
+        return await ArchiveMealHandler.ArchiveForChildAsync(access.AnchorChildId, command.MealId, command.UserId, meals, guardians, time, cancellationToken);
     }
 }

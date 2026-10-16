@@ -16,6 +16,7 @@ public static class AssignPickupHandler
         IPickupScheduleEventStore pickups,
         IGuardianLinkEventStore guardians,
         IBabysitterListEventStore babysitters,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -38,7 +39,7 @@ public static class AssignPickupHandler
         }
 
         var after = new PickupAssignment(command.Assignee, command.Time, userId, command.Notes);
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         var scheduleId = await pickups.FindIdForChildAsync(command.ChildId, cancellationToken);
 

@@ -13,6 +13,7 @@ public static class UpdateCalendarIconHandler
         IValidator<UpdateCalendarIcon> validator,
         ICalendarEventStore calendars,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -45,7 +46,7 @@ public static class UpdateCalendarIconHandler
 
         await calendars.AppendAsync(
             command.CalendarId,
-            [new CalendarIconChanged(command.CalendarId, command.Icon, userId, DateTimeOffset.UtcNow)],
+            [new CalendarIconChanged(command.CalendarId, command.Icon, userId, time.GetUtcNow())],
             cancellationToken);
 
         return new Result<Calendar>.Success(calendar with { Icon = command.Icon });

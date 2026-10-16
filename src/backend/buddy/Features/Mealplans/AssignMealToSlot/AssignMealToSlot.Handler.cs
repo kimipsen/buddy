@@ -15,6 +15,7 @@ public static class AssignMealToSlotHandler
         IMealPlanEventStore mealPlans,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -31,14 +32,14 @@ public static class AssignMealToSlotHandler
             return access.ToDeniedResult<MealPlanEntry>();
         }
 
-        return await AssignForChildAsync(command.ChildId, command.Date, command.Slot, command.MealId, command.Notes, userId, mealPlans, meals, guardians, cancellationToken);
+        return await AssignForChildAsync(command.ChildId, command.Date, command.Slot, command.MealId, command.Notes, userId, mealPlans, meals, guardians, time, cancellationToken);
     }
 
     // Shared with AssignMealToSlotForGroupHandler -- see CreateMealHandler.CreateForChildAsync
     // for the same pattern and rationale.
     internal static async Task<Result<MealPlanEntry>> AssignForChildAsync(
         UserId childId, DateOnly date, MealSlot slot, MealId mealId, string notes, UserId assignedBy,
-        IMealPlanEventStore mealPlans, IMealEventStore meals, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+        IMealPlanEventStore mealPlans, IMealEventStore meals, IGuardianLinkEventStore guardians, TimeProvider time, CancellationToken cancellationToken)
     {
         var mealEvents = await meals.ReadAsync(mealId, cancellationToken);
         var meal = Meal.Rehydrate(mealEvents);
@@ -64,7 +65,7 @@ public static class AssignMealToSlotHandler
         }
 
         var after = new MealPlanAssignment(mealId, assignedBy, notes);
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
 
         var mealPlanId = await MealFamilyResolution.ResolveFamilyMealPlanIdAsync(childId, guardians, mealPlans, cancellationToken);
 

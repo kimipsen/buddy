@@ -10,6 +10,7 @@ public static class DiscardAiSessionHandler
         IAiSessionEventStore sessions,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -39,7 +40,7 @@ public static class DiscardAiSessionHandler
             return new Result<AiSessionView>.Success(currentView);
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         await sessions.AppendAsync(sessionId, [new AiSessionDiscarded(sessionId, userId, now)], cancellationToken);
 
         MealplanAiSessionEvent[] allEvents = [.. existingEvents, new AiSessionDiscarded(sessionId, userId, now)];

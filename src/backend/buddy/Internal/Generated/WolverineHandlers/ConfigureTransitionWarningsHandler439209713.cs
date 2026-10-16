@@ -4,6 +4,7 @@ using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.TransitionWarnings;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -11,14 +12,16 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class ConfigureTransitionWarningsHandler439209713 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Calendars.ICalendarEventStore _calendarEventStore;
         private readonly buddy.Features.Calendars.ICalendarItemEventStore _calendarItemEventStore;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.TransitionWarnings.ITransitionWarningSettingsEventStore _transitionWarningSettingsEventStore;
 
-        public ConfigureTransitionWarningsHandler439209713(buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Calendars.ICalendarItemEventStore calendarItemEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.TransitionWarnings.ITransitionWarningSettingsEventStore transitionWarningSettingsEventStore)
+        public ConfigureTransitionWarningsHandler439209713(System.TimeProvider timeProvider, buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Calendars.ICalendarItemEventStore calendarItemEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.TransitionWarnings.ITransitionWarningSettingsEventStore transitionWarningSettingsEventStore)
         {
+            _timeProvider = timeProvider;
             _calendarEventStore = calendarEventStore;
             _calendarItemEventStore = calendarItemEventStore;
             _groupEventStore = groupEventStore;
@@ -39,7 +42,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.TransitionWarnings.ConfigureTransitionWarningsHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.TransitionWarnings.ConfigureTransitionWarningsHandler.Handle(configureTransitionWarnings, configureTransitionWarningsValidator, _transitionWarningSettingsEventStore, _guardianLinkEventStore, _calendarItemEventStore, _calendarEventStore, _groupEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.TransitionWarnings.ConfigureTransitionWarningsHandler.Handle(configureTransitionWarnings, configureTransitionWarningsValidator, _transitionWarningSettingsEventStore, _guardianLinkEventStore, _calendarItemEventStore, _calendarEventStore, _groupEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

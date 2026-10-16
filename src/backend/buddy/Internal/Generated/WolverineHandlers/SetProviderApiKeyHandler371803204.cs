@@ -3,6 +3,7 @@
 using buddy.Features.Guardians;
 using buddy.Features.Mealplans;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -11,13 +12,15 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class SetProviderApiKeyHandler371803204 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Mealplans.SetProviderApiKey> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.Mealplans.IAiCredentialEventStore _aiCredentialEventStore;
         private readonly buddy.Features.Mealplans.IApiKeyCipher _apiKeyCipher;
 
-        public SetProviderApiKeyHandler371803204(Microsoft.Extensions.Logging.ILogger<buddy.Features.Mealplans.SetProviderApiKey> loggerForMessage, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Mealplans.IAiCredentialEventStore aiCredentialEventStore, buddy.Features.Mealplans.IApiKeyCipher apiKeyCipher)
+        public SetProviderApiKeyHandler371803204(Microsoft.Extensions.Logging.ILogger<buddy.Features.Mealplans.SetProviderApiKey> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Mealplans.IAiCredentialEventStore aiCredentialEventStore, buddy.Features.Mealplans.IApiKeyCipher apiKeyCipher)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _aiCredentialEventStore = aiCredentialEventStore;
             _apiKeyCipher = apiKeyCipher;
@@ -36,7 +39,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Mealplans.SetProviderApiKeyHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Mealplans.SetProviderApiKeyHandler.Handle(setProviderApiKey, setProviderApiKeyValidator, _aiCredentialEventStore, _guardianLinkEventStore, _apiKeyCipher, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Mealplans.SetProviderApiKeyHandler.Handle(setProviderApiKey, setProviderApiKeyValidator, _aiCredentialEventStore, _guardianLinkEventStore, _apiKeyCipher, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

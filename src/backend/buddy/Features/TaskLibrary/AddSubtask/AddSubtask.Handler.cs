@@ -13,6 +13,7 @@ public static class AddSubtaskHandler
         IValidator<AddSubtask> validator,
         ITaskTemplateEventStore templates,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -39,7 +40,7 @@ public static class AddSubtaskHandler
         // rather than rejected.
         var position = command.Position ?? loaded.Template.Subtasks.Count;
         var subtask = new Subtask(SubtaskId.New(), command.Title, command.Icon, command.Duration, command.Weekdays);
-        var added = new SubtaskAdded(command.TemplateId, subtask, position, userId, DateTimeOffset.UtcNow);
+        var added = new SubtaskAdded(command.TemplateId, subtask, position, userId, time.GetUtcNow());
 
         await templates.AppendAsync(command.TemplateId, [added], cancellationToken);
 

@@ -5,7 +5,7 @@ namespace buddy.Features.Calendars;
 
 public static class DeleteCalendarHandler
 {
-    public static async Task<Result<Unit>> Handle(DeleteCalendar command, ICalendarEventStore calendars, IGroupEventStore groups, ILogger<DeleteCalendar> logger, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(DeleteCalendar command, ICalendarEventStore calendars, IGroupEventStore groups, ILogger<DeleteCalendar> logger, TimeProvider time, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -24,7 +24,7 @@ public static class DeleteCalendarHandler
             return access.ToDeniedResult<Unit>();
         }
 
-        await calendars.AppendAsync(command.CalendarId, [new CalendarDeleted(command.CalendarId, userId, DateTimeOffset.UtcNow)], cancellationToken);
+        await calendars.AppendAsync(command.CalendarId, [new CalendarDeleted(command.CalendarId, userId, time.GetUtcNow())], cancellationToken);
 
         logger.CalendarDeleted(command.CalendarId.Value, userId.Value);
 

@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Guardians;
 using buddy.Features.TaskLibrary;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -9,11 +10,13 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class WithdrawChecklistSuggestionHandler574164277 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.TaskLibrary.ITaskTemplateEventStore _taskTemplateEventStore;
 
-        public WithdrawChecklistSuggestionHandler574164277(buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.TaskLibrary.ITaskTemplateEventStore taskTemplateEventStore)
+        public WithdrawChecklistSuggestionHandler574164277(System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.TaskLibrary.ITaskTemplateEventStore taskTemplateEventStore)
         {
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _taskTemplateEventStore = taskTemplateEventStore;
         }
@@ -30,7 +33,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.TaskLibrary.WithdrawChecklistSuggestionHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.TaskLibrary.WithdrawChecklistSuggestionHandler.Handle(withdrawChecklistSuggestion, _taskTemplateEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.TaskLibrary.WithdrawChecklistSuggestionHandler.Handle(withdrawChecklistSuggestion, _taskTemplateEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

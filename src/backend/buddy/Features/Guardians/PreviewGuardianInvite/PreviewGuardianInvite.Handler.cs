@@ -4,11 +4,11 @@ namespace buddy.Features.Guardians;
 
 public static class PreviewGuardianInviteHandler
 {
-    public static async Task<Result<GuardianInvitePreview>> Handle(PreviewGuardianInvite query, IGuardianInviteEventStore invites, CancellationToken cancellationToken)
+    public static async Task<Result<GuardianInvitePreview>> Handle(PreviewGuardianInvite query, IGuardianInviteEventStore invites, TimeProvider time, CancellationToken cancellationToken)
     {
         var invite = await invites.FindInviteByTokenAsync(query.Token, cancellationToken);
 
-        if (invite is null || invite.Status != GuardianInviteStatus.Pending || invite.ExpiresAt < DateTimeOffset.UtcNow)
+        if (invite is null || invite.Status != GuardianInviteStatus.Pending || invite.ExpiresAt < time.GetUtcNow())
         {
             return new Result<GuardianInvitePreview>.NotFound();
         }

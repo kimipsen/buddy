@@ -10,6 +10,7 @@ public static class SetDoseStatusForGroupHandler
         IMedicineEventStore medicines,
         IMedicineSharingEventStore sharing,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var resolved = await MedicineGroupAccess.ResolveAsync(command.GroupId, command.ChildId, command.UserId, groups, sharing, cancellationToken);
@@ -19,6 +20,6 @@ public static class SetDoseStatusForGroupHandler
             return resolved.Reraise<Unit, MedicineDoseOccurrence>();
         }
 
-        return await SetDoseStatusHandler.SetForChildAsync(command.ChildId, command.MedicineId, command.Date, command.Time, command.Status, command.UserId, medicines, cancellationToken);
+        return await SetDoseStatusHandler.SetForChildAsync(command.ChildId, command.MedicineId, command.Date, command.Time, command.Status, command.UserId, medicines, time, cancellationToken);
     }
 }

@@ -14,6 +14,7 @@ public static class UpdateItemRecurrenceHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -63,7 +64,7 @@ public static class UpdateItemRecurrenceHandler
 
         await items.AppendAsync(
             command.ItemId,
-            [new RecurrenceUpdated(command.ItemId, item.Recurrence, command.Recurrence, userId, DateTimeOffset.UtcNow)],
+            [new RecurrenceUpdated(command.ItemId, item.Recurrence, command.Recurrence, userId, time.GetUtcNow())],
             cancellationToken);
 
         return new Result<CalendarItem>.Success(item with { Recurrence = command.Recurrence, LastModifiedBy = userId });

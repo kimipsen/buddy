@@ -3,6 +3,7 @@
 using buddy.Features.Guardians;
 using buddy.Features.Medicines;
 using buddy.Features.Users;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -10,13 +11,15 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class LogMedicineEffectNoteHandler3298003 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.Medicines.IMedicineEffectLogEventStore _medicineEffectLogEventStore;
         private readonly buddy.Features.Medicines.IMedicineEventStore _medicineEventStore;
         private readonly buddy.Features.Users.IUserEventStore _userEventStore;
 
-        public LogMedicineEffectNoteHandler3298003(buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Medicines.IMedicineEffectLogEventStore medicineEffectLogEventStore, buddy.Features.Medicines.IMedicineEventStore medicineEventStore, buddy.Features.Users.IUserEventStore userEventStore)
+        public LogMedicineEffectNoteHandler3298003(System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Medicines.IMedicineEffectLogEventStore medicineEffectLogEventStore, buddy.Features.Medicines.IMedicineEventStore medicineEventStore, buddy.Features.Users.IUserEventStore userEventStore)
         {
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _medicineEffectLogEventStore = medicineEffectLogEventStore;
             _medicineEventStore = medicineEventStore;
@@ -36,7 +39,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Medicines.LogMedicineEffectNoteHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Medicines.LogMedicineEffectNoteHandler.Handle(logMedicineEffectNote, logMedicineEffectNoteValidator, _medicineEffectLogEventStore, _medicineEventStore, _guardianLinkEventStore, _userEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Medicines.LogMedicineEffectNoteHandler.Handle(logMedicineEffectNote, logMedicineEffectNoteValidator, _medicineEffectLogEventStore, _medicineEventStore, _guardianLinkEventStore, _userEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

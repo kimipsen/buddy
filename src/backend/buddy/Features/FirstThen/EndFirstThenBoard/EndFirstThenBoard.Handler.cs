@@ -14,6 +14,7 @@ public static class EndFirstThenBoardHandler
         IFirstThenBoardEventStore boards,
         IGuardianLinkEventStore guardians,
         IUserEventStore users,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -32,6 +33,6 @@ public static class EndFirstThenBoardHandler
             boards,
             guardians,
             users,
-            cancellationToken);
+            time, cancellationToken);
     }
 }

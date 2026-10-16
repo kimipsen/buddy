@@ -2,6 +2,7 @@
 #pragma warning disable
 using buddy.Features.Guardians;
 using buddy.Features.WorkLocations;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -9,11 +10,13 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class AddWorkLocationHandler186895605 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.WorkLocations.IWorkLocationScheduleEventStore _workLocationScheduleEventStore;
 
-        public AddWorkLocationHandler186895605(buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.WorkLocations.IWorkLocationScheduleEventStore workLocationScheduleEventStore)
+        public AddWorkLocationHandler186895605(System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.WorkLocations.IWorkLocationScheduleEventStore workLocationScheduleEventStore)
         {
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _workLocationScheduleEventStore = workLocationScheduleEventStore;
         }
@@ -31,7 +34,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.WorkLocations.AddWorkLocationHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.WorkLocations.AddWorkLocationHandler.Handle(addWorkLocation, addWorkLocationValidator, _workLocationScheduleEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.WorkLocations.AddWorkLocationHandler.Handle(addWorkLocation, addWorkLocationValidator, _workLocationScheduleEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

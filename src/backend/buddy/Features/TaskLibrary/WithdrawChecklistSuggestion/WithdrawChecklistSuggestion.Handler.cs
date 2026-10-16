@@ -9,6 +9,7 @@ public static class WithdrawChecklistSuggestionHandler
         WithdrawChecklistSuggestion command,
         ITaskTemplateEventStore templates,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var resolved = await TaskTemplateAccess.ResolveForOwnerAsync(command.TemplateId, command.UserId, templates, guardians, cancellationToken);
@@ -24,6 +25,6 @@ public static class WithdrawChecklistSuggestionHandler
             ChecklistSuggestionStatus.Withdrawn,
             now => [new ChecklistItemSuggestionWithdrawn(command.TemplateId, command.SuggestionId, command.UserId, now)],
             templates,
-            cancellationToken);
+            time, cancellationToken);
     }
 }

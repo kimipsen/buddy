@@ -3,6 +3,7 @@
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -11,12 +12,14 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class SetMemberRoleHandler1174458822 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Calendars.SetMemberRole> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Calendars.ICalendarEventStore _calendarEventStore;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
 
-        public SetMemberRoleHandler1174458822(Microsoft.Extensions.Logging.ILogger<buddy.Features.Calendars.SetMemberRole> loggerForMessage, buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore)
+        public SetMemberRoleHandler1174458822(Microsoft.Extensions.Logging.ILogger<buddy.Features.Calendars.SetMemberRole> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Calendars.ICalendarEventStore calendarEventStore, buddy.Features.Groups.IGroupEventStore groupEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _calendarEventStore = calendarEventStore;
             _groupEventStore = groupEventStore;
         }
@@ -33,7 +36,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Calendars.SetMemberRoleHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Calendars.SetMemberRoleHandler.Handle(setMemberRole, _calendarEventStore, _groupEventStore, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Calendars.SetMemberRoleHandler.Handle(setMemberRole, _calendarEventStore, _groupEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

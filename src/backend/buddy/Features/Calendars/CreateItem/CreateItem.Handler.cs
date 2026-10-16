@@ -16,6 +16,7 @@ public static class CreateItemHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -41,7 +42,7 @@ public static class CreateItemHandler
         }
 
         var itemId = CalendarItemId.New();
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         CalendarItemEvent created;
 
         switch (command.Schedule)

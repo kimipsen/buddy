@@ -22,7 +22,8 @@ public sealed class UserErasure(
     IGroupEventStore groups,
     IKeycloakAdminClient keycloak,
     IEnumerable<IPersonalDataEraser> erasers,
-    ILogger<UserErasure> logger)
+    ILogger<UserErasure> logger,
+    TimeProvider time)
 {
     private readonly IPersonalDataEraser[] _erasers = [.. erasers.OrderBy(e => e.Order)];
 
@@ -216,7 +217,7 @@ public sealed class UserErasure(
             : users.DeleteAsync(
                 user.Id,
                 user.KeycloakSubject,
-                user.IsDeleted ? [] : [new UserDeleted(user.Id, DateTimeOffset.UtcNow)],
+                user.IsDeleted ? [] : [new UserDeleted(user.Id, time.GetUtcNow())],
                 cancellationToken);
 
     // A sibling under the same (active) guardians who isn't being erased and isn't deleted. The same

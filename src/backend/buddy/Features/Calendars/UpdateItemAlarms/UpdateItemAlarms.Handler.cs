@@ -16,6 +16,7 @@ public static class UpdateItemAlarmsHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -53,7 +54,7 @@ public static class UpdateItemAlarmsHandler
 
         await items.AppendAsync(
             command.ItemId,
-            [new ItemAlarmsUpdated(command.ItemId, item.Alarms, command.Alarms, userId, DateTimeOffset.UtcNow)],
+            [new ItemAlarmsUpdated(command.ItemId, item.Alarms, command.Alarms, userId, time.GetUtcNow())],
             cancellationToken);
 
         return new Result<CalendarItem>.Success(item with { Alarms = command.Alarms, LastModifiedBy = userId });

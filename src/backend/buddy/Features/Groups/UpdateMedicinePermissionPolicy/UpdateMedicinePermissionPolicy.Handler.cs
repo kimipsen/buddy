@@ -4,7 +4,7 @@ namespace buddy.Features.Groups;
 
 public static class UpdateMedicinePermissionPolicyHandler
 {
-    public static async Task<Result<Unit>> Handle(UpdateMedicinePermissionPolicy command, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(UpdateMedicinePermissionPolicy command, IGroupEventStore groups, TimeProvider time, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -25,7 +25,7 @@ public static class UpdateMedicinePermissionPolicyHandler
 
         await groups.AppendAsync(
             command.GroupId,
-            [new GroupMedicinePolicyUpdated(command.GroupId, command.Policy, userId, DateTimeOffset.UtcNow)],
+            [new GroupMedicinePolicyUpdated(command.GroupId, command.Policy, userId, time.GetUtcNow())],
             cancellationToken);
 
         return new Result<Unit>.Success(Unit.Value);

@@ -13,6 +13,7 @@ public static class UnshareMealPlanFromGroupHandler
         UnshareMealPlanFromGroup command,
         IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -41,7 +42,7 @@ public static class UnshareMealPlanFromGroupHandler
             return new Result<Unit>.Success(Unit.Value);
         }
 
-        await mealPlans.AppendAsync(mealPlanId, [new MealPlanUnsharedFromGroup(mealPlanId, command.GroupId, userId, DateTimeOffset.UtcNow)], cancellationToken);
+        await mealPlans.AppendAsync(mealPlanId, [new MealPlanUnsharedFromGroup(mealPlanId, command.GroupId, userId, time.GetUtcNow())], cancellationToken);
 
         return new Result<Unit>.Success(Unit.Value);
     }

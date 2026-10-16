@@ -12,6 +12,7 @@ public static class UnshareMedicineFromGroupHandler
         UnshareMedicineFromGroup command,
         IMedicineSharingEventStore sharing,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -39,7 +40,7 @@ public static class UnshareMedicineFromGroupHandler
             return new Result<Unit>.Success(Unit.Value);
         }
 
-        await sharing.AppendAsync(sharingId, [new MedicineUnsharedFromGroup(sharingId, command.GroupId, userId, DateTimeOffset.UtcNow)], cancellationToken);
+        await sharing.AppendAsync(sharingId, [new MedicineUnsharedFromGroup(sharingId, command.GroupId, userId, time.GetUtcNow())], cancellationToken);
 
         return new Result<Unit>.Success(Unit.Value);
     }

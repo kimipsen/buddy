@@ -9,7 +9,7 @@ namespace buddy.Features.Guardians;
 public static class UpdateChildTimeZoneHandler
 {
     public static async Task<Result<ChildSummary>> Handle(
-        UpdateChildTimeZone command, IValidator<UpdateChildTimeZone> validator, IGuardianLinkEventStore guardianLinks, IUserEventStore users, CancellationToken cancellationToken)
+        UpdateChildTimeZone command, IValidator<UpdateChildTimeZone> validator, IGuardianLinkEventStore guardianLinks, IUserEventStore users, TimeProvider time, CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
@@ -37,7 +37,7 @@ public static class UpdateChildTimeZoneHandler
 
         if (child.TimeZoneId != command.TimeZoneId)
         {
-            var timeZoneUpdated = new TimeZoneUpdated(command.ChildId, child.TimeZoneId, command.TimeZoneId, DateTimeOffset.UtcNow);
+            var timeZoneUpdated = new TimeZoneUpdated(command.ChildId, child.TimeZoneId, command.TimeZoneId, time.GetUtcNow());
             await users.AppendAsync(command.ChildId, [timeZoneUpdated], cancellationToken);
             child = child with { TimeZoneId = command.TimeZoneId };
         }

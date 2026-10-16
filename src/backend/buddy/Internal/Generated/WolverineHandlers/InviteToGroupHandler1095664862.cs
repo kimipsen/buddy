@@ -3,6 +3,7 @@
 using buddy.Email;
 using buddy.Features.Groups;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -11,13 +12,15 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class InviteToGroupHandler1095664862 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Groups.InviteToGroup> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Email.FrontendLinks _frontendLinks;
         private readonly buddy.Email.IEmailSender _emailSender;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
 
-        public InviteToGroupHandler1095664862(Microsoft.Extensions.Logging.ILogger<buddy.Features.Groups.InviteToGroup> loggerForMessage, buddy.Email.FrontendLinks frontendLinks, buddy.Email.IEmailSender emailSender, buddy.Features.Groups.IGroupEventStore groupEventStore)
+        public InviteToGroupHandler1095664862(Microsoft.Extensions.Logging.ILogger<buddy.Features.Groups.InviteToGroup> loggerForMessage, System.TimeProvider timeProvider, buddy.Email.FrontendLinks frontendLinks, buddy.Email.IEmailSender emailSender, buddy.Features.Groups.IGroupEventStore groupEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _frontendLinks = frontendLinks;
             _emailSender = emailSender;
             _groupEventStore = groupEventStore;
@@ -35,7 +38,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Groups.InviteToGroupHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Groups.InviteToGroupHandler.Handle(inviteToGroup, _groupEventStore, _emailSender, _frontendLinks, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Groups.InviteToGroupHandler.Handle(inviteToGroup, _groupEventStore, _emailSender, _frontendLinks, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

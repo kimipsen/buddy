@@ -14,6 +14,7 @@ public static class UpdateEmailHandler
         IUserEventStore events,
         IEmailSender emailSender,
         ILogger<UpdateEmail> logger,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -39,7 +40,7 @@ public static class UpdateEmailHandler
         // A verification against the old address says nothing about the new one, so
         // changing the address always drops back to unverified, and a fresh verification
         // is requested for it right away.
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var newEmail = Email.Unverified(command.Value);
         var emailUpdated = new EmailUpdated(userId, user.Email, newEmail, now);
 

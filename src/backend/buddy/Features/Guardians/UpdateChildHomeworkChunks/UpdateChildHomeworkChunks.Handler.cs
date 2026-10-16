@@ -13,6 +13,7 @@ public static class UpdateChildHomeworkChunksHandler
         IValidator<UpdateChildHomeworkChunks> validator,
         IGuardianLinkEventStore guardianLinks,
         IUserEventStore users,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -39,7 +40,7 @@ public static class UpdateChildHomeworkChunksHandler
 
         if (child.HomeworkChunks != command.HomeworkChunks)
         {
-            var updated = new HomeworkChunksUpdated(command.ChildId, child.HomeworkChunks, command.HomeworkChunks, DateTimeOffset.UtcNow);
+            var updated = new HomeworkChunksUpdated(command.ChildId, child.HomeworkChunks, command.HomeworkChunks, time.GetUtcNow());
             await users.AppendAsync(command.ChildId, [updated], cancellationToken);
             child = child with { HomeworkChunks = command.HomeworkChunks };
         }

@@ -15,10 +15,11 @@ public static class GetSharedSleepDiaryEndpoint
             DateOnly? from,
             DateOnly? to,
             IMessageBus bus,
+            TimeProvider time,
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var query = GetSharedSleepDiary.FromRequest(token, from, to);
+            var query = GetSharedSleepDiary.FromRequest(token, from, to, time);
             var result = await bus.InvokeAsync<Result<SharedSleepDiary>>(query, cancellationToken);
 
             return result switch

@@ -3,6 +3,7 @@
 using buddy.Features.Guardians;
 using buddy.Features.SleepDiaries;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -11,19 +12,21 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class CreateSleepDiaryShareLinkHandler1237052590 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.SleepDiaries.CreateSleepDiaryShareLink> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.SleepDiaries.ISleepDiaryShareTokenEventStore _sleepDiaryShareTokenEventStore;
 
-        public CreateSleepDiaryShareLinkHandler1237052590(Microsoft.Extensions.Logging.ILogger<buddy.Features.SleepDiaries.CreateSleepDiaryShareLink> loggerForMessage, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.SleepDiaries.ISleepDiaryShareTokenEventStore sleepDiaryShareTokenEventStore)
+        public CreateSleepDiaryShareLinkHandler1237052590(Microsoft.Extensions.Logging.ILogger<buddy.Features.SleepDiaries.CreateSleepDiaryShareLink> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.SleepDiaries.ISleepDiaryShareTokenEventStore sleepDiaryShareTokenEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _guardianLinkEventStore = guardianLinkEventStore;
             _sleepDiaryShareTokenEventStore = sleepDiaryShareTokenEventStore;
         }
 
         public override async System.Threading.Tasks.Task HandleAsync(Wolverine.Runtime.MessageContext context, System.Threading.CancellationToken cancellation)
         {
-            var createSleepDiaryShareLinkValidator = new buddy.Features.SleepDiaries.CreateSleepDiaryShareLinkValidator();
+            var createSleepDiaryShareLinkValidator = new buddy.Features.SleepDiaries.CreateSleepDiaryShareLinkValidator(_timeProvider);
             // The actual message body
             var createSleepDiaryShareLink = (buddy.Features.SleepDiaries.CreateSleepDiaryShareLink)context.Envelope.Message;
 
@@ -34,7 +37,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.SleepDiaries.CreateSleepDiaryShareLinkHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.SleepDiaries.CreateSleepDiaryShareLinkHandler.Handle(createSleepDiaryShareLink, createSleepDiaryShareLinkValidator, _sleepDiaryShareTokenEventStore, _guardianLinkEventStore, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.SleepDiaries.CreateSleepDiaryShareLinkHandler.Handle(createSleepDiaryShareLink, createSleepDiaryShareLinkValidator, _sleepDiaryShareTokenEventStore, _guardianLinkEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

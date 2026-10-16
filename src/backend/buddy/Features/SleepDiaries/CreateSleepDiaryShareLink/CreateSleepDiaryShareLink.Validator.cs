@@ -8,14 +8,14 @@ public sealed class CreateSleepDiaryShareLinkValidator : AbstractValidator<Creat
 {
     public const int MaxExpiryDays = 365;
 
-    public CreateSleepDiaryShareLinkValidator()
+    public CreateSleepDiaryShareLinkValidator(TimeProvider time)
     {
         RuleFor(x => x.ExpiresAt)
-            .Must(expiresAt => expiresAt is null || expiresAt > DateTimeOffset.UtcNow)
+            .Must(expiresAt => expiresAt is null || expiresAt > time.GetUtcNow())
             .WithMessage("expiresAt must be in the future.");
 
         RuleFor(x => x.ExpiresAt)
-            .Must(expiresAt => expiresAt is null || expiresAt <= DateTimeOffset.UtcNow.AddDays(MaxExpiryDays))
+            .Must(expiresAt => expiresAt is null || expiresAt <= time.GetUtcNow().AddDays(MaxExpiryDays))
             .WithMessage($"expiresAt cannot be more than {MaxExpiryDays} days away.");
     }
 }

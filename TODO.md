@@ -16,8 +16,7 @@
 ### Backend unit tests as the primary test source (2026-10-16)
 
 Make backend unit tests the primary test source, with integration tests on demand. Plan in
-[Backend unit tests](docs/backend/analysis/backend-unit-tests.md); settle its open questions
-(`TimeProvider` in handlers) before phase 4.
+[Backend unit tests](docs/backend/analysis/backend-unit-tests.md).
 
 - [ ] **Phase 1: split the projects.** Add `buddy.UnitTests` (no Docker), move the ~25 pure test
       files and golden files, make `task test:backend` unit-only and add
@@ -26,7 +25,7 @@ Make backend unit tests the primary test source, with integration tests on deman
       tests against fakes and Marten, event builders, recording fakes for Keycloak, mail and AI.
 - [ ] **Phase 3: validators and pure domain.** The 93 validators, aggregate `Rehydrate`, and the
       authorization helpers.
-- [ ] **Phase 4: handlers, domain by domain.** `TimeProvider` plus one test class per handler for
+- [ ] **Phase 4: handlers, domain by domain.** One test class per handler for
       each of the 19 feature folders; trim duplicated integration tests.
 - [ ] **Phase 5: tooling.** Run Stryker against the unit project; update `backend-feature`,
       `claude-backend`, `mutation-fix-backend` and `feature-from-analysis`.
@@ -805,3 +804,6 @@ they reuse data the app already keeps. Each has a design doc.
       committed (`task codegen:backend`, checked in CI), extra test hosts are shared per class
       (`BuddyApiFixture.SharedHostAsync`) and Keycloak is capped. A full run peaks at about 0.9 GB
       in the test process instead of 7.7 GB+ (2026-10-16).
+- [x] **Inject the clock.** All production code takes an injected `TimeProvider` (handlers,
+      services, static helpers); `DateTimeOffset.UtcNow` and friends are banned in the API project
+      (`buddy/BannedSymbols.txt`, build error RS0030) (2026-10-16).

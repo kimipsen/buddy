@@ -10,6 +10,7 @@ public static class SetChecklistOptionsHandler
         SetChecklistOptions command,
         ITaskTemplateEventStore templates,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -34,7 +35,7 @@ public static class SetChecklistOptionsHandler
             return new Result<TaskTemplate>.Success(loaded.Template);
         }
 
-        var changed = new ChecklistOptionsChanged(command.TemplateId, before, after, userId, DateTimeOffset.UtcNow);
+        var changed = new ChecklistOptionsChanged(command.TemplateId, before, after, userId, time.GetUtcNow());
 
         await templates.AppendAsync(command.TemplateId, [changed], cancellationToken);
 

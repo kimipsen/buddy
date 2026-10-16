@@ -3,6 +3,7 @@
 using buddy.Features.Groups;
 using buddy.Features.Users;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -11,12 +12,14 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class AcceptGroupInviteHandler742568617 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.Groups.AcceptGroupInvite> _loggerForMessage;
+        private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.Groups.IGroupEventStore _groupEventStore;
         private readonly buddy.Features.Users.IUserEventStore _userEventStore;
 
-        public AcceptGroupInviteHandler742568617(Microsoft.Extensions.Logging.ILogger<buddy.Features.Groups.AcceptGroupInvite> loggerForMessage, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Users.IUserEventStore userEventStore)
+        public AcceptGroupInviteHandler742568617(Microsoft.Extensions.Logging.ILogger<buddy.Features.Groups.AcceptGroupInvite> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.Groups.IGroupEventStore groupEventStore, buddy.Features.Users.IUserEventStore userEventStore)
         {
             _loggerForMessage = loggerForMessage;
+            _timeProvider = timeProvider;
             _groupEventStore = groupEventStore;
             _userEventStore = userEventStore;
         }
@@ -33,7 +36,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Groups.AcceptGroupInviteHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Groups.AcceptGroupInviteHandler.Handle(acceptGroupInvite, _groupEventStore, _userEventStore, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Groups.AcceptGroupInviteHandler.Handle(acceptGroupInvite, _groupEventStore, _userEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

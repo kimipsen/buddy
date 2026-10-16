@@ -10,6 +10,7 @@ public static class ArchiveMealHandler
         ArchiveMeal command,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -21,13 +22,13 @@ public static class ArchiveMealHandler
             return access.ToDeniedResult<Unit>();
         }
 
-        return await ArchiveForChildAsync(command.ChildId, command.MealId, userId, meals, guardians, cancellationToken);
+        return await ArchiveForChildAsync(command.ChildId, command.MealId, userId, meals, guardians, time, cancellationToken);
     }
 
     // Shared with ArchiveMealForGroupHandler -- see CreateMealHandler.CreateForChildAsync for the
     // same pattern and rationale.
     internal static async Task<Result<Unit>> ArchiveForChildAsync(
-        UserId childId, MealId mealId, UserId modifiedBy, IMealEventStore meals, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+        UserId childId, MealId mealId, UserId modifiedBy, IMealEventStore meals, IGuardianLinkEventStore guardians, TimeProvider time, CancellationToken cancellationToken)
     {
         var events = await meals.ReadAsync(mealId, cancellationToken);
         var meal = Meal.Rehydrate(events);
@@ -44,7 +45,7 @@ public static class ArchiveMealHandler
             return new Result<Unit>.NotFound();
         }
 
-        await meals.AppendAsync(mealId, [new MealArchived(mealId, modifiedBy, DateTimeOffset.UtcNow)], cancellationToken);
+        await meals.AppendAsync(mealId, [new MealArchived(mealId, modifiedBy, time.GetUtcNow())], cancellationToken);
 
         return new Result<Unit>.Success(Unit.Value);
     }

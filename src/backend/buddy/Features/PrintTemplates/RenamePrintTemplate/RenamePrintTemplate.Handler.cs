@@ -15,6 +15,7 @@ public static class RenamePrintTemplateHandler
         IPrintTemplateEventStore store,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -38,7 +39,7 @@ public static class RenamePrintTemplateHandler
             return new Result<PrintTemplateResponse>.Success(PrintTemplateResponse.From(template));
         }
 
-        var renamed = new PrintTemplateRenamed(template.Id, template.Name, name, userId, DateTimeOffset.UtcNow);
+        var renamed = new PrintTemplateRenamed(template.Id, template.Name, name, userId, time.GetUtcNow());
         var after = PrintTemplate.Advance(template, renamed);
 
         await store.AppendAsync(template.Id, [renamed], PrintTemplateIndexDocument.From(after), cancellationToken);

@@ -14,6 +14,7 @@ public static class ReorderRulesHandler
         IRuleBookEventStore books,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         var access = await HouseRulesAuthorization.CheckManage(command.Scope, command.UserId, groups, guardians, cancellationToken);
@@ -45,7 +46,7 @@ public static class ReorderRulesHandler
                 command.Scope, HouseRulesAccessTier.Manage, loaded.Book, command.UserId, groups, guardians, cancellationToken));
         }
 
-        var reordered = new RulesReordered(command.Scope.BookId, before, command.NewOrder, command.UserId, DateTimeOffset.UtcNow);
+        var reordered = new RulesReordered(command.Scope.BookId, before, command.NewOrder, command.UserId, time.GetUtcNow());
 
         await books.AppendAsync(command.Scope.BookId, [reordered], cancellationToken);
 

@@ -13,6 +13,7 @@ public static class SetWorkLocationOverridesHandler
         IValidator<SetWorkLocationOverrides> validator,
         IWorkLocationScheduleEventStore store,
         IGuardianLinkEventStore guardians,
+        TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -29,7 +30,7 @@ public static class SetWorkLocationOverridesHandler
             return access.ToDeniedResult<IReadOnlyCollection<WorkDay>>();
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = time.GetUtcNow();
         var loaded = await WorkLocationScheduleWriter.LoadAsync(store, userId, now, cancellationToken);
         var schedule = loaded.Schedule;
 

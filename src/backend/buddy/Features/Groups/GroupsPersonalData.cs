@@ -16,7 +16,8 @@ public sealed class GroupsPersonalDataEraser(
     IGroupEventStore groups,
     ICalendarEventStore calendars,
     IGuardianLinkEventStore guardians,
-    IUserEventStore users) : IPersonalDataEraser
+    IUserEventStore users,
+    TimeProvider time) : IPersonalDataEraser
 {
     public Type Store => typeof(IGroupsStore);
 
@@ -50,7 +51,7 @@ public sealed class GroupsPersonalDataEraser(
                 continue;
             }
 
-            var now = DateTimeOffset.UtcNow;
+            var now = time.GetUtcNow();
 
             if (role != GroupRole.Owner)
             {
@@ -82,13 +83,13 @@ public sealed class GroupsPersonalDataEraser(
         {
             var calendarId = new CalendarId(owned.Id);
             await calendars.EraseAsync(calendarId, cancellationToken);
-            await calendars.AppendAsync(calendarId, [new CalendarDeleted(calendarId, erasedBy, DateTimeOffset.UtcNow)], cancellationToken);
+            await calendars.AppendAsync(calendarId, [new CalendarDeleted(calendarId, erasedBy, time.GetUtcNow())], cancellationToken);
         }
 
         await store.MaskStreamAsync<GroupSnapshot>(groupId.Value, cancellationToken);
         await RewriteInvitesAsync(d => d.GroupId == groupId.Value, eraseGroupName: true, cancellationToken);
 
-        await groups.AppendAsync(groupId, [new GroupDeleted(groupId, erasedBy, DateTimeOffset.UtcNow)], cancellationToken);
+        await groups.AppendAsync(groupId, [new GroupDeleted(groupId, erasedBy, time.GetUtcNow())], cancellationToken);
     }
 
     private async Task EraseInvitesAsync(ErasureSubject person, CancellationToken cancellationToken)
@@ -114,7 +115,7 @@ public sealed class GroupsPersonalDataEraser(
             [
                 .. byGroup
                     .Where(i => i.Status == GroupInviteStatus.Pending)
-                    .Select(i => (GroupEvent)new GroupInviteRevoked(groupId, i.Id, person.UserId, DateTimeOffset.UtcNow))
+                    .Select(i => (GroupEvent)new GroupInviteRevoked(groupId, i.Id, person.UserId, time.GetUtcNow()))
             ];
             await groups.AppendAsync(groupId, revocations, cancellationToken);
 
