@@ -1,0 +1,128 @@
+@let saveState = saving.state();
+
+<app-card>
+  <h3 class="text-lg font-semibold tracking-normal">
+    {{
+      (editing() ? 'visitSummaries.editor.editTitle' : 'visitSummaries.editor.newTitle') | translate
+    }}
+  </h3>
+
+  <form class="mt-4 space-y-5" (ngSubmit)="save()">
+    <div class="grid gap-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div>
+        <label class="block text-sm font-medium" [for]="titleId">{{
+          'visitSummaries.editor.titleLabel' | translate
+        }}</label>
+        <input
+          [id]="titleId"
+          name="title"
+          type="text"
+          class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+          [maxlength]="maxTitleLength"
+          [placeholder]="'visitSummaries.editor.titlePlaceholder' | translate"
+          [ngModel]="title()"
+          (ngModelChange)="title.set($event)"
+        />
+      </div>
+      <div>
+        <span class="block text-sm font-medium">{{
+          'visitSummaries.editor.visitDateLabel' | translate
+        }}</span>
+        <div class="mt-1">
+          <app-date-select
+            [value]="visitDate()"
+            [ariaLabel]="'visitSummaries.editor.visitDateLabel' | translate"
+            (valueChange)="visitDate.set($event)"
+          />
+        </div>
+      </div>
+    </div>
+
+    <fieldset>
+      <legend class="text-sm font-medium">
+        {{ 'visitSummaries.editor.periodLabel' | translate }}
+      </legend>
+      <div class="mt-2">
+        <app-segmented-control
+          [options]="presetOptions()"
+          [selected]="preset()"
+          [ariaLabel]="'visitSummaries.editor.periodLabel' | translate"
+          (selectedChange)="choosePreset($event)"
+        />
+      </div>
+      <div class="mt-3 flex flex-wrap items-center gap-3 text-sm">
+        <span>{{ 'visitSummaries.editor.fromLabel' | translate }}</span>
+        <app-date-select
+          [value]="from()"
+          [ariaLabel]="'visitSummaries.editor.fromLabel' | translate"
+          (valueChange)="setFrom($event)"
+        />
+        <span>{{ 'visitSummaries.editor.toLabel' | translate }}</span>
+        <app-date-select
+          [value]="to()"
+          [ariaLabel]="'visitSummaries.editor.toLabel' | translate"
+          (valueChange)="setTo($event)"
+        />
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend class="text-sm font-medium">
+        {{ 'visitSummaries.editor.sectionsLabel' | translate }}
+      </legend>
+      <ul class="mt-2 flex flex-wrap gap-x-6 gap-y-2">
+        @for (section of allSections; track section) {
+          <li class="flex items-center gap-2 text-sm">
+            <app-toggle
+              [checked]="hasSection(section)"
+              [ariaLabel]="'visitSummaries.sections.' + section | translate"
+              (checkedChange)="toggleSection(section, $event)"
+            />
+            <span aria-hidden="true">{{ 'visitSummaries.sections.' + section | translate }}</span>
+          </li>
+        }
+      </ul>
+    </fieldset>
+
+    <div>
+      <label class="block text-sm font-medium" [for]="noteId">{{
+        'visitSummaries.editor.noteLabel' | translate
+      }}</label>
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        {{ 'visitSummaries.editor.noteHelp' | translate }}
+      </p>
+      <textarea
+        [id]="noteId"
+        name="note"
+        rows="5"
+        class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+        [maxlength]="maxNoteLength"
+        [ngModel]="note()"
+        (ngModelChange)="note.set($event)"
+      ></textarea>
+    </div>
+
+    @if (saveState.status === 'error') {
+      <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+        {{ saveState.message | translate }}
+      </p>
+    }
+
+    <div class="flex flex-wrap gap-3">
+      <button
+        type="submit"
+        class="rounded-lg bg-emerald-600 dark:bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 dark:hover:bg-emerald-400 disabled:bg-slate-300 disabled:text-slate-500 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
+        [disabled]="saving.busy()"
+      >
+        {{ 'visitSummaries.editor.save' | translate }}
+      </button>
+      <button
+        type="button"
+        class="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+        (click)="cancelled.emit()"
+      >
+        {{ 'visitSummaries.editor.cancel' | translate }}
+      </button>
+    </div>
+  </form>
+</app-card>

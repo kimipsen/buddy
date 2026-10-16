@@ -929,6 +929,34 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       }
     })();
 
+    // Doctor visit summary (docs/backend/analysis/doctor-visit-summary.md) ----------------------
+    // Emil's next follow-up: the last four weeks, which take in the 10 mg weeks, the dose change,
+    // the logged nights and the feelings above, with Sara's questions and a link for the clinic.
+    const visitSummary = await (async () => {
+      try {
+        const summary = await api.post<{ id: string }>(`/visit-summaries/children/${emil.id}`, {
+          title: 'Follow-up with Dr. Lund',
+          visitDate: inDays(5),
+          from: inDays(-27),
+          to: inDays(0),
+          sections: ['Medicine', 'Sleep', 'Feelings'],
+          note:
+            'The morning dose went up two weeks ago. School says mornings are calmer, but the afternoons after school are harder, especially on bus days.\n' +
+            '- Is the afternoon crash the medicine wearing off?\n' +
+            '- Appetite at lunch is poor since the change. Should we watch his weight?\n' +
+            '- Falling asleep takes longer on school nights. Should we move the melatonin earlier?',
+        });
+        const link = await api.post<{ token: string }>(
+          `/visit-summaries/children/${emil.id}/${summary.id}/share-links`,
+          { expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() },
+        );
+        return { id: summary.id, token: link.token };
+      } catch (error: unknown) {
+        warn(error);
+        return null;
+      }
+    })();
+
     // First – Then board (docs/backend/analysis/first-then-board.md) -----------------------------
     // Two earlier boards, so the guardian form has "Used before" cards, then today's
     // "Homework → iPad, 20 min", which Emil has ticked: his page shows the Then unlocked with the
@@ -1145,6 +1173,8 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       guardianInviteToken: await inviteTokenFromMail('demo.coparent@buddy.test', 'guardian-invite'),
       sleepDiaryShareToken: sleepShare?.token ?? null,
       feelingsShareToken: feelingsShare?.token ?? null,
+      visitSummaryId: visitSummary?.id ?? null,
+      visitSummaryShareToken: visitSummary?.token ?? null,
       childId: emil.id,
       groupId: group.id,
       morningRoutineItemId: morningItem.id,

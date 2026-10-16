@@ -25,6 +25,7 @@ const ALL_ON: InstallationFeatures = {
   transitionWarnings: true,
   feelings: true,
   firstThen: true,
+  visitSummaries: true,
   homework: true,
   help: true,
 };

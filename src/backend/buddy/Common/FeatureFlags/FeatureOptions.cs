@@ -28,6 +28,10 @@ public sealed class FeatureOptions
     public bool Feelings { get; set; } = true;
     public bool FirstThen { get; set; } = true;
 
+    // Reads the sleep diary, medicines and feelings; with all three off there is nothing to report,
+    // so it follows them like a sub-flag of all three.
+    public bool VisitSummaries { get; set; } = true;
+
     // Frontend-only sessions; the backend part is the per-child lengths route in Guardians.
     public bool Homework { get; set; } = true;
 
@@ -52,6 +56,7 @@ public sealed class FeatureOptions
         TransitionWarnings,
         Feelings,
         FirstThen,
+        VisitSummaries && (SleepDiary || Medicines || Feelings),
         Homework,
         Help);
 
@@ -67,6 +72,11 @@ public sealed class FeatureOptions
         if (!Mealplans && MealplanImport)
         {
             overridden.Add(nameof(MealplanImport));
+        }
+
+        if (VisitSummaries && !(SleepDiary || Medicines || Feelings))
+        {
+            overridden.Add(nameof(VisitSummaries));
         }
 
         return overridden;
@@ -90,5 +100,6 @@ public sealed record InstallationFeatures(
     bool TransitionWarnings,
     bool Feelings,
     bool FirstThen,
+    bool VisitSummaries,
     bool Homework,
     bool Help);

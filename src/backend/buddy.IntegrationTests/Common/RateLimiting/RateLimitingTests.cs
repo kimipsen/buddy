@@ -21,6 +21,7 @@ public sealed class RateLimitingTests(BuddyApiFixture fixture) : IAsyncLifetime
     private const int UserBurst = 3;
     private const int IpBurst = 3;
     private const int FeedBurst = 2;
+    private const int VisitSummaryShareBurst = 2;
     private const string AllowedOrigin = "https://app.rate-limit.test";
     private const string TrustedProxyNetwork = "10.0.0.0/8";
 
@@ -45,6 +46,8 @@ public sealed class RateLimitingTests(BuddyApiFixture fixture) : IAsyncLifetime
             ["RateLimiting:OutboundEmail:Window"] = "01:00:00",
             ["RateLimiting:PersonalDataExport:PermitLimit"] = "1",
             ["RateLimiting:PersonalDataExport:Window"] = "01:00:00",
+            ["RateLimiting:VisitSummaryShare:PermitLimit"] = $"{VisitSummaryShareBurst}",
+            ["RateLimiting:VisitSummaryShare:Window"] = "01:00:00",
             ["Cors:AllowedOrigins:0"] = AllowedOrigin,
             ["ForwardedHeaders:KnownNetworks:0"] = TrustedProxyNetwork
         });
@@ -215,6 +218,21 @@ public sealed class RateLimitingTests(BuddyApiFixture fixture) : IAsyncLifetime
         }
 
         Assert.Equal(429, await StatusAsync(Get(feed, NewClientIp())));
+    }
+
+    [Fact]
+    public async Task A_shared_visit_summary_link_over_its_window_gets_429_but_another_token_does_not()
+    {
+        var hammered = $"/visit-summaries/shared/{Guid.NewGuid():N}";
+
+        // A fresh IP per request, so only the per-link policy can be what throttles.
+        for (var i = 0; i < VisitSummaryShareBurst; i++)
+        {
+            Assert.Equal(404, await StatusAsync(Get(hammered, NewClientIp())));
+        }
+
+        Assert.Equal(429, await StatusAsync(Get(hammered, NewClientIp())));
+        Assert.Equal(404, await StatusAsync(Get($"/visit-summaries/shared/{Guid.NewGuid():N}", NewClientIp())));
     }
 
     [Theory]

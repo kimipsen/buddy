@@ -2,6 +2,7 @@ using buddy.Common.Erasure;
 using buddy.Common.Http;
 using buddy.Common.OpenApi;
 using buddy.Common.Postgres;
+using buddy.Features.VisitSummaries;
 using buddy.Serialization;
 
 using JasperFx.Events;
@@ -65,6 +66,8 @@ public static class SleepDiariesFeature
 
         services.AddSingleton<ISleepDiaryEventStore, MartenSleepDiaryEventStore>();
         services.AddSingleton<ISleepDiaryShareTokenEventStore, MartenSleepDiaryShareTokenEventStore>();
+        // The sleep section of a doctor visit summary (Features/VisitSummaries).
+        services.AddSingleton<IVisitSummarySectionSource, SleepDiaryVisitSummarySource>();
 
         return services;
     }

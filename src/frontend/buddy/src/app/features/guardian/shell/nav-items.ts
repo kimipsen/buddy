@@ -56,6 +56,11 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         tab: { label: 'shell.tabs.sleep', icon: 'sleep' },
       },
       { link: '/guardian/feelings', label: 'shell.nav.items.feelings', feature: 'feelings' },
+      {
+        link: '/guardian/visit-summaries',
+        label: 'shell.nav.items.visitSummaries',
+        feature: 'visitSummaries',
+      },
     ],
   },
   {

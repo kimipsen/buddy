@@ -28,6 +28,7 @@ export const shell = {
       medicine: 'Medicin',
       sleepDiary: 'Søvndagbog',
       feelings: 'Følelser',
+      visitSummaries: 'Lægebesøg',
       taskLibrary: 'Opgavebibliotek',
       houseRules: 'Husregler',
       transitionWarnings: 'Varsel før skift',

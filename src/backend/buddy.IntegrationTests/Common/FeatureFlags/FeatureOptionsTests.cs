@@ -22,7 +22,7 @@ public sealed class FeatureOptionsTests
         using var provider = services.BuildServiceProvider();
 
         Assert.Equal(
-            new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true),
+            new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true),
             provider.GetRequiredService<IOptions<FeatureOptions>>().Value.Effective());
     }
 
@@ -32,5 +32,15 @@ public sealed class FeatureOptionsTests
         Assert.Equal(["MealplanAiAssistant", "MealplanImport"], new FeatureOptions { Mealplans = false }.SubFlagsOverriddenByParent());
         Assert.Equal(["MealplanImport"], new FeatureOptions { Mealplans = false, MealplanAiAssistant = false }.SubFlagsOverriddenByParent());
         Assert.Empty(new FeatureOptions { MealplanAiAssistant = false }.SubFlagsOverriddenByParent());
+        Assert.Equal(["VisitSummaries"], new FeatureOptions { SleepDiary = false, Medicines = false, Feelings = false }.SubFlagsOverriddenByParent());
+        Assert.Empty(new FeatureOptions { SleepDiary = false, Medicines = false }.SubFlagsOverriddenByParent());
+    }
+
+    [Fact]
+    public void Visit_summaries_stay_on_while_any_feature_they_report_on_is_on()
+    {
+        Assert.True(new FeatureOptions { SleepDiary = false, Medicines = false }.Effective().VisitSummaries);
+        Assert.False(new FeatureOptions { SleepDiary = false, Medicines = false, Feelings = false }.Effective().VisitSummaries);
+        Assert.False(new FeatureOptions { VisitSummaries = false }.Effective().VisitSummaries);
     }
 }

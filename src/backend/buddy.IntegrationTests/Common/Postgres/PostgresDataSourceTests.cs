@@ -16,6 +16,7 @@ using buddy.Features.SleepDiaries;
 using buddy.Features.TaskLibrary;
 using buddy.Features.TransitionWarnings;
 using buddy.Features.Users;
+using buddy.Features.VisitSummaries;
 using buddy.Features.WorkLocations;
 using buddy.IntegrationTests.Fixtures;
 
@@ -101,6 +102,7 @@ public sealed class PostgresDataSourceHostTests(BuddyApiFixture fixture)
         typeof(ITransitionWarningsStore),
         typeof(IFeelingsStore),
         typeof(IFirstThenStore),
+        typeof(IVisitSummariesStore),
         typeof(IIdempotencyStore),
         typeof(IDataProtectionStore)
     ];

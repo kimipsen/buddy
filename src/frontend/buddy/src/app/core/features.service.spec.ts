@@ -29,6 +29,7 @@ describe('FeaturesService', () => {
     transitionWarnings: true,
     feelings: true,
     firstThen: true,
+    visitSummaries: true,
     homework: true,
     help: true,
   };

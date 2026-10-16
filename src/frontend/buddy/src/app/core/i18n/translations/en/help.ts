@@ -288,6 +288,35 @@ export const help = {
         },
       },
     },
+    visitSummaries: {
+      title: 'Doctor visits',
+      link: 'Open the visit summaries',
+      sections: {
+        prepare: {
+          title: 'Prepare a visit summary',
+          body: 'A visit summary is one report for a period you choose, for example the four weeks since the last appointment. Buddy fills it from what you have already logged; you only add your own questions.',
+          steps: {
+            s1: 'Press "New summary".',
+            s2: 'Give it a title and, if you know it, the date of the visit.',
+            s3: 'Choose the period and which parts the report shows: medicine, sleep and feelings.',
+            s4: 'Write what has changed and what you want to ask, then press "Save summary".',
+          },
+        },
+        whatItShows: {
+          title: 'What the report shows',
+          body: 'An overview with one row per week, then the medicine doses taken and skipped (also for a medicine you stopped during the period), the effect notes by dose, sleep averages and the feelings by time of day. Notes your child wrote in their own check-ins are never included. The report always shows your latest entries, so a night you correct later is corrected in the report too.',
+        },
+        share: {
+          title: 'Print it or share it with the doctor',
+          body: 'Press "Print" for an A4 printout. A share link lets the doctor read the report without a Buddy account, for exactly the period you chose. Deleting the summary stops all its links.',
+          steps: {
+            s1: 'Under "Share with the doctor", choose when the link expires.',
+            s2: 'Press "Create link".',
+            s3: 'Copy the link right away, because it is only shown once, and send it to the clinic.',
+          },
+        },
+      },
+    },
     houseRules: {
       title: 'House rules',
       sections: {

@@ -2,6 +2,7 @@ using buddy.Common.Erasure;
 using buddy.Common.Http;
 using buddy.Common.OpenApi;
 using buddy.Common.Postgres;
+using buddy.Features.VisitSummaries;
 using buddy.Serialization;
 
 using JasperFx.Events;
@@ -76,6 +77,8 @@ public static class FeelingsFeature
 
         services.AddSingleton<IFeelingsJournalEventStore, MartenFeelingsJournalEventStore>();
         services.AddSingleton<IFeelingsShareTokenEventStore, MartenFeelingsShareTokenEventStore>();
+        // The feelings section of a doctor visit summary (Features/VisitSummaries).
+        services.AddSingleton<IVisitSummarySectionSource, FeelingsVisitSummarySource>();
 
         return services;
     }

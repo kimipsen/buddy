@@ -1,0 +1,93 @@
+@let deleteState = deleting.state();
+
+<app-page
+  backLink="/guardian/visit-summaries"
+  [backLabel]="'visitSummaries.page.backToList' | translate"
+>
+  @if (loaded.isLoading() && !loaded.hasValue()) {
+    <app-loading-spinner [label]="'visitSummaries.loading' | translate" />
+  } @else if (notFound()) {
+    <p class="text-sm text-slate-600 dark:text-slate-300">
+      {{ 'visitSummaries.page.notFound' | translate }}
+    </p>
+  } @else if (loaded.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400">
+      {{ 'visitSummaries.loadError' | translate }}
+    </p>
+  } @else if (loaded.hasValue()) {
+    @let current = loaded.value();
+
+    <div class="mb-6 flex flex-wrap items-center gap-3">
+      @if (!editing()) {
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+          (click)="editing.set(true)"
+        >
+          {{ 'visitSummaries.page.edit' | translate }}
+        </button>
+      }
+      <a
+        class="rounded-lg bg-emerald-600 dark:bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 dark:hover:bg-emerald-400"
+        [routerLink]="['/guardian/visit-summaries/print', childId, summaryId]"
+      >
+        {{ 'visitSummaries.page.print' | translate }}
+      </a>
+      <div class="ml-auto flex flex-wrap items-center gap-2">
+        @if (confirmingDelete()) {
+          <span class="text-sm text-slate-700 dark:text-slate-300">{{
+            'visitSummaries.page.deleteConfirm' | translate
+          }}</span>
+          <button
+            type="button"
+            class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+            [disabled]="deleting.busy()"
+            (click)="delete()"
+          >
+            {{ 'visitSummaries.page.deleteYes' | translate }}
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
+            (click)="confirmingDelete.set(false)"
+          >
+            {{ 'visitSummaries.page.deleteNo' | translate }}
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+            (click)="confirmingDelete.set(true)"
+          >
+            {{ 'visitSummaries.page.delete' | translate }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (deleteState.status === 'error') {
+      <p class="mb-4 text-sm text-red-600 dark:text-red-400">
+        {{ deleteState.message | translate }}
+      </p>
+    }
+
+    @if (editing()) {
+      <app-visit-summary-editor
+        class="mb-6 block"
+        [childId]="childId"
+        [summary]="current.summary"
+        (saved)="onSaved()"
+        (cancelled)="editing.set(false)"
+      />
+    }
+
+    <div class="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
+      <app-visit-summary-report [report]="current.report" />
+      <app-visit-summary-share-links
+        class="block self-start"
+        [summary]="current.summary"
+        (changed)="reload()"
+      />
+    </div>
+  }
+</app-page>

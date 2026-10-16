@@ -24,6 +24,7 @@ import { sleepDiary } from './sleep-diary';
 import { taskLibrary } from './task-library';
 import { transitionWarnings } from './transition-warnings';
 import { verifyEmail } from './verify-email';
+import { visitSummaries } from './visit-summaries';
 import { workLocations } from './work-locations';
 
 export const en = {
@@ -53,5 +54,6 @@ export const en = {
   taskLibrary,
   transitionWarnings,
   verifyEmail,
+  visitSummaries,
   workLocations,
 };

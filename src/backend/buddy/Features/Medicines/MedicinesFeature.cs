@@ -2,6 +2,7 @@ using buddy.Common.Erasure;
 using buddy.Common.Http;
 using buddy.Common.OpenApi;
 using buddy.Common.Postgres;
+using buddy.Features.VisitSummaries;
 using buddy.Serialization;
 
 using JasperFx.Events;
@@ -90,6 +91,8 @@ public static class MedicinesFeature
         services.AddSingleton<IMedicineEventStore, MartenMedicineEventStore>();
         services.AddSingleton<IMedicineSharingEventStore, MartenMedicineSharingEventStore>();
         services.AddSingleton<IMedicineEffectLogEventStore, MartenMedicineEffectLogEventStore>();
+        // The medicine section of a doctor visit summary (Features/VisitSummaries).
+        services.AddSingleton<IVisitSummarySectionSource, MedicineVisitSummarySource>();
 
         return services;
     }

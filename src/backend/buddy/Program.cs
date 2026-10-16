@@ -29,6 +29,7 @@ using buddy.Features.SleepDiaries;
 using buddy.Features.TaskLibrary;
 using buddy.Features.TransitionWarnings;
 using buddy.Features.Users;
+using buddy.Features.VisitSummaries;
 using buddy.Features.WorkLocations;
 using buddy.Serialization;
 
@@ -137,6 +138,9 @@ builder.Services.AddTransitionWarningsFeature(builder.Configuration);
 // After Users and Guardians: authorization reads IGuardianLinkEventStore, the last modifier's name
 // IUserEventStore.
 builder.Services.AddFirstThenFeature(builder.Configuration);
+// After Users and Guardians: authorization reads IGuardianLinkEventStore, the report's names
+// IUserEventStore. The report's sections come from SleepDiaries, Medicines and Feelings.
+builder.Services.AddVisitSummariesFeature(builder.Configuration);
 // Last: erasure orchestrates every feature's IPersonalDataEraser.
 builder.Services.AddPrivacyFeature();
 
@@ -263,6 +267,11 @@ if (features.TransitionWarnings)
 if (features.FirstThen)
 {
     app.MapFirstThenFeature();
+}
+
+if (features.VisitSummaries)
+{
+    app.MapVisitSummariesFeature();
 }
 
 // JasperFx command line: no arguments runs the API as before; `projections --rebuild --store <name>`

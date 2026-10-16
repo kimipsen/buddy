@@ -75,7 +75,10 @@ describe('NavMenu', () => {
         heading: 'Every day',
         links: ['Today', 'Calendar', 'Meal planner', 'Pickup & drop-off'],
       },
-      { heading: 'Health & well-being', links: ['Medicine', 'Sleep diary', 'Feelings'] },
+      {
+        heading: 'Health & well-being',
+        links: ['Medicine', 'Sleep diary', 'Feelings', 'Doctor visits'],
+      },
       {
         heading: 'Routines',
         links: [
@@ -94,7 +97,7 @@ describe('NavMenu', () => {
   });
 
   it('leaves out turned-off features, and a group with nothing left in it', async () => {
-    disableFeatures('medicines', 'sleepDiary', 'feelings', 'pickups');
+    disableFeatures('medicines', 'sleepDiary', 'feelings', 'visitSummaries', 'pickups');
     const { root, toggle, click } = await setup();
 
     click(toggle());

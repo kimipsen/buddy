@@ -1,0 +1,27 @@
+{
+  "Id": "00000000-0000-0000-0000-0000000000c0",
+  "Before": {
+    "Title": "Follow-up with Dr. Lund",
+    "VisitDate": "2025-06-30",
+    "From": "2025-06-01",
+    "To": "2025-06-28",
+    "Sections": [
+      "Medicine",
+      "Sleep",
+      "Feelings"
+    ],
+    "Note": "Afternoons are harder since the dose change."
+  },
+  "After": {
+    "Title": "Follow-up with Dr. Lund",
+    "VisitDate": null,
+    "From": "2025-06-01",
+    "To": "2025-06-28",
+    "Sections": [
+      "Medicine"
+    ],
+    "Note": ""
+  },
+  "ModifiedBy": "00000000-0000-0000-0000-000000000001",
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

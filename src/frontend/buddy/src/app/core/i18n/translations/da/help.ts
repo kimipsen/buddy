@@ -289,6 +289,35 @@ export const help = {
         },
       },
     },
+    visitSummaries: {
+      title: 'Lægebesøg',
+      link: 'Åbn besøgsoversigterne',
+      sections: {
+        prepare: {
+          title: 'Forbered en besøgsoversigt',
+          body: 'En besøgsoversigt er én rapport for en periode, du vælger, for eksempel de fire uger siden sidste aftale. Buddy fylder den ud med det, du allerede har registreret; du skriver kun dine egne spørgsmål.',
+          steps: {
+            s1: 'Tryk på "Ny oversigt".',
+            s2: 'Giv den en titel og, hvis du kender den, datoen for besøget.',
+            s3: 'Vælg perioden, og hvilke dele rapporten viser: medicin, søvn og følelser.',
+            s4: 'Skriv hvad der har ændret sig, og hvad du vil spørge om, og tryk på "Gem oversigt".',
+          },
+        },
+        whatItShows: {
+          title: 'Det viser rapporten',
+          body: 'Et overblik med én række pr. uge, derefter de doser, der er taget og sprunget over (også for medicin, der blev stoppet i perioden), virkningsnoterne pr. dosis, søvngennemsnit og følelserne fordelt over dagen. Noter, dit barn selv har skrevet, kommer aldrig med. Rapporten viser altid dine nyeste registreringer, så en nat, du retter senere, også er rettet i rapporten.',
+        },
+        share: {
+          title: 'Udskriv den eller del den med lægen',
+          body: 'Tryk på "Udskriv" for en A4-udskrift. Et delingslink lader lægen læse rapporten uden en Buddy-konto, for præcis den periode, du valgte. Når oversigten slettes, holder alle dens links op med at virke.',
+          steps: {
+            s1: 'Under "Del med lægen" vælger du, hvornår linket udløber.',
+            s2: 'Tryk på "Opret link".',
+            s3: 'Kopiér linket med det samme, for det vises kun én gang, og send det til klinikken.',
+          },
+        },
+      },
+    },
     houseRules: {
       title: 'Husregler',
       sections: {

@@ -84,6 +84,13 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     related: ['sleepDiary', 'medicine'],
   },
   {
+    id: 'visitSummaries',
+    feature: 'visitSummaries',
+    sections: [{ id: 'prepare', steps: 4 }, { id: 'whatItShows' }, { id: 'share', steps: 3 }],
+    related: ['sleepDiary', 'medicine', 'feelings'],
+    link: '/guardian/visit-summaries',
+  },
+  {
     id: 'houseRules',
     feature: 'houseRules',
     sections: [

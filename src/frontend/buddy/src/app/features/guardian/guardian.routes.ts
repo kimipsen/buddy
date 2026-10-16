@@ -26,6 +26,9 @@ import { GuardianFeelings } from './feelings/feelings';
 import { GuardianFirstThen } from './first-then/first-then';
 import { GuardianTransitionWarnings } from './transition-warnings/transition-warnings';
 import { GuardianTaskLibrary } from './task-library/task-library';
+import { GuardianVisitSummaries } from './visit-summaries/visit-summaries';
+import { VisitSummaryPrintPage } from './visit-summaries/print/visit-summary-print-page';
+import { VisitSummaryPage } from './visit-summaries/summary/visit-summary-page';
 import { GuardianWorkLocations } from './work-locations/work-locations';
 
 export const GUARDIAN_ROUTES: Routes = [
@@ -49,6 +52,12 @@ export const GUARDIAN_ROUTES: Routes = [
     component: HouseRulesPrintPage,
     canActivate: [featureGuard('houseRules')],
     data: { printScope: 'group' },
+  },
+  // The doctor visit summary's A4 printout, outside the shell for the same reason.
+  {
+    path: 'visit-summaries/print/:childId/:summaryId',
+    component: VisitSummaryPrintPage,
+    canActivate: [featureGuard('visitSummaries')],
   },
   {
     path: '',
@@ -104,6 +113,18 @@ export const GUARDIAN_ROUTES: Routes = [
         canActivate: [featureGuard('feelings')],
         component: GuardianFeelings,
         data: { helpTopic: 'feelings' },
+      },
+      {
+        path: 'visit-summaries',
+        canActivate: [featureGuard('visitSummaries')],
+        component: GuardianVisitSummaries,
+        data: { helpTopic: 'visitSummaries' },
+      },
+      {
+        path: 'visit-summaries/:childId/:summaryId',
+        canActivate: [featureGuard('visitSummaries')],
+        component: VisitSummaryPage,
+        data: { helpTopic: 'visitSummaries' },
       },
       {
         path: 'transition-warnings',

@@ -1,0 +1,44 @@
+<main
+  class="min-h-dvh bg-slate-100 dark:bg-slate-950 text-slate-950 dark:text-slate-50 print:bg-white print:text-black"
+>
+  <div class="mx-auto max-w-[220mm] px-4 py-8 sm:px-6 print:max-w-none print:p-0">
+    @if (shared.isLoading()) {
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'visitSummaries.shared.loading' | translate }}
+      </p>
+    } @else if (notFound()) {
+      <h1 class="text-xl font-semibold">{{ 'visitSummaries.shared.notFoundTitle' | translate }}</h1>
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+        {{ 'visitSummaries.shared.notFoundBody' | translate }}
+      </p>
+    } @else if (shared.error()) {
+      <p class="text-sm text-red-600 dark:text-red-400">
+        {{ 'visitSummaries.shared.loadError' | translate }}
+      </p>
+    } @else if (shared.hasValue()) {
+      @let view = shared.value();
+
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          @if (view.expiresAt; as expiresAt) {
+            {{
+              'visitSummaries.shared.expires'
+                | translate: { date: (expiresAt | date: 'mediumDate') ?? '' }
+            }}
+          } @else {
+            {{ 'visitSummaries.shared.noExpiry' | translate }}
+          }
+        </p>
+        <button
+          type="button"
+          class="rounded-lg bg-emerald-600 dark:bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 dark:hover:bg-emerald-400"
+          (click)="print()"
+        >
+          {{ 'visitSummaries.shared.print' | translate }}
+        </button>
+      </div>
+
+      <app-visit-summary-report [report]="view.report" />
+    }
+  </div>
+</main>

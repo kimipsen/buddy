@@ -26,6 +26,7 @@ public static class RateLimitingFeature
     public const string AiAssistantPolicy = "ai-assistant";
     public const string OutboundEmailPolicy = "outbound-email";
     public const string PersonalDataExportPolicy = "personal-data-export";
+    public const string VisitSummarySharePolicy = "visit-summary-share";
 
     public static IServiceCollection AddRateLimitingFeature(this IServiceCollection services)
     {
@@ -64,6 +65,12 @@ public static class RateLimitingFeature
                 // An export reads every feature's store for the caller and all their children.
                 options.AddPolicy(PersonalDataExportPolicy, context =>
                     RateLimitPartition.GetFixedWindowLimiter($"export:{CallerKey(context)}", _ => limits.PersonalDataExport.ToOptions()));
+
+                // A shared doctor visit summary reads three features' data per request. Keyed by the
+                // token's hash, so a doctor reopening the page during a visit uses their own window and
+                // a wrong token can't drain anyone else's.
+                options.AddPolicy(VisitSummarySharePolicy, context =>
+                    RateLimitPartition.GetFixedWindowLimiter(VisitSummaryShareKey(context), _ => limits.VisitSummaryShare.ToOptions()));
             });
 
         return services;
@@ -112,6 +119,13 @@ public static class RateLimitingFeature
         var token = context.GetRouteValue("token") as string ?? string.Empty;
 
         return $"ical:{feed}:{Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)))}";
+    }
+
+    private static string VisitSummaryShareKey(HttpContext context)
+    {
+        var token = context.GetRouteValue("token") as string ?? string.Empty;
+
+        return $"visit-summary:{Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)))}";
     }
 
     private static async ValueTask RejectAsync(OnRejectedContext rejected, CancellationToken cancellationToken)

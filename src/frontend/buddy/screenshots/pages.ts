@@ -16,6 +16,9 @@ export interface DemoFamily {
   guardianInviteToken: string | null;
   sleepDiaryShareToken: string | null;
   feelingsShareToken: string | null;
+  // Emil's demo doctor visit summary and its share link.
+  visitSummaryId: string | null;
+  visitSummaryShareToken: string | null;
   // The demo child (Emil) and the family group, for the house rules printouts.
   childId: string;
   groupId: string;
@@ -174,6 +177,40 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     as: 'guardian',
     route: '/guardian/feelings',
     waitFor: 'Check-in settings',
+  },
+  {
+    name: 'guardian-visit-summaries',
+    title: 'Doctor visits',
+    description:
+      'Prepared doctor’s visits per child, newest first: each summary’s title, period, visit date, sections and how many share links are active.',
+    as: 'guardian',
+    route: '/guardian/visit-summaries',
+    waitFor: 'Follow-up with Dr. Lund',
+  },
+  {
+    name: 'guardian-visit-summary',
+    title: 'Doctor visit summary',
+    description:
+      'One prepared visit: the report a doctor sees (the guardian’s questions, a week-by-week overview of sleep, doses and feelings, medicine adherence and effects by dose period, sleep averages and feelings by time of day), with edit, print, delete and share links.',
+    as: 'guardian',
+    route: '/guardian/visit-summaries/:childId/:summaryId',
+    path: (demo) =>
+      demo.visitSummaryId
+        ? `/guardian/visit-summaries/${demo.childId}/${demo.visitSummaryId}`
+        : null,
+    waitFor: 'Questions and notes from home',
+  },
+  {
+    name: 'guardian-visit-summary-print',
+    title: 'Doctor visit summary printout',
+    description: 'The visit summary on A4 portrait, without the app’s navigation.',
+    as: 'guardian',
+    route: '/guardian/visit-summaries/print/:childId/:summaryId',
+    path: (demo) =>
+      demo.visitSummaryId
+        ? `/guardian/visit-summaries/print/${demo.childId}/${demo.visitSummaryId}`
+        : null,
+    waitFor: 'Questions and notes from home',
   },
   {
     name: 'guardian-transition-warnings',
@@ -421,6 +458,17 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     path: (demo) =>
       demo.feelingsShareToken ? `/shared/feelings/${demo.feelingsShareToken}` : null,
     waitFor: 'Feelings check-ins for Emil',
+  },
+  {
+    name: 'shared-visit-summary',
+    title: 'Shared doctor visit summary',
+    description:
+      'What a doctor sees from a visit summary link, with no login: the report for the period the family chose, printable on A4.',
+    as: 'anonymous',
+    route: '/shared/visit-summary/:token',
+    path: (demo) =>
+      demo.visitSummaryShareToken ? `/shared/visit-summary/${demo.visitSummaryShareToken}` : null,
+    waitFor: 'Questions and notes from home',
   },
 ];
 

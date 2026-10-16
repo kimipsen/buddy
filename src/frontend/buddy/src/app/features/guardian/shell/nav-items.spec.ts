@@ -53,11 +53,14 @@ describe('visibleNavGroups', () => {
     expect(health?.items.map((item) => item.link)).toEqual([
       '/guardian/sleep-diary',
       '/guardian/feelings',
+      '/guardian/visit-summaries',
     ]);
   });
 
   it('drops a group whose pages are all turned off', () => {
-    const groups = visibleNavGroups(offering('medicines', 'sleepDiary', 'feelings'));
+    const groups = visibleNavGroups(
+      offering('medicines', 'sleepDiary', 'feelings', 'visitSummaries'),
+    );
 
     expect(groups.map((group) => group.label)).toEqual([
       'shell.nav.groups.everyDay',

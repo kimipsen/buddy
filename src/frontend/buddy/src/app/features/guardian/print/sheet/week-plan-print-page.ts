@@ -1,6 +1,5 @@
 import {
   Component,
-  DestroyRef,
   DOCUMENT,
   ElementRef,
   HostListener,
@@ -19,7 +18,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { nextWeekdayOnOrAfter, todayIsoDate } from '../../../../core/date-utils';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
-import { PrintTemplate, PrintTemplatesService } from '../../../../core/print-templates.service';
+import { injectPrintPageStyle } from '../../../../core/print-page-style';
+import { PrintTemplatesService } from '../../../../core/print-templates.service';
 import { UsersService } from '../../../../core/users.service';
 import { DateSelect } from '../../../../shared/date-select/date-select';
 import { LoadingSpinner } from '../../../../shared/loading-spinner/loading-spinner';
@@ -34,9 +34,7 @@ const PX_PER_MM = 96 / 25.4;
 const PREVIEW_GUTTER_PX = 32;
 
 // The printable route, deliberately outside GuardianShell so no navigation ends up on paper.
-// It owns the one global <style> carrying @page -- @page can't be scoped to a component (it has no
-// selector for emulated encapsulation to rewrite) -- adding it once the template arrives and
-// removing it on destroy.
+// It adds the @page style (injectPrintPageStyle) once the template arrives.
 @Component({
   selector: 'app-week-plan-print-page',
   imports: [RouterLink, TranslatePipe, DateSelect, LoadingSpinner, Toggle, WeekPlanSheet],
@@ -46,7 +44,6 @@ export class WeekPlanPrintPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly templates = inject(PrintTemplatesService);
   private readonly loader = inject(WeekPlanLoader);
   private readonly users = inject(UsersService);
@@ -65,7 +62,7 @@ export class WeekPlanPrintPage {
       // Left before the template arrived (destroying the page aborts the load): adding the style
       // now would outlive the page and set the paper size for every later print in this tab.
       if (!abortSignal.aborted) {
-        this.applyPageStyle(template);
+        this.pageStyle.apply({ size: template.paperSize, orientation: 'landscape', margin: '8mm' });
       }
       return template;
     },
@@ -134,7 +131,7 @@ export class WeekPlanPrintPage {
   protected readonly loadFailed = computed(() => !!this.template.error() || !!this.sheet.error());
 
   private readonly viewportWidth = signal(this.document.defaultView?.innerWidth ?? 1280);
-  private pageStyle: HTMLStyleElement | null = null;
+  private readonly pageStyle = injectPrintPageStyle('week-plan-print');
   private focusedOnce = false;
 
   // On screen the sheet keeps its millimetre size and is scaled down to fit, so the preview is a
@@ -156,8 +153,6 @@ export class WeekPlanPrintPage {
   }
 
   constructor() {
-    this.destroyRef.onDestroy(() => this.pageStyle?.remove());
-
     // Print is the default action on the preview: focus it once, when the sheet first appears --
     // not again on every date change, which would pull focus out of the date input mid-typing.
     effect(() => {
@@ -202,15 +197,5 @@ export class WeekPlanPrintPage {
       replaceUrl: true,
     });
     this.includeQrCode.set(include);
-  }
-
-  private applyPageStyle(template: PrintTemplate): void {
-    const size = template.paperSize;
-    this.pageStyle ??= this.document.head.appendChild(this.document.createElement('style'));
-    this.pageStyle.setAttribute('data-week-plan-print', '');
-    // Paper is always white, whatever the app theme: the dark class on <html> must not print.
-    this.pageStyle.textContent =
-      `@page { size: ${size} landscape; margin: 8mm; }\n` +
-      '@media print { html, body { background: #fff !important; color-scheme: light; } }';
   }
 }
