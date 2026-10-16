@@ -2,6 +2,23 @@
   <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
     <h3 class="text-lg font-semibold tracking-normal">{{ 'pickup.assign.title' | translate }}</h3>
 
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="rounded-md border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
+        (click)="previousWeek()"
+      >
+        {{ 'pickup.assign.previousWeek' | translate }}
+      </button>
+      <button
+        type="button"
+        class="rounded-md border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
+        (click)="nextWeek()"
+      >
+        {{ 'pickup.assign.nextWeek' | translate }}
+      </button>
+    </div>
+
     @if (childList().length > 1) {
       <label class="sr-only" for="selectedChildId">{{
         'common.selectChildLabel' | translate

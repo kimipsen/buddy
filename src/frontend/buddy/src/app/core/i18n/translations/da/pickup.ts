@@ -8,6 +8,8 @@ export const pickup = {
   },
   assign: {
     title: 'Ugeplan',
+    previousWeek: '← Forrige uge',
+    nextWeek: 'Næste uge →',
     loading: 'Indlæser plan…',
     noChildren: 'Tilknyt et barn under Indstillinger, før du planlægger afhentning.',
     loadError: 'Kunne ikke indlæse afhentningsplanen.',

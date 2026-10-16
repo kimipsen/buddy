@@ -8,6 +8,8 @@ export const pickup = {
   },
   assign: {
     title: 'Weekly schedule',
+    previousWeek: '← Previous week',
+    nextWeek: 'Next week →',
     loading: 'Loading schedule…',
     noChildren: 'Link a child from Settings before planning pickups.',
     loadError: 'Unable to load the pickup schedule.',

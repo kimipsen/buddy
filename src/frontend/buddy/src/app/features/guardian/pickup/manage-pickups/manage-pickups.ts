@@ -1,11 +1,11 @@
-import { Component, computed, inject, linkedSignal, resource } from '@angular/core';
+import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { FeaturesService } from '../../../../core/features.service';
 import { firstAndLast } from '../../../../core/array-utils';
 import { BabysittersService, ChildBabysitter } from '../../../../core/babysitters.service';
-import { toIsoDate } from '../../../../core/date-utils';
+import { parseIsoDate, toIsoDate, todayIsoDate } from '../../../../core/date-utils';
 import {
   ChildSummary,
   GuardianSummary,
@@ -57,11 +57,11 @@ interface WeekDay {
   label: string;
 }
 
-function buildWeek(locale: string): WeekDay[] {
-  const today = new Date();
+function buildWeek(anchorIsoDate: string, locale: string): WeekDay[] {
+  const anchor = parseIsoDate(anchorIsoDate);
 
   return Array.from({ length: DAYS_AHEAD }, (_, offset) => {
-    const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
+    const date = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + offset);
 
     return {
       date: toIsoDate(date),
@@ -85,7 +85,11 @@ export class ManagePickups {
 
   protected readonly slots = SLOTS;
   protected readonly slotLabels = SLOT_LABELS;
-  protected readonly week = computed(() => buildWeek(this.translation.language()));
+  // The first day shown; starts today and moves a week at a time so later weeks can be planned.
+  protected readonly anchorDate = signal(todayIsoDate());
+  protected readonly week = computed(() =>
+    buildWeek(this.anchorDate(), this.translation.language()),
+  );
 
   protected readonly children = resource({
     loader: () => this.guardians.listMyChildren(),
@@ -141,6 +145,24 @@ export class ManagePickups {
   protected readonly loaded = computed((): ChildSchedule =>
     this.schedule.hasValue() ? this.schedule.value() : EMPTY_SCHEDULE,
   );
+
+  protected previousWeek(): void {
+    this.shiftWeek(-DAYS_AHEAD);
+  }
+
+  protected nextWeek(): void {
+    this.shiftWeek(DAYS_AHEAD);
+  }
+
+  private shiftWeek(offsetDays: number): void {
+    const anchor = parseIsoDate(this.anchorDate());
+    const shifted = new Date(
+      anchor.getFullYear(),
+      anchor.getMonth(),
+      anchor.getDate() + offsetDays,
+    );
+    this.anchorDate.set(toIsoDate(shifted));
+  }
 
   protected key(date: string, slot: PickupSlot): string {
     return `${date}|${slot}`;

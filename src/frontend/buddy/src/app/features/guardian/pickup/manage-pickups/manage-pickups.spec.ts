@@ -214,7 +214,38 @@ describe('ManagePickups', () => {
     expect(compiled.textContent).toContain('Unable to load the pickup schedule.');
   });
 
-  it("fetches the child's guardians and schedule for a fixed 7-day window starting today", async () => {
+  it('moves the 7-day window a week forward and back, refetching the schedule for each week', async () => {
+    const { fixture, pickups } = await setup();
+    await settle(fixture);
+    const compiled = fixture.nativeElement as HTMLElement;
+    const button = (label: string) =>
+      Array.from(compiled.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes(label),
+      ) as HTMLButtonElement;
+
+    button('Next week').click();
+    await settle(fixture);
+
+    expect(pickups.listSchedule).toHaveBeenLastCalledWith(
+      'child-1',
+      isoDateOffset(7),
+      isoDateOffset(13),
+    );
+    expect(compiled.querySelector('tbody tr th')?.textContent?.trim()).toBe(
+      new Date(`${isoDateOffset(7)}T00:00`).toLocaleDateString('en', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      }),
+    );
+
+    button('Previous week').click();
+    await settle(fixture);
+
+    expect(pickups.listSchedule).toHaveBeenLastCalledWith('child-1', weekStart, weekEnd);
+  });
+
+  it("fetches the child's guardians and schedule for a 7-day window starting today", async () => {
     const { fixture, guardians, pickups } = await setup();
     await settle(fixture);
 
