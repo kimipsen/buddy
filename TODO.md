@@ -6,6 +6,13 @@
 
 ## Open
 
+### Document all validations (2026-10-16)
+
+- [ ] Make the documentation list every validation rule: each of the 93 FluentValidation
+      validators in `src/backend/buddy/Features`, plus the domain checks in the handlers, belongs
+      in its domain's `docs/backend/<domain>/flow.md` (field, rule, error code, HTTP status) and
+      matches `docs/backend/openapi/buddy.json`.
+
 ### Backend unit tests as the primary test source (2026-10-16)
 
 Make backend unit tests the primary test source, with integration tests on demand. Plan in
