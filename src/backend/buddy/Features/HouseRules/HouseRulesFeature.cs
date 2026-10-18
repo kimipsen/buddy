@@ -26,7 +26,11 @@ public static class HouseRulesFeature
         typeof(RuleEdited),
         typeof(RuleRemoved),
         typeof(RulesReordered),
-        typeof(RuleAcknowledged)
+        typeof(RuleAcknowledged),
+        typeof(RuleDraftAdded),
+        typeof(RuleDraftEdited),
+        typeof(RuleDraftDiscarded),
+        typeof(RulePublished)
     ];
 
     // Depends on IGuardianLinkEventStore (personal books), IGroupEventStore (household books) and
@@ -84,6 +88,9 @@ public static class HouseRulesFeature
         houseRules.MapEditRule();
         houseRules.MapRemoveRule();
         houseRules.MapReorderRules();
+        houseRules.MapPublishRule();
+        houseRules.MapPublishRules();
+        houseRules.MapDiscardRuleDraft();
         houseRules.MapListRules();
         houseRules.MapAcknowledgeRule();
         houseRules.MapGetChildRules();

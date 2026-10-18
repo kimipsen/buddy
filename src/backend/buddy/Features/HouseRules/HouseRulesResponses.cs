@@ -3,7 +3,8 @@ using buddy.Features.Users;
 namespace buddy.Features.HouseRules;
 
 // One rule book as ListRules returns it. Access is the caller's tier, so the client knows whether to
-// offer editing. Children are the children whose acknowledgements the book tracks: the child of a
+// offer editing. Manage gets every rule with its draft; every other tier only the published rules,
+// as if the drafts didn't exist (house-rules-publishing.md, Question 4). Children are the children whose acknowledgements the book tracks: the child of a
 // personal book, or the child members of a household group -- only the caller themself when the
 // caller is a child.
 public sealed record RuleBookResponse(
@@ -19,9 +20,14 @@ public sealed record RuleBookResponse(
             scope.Id,
             access,
             [.. children.Select(c => c.Value)],
-            book is null ? [] : [.. book.Rules.Select(rule => RuleResponse.From(book, rule, children))]);
+            book is null ? [] : access == HouseRulesAccessTier.Manage
+                ? [.. book.Rules.Select(rule => RuleResponse.From(book, rule, children))]
+                : [.. book.PublishedRules.Select(rule => RuleResponse.From(book, rule with { Draft = null }, children))]);
 }
 
+// Title/Body/Revision are the published version ("" and 0 until first published). Draft is the
+// unpublished change, only ever set for Manage. A never-published rule has no acknowledgements: there
+// is nothing for the children to read yet.
 public sealed record RuleResponse(
     Guid Id,
     string Title,
@@ -29,7 +35,9 @@ public sealed record RuleResponse(
     int Revision,
     int AcknowledgementRevision,
     DateTimeOffset LastEditedAt,
-    IReadOnlyList<RuleAcknowledgementResponse> Acknowledgements)
+    IReadOnlyList<RuleAcknowledgementResponse> Acknowledgements,
+    bool IsPublished,
+    RuleDraftResponse? Draft)
 {
     public static RuleResponse From(RuleBook book, Rule rule, IReadOnlyList<UserId> children) =>
         new(
@@ -39,10 +47,22 @@ public sealed record RuleResponse(
             rule.Revision,
             rule.AcknowledgementRevision,
             rule.LastEditedAt,
-            [.. children.Select(child => new RuleAcknowledgementResponse(
-                child.Value,
-                book.AcknowledgedRevision(rule.Id, child),
-                book.IsUpToDate(rule, child)))]);
+            rule.IsPublished
+                ? [.. children.Select(child => new RuleAcknowledgementResponse(
+                    child.Value,
+                    book.AcknowledgedRevision(rule.Id, child),
+                    book.IsUpToDate(rule, child)))]
+                : [],
+            rule.IsPublished,
+            rule.Draft is { } draft ? RuleDraftResponse.From(draft) : null);
+}
+
+// RequiresReacknowledgement is the "small fix" switch, inverted: false keeps the children's
+// acknowledgements when the draft is published.
+public sealed record RuleDraftResponse(string Title, string Body, bool RequiresReacknowledgement, DateTimeOffset EditedAt)
+{
+    public static RuleDraftResponse From(RuleDraft draft) =>
+        new(draft.Content.Title, draft.Content.Body, draft.RequiresReacknowledgement, draft.EditedAt);
 }
 
 // AcknowledgedRevision is null when the child has never acknowledged the rule (the client shows
@@ -58,6 +78,7 @@ public sealed record ChildRulesResponse(
     int PendingAcknowledgements);
 
 // Label is the child's given name for the personal section and the group's name for a household.
+// Only published rules, with their published text: this is what the child reads.
 public sealed record ChildRuleSectionResponse(
     RuleBookScopeKind ScopeKind,
     Guid ScopeId,
@@ -69,7 +90,7 @@ public sealed record ChildRuleSectionResponse(
             scope.Kind,
             scope.Id,
             label,
-            book is null ? [] : [.. book.Rules.Select(rule => new ChildRuleResponse(
+            book is null ? [] : [.. book.PublishedRules.Select(rule => new ChildRuleResponse(
                 rule.Id.Value,
                 rule.Title,
                 rule.Body,

@@ -8,7 +8,9 @@ and `GetChildRules`, GDPR erasure and export, and the `Features:HouseRules` flag
 `shared/markdown-editor`, the guardian page `/guardian/house-rules`, the printouts
 `/guardian/house-rules/print/children/:childId` and `/guardian/house-rules/print/groups/:groupId`,
 the child page `/child/rules` with a "rules to read" card on the child home, a help topic and the
-profile-menu link. The app's Content-Security-Policy is now enforced.
+profile-menu link. The app's Content-Security-Policy is now enforced. Rules are written as drafts
+and published later since [house-rules-publishing.md](house-rules-publishing.md), which changes what
+`AddRule` and `EditRule` append.
 
 ## Context
 

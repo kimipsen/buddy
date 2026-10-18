@@ -12,6 +12,23 @@ const RULE: Rule = {
   acknowledgementRevision: 2,
   lastEditedAt: '2026-10-01T10:00:00Z',
   acknowledgements: [],
+  isPublished: true,
+  draft: null,
+};
+
+const DRAFT_ONLY: Rule = {
+  ...RULE,
+  title: '',
+  body: '',
+  revision: 0,
+  acknowledgementRevision: 0,
+  isPublished: false,
+  draft: {
+    title: 'Sleepovers',
+    body: 'Ask first',
+    requiresReacknowledgement: true,
+    editedAt: '2026-10-02T10:00:00Z',
+  },
 };
 
 describe('RuleEditor', () => {
@@ -73,6 +90,72 @@ describe('RuleEditor', () => {
     expect(saved).toHaveBeenCalledWith({
       content: { title: 'Shoes', body: '**Off**' },
       requireReacknowledgement: true,
+      publish: false,
+    });
+    expect(saveButton(compiled).textContent?.trim()).toBe('Save draft');
+  });
+
+  it('saves and publishes in one go', async () => {
+    const { fixture, compiled, saved } = await setup();
+
+    type(fixture, '#rule-editor-title-input', 'Shoes');
+    [...compiled.querySelectorAll('button')]
+      .find((b) => b.textContent?.trim() === 'Save and publish')!
+      .click();
+
+    expect(saved).toHaveBeenCalledWith({
+      content: { title: 'Shoes', body: '' },
+      requireReacknowledgement: true,
+      publish: true,
+    });
+  });
+
+  it('edits a never-published rule from its draft, without the small-fix switch', async () => {
+    const { compiled, saved } = await setup(DRAFT_ONLY);
+
+    expect(compiled.querySelector<HTMLInputElement>('#rule-editor-title-input')!.value).toBe(
+      'Sleepovers',
+    );
+    expect(compiled.querySelector<HTMLTextAreaElement>('#rule-editor-body')!.value).toBe(
+      'Ask first',
+    );
+    expect(compiled.querySelector('button[role="switch"]')).toBeNull();
+
+    saveButton(compiled).click();
+
+    expect(saved).toHaveBeenCalledWith({
+      content: { title: 'Sleepovers', body: 'Ask first' },
+      requireReacknowledgement: true,
+      publish: false,
+    });
+  });
+
+  it('opens a published rule’s draft with its small-fix switch as saved', async () => {
+    const { compiled, saved } = await setup({
+      ...RULE,
+      draft: {
+        title: 'Dinner',
+        body: 'No phones at all',
+        requiresReacknowledgement: false,
+        editedAt: '2026-10-02T10:00:00Z',
+      },
+    });
+
+    expect(compiled.querySelector<HTMLTextAreaElement>('#rule-editor-body')!.value).toBe(
+      'No phones at all',
+    );
+    expect(
+      compiled
+        .querySelector<HTMLButtonElement>('button[role="switch"]')!
+        .getAttribute('aria-checked'),
+    ).toBe('true');
+
+    saveButton(compiled).click();
+
+    expect(saved).toHaveBeenCalledWith({
+      content: { title: 'Dinner', body: 'No phones at all' },
+      requireReacknowledgement: false,
+      publish: false,
     });
   });
 
@@ -94,6 +177,7 @@ describe('RuleEditor', () => {
     expect(saved).toHaveBeenCalledWith({
       content: { title: 'Dinner', body: 'No phones' },
       requireReacknowledgement: false,
+      publish: false,
     });
   });
 

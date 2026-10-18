@@ -95,7 +95,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     feature: 'houseRules',
     sections: [
       { id: 'whereRulesLive' },
-      { id: 'writeRule', steps: 3 },
+      { id: 'writeRule', steps: 4 },
       { id: 'reading' },
       { id: 'print' },
     ],

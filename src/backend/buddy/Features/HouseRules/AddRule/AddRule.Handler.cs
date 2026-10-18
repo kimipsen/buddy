@@ -43,7 +43,9 @@ public static class AddRuleHandler
 
         var id = command.Scope.BookId;
         var now = time.GetUtcNow();
-        var added = new RuleAdded(id, RuleId.New(), command.Title, command.Body, command.UserId, now);
+        // A new rule starts as a draft only Manage sees, until it is published
+        // (house-rules-publishing.md, Question 3).
+        var added = new RuleDraftAdded(id, RuleId.New(), new RuleContent(command.Title, command.Body), command.UserId, now);
         RuleBookEvent[] appended;
 
         if (loaded.Book is null)

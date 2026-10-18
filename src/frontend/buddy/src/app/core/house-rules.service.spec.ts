@@ -6,10 +6,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   ChildRules,
   HouseRulesService,
+  Rule,
   RuleBook,
   RuleScope,
   isRevisionChanged,
   scopeOf,
+  workingContent,
 } from './house-rules.service';
 import { RuntimeConfigService } from './runtime-config.service';
 
@@ -94,6 +96,35 @@ describe('HouseRulesService', () => {
     await expect(promise).resolves.toBeNull();
   });
 
+  it('publishes one rule with an idempotency key', async () => {
+    const promise = service.publishRule(child, 'rule-1');
+
+    const req = httpMock.expectOne({ method: 'POST', url: `${childRules}/rule-1/publish` });
+    expect(req.request.body).toBeNull();
+    expect(req.request.headers.get('Idempotency-Key')).toBeTruthy();
+    req.flush(book);
+
+    expect(await promise).toEqual(book);
+  });
+
+  it('publishes every draft in a book', async () => {
+    const promise = service.publishAll(group);
+
+    const req = httpMock.expectOne({ method: 'POST', url: `${groupRules}/publish` });
+    expect(req.request.headers.get('Idempotency-Key')).toBeTruthy();
+    req.flush(book);
+
+    expect(await promise).toEqual(book);
+  });
+
+  it('discards a rule’s draft', async () => {
+    const promise = service.discardDraft(group, 'rule-1');
+
+    httpMock.expectOne({ method: 'DELETE', url: `${groupRules}/rule-1/draft` }).flush(null);
+
+    await expect(promise).resolves.toBeNull();
+  });
+
   it('reorders rules with the full new order', async () => {
     const promise = service.reorderRules(child, ['b', 'a']);
 
@@ -145,5 +176,32 @@ describe('HouseRulesService', () => {
 
   it('turns a child-rules section into a scope', () => {
     expect(scopeOf({ scopeKind: 'Group', scopeId: 'g' })).toEqual({ kind: 'Group', id: 'g' });
+  });
+
+  it('edits the draft when there is one, otherwise the published text', () => {
+    const published: Rule = {
+      id: 'r1',
+      title: 'Dinner',
+      body: 'No phones',
+      revision: 1,
+      acknowledgementRevision: 1,
+      lastEditedAt: '2026-10-01T10:00:00Z',
+      acknowledgements: [],
+      isPublished: true,
+      draft: null,
+    };
+
+    expect(workingContent(published)).toEqual({ title: 'Dinner', body: 'No phones' });
+    expect(
+      workingContent({
+        ...published,
+        draft: {
+          title: 'Dinner!',
+          body: 'No tablets',
+          requiresReacknowledgement: true,
+          editedAt: '2026-10-02T10:00:00Z',
+        },
+      }),
+    ).toEqual({ title: 'Dinner!', body: 'No tablets' });
   });
 });

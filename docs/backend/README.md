@@ -66,6 +66,7 @@ model or permissions logic.
 - [Client-ready OpenAPI documents](analysis/openapi-client-contract.md)
 - [Feature flags](analysis/feature-flags.md)
 - [House rules](analysis/house-rules.md)
+- [House rules publishing](analysis/house-rules-publishing.md)
 - [Social stories](analysis/social-stories.md)
 - [First–Then board](analysis/first-then-board.md)
 - [Update check](analysis/update-check.md)

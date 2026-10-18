@@ -39,8 +39,39 @@ function rule(id: string, title: string, overrides: Partial<Rule> = {}): Rule {
       { childId: 'ida', acknowledgedRevision: null, isUpToDate: false },
       { childId: 'noah', acknowledgedRevision: 1, isUpToDate: false },
     ],
+    isPublished: true,
+    draft: null,
     ...overrides,
   };
+}
+
+// A rule the children have never seen: no published text, only a draft.
+function draftRule(id: string, title: string): Rule {
+  return rule(id, '', {
+    body: '',
+    revision: 0,
+    acknowledgementRevision: 0,
+    acknowledgements: [],
+    isPublished: false,
+    draft: {
+      title,
+      body: 'Ask two days before',
+      requiresReacknowledgement: true,
+      editedAt: '2026-10-02T10:00:00Z',
+    },
+  });
+}
+
+// A published rule with an unpublished change.
+function changedRule(id: string, title: string): Rule {
+  return rule(id, title, {
+    draft: {
+      title,
+      body: '- **Tablets** in the basket too',
+      requiresReacknowledgement: true,
+      editedAt: '2026-10-02T10:00:00Z',
+    },
+  });
 }
 
 function book(overrides: Partial<RuleBook> = {}): RuleBook {
@@ -111,6 +142,9 @@ describe('GuardianHouseRules', () => {
         book({ rules: [rule('r2', 'Bedtime'), rule('r1', 'Dinner')] }),
       ),
       acknowledge: vi.fn(async () => undefined),
+      publishRule: vi.fn(async () => book()),
+      publishAll: vi.fn(async () => book()),
+      discardDraft: vi.fn(async () => undefined),
       ...options.houseRules,
     };
 
@@ -217,7 +251,7 @@ describe('GuardianHouseRules', () => {
     body.value = 'Off at the door';
     body.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    button(dialog, 'Save rule').click();
+    button(dialog, 'Save draft').click();
     await settle(fixture);
 
     expect(houseRules.addRule).toHaveBeenCalledWith(
@@ -240,7 +274,7 @@ describe('GuardianHouseRules', () => {
     );
     dialog.querySelector<HTMLButtonElement>('button[role="switch"]')!.click();
     fixture.detectChanges();
-    button(dialog, 'Save rule').click();
+    button(dialog, 'Save draft').click();
     await settle(fixture);
 
     expect(houseRules.editRule).toHaveBeenCalledWith(
@@ -259,7 +293,7 @@ describe('GuardianHouseRules', () => {
 
     button(ruleCard(compiled, 'r1'), 'Edit').click();
     await settle(fixture);
-    button(compiled.querySelector<HTMLElement>('[role="dialog"]')!, 'Save rule').click();
+    button(compiled.querySelector<HTMLElement>('[role="dialog"]')!, 'Save draft').click();
     await settle(fixture);
 
     const dialog = compiled.querySelector<HTMLElement>('[role="dialog"]')!;
@@ -377,6 +411,147 @@ describe('GuardianHouseRules', () => {
 
     // Ida and Noah are in the book but neither the guardian's children nor (child scope) members.
     expect(ruleCard(compiled, 'r1').textContent).toContain('A child hasn’t read it yet');
+  });
+
+  it('marks a draft and a rule with unpublished changes, and offers to publish all', async () => {
+    const { compiled } = await setup({
+      houseRules: {
+        listRules: vi.fn(async () =>
+          book({
+            rules: [
+              rule('r1', 'Dinner'),
+              changedRule('r2', 'Bedtime'),
+              draftRule('r3', 'Sleepovers'),
+            ],
+          }),
+        ),
+      },
+    });
+
+    expect(
+      [...compiled.querySelectorAll('[data-rule-id]')].map((c) =>
+        c.getAttribute('data-publish-state'),
+      ),
+    ).toEqual(['published', 'changed', 'draft']);
+    expect(ruleCard(compiled, 'r3').querySelector('h3')?.textContent?.trim()).toBe('Sleepovers');
+    expect(ruleCard(compiled, 'r3').textContent).toContain(
+      'Draft: the children can’t see this yet',
+    );
+    expect(ruleCard(compiled, 'r3').querySelector('[data-status]')).toBeNull();
+    expect(button(ruleCard(compiled, 'r3'), 'Discard changes')).toBeUndefined();
+
+    const changed = ruleCard(compiled, 'r2');
+    expect(changed.textContent).toContain('Unpublished changes');
+    expect(changed.querySelector('app-markdown-view strong')?.textContent).toBe('Tablets');
+    expect(changed.querySelector('details')?.textContent).toContain('What the children see now');
+    expect(changed.querySelector('details app-markdown-view strong')?.textContent).toBe('Phones');
+
+    expect(button(ruleCard(compiled, 'r1'), 'Publish')).toBeUndefined();
+    expect(button(compiled, 'Publish all (2)')).toBeDefined();
+  });
+
+  it('publishes one rule', async () => {
+    const { fixture, compiled, houseRules } = await setup({
+      houseRules: {
+        listRules: vi.fn(async () =>
+          book({ rules: [rule('r1', 'Dinner'), draftRule('r2', 'Sleepovers')] }),
+        ),
+        publishRule: vi.fn(async () =>
+          book({ rules: [rule('r1', 'Dinner'), rule('r2', 'Sleepovers')] }),
+        ),
+      },
+    });
+
+    ruleCard(compiled, 'r2')
+      .querySelector<HTMLButtonElement>('[aria-label="Publish “Sleepovers”"]')!
+      .click();
+    await settle(fixture);
+
+    expect(houseRules.publishRule).toHaveBeenCalledWith({ kind: 'Group', id: 'home' }, 'r2');
+    expect(ruleCard(compiled, 'r2').getAttribute('data-publish-state')).toBe('published');
+    expect(button(compiled, 'Publish all (1)')).toBeUndefined();
+  });
+
+  it('publishes every draft at once', async () => {
+    const { fixture, compiled, houseRules } = await setup({
+      houseRules: {
+        listRules: vi.fn(async () =>
+          book({ rules: [changedRule('r1', 'Dinner'), draftRule('r2', 'Sleepovers')] }),
+        ),
+      },
+    });
+
+    button(compiled, 'Publish all (2)').click();
+    await settle(fixture);
+
+    expect(houseRules.publishAll).toHaveBeenCalledWith({ kind: 'Group', id: 'home' });
+    expect(compiled.querySelectorAll('[data-publish-state="published"]')).toHaveLength(2);
+  });
+
+  it('shows a failed publish-all above the rules', async () => {
+    const { fixture, compiled } = await setup({
+      houseRules: {
+        listRules: vi.fn(async () => book({ rules: [draftRule('r1', 'Sleepovers')] })),
+        publishAll: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
+    });
+
+    button(compiled, 'Publish all (1)').click();
+    await settle(fixture);
+
+    expect(compiled.querySelector('[role="alert"]')?.textContent?.trim()).toBe(
+      'Unable to publish the rule.',
+    );
+  });
+
+  it('discards a published rule’s changes', async () => {
+    const { fixture, compiled, houseRules } = await setup({
+      houseRules: { listRules: vi.fn(async () => book({ rules: [changedRule('r1', 'Dinner')] })) },
+    });
+
+    button(ruleCard(compiled, 'r1'), 'Discard changes').click();
+    await settle(fixture);
+
+    expect(houseRules.discardDraft).toHaveBeenCalledWith({ kind: 'Group', id: 'home' }, 'r1');
+    expect(ruleCard(compiled, 'r1').getAttribute('data-publish-state')).toBe('published');
+    expect(ruleCard(compiled, 'r1').querySelector('app-markdown-view strong')?.textContent).toBe(
+      'Phones',
+    );
+  });
+
+  it('saves a new rule and publishes it from the editor', async () => {
+    const { fixture, compiled, houseRules } = await setup();
+
+    button(compiled, 'Add rule').click();
+    await settle(fixture);
+    const dialog = compiled.querySelector<HTMLElement>('[role="dialog"]')!;
+    const title = dialog.querySelector<HTMLInputElement>('#rule-editor-title-input')!;
+    title.value = 'Shoes';
+    title.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    button(dialog, 'Save and publish').click();
+    await settle(fixture);
+
+    expect(houseRules.addRule).toHaveBeenCalled();
+    expect(houseRules.publishRule).toHaveBeenCalledWith({ kind: 'Group', id: 'home' }, 'r3');
+    expect(compiled.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('shows a failed publish after saving under the rule, with the editor closed', async () => {
+    const { fixture, compiled, houseRules } = await setup({
+      houseRules: { publishRule: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
+
+    button(ruleCard(compiled, 'r1'), 'Edit').click();
+    await settle(fixture);
+    button(compiled.querySelector<HTMLElement>('[role="dialog"]')!, 'Save and publish').click();
+    await settle(fixture);
+
+    expect(houseRules.editRule).toHaveBeenCalled();
+    expect(compiled.querySelector('[role="dialog"]')).toBeNull();
+    expect(ruleCard(compiled, 'r1').querySelector('[role="alert"]')?.textContent?.trim()).toBe(
+      'Unable to publish the rule.',
+    );
   });
 
   it('gives focus back to the button that opened the editor', async () => {

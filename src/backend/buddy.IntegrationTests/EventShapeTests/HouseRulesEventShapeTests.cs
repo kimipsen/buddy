@@ -57,4 +57,24 @@ public sealed class HouseRulesEventShapeTests
     public void RuleAcknowledged_by_a_guardian() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new RuleAcknowledged(FixedBookId, FixedRuleId, FixedChildId, 2, FixedGuardianId, FixedInstant),
         "HouseRules/RuleAcknowledged_ByGuardian.json");
+
+    [Fact]
+    public void RuleDraftAdded() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new RuleDraftAdded(FixedBookId, FixedRuleId, Before, FixedGuardianId, FixedInstant),
+        "HouseRules/RuleDraftAdded.json");
+
+    [Fact]
+    public void RuleDraftEdited() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new RuleDraftEdited(FixedBookId, FixedRuleId, Before, After, false, FixedGuardianId, FixedInstant),
+        "HouseRules/RuleDraftEdited.json");
+
+    [Fact]
+    public void RuleDraftDiscarded() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new RuleDraftDiscarded(FixedBookId, FixedRuleId, After, FixedGuardianId, FixedInstant),
+        "HouseRules/RuleDraftDiscarded.json");
+
+    [Fact]
+    public void RulePublished() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new RulePublished(FixedBookId, FixedRuleId, After, 2, true, FixedGuardianId, FixedInstant),
+        "HouseRules/RulePublished.json");
 }

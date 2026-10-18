@@ -29,6 +29,18 @@ public static class RuleBooks
         return book is not null && book.ScopeKind == scope.Kind ? book : null;
     }
 
+    // The event that publishes a rule's draft. A first publish always asks the children to read it,
+    // whatever the draft's "small fix" switch says (house-rules-publishing.md, Question 2).
+    public static RulePublished Publish(RuleBookId bookId, Rule rule, RuleDraft draft, UserId publishedBy, DateTimeOffset now) =>
+        new(
+            bookId,
+            rule.Id,
+            draft.Content,
+            rule.Revision + 1,
+            !rule.IsPublished || draft.RequiresReacknowledgement,
+            publishedBy,
+            now);
+
     // A child sees only their own acknowledgement status; Manage and View see every child's.
     public static async Task<RuleBookResponse> ToResponseAsync(
         RuleBookScope scope,

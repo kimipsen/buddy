@@ -10,6 +10,8 @@ namespace buddy.IntegrationTests.Features.HouseRules;
 // Response shapes matching RuleBookResponse / ChildRulesResponse (Features/HouseRules).
 internal sealed record RuleAcknowledgementDto(Guid ChildId, int? AcknowledgedRevision, bool IsUpToDate);
 
+internal sealed record RuleDraftDto(string Title, string Body, bool RequiresReacknowledgement, DateTimeOffset EditedAt);
+
 internal sealed record RuleDto(
     Guid Id,
     string Title,
@@ -17,7 +19,9 @@ internal sealed record RuleDto(
     int Revision,
     int AcknowledgementRevision,
     DateTimeOffset LastEditedAt,
-    List<RuleAcknowledgementDto> Acknowledgements);
+    List<RuleAcknowledgementDto> Acknowledgements,
+    bool IsPublished,
+    RuleDraftDto? Draft);
 
 internal sealed record RuleBookDto(string ScopeKind, Guid ScopeId, string Access, List<Guid> Children, List<RuleDto> Rules);
 
@@ -82,13 +86,57 @@ internal static class HouseRulesTestHelpers
         return expectedStatus == 200 ? response.ReadAsJson<RuleBookDto>() : null;
     }
 
-    // Adds one rule and returns it (the last one in the book).
-    public static async Task<RuleDto> AddOneRuleAsync(BuddyApiFixture fixture, string token, string rulesPath, string title = "Screen time", string body = "- 45 min")
+    // Adds one rule and returns it (the last one in the book). Published by default, so the children
+    // see it at revision 1; publish: false leaves it a draft only Manage sees.
+    public static async Task<RuleDto> AddOneRuleAsync(
+        BuddyApiFixture fixture, string token, string rulesPath, string title = "Screen time", string body = "- 45 min", bool publish = true)
     {
         var book = await AddRuleAsync(fixture, token, rulesPath, title, body);
+        var rule = book!.Rules[^1];
 
-        return book!.Rules[^1];
+        return publish ? (await PublishRuleAsync(fixture, token, rulesPath, rule.Id))!.Rules.Single(r => r.Id == rule.Id) : rule;
     }
+
+    // Saves a draft of the rule, then publishes it -- what EditRule alone did before drafts existed.
+    public static async Task<RuleBookDto> EditAndPublishRuleAsync(
+        BuddyApiFixture fixture, string token, string rulesPath, Guid ruleId, string title, string body = "", bool requireReacknowledgement = true)
+    {
+        await EditRuleAsync(fixture, token, rulesPath, ruleId, title, body, requireReacknowledgement);
+
+        return (await PublishRuleAsync(fixture, token, rulesPath, ruleId))!;
+    }
+
+    public static async Task<RuleBookDto?> PublishRuleAsync(BuddyApiFixture fixture, string token, string rulesPath, Guid ruleId, int expectedStatus = 200)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Post.Url($"{rulesPath}/{ruleId}/publish");
+            _.StatusCodeShouldBe(expectedStatus);
+        });
+
+        return expectedStatus == 200 ? response.ReadAsJson<RuleBookDto>() : null;
+    }
+
+    public static async Task<RuleBookDto?> PublishRulesAsync(BuddyApiFixture fixture, string token, string rulesPath, int expectedStatus = 200)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Post.Url($"{rulesPath}/publish");
+            _.StatusCodeShouldBe(expectedStatus);
+        });
+
+        return expectedStatus == 200 ? response.ReadAsJson<RuleBookDto>() : null;
+    }
+
+    public static Task DiscardRuleDraftAsync(BuddyApiFixture fixture, string token, string rulesPath, Guid ruleId, int expectedStatus = 204) =>
+        fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Delete.Url($"{rulesPath}/{ruleId}/draft");
+            _.StatusCodeShouldBe(expectedStatus);
+        });
 
     public static async Task<RuleBookDto?> EditRuleAsync(
         BuddyApiFixture fixture,

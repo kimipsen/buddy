@@ -3,7 +3,7 @@ export const houseRules = {
   eyebrow: 'Husregler',
   title: 'Aftal reglerne sammen.',
   intro:
-    'Korte regler, som dine børn kan læse og markere som læst. Husstandens regler gælder for alle børn i en gruppe, personlige regler for ét barn.',
+    'Korte regler, som dine børn kan læse og markere som læst. Husstandens regler gælder for alle børn i en gruppe, personlige regler for ét barn. Nye regler og ændringer er kladder, indtil du offentliggør dem.',
   loading: 'Indlæser husregler…',
   loadError: 'Kunne ikke indlæse husreglerne.',
   noScopes: 'Opret en gruppe eller tilknyt et barn under Indstillinger, før du skriver husregler.',
@@ -21,6 +21,15 @@ export const houseRules = {
   moveUp: 'Flyt “{title}” op',
   moveDown: 'Flyt “{title}” ned',
   printButton: 'Udskriv',
+  publishButton: 'Offentliggør',
+  publishLabel: 'Offentliggør “{title}”',
+  publishAllButton: 'Offentliggør alle ({count})',
+  discardButton: 'Kassér ændringer',
+  publishState: {
+    draft: 'Kladde: børnene kan ikke se den endnu',
+    changed: 'Ændringer, der ikke er offentliggjort',
+  },
+  publishedVersion: 'Det, børnene ser nu',
   statusLabel: 'Status',
   aChild: 'Et barn',
   status: {
@@ -33,6 +42,8 @@ export const houseRules = {
   removeError: 'Kunne ikke fjerne reglen.',
   reorderError: 'Kunne ikke flytte reglen.',
   acknowledgeError: 'Kunne ikke markere reglen som læst.',
+  publishError: 'Kunne ikke offentliggøre reglen.',
+  discardError: 'Kunne ikke kassere ændringerne.',
   editor: {
     addTitle: 'Ny regel',
     editTitle: 'Rediger regel',
@@ -41,7 +52,9 @@ export const houseRules = {
     bodyHint: 'Markdown: **fed**, lister, afkrydsningsfelter, tabeller og links.',
     minorFix:
       'Det er en lille rettelse (stavning, formulering). Børnene behøver ikke læse den igen.',
-    save: 'Gem regel',
+    draftHint: 'Børnene ser reglen, når du offentliggør den.',
+    save: 'Gem kladde',
+    saveAndPublish: 'Gem og offentliggør',
     saving: 'Gemmer…',
     cancel: 'Annuller',
   },

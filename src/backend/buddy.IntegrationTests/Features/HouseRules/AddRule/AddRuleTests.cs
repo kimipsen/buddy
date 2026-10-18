@@ -17,7 +17,7 @@ public sealed class AddRuleTests(BuddyApiFixture fixture)
 {
     [Fact]
     [CoversEndpoint("AddRule")]
-    public async Task A_guardian_adds_a_personal_rule_and_the_book_is_started_on_first_use()
+    public async Task A_guardian_adds_a_personal_rule_as_a_draft_and_the_book_is_started_on_first_use()
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, token, "Emil");
@@ -33,18 +33,19 @@ public sealed class AddRuleTests(BuddyApiFixture fixture)
         Assert.Equal("Manage", book.Access);
         Assert.Equal([child.Id], book.Children);
         var rule = Assert.Single(book.Rules);
-        Assert.Equal("Screen time", rule.Title);
-        Assert.Equal("| Day | Time |\n|---|---|\n| Mon | 45 min |", rule.Body);
-        Assert.Equal(1, rule.Revision);
-        Assert.Equal(1, rule.AcknowledgementRevision);
-        var acknowledgement = Assert.Single(rule.Acknowledgements);
-        Assert.Equal(new RuleAcknowledgementDto(child.Id, null, false), acknowledgement);
+        Assert.False(rule.IsPublished);
+        Assert.Equal("", rule.Title);
+        Assert.Equal("", rule.Body);
+        Assert.Equal(0, rule.Revision);
+        Assert.Empty(rule.Acknowledgements);
+        Assert.Equal("Screen time", rule.Draft!.Title);
+        Assert.Equal("| Day | Time |\n|---|---|\n| Mon | 45 min |", rule.Draft.Body);
 
         var events = await books.ReadAsync(bookId, CancellationToken.None);
-        Assert.Collection(events, e => Assert.IsType<RuleBookStarted>(e.Value), e => Assert.IsType<RuleAdded>(e.Value));
+        Assert.Collection(events, e => Assert.IsType<RuleBookStarted>(e.Value), e => Assert.IsType<RuleDraftAdded>(e.Value));
 
         var second = await AddRuleAsync(fixture, token, ChildRules(child.Id), "Bedtime");
-        Assert.Equal(["Screen time", "Bedtime"], second!.Rules.Select(r => r.Title));
+        Assert.Equal(["Screen time", "Bedtime"], second!.Rules.Select(r => r.Draft!.Title));
         Assert.Equal(3, (await books.ReadAsync(bookId, CancellationToken.None)).Count);
     }
 
@@ -59,7 +60,20 @@ public sealed class AddRuleTests(BuddyApiFixture fixture)
         Assert.Equal("Group", book!.ScopeKind);
         Assert.Equal(home.GroupId, book.ScopeId);
         Assert.Equal([home.Child.Id], book.Children);
-        Assert.Equal(home.Child.Id, Assert.Single(Assert.Single(book.Rules).Acknowledgements).ChildId);
+        Assert.Equal("No phones at the dinner table", Assert.Single(book.Rules).Draft!.Title);
+    }
+
+    [Fact]
+    public async Task A_draft_is_hidden_from_the_child_and_other_members_until_it_is_published()
+    {
+        var home = await CreateHouseholdAsync(fixture);
+        await AddRuleAsync(fixture, home.OwnerToken, home.Rules, "Sleepovers", "Ask two days before");
+
+        Assert.Empty((await ListRulesAsync(fixture, home.ChildToken, home.Rules))!.Rules);
+        Assert.Empty((await ListRulesAsync(fixture, home.AdultToken, home.Rules))!.Rules);
+        var childView = await GetChildRulesAsync(fixture, home.ChildToken, home.Child.Id);
+        Assert.Empty(Assert.Single(childView!.Households).Rules);
+        Assert.Equal(0, childView.PendingAcknowledgements);
     }
 
     [Fact]
@@ -75,9 +89,9 @@ public sealed class AddRuleTests(BuddyApiFixture fixture)
         await AddRuleAsync(fixture, token, ChildRules(child.Id), "Links", unsafeBody);
         var book = await AddRuleAsync(fixture, token, ChildRules(child.Id), "Code", indentedBody);
 
-        Assert.Equal("", book!.Rules[0].Body);
-        Assert.Equal(unsafeBody, book.Rules[1].Body);
-        Assert.Equal(indentedBody, book.Rules[2].Body);
+        Assert.Equal("", book!.Rules[0].Draft!.Body);
+        Assert.Equal(unsafeBody, book.Rules[1].Draft!.Body);
+        Assert.Equal(indentedBody, book.Rules[2].Draft!.Body);
     }
 
     [Theory]

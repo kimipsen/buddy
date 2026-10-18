@@ -27,11 +27,13 @@ public static class RemoveRuleHandler
         }
 
         // Idempotent DELETE: a rule that's already gone (or a book never started) appends nothing.
+        // Removal isn't drafted: the rule and any draft of it are gone for everyone at once
+        // (house-rules-publishing.md, Question 1).
         if (loaded.Book?.FindRule(command.RuleId) is { } rule)
         {
             await books.AppendAsync(
                 command.Scope.BookId,
-                [new RuleRemoved(command.Scope.BookId, rule.Id, rule.Content, command.UserId, time.GetUtcNow())],
+                [new RuleRemoved(command.Scope.BookId, rule.Id, rule.WorkingContent, command.UserId, time.GetUtcNow())],
                 cancellationToken);
         }
 

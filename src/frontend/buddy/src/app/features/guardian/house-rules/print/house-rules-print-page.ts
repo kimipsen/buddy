@@ -79,7 +79,10 @@ export class HouseRulesPrintPage {
       this.groups.getGroup(this.id),
     ]);
 
-    return { title: group.name, sections: withRules([{ heading: '', rules: book.rules }]) };
+    // A guardian with Manage also gets the drafts; the fridge copy is what the children read.
+    const published = book.rules.filter((rule) => rule.isPublished);
+
+    return { title: group.name, sections: withRules([{ heading: '', rules: published }]) };
   }
 }
 

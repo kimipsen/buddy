@@ -62,6 +62,24 @@ describe('HouseRulesPrintPage', () => {
             acknowledgementRevision: 1,
             lastEditedAt: '2026-10-01T10:00:00Z',
             acknowledgements: [],
+            isPublished: true,
+            draft: null,
+          },
+          {
+            id: 'h2',
+            title: '',
+            body: '',
+            revision: 0,
+            acknowledgementRevision: 0,
+            lastEditedAt: '2026-10-01T10:00:00Z',
+            acknowledgements: [],
+            isPublished: false,
+            draft: {
+              title: 'Sleepovers',
+              body: 'Not settled yet',
+              requiresReacknowledgement: true,
+              editedAt: '2026-10-02T10:00:00Z',
+            },
           },
         ],
       })),
@@ -154,6 +172,9 @@ describe('HouseRulesPrintPage', () => {
     expect(compiled.querySelector('h1')?.textContent?.trim()).toBe('Mum’s');
     expect(compiled.querySelector('h2')).toBeNull();
     expect(compiled.querySelector('h3')?.textContent?.trim()).toBe('1. Shoes off');
+    // A draft the children can't see yet stays off the fridge copy.
+    expect(compiled.querySelectorAll('h3')).toHaveLength(1);
+    expect(compiled.textContent).not.toContain('Sleepovers');
   });
 
   it('keeps the toolbar off paper and prints with the browser', async () => {

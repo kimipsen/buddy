@@ -327,16 +327,17 @@ export const help = {
         },
         writeRule: {
           title: 'Skriv en regel',
-          body: 'Hold hver regel kort, med en titel og om nødvendigt detaljerne. Detaljerne kan bruge markdown: fed tekst, punkt- eller nummererede lister, afkrydsningsfelter, tabeller og links. Tryk på "Forhåndsvisning" for at se, hvordan den kommer til at se ud. Brug pilene til at ændre rækkefølgen.',
+          body: 'Hold hver regel kort, med en titel og om nødvendigt detaljerne. Detaljerne kan bruge markdown: fed tekst, punkt- eller nummererede lister, afkrydsningsfelter, tabeller og links. Tryk på "Forhåndsvisning" for at se, hvordan den kommer til at se ud. Brug pilene til at ændre rækkefølgen. En ny regel og hver ændring af en regel er en kladde, som kun du og de andre voksne, der styrer reglerne, kan se, indtil du offentliggør den.',
           steps: {
             s1: 'Vælg husstanden eller barnet under "Regler for".',
             s2: 'Tryk på "Tilføj regel", og skriv en titel og reglen.',
-            s3: 'Tryk på "Gem regel".',
+            s3: 'Tryk på "Gem kladde". Kom tilbage og ret den, så tit du vil.',
+            s4: 'Når den er klar, så tryk på "Offentliggør" ved reglen eller på "Offentliggør alle" for at offentliggøre alle kladder på én gang. "Gem og offentliggør" i editoren gør begge dele på én gang.',
           },
         },
         reading: {
           title: 'Når dine børn har læst en regel',
-          body: 'Dine børn ser deres regler på deres forside og trykker "Jeg har læst den" ved hver regel. Under hver regel kan du se, hvem der har læst den. Når du ændrer en regel, bliver børnene bedt om at læse den igen, medmindre du markerer ændringen som en lille rettelse. Har du et barn, der ikke kan læse endnu, så gå reglen igennem sammen, og tryk på "Læs den med" og barnets navn.',
+          body: 'Dine børn ser deres regler på deres forside og trykker "Jeg har læst den" ved hver regel. Under hver regel kan du se, hvem der har læst den. Når du offentliggør en ændring af en regel, bliver børnene bedt om at læse den igen, medmindre du har markeret ændringen som en lille rettelse. Indtil da ser de stadig den version, de kender, og "Kassér ændringer" fjerner din kladde igen. Har du et barn, der ikke kan læse endnu, så gå reglen igennem sammen, og tryk på "Læs den med" og barnets navn.',
         },
         print: {
           title: 'Udskriv reglerne',

@@ -18,7 +18,9 @@ import {
   Rule,
   RuleAcknowledgement,
   RuleBook,
+  RuleContent,
   RuleScope,
+  workingContent,
 } from '../../../core/house-rules.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -43,13 +45,21 @@ const STATUS_KEYS: Record<AcknowledgementStatus, string> = {
 // Which rule is open in the editor: a new one, or an existing one by id.
 type Editing = { kind: 'new' } | { kind: 'edit'; rule: Rule } | null;
 
+// Where a rule stands for the children: never shown, shown with unpublished changes, or as written.
+export type PublishState = 'draft' | 'changed' | 'published';
+
+// The action-state key for "Publish all", next to the rule ids and 'new'.
+const PUBLISH_ALL = 'publishAll';
+
 function keyOf(scope: RuleScope): string {
   return `${scope.kind}:${scope.id}`;
 }
 
 // The guardian's house rules: pick a household group or a child, read the rules with every
 // child's "read it" status, and -- with Manage -- add, edit, remove and reorder them, or go
-// through a rule with a child who can't read yet (docs/backend/analysis/house-rules.md).
+// through a rule with a child who can't read yet (docs/backend/analysis/house-rules.md). New text
+// is a draft the children don't see until it's published, one rule at a time or all at once
+// (docs/backend/analysis/house-rules-publishing.md).
 @Component({
   selector: 'app-guardian-house-rules',
   imports: [FormsModule, MarkdownView, Page, RouterLink, RuleEditor, TranslatePipe],
@@ -130,6 +140,9 @@ export class GuardianHouseRules {
     this.book.hasValue() ? this.book.value() : undefined,
   );
   protected readonly canManage = computed(() => this.loaded()?.access === 'Manage');
+  protected readonly draftCount = computed(
+    () => this.loaded()?.rules.filter((rule) => rule.draft !== null).length ?? 0,
+  );
   protected readonly printLink = computed(() => {
     const scope = this.scope();
 
@@ -158,6 +171,18 @@ export class GuardianHouseRules {
   // A household child from another family has no name until the group's members load.
   protected nameOf(childId: string): string {
     return this.names()[childId] ?? this.translation.translate('houseRules.aChild');
+  }
+
+  protected contentOf(rule: Rule): RuleContent {
+    return workingContent(rule);
+  }
+
+  protected publishStateOf(rule: Rule): PublishState {
+    if (!rule.isPublished) {
+      return 'draft';
+    }
+
+    return rule.draft === null ? 'published' : 'changed';
   }
 
   protected statusOf(acknowledgement: RuleAcknowledgement): AcknowledgementStatus {
@@ -221,7 +246,8 @@ export class GuardianHouseRules {
     }
 
     const id = editing.kind === 'edit' ? editing.rule.id : 'new';
-    const saved = await this.action.run(
+    let saved: Rule | undefined;
+    const ok = await this.action.run(
       id,
       async () => {
         const book =
@@ -234,14 +260,77 @@ export class GuardianHouseRules {
               )
             : await this.houseRules.addRule(scope, result.content);
         this.showBook(scope, book);
+        // A new rule is appended at the end of the book.
+        saved = editing.kind === 'edit' ? editing.rule : book.rules.at(-1);
       },
       'houseRules.saveError',
     );
 
-    if (saved) {
-      this.editing.set(null);
-      this.refocusTrigger();
+    if (!ok) {
+      return;
     }
+
+    this.editing.set(null);
+    this.refocusTrigger();
+
+    // "Save and publish": publishing is the card's own action once the draft is safely saved, so a
+    // failed publish shows on the card and retrying it can't add the rule a second time.
+    if (result.publish && saved) {
+      await this.publish(saved);
+    }
+  }
+
+  protected async publish(rule: Rule): Promise<void> {
+    const scope = this.scope();
+
+    if (!scope) {
+      return;
+    }
+
+    await this.action.run(
+      rule.id,
+      async () => this.showBook(scope, await this.houseRules.publishRule(scope, rule.id)),
+      'houseRules.publishError',
+    );
+  }
+
+  protected async publishAll(): Promise<void> {
+    const scope = this.scope();
+
+    if (!scope) {
+      return;
+    }
+
+    await this.action.run(
+      PUBLISH_ALL,
+      async () => this.showBook(scope, await this.houseRules.publishAll(scope)),
+      'houseRules.publishError',
+    );
+  }
+
+  protected publishAllError(): string | null {
+    const state = this.action.state();
+    return state.status === 'error' && state.id === PUBLISH_ALL ? state.message : null;
+  }
+
+  protected async discard(rule: Rule): Promise<void> {
+    const scope = this.scope();
+
+    if (!scope) {
+      return;
+    }
+
+    await this.action.run(
+      rule.id,
+      async () => {
+        await this.houseRules.discardDraft(scope, rule.id);
+        this.updateBook((book) => ({
+          ...book,
+          rules: book.rules.map((r) => (r.id === rule.id ? { ...r, draft: null } : r)),
+        }));
+      },
+      'houseRules.discardError',
+    );
   }
 
   protected async remove(rule: Rule): Promise<void> {

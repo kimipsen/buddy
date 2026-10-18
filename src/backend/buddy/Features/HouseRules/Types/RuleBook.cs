@@ -23,6 +23,9 @@ public sealed record RuleBook(
 
     public Rule? FindRule(RuleId ruleId) => Rules.Find(r => r.Id == ruleId);
 
+    // What the children and adult View members read: rules that have been published, in book order.
+    public IEnumerable<Rule> PublishedRules => Rules.Where(r => r.IsPublished);
+
     public int? AcknowledgedRevision(RuleId ruleId, UserId childId) =>
         Acknowledgements.TryGetValue((ruleId, childId), out var revision) ? revision : null;
 
@@ -74,6 +77,46 @@ public sealed record RuleBook(
             Rules = Reorder(book.Rules, reordered.After),
             LastModifiedBy = reordered.ModifiedBy
         },
+        RuleDraftAdded added => book with
+        {
+            Rules = book.Rules.Add(new Rule(
+                added.RuleId,
+                "",
+                "",
+                0,
+                0,
+                added.AddedBy,
+                added.OccurredAt,
+                new RuleDraft(added.Content, true, added.AddedBy, added.OccurredAt))),
+            LastModifiedBy = added.AddedBy
+        },
+        RuleDraftEdited edited => book with
+        {
+            Rules = Replace(book.Rules, edited.RuleId, rule => rule with
+            {
+                Draft = new RuleDraft(edited.After, edited.RequiresReacknowledgement, edited.EditedBy, edited.OccurredAt)
+            }),
+            LastModifiedBy = edited.EditedBy
+        },
+        RuleDraftDiscarded discarded => book with
+        {
+            Rules = Replace(book.Rules, discarded.RuleId, rule => rule with { Draft = null }),
+            LastModifiedBy = discarded.DiscardedBy
+        },
+        RulePublished published => book with
+        {
+            Rules = Replace(book.Rules, published.RuleId, rule => rule with
+            {
+                Title = published.Content.Title,
+                Body = published.Content.Body,
+                Revision = published.Revision,
+                AcknowledgementRevision = published.RequiresReacknowledgement ? published.Revision : rule.AcknowledgementRevision,
+                LastEditedBy = published.PublishedBy,
+                LastEditedAt = published.OccurredAt,
+                Draft = null
+            }),
+            LastModifiedBy = published.PublishedBy
+        },
         // An acknowledgement is the child's, not an edit of the book, so LastModifiedBy stays.
         RuleAcknowledged acknowledged => book with
         {
@@ -88,7 +131,7 @@ public sealed record RuleBook(
 
         return index >= 0
             ? rules.SetItem(index, change(rules[index]))
-            : throw new InvalidOperationException($"RuleEdited referenced unknown rule {ruleId}.");
+            : throw new InvalidOperationException($"A rule book event referenced unknown rule {ruleId}.");
     }
 
     // Every id in `after` must already exist -- a violation is a bug in the handler that appended

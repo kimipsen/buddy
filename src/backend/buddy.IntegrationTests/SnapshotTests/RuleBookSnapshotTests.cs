@@ -23,10 +23,15 @@ public sealed class RuleBookSnapshotTests(BuddyApiFixture fixture)
         var c = await AddOneRuleAsync(fixture, home.OwnerToken, home.Rules, "C");
         await AcknowledgeAsync(fixture, home.ChildToken, home.Rules, a.Id, 1);
         await AcknowledgeAsync(fixture, home.ChildToken, home.Rules, b.Id, 1);
-        await EditRuleAsync(fixture, home.OwnerToken, home.Rules, a.Id, "A", "changed");
+        await EditAndPublishRuleAsync(fixture, home.OwnerToken, home.Rules, a.Id, "A", "changed");
         await EditRuleAsync(fixture, home.OwnerToken, home.Rules, b.Id, "B!", b.Body, requireReacknowledgement: false);
+        await PublishRulesAsync(fixture, home.OwnerToken, home.Rules);
+        await EditRuleAsync(fixture, home.OwnerToken, home.Rules, a.Id, "A", "discarded");
+        await DiscardRuleDraftAsync(fixture, home.OwnerToken, home.Rules, a.Id);
+        await EditRuleAsync(fixture, home.OwnerToken, home.Rules, b.Id, "B", "still a draft");
+        var d = await AddOneRuleAsync(fixture, home.OwnerToken, home.Rules, "D", publish: false);
         await RemoveRuleAsync(fixture, home.OwnerToken, home.Rules, c.Id);
-        await ReorderRulesAsync(fixture, home.OwnerToken, home.Rules, [b.Id, a.Id]);
+        await ReorderRulesAsync(fixture, home.OwnerToken, home.Rules, [d.Id, b.Id, a.Id]);
 
         var books = fixture.Host.Services.GetRequiredService<IRuleBookEventStore>();
         var id = new RuleBookId(home.GroupId);
@@ -37,6 +42,8 @@ public sealed class RuleBookSnapshotTests(BuddyApiFixture fixture)
         Assert.NotNull(replayed);
         Assert.NotNull(snapshot);
         Assert.Equal(2, replayed.Acknowledgements.Count);
+        Assert.NotNull(replayed.FindRule(new RuleId(b.Id))!.Draft);
+        Assert.False(replayed.FindRule(new RuleId(d.Id))!.IsPublished);
         Assert.Equivalent(replayed, snapshot, strict: true);
     }
 }

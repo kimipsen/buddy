@@ -13,7 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { Rule, RuleContent } from '../../../../core/house-rules.service';
+import { Rule, RuleContent, workingContent } from '../../../../core/house-rules.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MarkdownEditor } from '../../../../shared/markdown-editor/markdown-editor';
 import { Toggle } from '../../../../shared/toggle/toggle';
@@ -24,11 +24,14 @@ export const MAX_BODY_LENGTH = 4000;
 export interface RuleEditorResult {
   content: RuleContent;
   requireReacknowledgement: boolean;
+  // Publish right after saving, rather than leaving a draft to refine.
+  publish: boolean;
 }
 
-// The add/edit dialog: a plain-text title, the markdown body, and -- when editing -- the "small fix"
-// switch that keeps the children's acknowledgements (house-rules.md, Question 3). The parent owns
-// saving; this only collects the input and reports it.
+// The add/edit dialog: a plain-text title, the markdown body, and -- when editing a published rule --
+// the "small fix" switch that keeps the children's acknowledgements (house-rules.md, Question 3).
+// Saving writes a draft the children don't see; "Save and publish" also publishes it
+// (house-rules-publishing.md). The parent owns saving; this only collects the input and reports it.
 @Component({
   selector: 'app-rule-editor',
   imports: [MarkdownEditor, Toggle, TranslatePipe],
@@ -56,6 +59,8 @@ export class RuleEditor implements OnInit {
   protected readonly maxBodyLength = MAX_BODY_LENGTH;
 
   protected readonly isEdit = computed(() => this.rule() !== null);
+  // A rule the children have never seen is always new to them, so the switch would mean nothing.
+  protected readonly canBeMinorFix = computed(() => this.rule()?.isPublished === true);
   protected readonly canSave = computed(
     () =>
       !this.saving() &&
@@ -66,8 +71,10 @@ export class RuleEditor implements OnInit {
 
   ngOnInit(): void {
     const rule = this.rule();
-    this.title.set(rule?.title ?? '');
-    this.body.set(rule?.body ?? '');
+    const content = rule ? workingContent(rule) : { title: '', body: '' };
+    this.title.set(content.title);
+    this.body.set(content.body);
+    this.minorFix.set(rule?.draft ? !rule.draft.requiresReacknowledgement : false);
     afterNextRender(() => this.titleInput()?.nativeElement.focus(), { injector: this.injector });
   }
 
@@ -75,14 +82,15 @@ export class RuleEditor implements OnInit {
     this.title.set((event.target as HTMLInputElement).value);
   }
 
-  protected submit(): void {
+  protected submit(publish = false): void {
     if (!this.canSave()) {
       return;
     }
 
     this.save.emit({
       content: { title: this.title().trim(), body: this.body() },
-      requireReacknowledgement: !this.minorFix(),
+      requireReacknowledgement: !(this.canBeMinorFix() && this.minorFix()),
+      publish,
     });
   }
 

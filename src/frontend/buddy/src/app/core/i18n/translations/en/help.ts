@@ -326,16 +326,17 @@ export const help = {
         },
         writeRule: {
           title: 'Write a rule',
-          body: 'Keep each rule short, with a title and, if needed, the details. The details can use markdown: bold text, bulleted or numbered lists, checkboxes, tables and links. Press "Preview" to see how it will look. Use the arrows to change the order.',
+          body: 'Keep each rule short, with a title and, if needed, the details. The details can use markdown: bold text, bulleted or numbered lists, checkboxes, tables and links. Press "Preview" to see how it will look. Use the arrows to change the order. A new rule, and every change to a rule, is a draft that only you and the other adults who manage the rules can see, until you publish it.',
           steps: {
             s1: 'Under "Rules for", choose the household or the child.',
             s2: 'Press "Add rule", then write a title and the rule.',
-            s3: 'Press "Save rule".',
+            s3: 'Press "Save draft". Come back to refine it as often as you like.',
+            s4: 'When it\'s ready, press "Publish" on the rule, or "Publish all" to publish every draft at once. "Save and publish" in the editor does both in one go.',
           },
         },
         reading: {
           title: 'When your children have read a rule',
-          body: 'Your children see their rules on their home page and tap "I\'ve read this" for each one. Under every rule you see who has read it. When you change a rule, the children are asked to read it again, unless you mark the change as a small fix. For a child who can\'t read yet, go through the rule together and press "Read it with" and their name.',
+          body: 'Your children see their rules on their home page and tap "I\'ve read this" for each one. Under every rule you see who has read it. When you publish a change to a rule, the children are asked to read it again, unless you marked the change as a small fix. Until then they keep seeing the version they already know, and "Discard changes" takes your draft back. For a child who can\'t read yet, go through the rule together and press "Read it with" and their name.',
         },
         print: {
           title: 'Print the rules',

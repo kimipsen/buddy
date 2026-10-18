@@ -1005,7 +1005,9 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     // House rules ---------------------------------------------------------------------------
     // A household book for the family group and one personal rule for Emil. Ida has read every
     // household rule (Sara went through them with her); Emil read "Dinner" before it changed and
-    // hasn't read the others, so the guardian page and his page show "new" and "changed".
+    // hasn't read the others, so the guardian page and his page show "new" and "changed". Rules are
+    // drafts until published (house-rules-publishing.md): Sara is still writing "Sleepovers", and has
+    // an unpublished change to "Bedtime", so the guardian page shows both kinds of draft.
     interface RuleBookDto {
       rules: { id: string; title: string; revision: number }[];
     }
@@ -1026,10 +1028,11 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       title: 'Dinner',
       body: 'Phones stay in the basket by the door.',
     });
-    const household = await api.post<RuleBookDto>(householdRules, {
+    await api.post(householdRules, {
       title: 'Bedtime',
       body: '1. Pyjamas and teeth\n2. One story\n3. Lights out at **20:00**',
     });
+    const household = await api.post<RuleBookDto>(`${householdRules}/publish`, {});
     const dinner = household.rules.find((rule) => rule.title === 'Dinner');
     for (const rule of household.rules) {
       await api
@@ -1050,14 +1053,31 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
           requireReacknowledgement: true,
         })
         .catch(warn);
+      await api.post(`${householdRules}/${dinner.id}/publish`, {}).catch(warn);
       await api
         .put(`${householdRules}/${dinner.id}/acknowledgement`, { revision: 2, childId: ida.id })
         .catch(warn);
     }
-    await api.post(`/house-rules/children/${emil.id}/rules`, {
+    const bedtimeRule = household.rules.find((rule) => rule.title === 'Bedtime');
+    if (bedtimeRule) {
+      await api
+        .put(`${householdRules}/${bedtimeRule.id}`, {
+          title: 'Bedtime',
+          body: '1. Pyjamas and teeth\n2. One story\n3. Lights out at **20:00**, **20:30** on Fridays',
+          requireReacknowledgement: true,
+        })
+        .catch(warn);
+    }
+    await api.post(householdRules, {
+      title: 'Sleepovers',
+      body: '1. Ask at least two days before.\n2. Pack your own toothbrush and pyjamas.\n3. Call home before bedtime.',
+    });
+    const personalRules = `/house-rules/children/${emil.id}/rules`;
+    await api.post(personalRules, {
       title: 'Gaming',
       body: '- [x] Homework first\n- [ ] 45 minutes on school days\n- [ ] Stop when the timer rings',
     });
+    await api.post(`${personalRules}/publish`, {}).catch(warn);
 
     // Work locations ------------------------------------------------------------------------
     const office = await api.post<Named>('/work-locations/me/locations', {

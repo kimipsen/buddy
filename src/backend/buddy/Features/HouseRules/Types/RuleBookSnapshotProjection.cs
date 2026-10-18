@@ -27,4 +27,16 @@ public sealed class RuleBookSnapshotProjection : SingleStreamProjection<RuleBook
 
     public RuleBookSnapshot Apply(RuleBookSnapshot current, RuleAcknowledged acknowledged) =>
         current with { RuleBook = RuleBook.Advance(current.RuleBook, RuleBookEvent.FromPayload(acknowledged)) };
+
+    public RuleBookSnapshot Apply(RuleBookSnapshot current, RuleDraftAdded added) =>
+        current with { RuleBook = RuleBook.Advance(current.RuleBook, RuleBookEvent.FromPayload(added)) };
+
+    public RuleBookSnapshot Apply(RuleBookSnapshot current, RuleDraftEdited edited) =>
+        current with { RuleBook = RuleBook.Advance(current.RuleBook, RuleBookEvent.FromPayload(edited)) };
+
+    public RuleBookSnapshot Apply(RuleBookSnapshot current, RuleDraftDiscarded discarded) =>
+        current with { RuleBook = RuleBook.Advance(current.RuleBook, RuleBookEvent.FromPayload(discarded)) };
+
+    public RuleBookSnapshot Apply(RuleBookSnapshot current, RulePublished published) =>
+        current with { RuleBook = RuleBook.Advance(current.RuleBook, RuleBookEvent.FromPayload(published)) };
 }

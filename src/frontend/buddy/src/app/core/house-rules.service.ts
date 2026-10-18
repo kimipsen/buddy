@@ -10,6 +10,8 @@ import { RuntimeConfigService } from './runtime-config.service';
 // children whose acknowledgements it tracks, and the ordered rules with each child's status.
 export type RuleBook = Schemas['RuleBookResponse'];
 export type Rule = Schemas['RuleResponse'];
+// The unpublished change to a rule; only a Manage caller ever gets one.
+export type RuleDraft = Schemas['RuleDraftResponse'];
 export type RuleAcknowledgement = Schemas['RuleAcknowledgementResponse'];
 export type HouseRulesAccess = Schemas['HouseRulesAccessTier'];
 
@@ -36,6 +38,13 @@ export const REVISION_CHANGED_STATUS = 409;
 
 export function isRevisionChanged(error: unknown): boolean {
   return error instanceof HttpErrorResponse && error.status === REVISION_CHANGED_STATUS;
+}
+
+// What a guardian edits and sees on the card: the draft when there is one, else the published text.
+export function workingContent(rule: Rule): RuleContent {
+  return rule.draft
+    ? { title: rule.draft.title, body: rule.draft.body }
+    : { title: rule.title, body: rule.body };
 }
 
 export function scopeOf(section: Pick<ChildRuleSection, 'scopeKind' | 'scopeId'>): RuleScope {
@@ -72,6 +81,25 @@ export class HouseRulesService {
         requireReacknowledgement,
       }),
     );
+  }
+
+  // Makes the rule's draft the version the children read (house-rules-publishing.md).
+  publishRule(scope: RuleScope, ruleId: string): Promise<RuleBook> {
+    return firstValueFrom(
+      postIdempotent<RuleBook>(this.http, `${this.rules(scope)}/${ruleId}/publish`, null),
+    );
+  }
+
+  // Publishes every draft in the book at once.
+  publishAll(scope: RuleScope): Promise<RuleBook> {
+    return firstValueFrom(
+      postIdempotent<RuleBook>(this.http, `${this.rules(scope)}/publish`, null),
+    );
+  }
+
+  // Drops a published rule's draft; the published text stays.
+  discardDraft(scope: RuleScope, ruleId: string): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.rules(scope)}/${ruleId}/draft`));
   }
 
   removeRule(scope: RuleScope, ruleId: string): Promise<void> {

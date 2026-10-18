@@ -50,7 +50,7 @@ public sealed class AcknowledgeRuleTests(BuddyApiFixture fixture)
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, token);
         var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
         var rule = await AddOneRuleAsync(fixture, token, ChildRules(child.Id));
-        await EditRuleAsync(fixture, token, ChildRules(child.Id), rule.Id, rule.Title, "- 30 min");
+        await EditAndPublishRuleAsync(fixture, token, ChildRules(child.Id), rule.Id, rule.Title, "- 30 min");
 
         var response = await AcknowledgeAsync(fixture, childToken, ChildRules(child.Id), rule.Id, 1, expectedStatus: 409);
 
@@ -67,12 +67,24 @@ public sealed class AcknowledgeRuleTests(BuddyApiFixture fixture)
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, token);
         var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
         var rule = await AddOneRuleAsync(fixture, token, ChildRules(child.Id), "Scren time");
-        await EditRuleAsync(fixture, token, ChildRules(child.Id), rule.Id, "Screen time", rule.Body, requireReacknowledgement: false);
+        await EditAndPublishRuleAsync(fixture, token, ChildRules(child.Id), rule.Id, "Screen time", rule.Body, requireReacknowledgement: false);
 
         await AcknowledgeAsync(fixture, childToken, ChildRules(child.Id), rule.Id, 1);
 
         var status = Assert.Single(Assert.Single((await ListRulesAsync(fixture, token, ChildRules(child.Id)))!.Rules).Acknowledgements);
         Assert.Equal(new RuleAcknowledgementDto(child.Id, 1, true), status);
+    }
+
+    [Fact]
+    public async Task A_never_published_rule_cannot_be_acknowledged()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, token);
+        var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
+        var rule = await AddOneRuleAsync(fixture, token, ChildRules(child.Id), publish: false);
+
+        await AcknowledgeAsync(fixture, childToken, ChildRules(child.Id), rule.Id, 1, expectedStatus: 404);
+        await AcknowledgeAsync(fixture, token, ChildRules(child.Id), rule.Id, 1, child.Id, expectedStatus: 404);
     }
 
     [Fact]

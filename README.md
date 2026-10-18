@@ -75,6 +75,9 @@ in real time.
 - [x] Doctor visit summary: one printable A4 report of sleep, doses, effect notes and feelings for
       a chosen period of at most 92 days, with one revocable, expiring doctor share link (see
       [Doctor visit summary](docs/backend/analysis/doctor-visit-summary.md))
+- [x] Draft and publish house rules: guardians write and refine a rule before the children see it,
+      then publish one rule or all drafts at once (see
+      [House rules publishing](docs/backend/analysis/house-rules-publishing.md))
 
 ### Child
 

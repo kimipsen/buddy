@@ -36,8 +36,10 @@ public static class AcknowledgeRuleHandler
             };
         }
 
+        // A draft the children have never been shown doesn't exist for them
+        // (house-rules-publishing.md, Question 3).
         if (await RuleBooks.ReadAsync(books, command.Scope, cancellationToken) is not { Book: { } book }
-            || book.FindRule(command.RuleId) is not { } rule)
+            || book.FindRule(command.RuleId) is not { IsPublished: true } rule)
         {
             return new AcknowledgeRuleOutcome.NotFound();
         }
