@@ -575,6 +575,10 @@ npm run test:mutation
 ```
 
 The HTML report is written to `reports/mutation/index.html` (git-ignored).
+The command appends `$MUTATION_SPECS` (`--include` flags for `ng test`), which
+`scripts/mutation-batch.sh` sets to the specs that exercise the batch's files, so a
+mutant doesn't re-run the whole suite. The generated `buddy-api.ts` types are not mutated.
+See [nightly mutation testing](../testing.md#nightly-mutation-testing) for the CI batches.
 Coverage is still intentionally small: the current suite contains the app
 shell spec and a profile-management spec, so many mutants can report as
 uncovered rather than killed. That is a test-coverage signal, not a tooling
