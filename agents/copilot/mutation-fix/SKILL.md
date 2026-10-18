@@ -12,7 +12,7 @@ From the repo root:
 task test:mutation:frontend:batch [BATCH_SIZE=5] [CONCURRENCY=2] > <scratchpad>/batch.log 2>&1; echo $? > <scratchpad>/batch.log.exit
 ```
 
-This is slow (every mutant re-runs `npm test`). Run it with `run_in_background: true` and a generous timeout, redirect output to a log file in the scratchpad, write the exit code next to it so the status updates know when it ends, and start the status updates (below). Then wait for the completion notification. Don't poll the log yourself.
+This is slow (every mutant re-runs `npm test`, limited to the specs that exercise the batch's files; the script prints them as `against N spec(s): ...`). Run it with `run_in_background: true` and a generous timeout, redirect output to a log file in the scratchpad, write the exit code next to it so the status updates know when it ends, and start the status updates (below). Then wait for the completion notification. Don't poll the log yourself.
 
 **Status updates every 5 minutes.** Right after starting a background Stryker run (here and in step 4), use the environment's monitor tool when available. Start it with `timeout_ms: 1800000`, a description such as `mutation-fix batch progress`, and:
 
@@ -82,7 +82,7 @@ Fix any failing test before moving on — a failing initial test run makes Stryk
 npx stryker run --mutate "<file1>,<file2>,..." --incremental --force --concurrency <same as step 1, default 2>
 ```
 
-Run it in the background as in step 1, with its own log and exit file (`> <scratchpad>/round-N.log 2>&1; echo $? > <scratchpad>/round-N.log.exit`), and start the 5-minute status updates on that log. **`--force` is required.** This project uses the command test runner with coverage analysis off, so Stryker can't see that a spec changed: without `--force` it reuses every cached result ("N of N mutant result(s) are reused"), finishes in seconds and reports the same survivors. `--force` re-tests every mutant in the listed files, and `--incremental` still writes the fresh results to `reports/stryker-incremental.json`. Because every mutant in those files gets retested, pass only the files that still have survivors.
+Run it in the background as in step 1, with its own log and exit file (`> <scratchpad>/round-N.log 2>&1; echo $? > <scratchpad>/round-N.log.exit`), and start the 5-minute status updates on that log. **`--force` is required.** This project uses the command test runner with coverage analysis off, so Stryker can't see that a spec changed: without `--force` it reuses every cached result ("N of N mutant result(s) are reused"), finishes in seconds and reports the same survivors. `--force` re-tests every mutant in the listed files, and `--incremental` still writes the fresh results to `reports/stryker-incremental.json`. Because every mutant in those files gets retested, pass only the files that still have survivors. Without `MUTATION_SPECS`, each mutant runs the whole suite; to keep it as fast as the batch, prefix the command with the specs of the files you re-run, e.g. `MUTATION_SPECS="--include src/app/foo/foo.spec.ts --include src/app/bar/bar.spec.ts" npx stryker run ...`.
 
 Then go back to step 2 with the same file list.
 

@@ -242,15 +242,29 @@ Stryker.NET doesn't support .NET 11 yet, so a backend run is expected to fail
 for now. Once it's supported, set `MUTATION_SCOPE=both`; no code change is
 needed.
 
-The frontend job runs StrykerJS with `--incremental` on all runner vCPUs.
-Each run starts from the committed
-`src/frontend/buddy/reports/stryker-incremental.json` and layers on the latest
-baseline from the Actions cache, so only mutants whose source or tests changed
-are re-tested. Jobs time out after 300 minutes. If the committed baseline gets
-far behind, refresh it locally with `task test:mutation:frontend:batch` and
-commit it, so that a run with an evicted cache still fits.
-Each run writes the mutation score to the job summary and uploads the HTML
-report and the incremental JSON as the `frontend-mutation-report` artifact.
+A full frontend run doesn't fit in one job, so the job works through the
+source files in batches with `scripts/mutation-batch.sh` on all runner vCPUs,
+for up to 230 minutes. Then it stops and caches its progress
+(`reports/stryker-incremental.json` and `.mutation-batch-progress`), and the
+next run carries on from there. A first pass over every file takes a few
+nights. After that, a night only re-runs the files whose source or specs
+changed. With no cache (first run, or evicted after 7 days unused), the run
+starts from the committed `stryker-incremental.json` and goes through every
+file again.
+
+Each batch runs only the specs that exercise its files: the colocated
+`foo.spec.ts` and every spec that imports `foo`. A file that no spec imports,
+such as a child component, uses the specs of the files that import it. The
+script passes these specs to `ng test --include` through the `MUTATION_SPECS`
+variable in `stryker.conf.json`. This is much cheaper than running the whole
+suite for every mutant. The cost is that a mutant only an unrelated spec would
+kill is reported as surviving. Without `MUTATION_SPECS`, Stryker runs the whole
+suite as before.
+
+Each run writes the mutation score and the number of files covered to the job
+summary. It uploads an HTML report of all results so far
+(`scripts/mutation-html.mjs`) and the incremental JSON as the
+`frontend-mutation-report` artifact.
 
 Runs on the default branch also keep one open issue, **Frontend mutation
 testing findings** (label `mutation-testing`), up to date. It lists every

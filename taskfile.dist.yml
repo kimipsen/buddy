@@ -240,11 +240,11 @@ tasks:
   test:mutation:frontend:batch:
     desc: >-
       Work through frontend mutation testing a few files at a time (see
-      scripts/mutation-batch.sh), so it doesn't overwhelm the devcontainer.
-      Re-run repeatedly to cover the whole codebase; results accumulate in
-      reports/stryker-incremental.json as a baseline. Usage: task
+      scripts/mutation-batch.sh), running only the specs that exercise
+      them. Re-run repeatedly to cover the whole codebase; results accumulate
+      in reports/stryker-incremental.json as a baseline. Usage: task
       test:mutation:frontend:batch [BATCH_SIZE=5] [CONCURRENCY=2] [--
-      --status|--reset|--dry-run]
+      --status|--reset|--dry-run|--max-minutes N|--rerun-changed]
     dir: src/frontend/buddy
     vars:
       BATCH_SIZE: '{{.BATCH_SIZE | default "5"}}'

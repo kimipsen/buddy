@@ -116,27 +116,37 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
-      # Overlay the most recent CI baseline on top of the committed one, so each night only
-      # re-tests mutants whose source or tests changed. With no cache (first run, or evicted
-      # after 7 days unused) the committed reports/stryker-incremental.json is used as-is.
-      - name: Restore incremental baseline
+      # Restore where the last run got to: the cumulative results and the list of files covered
+      # (with a fingerprint of each file and its specs). With no cache (first run, or evicted after
+      # 7 days unused) the committed reports/stryker-incremental.json is the starting point and
+      # every file is run again.
+      - name: Restore mutation progress
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: src/frontend/buddy/reports/stryker-incremental.json
-          key: stryker-incremental-${{ github.run_id }}
-          restore-keys: stryker-incremental-
+          path: |
+            src/frontend/buddy/reports/stryker-incremental.json
+            src/frontend/buddy/.mutation-batch-progress
+          key: stryker-batches-${{ github.run_id }}
+          restore-keys: stryker-batches-
 
-      # Runners aren't shared like the devcontainer, so use every vCPU instead of batching.
+      # A full run doesn't fit in one job, so work through the files in batches until the time
+      # budget is used up; the next run carries on from there. Each batch only runs the specs that
+      # exercise its files (see scripts/mutation-batch.sh). Once every file is covered, a night only
+      # re-runs files whose source or specs changed. The step timeout is a backstop: the script
+      # stops itself at --max-minutes, so the steps below still save and report what it finished.
       # timeoutMS in stryker.conf.json keeps one slow test run from cascading into timeouts.
-      - name: Run StrykerJS
-        run: npm run test:mutation -- --incremental --concurrency "$(nproc)"
+      - name: Run StrykerJS in batches
+        timeout-minutes: 250
+        run: ./scripts/mutation-batch.sh --rerun-changed --max-minutes 230 --batch-size 10 --concurrency "$(nproc)"
 
-      - name: Save incremental baseline
-        if: ${{ !cancelled() }}
+      - name: Save mutation progress
+        if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: src/frontend/buddy/reports/stryker-incremental.json
-          key: stryker-incremental-${{ github.run_id }}
+          path: |
+            src/frontend/buddy/reports/stryker-incremental.json
+            src/frontend/buddy/.mutation-batch-progress
+          key: stryker-batches-${{ github.run_id }}
 
       - name: Write summary
         if: ${{ !cancelled() }}
@@ -151,9 +161,11 @@ jobs:
               "|---|---|---|---|---|---|",
               "| \($k) | \($sv) | \($t) | \($nc) | \(n("CompileError")) | \(.files | length) |"
           ' reports/stryker-incremental.json >> "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+          ./scripts/mutation-batch.sh --rerun-changed --status >> "$GITHUB_STEP_SUMMARY"
 
-      # Only after a completed Stryker run, so a crash or timeout never rewrites the issue with
-      # stale or partial results.
+      # Only after the batch step succeeded, so a crash never rewrites the issue. Until the first
+      # pass over all files is done, the issue lists the findings in the files covered so far.
       - name: Build findings list
         run: node scripts/mutation-issue.mjs --out reports/mutation-findings.md > reports/mutation-issue.md
 
@@ -179,6 +191,11 @@ jobs:
           elif [ -n "$NUMBER" ]; then
             gh issue close "$NUMBER" --comment "No surviving or uncovered mutants as of ${GITHUB_SHA::7}."
           fi
+
+      # Stryker's own HTML report only shows the last batch; render one from all results.
+      - name: Build HTML report
+        if: ${{ !cancelled() }}
+        run: node scripts/mutation-html.mjs
 
       - name: Upload report
         if: ${{ !cancelled() }}
