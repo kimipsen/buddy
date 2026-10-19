@@ -23,6 +23,9 @@ in real time.
 
 ### Guardian
 
+- [ ] Mark meals as eating out (at friends/family or a restaurant), so the AI assistant never
+      suggests them and leaves those slots alone (proposed, not yet implemented — see
+      [Eating-out meals](docs/backend/analysis/eating-out-meals.md))
 - [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
       child for something new such as the dentist or a trip (proposed, not yet implemented — see
       [Social stories](docs/backend/analysis/social-stories.md))

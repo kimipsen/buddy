@@ -51,6 +51,7 @@ model or permissions logic.
 - [Meal plan iCal feed](analysis/mealplan-ical-feed.md)
 - [Importing historical meal plans](analysis/mealplan-import.md)
 - [AI assistant meal filter](analysis/ai-assistant-meal-filter.md)
+- [Eating-out meals](analysis/eating-out-meals.md)
 - [Conditional GET with ETags](analysis/conditional-get-etags.md)
 - [Rate limiting](analysis/rate-limiting.md)
 - [Pickup and drop-off schedules](analysis/pickup-schedules.md)
