@@ -78,6 +78,7 @@ model or permissions logic.
 - [Packing checklists](analysis/packing-checklists.md)
 - [Medicine effect and side-effect notes](analysis/medicine-effect-notes.md)
 - [Doctor visit summary](analysis/doctor-visit-summary.md)
+- [Leaving medicines out of the effect summary](analysis/medicine-effect-inclusion.md)
 - [Skipping single occurrences](analysis/skip-occurrences.md)
 - [Publishing Docker images on GitHub](analysis/publish-docker-images.md)
 
