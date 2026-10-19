@@ -102,8 +102,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Same contexts and build arguments as deploy/docker-compose.prod.yml; the URLs only end
-          # up in runtime-config.json and the Caddyfile's CSP, which the scan doesn't look at.
+          # Same contexts and build arguments as deploy/docker-compose.prod.yml.
           - name: api
             context: src/backend
             dockerfile: src/backend/buddy/Dockerfile
@@ -111,9 +110,7 @@ jobs:
           - name: web
             context: src/frontend/buddy
             dockerfile: src/frontend/buddy/Dockerfile
-            build-args: >-
-              --build-arg API_BASE_URL=https://api.example.invalid
-              --build-arg KEYCLOAK_AUTHORITY=https://auth.example.invalid/realms/buddy
+            build-args: ""
           - name: keycloak
             context: .
             dockerfile: deploy/azure/keycloak/Dockerfile

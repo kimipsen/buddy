@@ -9,27 +9,10 @@ RUN npm ci --ignore-scripts
 
 COPY . .
 
-ARG API_BASE_URL
-ARG KEYCLOAK_AUTHORITY
-# From deploy/version.sh (the build context has no .git); shown in the profile menu.
-ARG BUDDY_VERSION=0.0.0-dev
-# Source code link in the profile menu; empty keeps the app's default (kimipsen/buddy).
-ARG REPOSITORY_URL=
-RUN npm run build -- --configuration production
-
-# Runtime config is fetched by the app at startup (see runtime-config.service.ts),
-# not baked into the JS bundle — overwrite it here so a rebuild picks up the
-# right domains without touching app source.
-RUN node -e " \
-  const fs = require('fs'); \
-  const path = 'dist/buddy/browser/config/runtime-config.json'; \
-  const config = JSON.parse(fs.readFileSync(path, 'utf8')); \
-  config.keycloak.authority = process.env.KEYCLOAK_AUTHORITY; \
-  config.apiBaseUrl = process.env.API_BASE_URL; \
-  config.version = process.env.BUDDY_VERSION; \
-  if (process.env.REPOSITORY_URL) config.repositoryUrl = process.env.REPOSITORY_URL; \
-  fs.writeFileSync(path, JSON.stringify(config, null, 2)); \
-"
+# The development runtime config (localhost URLs) mustn't ship: the Caddyfile serves
+# /config/runtime-config.json from the container's environment instead.
+RUN npm run build -- --configuration production \
+    && rm dist/buddy/browser/config/runtime-config.json
 
 FROM caddy:2-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f AS runtime
 
@@ -40,12 +23,13 @@ RUN if ! id -u caddy >/dev/null 2>&1; then \
     fi \
     && chown -R caddy:caddy /data /config
 
-# The Caddyfile reads these for the Content-Security-Policy's connect-src/form-action, so the
-# policy names the same API and Keycloak origins as runtime-config.json.
-ARG API_BASE_URL
-ARG KEYCLOAK_AUTHORITY
-ENV API_BASE_URL=$API_BASE_URL \
-    KEYCLOAK_AUTHORITY=$KEYCLOAK_AUTHORITY
+# One image serves any deployment: API_BASE_URL, KEYCLOAK_AUTHORITY and the optional
+# REPOSITORY_URL come from the container's environment at start, where the Caddyfile writes them
+# into runtime-config.json and the Content-Security-Policy. Only the version is baked in, because
+# it belongs to the image: from deploy/version.sh (the build context has no .git), shown in the
+# profile menu.
+ARG BUDDY_VERSION=0.0.0-dev
+ENV BUDDY_VERSION=$BUDDY_VERSION
 
 COPY --from=build /app/dist/buddy/browser /usr/share/caddy
 COPY Caddyfile /etc/caddy/Caddyfile

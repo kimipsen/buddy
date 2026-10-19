@@ -99,12 +99,13 @@ database), and gets the edge Caddy to issue Let's Encrypt certs for
 `API_DOMAIN`, `AUTH_DOMAIN`, and `APP_DOMAIN` automatically (DNS must already
 resolve for this to succeed).
 
-The frontend's `runtime-config.json` (authority/API URL) is baked in at
-**build time** from `API_DOMAIN`/`AUTH_DOMAIN` in `.env` — see
-`src/frontend/buddy/Dockerfile`. If you change either domain later, you need
-to rebuild the `frontend` image (rerun `task deploy`), not just restart it.
-The same goes for the optional `REPOSITORY_URL` (the profile menu's GitHub
-link, for a family running its own fork).
+The frontend reads its `runtime-config.json` (authority/API URL) from the
+container's environment when it starts, set from `API_DOMAIN`/`AUTH_DOMAIN`
+in `.env` — see `src/frontend/buddy/Caddyfile`. If you change either domain
+later, `task deploy` recreates the `frontend` container with the new values;
+the image itself doesn't change. The same goes for the optional
+`REPOSITORY_URL` (the profile menu's GitHub link, for a family running its
+own fork).
 
 **Upgrading from the stock Keycloak image.** Earlier versions of this
 compose file ran `quay.io/keycloak/keycloak:21.1.1` with `start --optimized`
@@ -325,6 +326,15 @@ tell you about a release instead:
   `vX.Y.Z` release, with a link to its notes. Pre-release tags are ignored.
   If the VM can't reach the remote, it says so and compares against the tags
   it already has.
+
+Each release is also published as multi-arch images (`linux/amd64` and
+`linux/arm64`) to the GitHub Container Registry:
+`ghcr.io/kimipsen/buddy-api`, `buddy-frontend` and `buddy-keycloak`, tagged
+`1.5.3`, `1.5`, `1` and `latest`, plus `edge` for the newest `master`
+(see [docs/versioning.md](../docs/versioning.md#published-images)).
+`task deploy` still builds on the VM for now; pulling the published images
+instead is planned in
+[publish-docker-images.md](../docs/backend/analysis/publish-docker-images.md).
 
 To upgrade, read the release notes, take a backup (step 7), check out the tag
 (`git fetch --tags && git checkout v1.3.0`, or merge it into your fork) and

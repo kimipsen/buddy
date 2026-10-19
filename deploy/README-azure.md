@@ -85,9 +85,9 @@ This, in order:
 7. Builds and deploys the API image, wired up with Brevo SMTP if
    `BREVO_SMTP_LOGIN`/`BREVO_SMTP_KEY`/`MAIL_FROM_ADDRESS` are set in `.env` —
    see "Mail" below.
-8. Builds the frontend image with `API_BASE_URL`/`KEYCLOAK_AUTHORITY` passed
-   as build args (baked into `runtime-config.json` at build time, same as the
-   Oracle setup), and deploys it.
+8. Builds the frontend image and deploys it with `API_BASE_URL`/
+   `KEYCLOAK_AUTHORITY` as container environment variables (the image serves
+   them as `runtime-config.json` when it starts, same as the Oracle setup).
 9. Points Keycloak's `buddy` realm at the same Brevo SMTP credentials via its
    Admin REST API, so Keycloak's own emails (password resets, address
    verification) send too — skipped with a note on the very first run, since
@@ -198,8 +198,8 @@ To use your own domains (e.g. `app.yourdomain.com`, `api.yourdomain.com`,
    `*.azurecontainerapps.io` FQDN.
 3. Rerun `./deploy.sh`.
 
-On this run, `deploy.sh` rebuilds the frontend image with the new
-`API_BASE_URL`/`KEYCLOAK_AUTHORITY` build args, updates the API app's
+On this run, `deploy.sh` updates the frontend app's `API_BASE_URL`/
+`KEYCLOAK_AUTHORITY` env vars, updates the API app's
 `Authentication__Keycloak__*` and `Cors__AllowedOrigins__0` env vars and the
 Keycloak app's `KC_HOSTNAME` to the new domains, and adds + binds each
 configured hostname to its Container App.

@@ -1,6 +1,11 @@
 # Publishing Docker images on GitHub
 
-Status: Proposed (not yet implemented)
+Status: Implemented (phase 1: publishing).
+[`publish-images.yml`](../../../.github/workflows/publish-images.yml) publishes the three images
+to GHCR on release tags, `master` pushes and manual runs, and the frontend reads its URLs at
+container start. Phase 2 (deployments pull the published images) and retention are open in
+`TODO.md`. Two details changed from the proposal: Trivy scans each architecture's digest in its
+build job, and there is no retention job yet (see [Retention](#retention)).
 
 ## Context
 
@@ -138,12 +143,12 @@ is the main deployment.
 **Decision: tags come from `docker/metadata-action`, with the version from `deploy/version.sh` on
 a full clone (`fetch-depth: 0`).**
 
-| Trigger             | Image tags                          |
-| ------------------- | ----------------------------------- |
-| tag `v1.5.3`        | `1.5.3`, `1.5`, `1`, `latest`       |
-| tag `v1.6.0-rc.1`   | `1.6.0-rc.1` only (no `latest`)     |
-| push to `master`    | `edge`, `sha-<12-character commit>` |
-| `workflow_dispatch` | `sha-<12-character commit>`         |
+| Trigger             | Image tags                                                 |
+| ------------------- | ---------------------------------------------------------- |
+| tag `v1.5.3`        | `1.5.3`, `1.5`, `1`, `latest`, `sha-<12-character commit>` |
+| tag `v1.6.0-rc.1`   | `1.6.0-rc.1`, `sha-<12-character commit>` (no `latest`)    |
+| push to `master`    | `edge`, `sha-<12-character commit>`                        |
+| `workflow_dispatch` | `sha-<12-character commit>`                                |
 
 - The images carry the same `BUDDY_VERSION` / `BUDDY_COMMIT` build args as today, so `GET /version`
   and the profile menu report the same thing whether an image was built by CI or on the host.
@@ -153,8 +158,9 @@ a full clone (`fetch-depth: 0`).**
 
 ## Decision: scan before tagging, then attest
 
-**Decision: the build pushes untagged digests. A `publish` job per image runs the Trivy gate on the
-digest and applies the tags only if it passes.**
+**Decision: each build job pushes its architecture's image as an untagged digest and runs the
+Trivy gate on it, on the same runner. The `publish` job per image joins and tags the digests only
+when every build job has passed.**
 
 - It's the same gate as security-scan (fixable high and critical findings, `.trivyignore`), so a
   release can't publish an image that the daily scan would fail.
@@ -182,8 +188,13 @@ pull the published images.**
 
 ## Retention
 
-A weekly job uses `actions/delete-package-versions` to keep the newest 20 `sha-*` versions of each
-image and delete untagged versions older than a week. Release tags are never deleted.
+Not implemented yet. The proposal was a weekly `actions/delete-package-versions` job, but GHCR
+stores each architecture's image (and its attestations) inside a multi-arch image as an
+_untagged_ package version, and that action can't tell those apart from leftovers. Deleting
+untagged versions would break published releases, and its `ignore-versions` filter matches
+digests, not tags. Public GHCR storage is free, so retention can wait until a tool that
+understands image indexes (for example `dataaxiom/ghcr-cleanup-action`) has been tried on a test
+package. Digests from builds that failed the scan stay behind untagged until then.
 
 ## Docs to update
 

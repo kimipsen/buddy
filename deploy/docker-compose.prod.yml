@@ -35,11 +35,15 @@ services:
     build:
       context: ../src/frontend/buddy
       args:
-        API_BASE_URL: "https://${API_DOMAIN}"
-        KEYCLOAK_AUTHORITY: "https://${AUTH_DOMAIN}"
         BUDDY_VERSION: "${BUDDY_VERSION:-0.0.0-dev}"
-        REPOSITORY_URL: "${REPOSITORY_URL:-}"
     restart: unless-stopped
+    # Read when the container starts (the image's Caddyfile serves them as runtime-config.json and
+    # puts them in its Content-Security-Policy), so a domain change recreates the container
+    # (`docker compose up -d frontend`) without rebuilding the image.
+    environment:
+      API_BASE_URL: "https://${API_DOMAIN}"
+      KEYCLOAK_AUTHORITY: "https://${AUTH_DOMAIN}"
+      REPOSITORY_URL: "${REPOSITORY_URL:-}"
     # The caddy image is Alpine, so busybox wget is there.
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:80/"]

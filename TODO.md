@@ -6,6 +6,18 @@
 
 ## Open
 
+### Publishing Docker images (2026-10-19)
+
+Plan in [Publishing Docker images on GitHub](docs/backend/analysis/publish-docker-images.md).
+
+- [ ] **First run.** After the first run of `publish-images.yml`, make the three `buddy-*`
+      packages public in their GitHub package settings, and check that
+      `docker pull ghcr.io/kimipsen/buddy-api:edge` works on the arm64 VM without logging in.
+- [ ] **Phase 2: deploy from the published images.** `task deploy:pull VERSION=x.y.z` (compose
+      `pull` + `up -d --no-build`, rollback by tag), and `az acr import` in `deploy/azure/deploy.sh`.
+- [ ] **Retention.** Clean up old `sha-*` and orphaned untagged versions with a tool that keeps
+      the platform images of a multi-arch image (not `actions/delete-package-versions`).
+
 ### Leave medicines out of the effect summary (2026-10-19)
 
 Some medicines (vitamin D, melatonin) aren't relevant to an ADHD doctor visit, but they split dose
@@ -840,3 +852,11 @@ they reuse data the app already keeps. Each has a design doc.
 - [x] **Untrimmed names.** Meal, medicine, calendar, task-template and subtask names, the
       provider API key (now at least 8 characters) and email changes are trimmed before
       validation and storage (2026-10-19).
+
+### Publishing Docker images
+
+- [x] **Phase 1: publish.** `publish-images.yml` builds the api, frontend and keycloak images for
+      amd64 and arm64 on native runners, scans each with Trivy, and publishes them to GHCR with
+      release, `edge` and `sha-` tags, build provenance and an SBOM. The frontend image reads
+      `API_BASE_URL`/`KEYCLOAK_AUTHORITY` at container start instead of at build time
+      (2026-10-19).

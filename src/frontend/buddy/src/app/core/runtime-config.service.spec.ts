@@ -62,6 +62,38 @@ describe('RuntimeConfigService', () => {
     expect(() => service.apiBaseUrl).toThrow('Runtime config has not been loaded.');
   });
 
+  it.each([
+    ['apiBaseUrl', { ...config, apiBaseUrl: '' }],
+    ['keycloak.authority', { ...config, keycloak: { ...config.keycloak, authority: '' } }],
+    ['keycloak.realm', { ...config, keycloak: { ...config.keycloak, realm: '' } }],
+  ])(
+    'rejects a config whose %s is empty, as the image serves it when a variable is unset',
+    async (_, body) => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => body,
+      });
+
+      await expect(service.load()).rejects.toThrow('Runtime config is missing');
+    },
+  );
+
+  it('treats an empty version as none and an empty repository URL as the default', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({ ...config, version: '', repositoryUrl: '' }),
+    });
+
+    await service.load();
+
+    expect(service.version).toBeNull();
+    expect(service.repositoryUrl).toBe('https://github.com/kimipsen/buddy');
+  });
+
   it('exposes apiBaseUrl and keycloak from the fetched config once load() resolves', async () => {
     fetchMock.mockResolvedValue({
       ok: true,

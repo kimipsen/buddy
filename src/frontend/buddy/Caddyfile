@@ -17,6 +17,19 @@
 		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' {$API_BASE_URL} {$KEYCLOAK_AUTHORITY}; form-action 'self' {$KEYCLOAK_AUTHORITY}; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
 	}
 
-	try_files {path} /index.html
-	file_server
+	# The app's runtime config (runtime-config.service.ts), from the container's environment, so one
+	# image serves any deployment. Unset variables come out as "", which the app treats as missing:
+	# it refuses to start without API_BASE_URL or KEYCLOAK_AUTHORITY.
+	handle /config/runtime-config.json {
+		header Content-Type application/json
+		header Cache-Control no-cache
+		respond `{"keycloak": {"authority": "{$KEYCLOAK_AUTHORITY}", "realm": "buddy", "clientId": "buddy-frontend", "redirectPath": "/dashboard"}, "apiBaseUrl": "{$API_BASE_URL}", "version": "{$BUDDY_VERSION}", "repositoryUrl": "{$REPOSITORY_URL}"}`
+	}
+
+	# A separate handle, because try_files is a rewrite that Caddy runs before any handle: outside
+	# one, it would rewrite /config/runtime-config.json (which the image doesn't ship) to /index.html.
+	handle {
+		try_files {path} /index.html
+		file_server
+	}
 }

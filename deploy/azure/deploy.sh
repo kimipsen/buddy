@@ -470,15 +470,22 @@ set_probes api '[
 
 bind_custom_domain api "$API_CUSTOM_DOMAIN" "$API_FQDN"
 
-echo "==> Building the frontend image (API_BASE_URL/KEYCLOAK_AUTHORITY baked in at build time)"
+echo "==> Building the frontend image (version $BUDDY_VERSION)"
 az acr build \
   --registry "$ACR_NAME" \
   --image buddy-frontend:latest \
-  --build-arg "API_BASE_URL=https://$API_HOSTNAME" \
-  --build-arg "KEYCLOAK_AUTHORITY=https://$KEYCLOAK_HOSTNAME" \
   --build-arg "BUDDY_VERSION=$BUDDY_VERSION" \
-  --build-arg "REPOSITORY_URL=${REPOSITORY_URL:-}" \
   "$REPO_ROOT/src/frontend/buddy"
+
+# Read when the container starts: the image's Caddyfile serves them as runtime-config.json and puts
+# them in its Content-Security-Policy. Without REPOSITORY_URL the app keeps its default link.
+FRONTEND_ENV_VARS=(
+  "API_BASE_URL=https://$API_HOSTNAME"
+  "KEYCLOAK_AUTHORITY=https://$KEYCLOAK_HOSTNAME"
+)
+if [[ -n "${REPOSITORY_URL:-}" ]]; then
+  FRONTEND_ENV_VARS+=("REPOSITORY_URL=$REPOSITORY_URL")
+fi
 
 FRONTEND_DIGEST=$(az acr repository show --name "$ACR_NAME" --image buddy-frontend:latest --query digest -o tsv)
 FRONTEND_IMAGE="$ACR_SERVER/buddy-frontend@$FRONTEND_DIGEST"
@@ -489,6 +496,7 @@ if containerapp_exists frontend; then
     --name frontend \
     --resource-group "$RESOURCE_GROUP" \
     --image "$FRONTEND_IMAGE" \
+    --set-env-vars "${FRONTEND_ENV_VARS[@]}" \
     --min-replicas 1 --max-replicas 1 \
     -o none
 else
@@ -501,6 +509,7 @@ else
     --registry-server "$ACR_SERVER" \
     --registry-username "$ACR_USERNAME" \
     --registry-password "$ACR_PASSWORD" \
+    --env-vars "${FRONTEND_ENV_VARS[@]}" \
     --target-port 80 \
     --ingress external \
     --min-replicas 1 --max-replicas 1 \

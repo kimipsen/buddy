@@ -10,11 +10,12 @@ export interface KeycloakConfig {
 export interface RuntimeConfig {
   keycloak: KeycloakConfig;
   apiBaseUrl: string;
-  // Build version from git tags, written by the Dockerfile at deploy time (docs/versioning.md).
-  // Absent in local development.
+  // Build version from git tags, baked into the image and served by its Caddyfile
+  // (docs/versioning.md). Absent in local development; empty counts as absent.
   version?: string;
   // Source code link in the profile menu, so a family running its own fork can point it there.
-  // Defaults to DEFAULT_REPOSITORY_URL.
+  // Defaults to DEFAULT_REPOSITORY_URL when absent or empty (the image serves "" when the
+  // REPOSITORY_URL environment variable isn't set).
   repositoryUrl?: string;
 }
 
@@ -42,11 +43,11 @@ export class RuntimeConfigService {
 
   // Cosmetic, so null (rather than a throw) both before load() and when the config has none.
   get version(): string | null {
-    return this.config?.version ?? null;
+    return nonEmpty(this.config?.version) ?? null;
   }
 
   get repositoryUrl(): string {
-    return this.config?.repositoryUrl ?? DEFAULT_REPOSITORY_URL;
+    return nonEmpty(this.config?.repositoryUrl) ?? DEFAULT_REPOSITORY_URL;
   }
 
   async load(): Promise<void> {
@@ -75,7 +76,9 @@ export function isRuntimeConfig(value: unknown): value is RuntimeConfig {
 
   const { keycloak, apiBaseUrl, version, repositoryUrl } = value as Record<string, unknown>;
 
-  if (typeof apiBaseUrl !== 'string' || typeof keycloak !== 'object' || keycloak === null) {
+  // The image fills these in from environment variables, which come out as "" when unset, so an
+  // empty value is as missing as an absent one.
+  if (!isNonEmptyString(apiBaseUrl) || typeof keycloak !== 'object' || keycloak === null) {
     return false;
   }
 
@@ -89,7 +92,15 @@ export function isRuntimeConfig(value: unknown): value is RuntimeConfig {
 
   const fields = keycloak as Record<string, unknown>;
 
-  return ['authority', 'clientId', 'realm', 'redirectPath'].every(
-    (field) => typeof fields[field] === 'string',
+  return ['authority', 'clientId', 'realm', 'redirectPath'].every((field) =>
+    isNonEmptyString(fields[field]),
   );
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value !== '';
+}
+
+function nonEmpty(value: string | undefined): string | undefined {
+  return value === '' ? undefined : value;
 }

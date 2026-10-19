@@ -32,8 +32,9 @@ Deploy from the tagged commit to ship exactly that version.
   [`deploy/version.sh`](../deploy/version.sh) computes the same version from git on the host.
   `task deploy` and `deploy/azure/deploy.sh` pass it in as the `BUDDY_VERSION` / `BUDDY_COMMIT`
   build args. The API Dockerfile hands them to MinVer (`MinVerVersionOverride`) and the SDK
-  (`SourceRevisionId`). The frontend Dockerfile writes `version` into `runtime-config.json`.
-  A bare `docker build` without the args reports `0.0.0-dev`.
+  (`SourceRevisionId`). The frontend Dockerfile bakes it into the image, and its Caddyfile
+  serves it as `version` in `runtime-config.json`. A bare `docker build` without the args
+  reports `0.0.0-dev`.
 
 ## Where it shows
 
@@ -42,7 +43,28 @@ Deploy from the tagged commit to ship exactly that version.
   development, where `public/config/runtime-config.json` has no `version`.
 
 CI checkouts are shallow, so a test build there may compute a different height. Builds that
-ship always go through `deploy/version.sh` on a full clone.
+ship always go through `deploy/version.sh` on a full clone, including the published images below.
+
+## Published images
+
+[`publish-images.yml`](../.github/workflows/publish-images.yml) builds the api, frontend and
+keycloak images for `linux/amd64` and `linux/arm64` and publishes them to the GitHub Container
+Registry as `ghcr.io/kimipsen/buddy-api`, `buddy-frontend` and `buddy-keycloak`:
+
+| Trigger                          | Image tags                            |
+| -------------------------------- | ------------------------------------- |
+| tag `v1.5.3`                     | `1.5.3`, `1.5`, `1`, `latest`, `sha-` |
+| tag `v1.6.0-rc.1`                | `1.6.0-rc.1`, `sha-`                  |
+| push to `master`                 | `edge`, `sha-`                        |
+| manual run (`workflow_dispatch`) | `sha-`                                |
+
+`sha-` is `sha-` plus the first 12 characters of the commit, the same as the image tags
+`task deploy` gives its local builds. Each image is scanned with Trivy before it is tagged (the
+same gate as `security-scan.yml`) and carries build provenance and an SBOM; check one with
+`gh attestation verify oci://ghcr.io/kimipsen/buddy-api:1.5.3 --repo kimipsen/buddy`.
+
+The frontend image works for any deployment: it reads `API_BASE_URL`, `KEYCLOAK_AUTHORITY` and
+the optional `REPOSITORY_URL` from its environment when it starts.
 
 ## Finding out about new releases
 

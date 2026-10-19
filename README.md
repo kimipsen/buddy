@@ -122,8 +122,6 @@ in real time.
 
 ### Platform
 
-- [ ] Versioned multi-arch Docker images published to GitHub (proposed, not yet implemented — see
-      [Publishing Docker images on GitHub](docs/backend/analysis/publish-docker-images.md))
 - [x] Keycloak authentication, token lifecycle, and role-based routing
 - [x] Group and guardian invitations and email-verification flows; an invitation can only be
       accepted by an account with a verified email address that matches the invited one
@@ -138,6 +136,8 @@ in real time.
       milestones, missed doses and reminders (proposed, not yet implemented — see
       [Mobile app and push notifications](docs/backend/analysis/mobile-app-and-notifications.md)
       and [Buddy as a mobile app](docs/frontend/analysis/mobile-app.md))
+- [x] Versioned multi-arch Docker images (amd64 and arm64) published to the GitHub Container
+      Registry on every release
 
 ## Repository structure
 

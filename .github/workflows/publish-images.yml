@@ -1,0 +1,249 @@
+name: Publish images
+
+# Builds the api, frontend and keycloak images for linux/amd64 and linux/arm64 and publishes them
+# to the GitHub Container Registry as ghcr.io/<owner>/buddy-<image>. A vX.Y.Z tag publishes a
+# release (1.5.3, 1.5, 1, latest); a push to master publishes edge. Every run also tags the commit
+# as sha-<12 characters>, matching the image tags `task deploy` uses. Design and tag rules:
+# docs/backend/analysis/publish-docker-images.md.
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+    branches: [master]
+    # Only for branch pushes; GitHub doesn't apply path filters to tag pushes.
+    paths:
+      - "src/backend/**"
+      - "src/frontend/**"
+      - "themes/**"
+      - "deploy/azure/keycloak/**"
+      - "global.json"
+      - ".trivyignore"
+      - ".github/workflows/publish-images.yml"
+  workflow_dispatch:
+
+# Least privilege for the GITHUB_TOKEN; a job that needs more asks for it itself.
+permissions:
+  contents: read
+
+# A newer master push supersedes an older one; a release always runs to the end.
+concurrency:
+  group: publish-images-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_type == 'branch' }}
+
+jobs:
+  version:
+    # origin pushes to a mirror too; only the upstream repository publishes. A fork that wants its
+    # own images changes this to its own name.
+    if: github.repository == 'kimipsen/buddy'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      commit: ${{ steps.version.outputs.commit }}
+      registry: ${{ steps.version.outputs.registry }}
+    steps:
+      # Full history and tags: deploy/version.sh counts commits since the last tag, the same way
+      # MinVer does, and a shallow clone gets that wrong (docs/versioning.md).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Compute version
+        id: version
+        # Image names must be lowercase; an owner name may not be.
+        run: |
+          {
+            echo "version=$(deploy/version.sh)"
+            echo "commit=$(deploy/version.sh --commit)"
+            echo "registry=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build ${{ matrix.image.name }} (${{ matrix.arch.platform }})
+    needs: version
+    # Each architecture on its own runner: emulating arm64 with QEMU makes dotnet publish and
+    # ng build several times slower.
+    runs-on: ${{ matrix.arch.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # Same contexts as deploy/docker-compose.prod.yml and security-scan.yml.
+        image:
+          - name: api
+            context: src/backend
+            dockerfile: src/backend/buddy/Dockerfile
+          - name: frontend
+            context: src/frontend/buddy
+            dockerfile: src/frontend/buddy/Dockerfile
+          - name: keycloak
+            context: .
+            dockerfile: deploy/azure/keycloak/Dockerfile
+        arch:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    env:
+      IMAGE: ${{ needs.version.outputs.registry }}/buddy-${{ matrix.image.name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Only the labels; the tags are applied once both architectures have passed the scan.
+      - name: Labels
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE }}
+          labels: |
+            org.opencontainers.image.title=buddy-${{ matrix.image.name }}
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
+            org.opencontainers.image.revision=${{ needs.version.outputs.commit }}
+
+      # Pushed by digest only, untagged, so nothing pullable by tag exists before the scan passes.
+      # Each Dockerfile reads only the arguments it declares: BUDDY_VERSION (api, frontend),
+      # BUDDY_COMMIT (api) and HEALTH_ENABLED (keycloak, on for both deployments' probes).
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.image.context }}
+          file: ${{ matrix.image.dockerfile }}
+          platforms: ${{ matrix.arch.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            BUDDY_VERSION=${{ needs.version.outputs.version }}
+            BUDDY_COMMIT=${{ needs.version.outputs.commit }}
+            HEALTH_ENABLED=true
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=${{ matrix.image.name }}-${{ matrix.arch.platform }}
+          cache-to: type=gha,scope=${{ matrix.image.name }}-${{ matrix.arch.platform }},mode=max
+
+      # Same gate as security-scan.yml: high or critical findings with a fixed version fail the
+      # build, and accepted ones go in .trivyignore. security-scan.yml uploads the full SARIF report.
+      - name: Fail on fixable high and critical vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          TRIVY_PLATFORM: ${{ matrix.arch.platform }}
+        with:
+          image-ref: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          trivyignores: .trivyignore
+
+      # The frontend reads its URLs when the container starts (src/frontend/buddy/Caddyfile), so
+      # check that runtime-config.json and the Content-Security-Policy carry them.
+      - name: Smoke test the runtime config
+        if: matrix.image.name == 'frontend'
+        env:
+          REF: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
+        run: |
+          docker run -d --name frontend -p 8080:80 \
+            -e API_BASE_URL=https://api.example.test \
+            -e KEYCLOAK_AUTHORITY=https://auth.example.test \
+            "$REF"
+          for _ in $(seq 1 30); do curl -fsS -o /dev/null http://127.0.0.1:8080/ && break; sleep 1; done
+          curl -fsS -D headers.txt http://127.0.0.1:8080/config/runtime-config.json -o config.json
+          cat config.json
+          jq -e '.apiBaseUrl == "https://api.example.test"
+            and .keycloak.authority == "https://auth.example.test"
+            and .version == "${{ needs.version.outputs.version }}"
+            and .repositoryUrl == ""' config.json
+          grep -i '^content-security-policy:.*connect-src .self. https://api.example.test https://auth.example.test;' headers.txt
+          docker rm -f frontend
+
+      - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: digests-${{ matrix.image.name }}-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish ${{ matrix.image }}
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [api, frontend, keycloak]
+    env:
+      IMAGE: ${{ needs.version.outputs.registry }}/buddy-${{ matrix.image }}
+      # sha-<12 characters>, like the image tags `task deploy` gives its local builds.
+      DOCKER_METADATA_SHORT_SHA_LENGTH: "12"
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ matrix.image }}-*
+          merge-multiple: true
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # v1.5.3 -> 1.5.3, 1.5, 1 and latest; a pre-release (v1.6.0-rc.1) gets only its own version.
+      # master -> edge. Every run -> sha-<commit>.
+      - name: Tags
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=edge,branch=master
+            type=sha,prefix=sha-
+
+      - name: Create the multi-arch image
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          # shellcheck disable=SC2046
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("--tag " + .) | join(" ")' <<<"$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf "$IMAGE@sha256:%s " *)
+
+      - name: Image digest
+        id: digest
+        env:
+          TAG: ${{ steps.meta.outputs.version }}
+        run: |
+          docker buildx imagetools inspect "$IMAGE:$TAG"
+          echo "digest=$(docker buildx imagetools inspect "$IMAGE:$TAG" --format '{{json .Manifest}}' | jq -r .digest)" >> "$GITHUB_OUTPUT"
+
+      # Verifiable with: gh attestation verify oci://<image>:<tag> --repo kimipsen/buddy
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          push-to-registry: true
