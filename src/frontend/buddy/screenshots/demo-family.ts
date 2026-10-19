@@ -673,18 +673,36 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         description,
       });
     }
+    // Eating-out meals: badged in the library and the plan, and skipped by the AI assistant.
+    for (const [name, icon, color, eatingOut] of [
+      ['Dinner at Grandma’s', '👵', '#ec4899', 'FriendsAndFamily'],
+      ['Restaurant', '🍽️', '#8b5cf6', 'Restaurant'],
+    ] as const) {
+      meals[name] = await api.post<Named>(`/mealplans/children/${emil.id}/meals`, {
+        name,
+        icon,
+        color,
+        eatingOut,
+      });
+    }
 
     // Indexed by getDay (0 = Sunday).
     const dinners = [
       'Spaghetti bolognese',
       'Fish fingers & potatoes',
       'Spaghetti bolognese',
-      'Fish fingers & potatoes',
+      'Dinner at Grandma’s',
       'Spaghetti bolognese',
       'Chicken tacos',
-      'Chicken tacos',
+      'Restaurant',
     ];
-    for (const day of planDays) {
+    // The meal plan also covers last week: the child's meal plan opens on the seven days before
+    // today, which on a Monday lie entirely before planDays.
+    const mealPlanDays = [
+      ...Array.from({ length: 7 }, (_, i) => addDays(monday, i - 7)),
+      ...planDays,
+    ];
+    for (const day of mealPlanDays) {
       const assign = (slot: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack', meal: string) =>
         api.put(`/mealplans/children/${emil.id}/plan?date=${isoDate(day)}&slot=${slot}`, {
           mealId: meals[meal].id,
