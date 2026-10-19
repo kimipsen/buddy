@@ -416,6 +416,17 @@ describe('shiftRangeEnd', () => {
   ])('leaves the end alone when a part is blank (%o -> %o, end %o)', (oldStart, newStart, end) => {
     expect(shiftRangeEnd(oldStart, newStart, end)).toBe(end);
   });
+
+  it.each([
+    { date: 'x2026-10-09', time: '10:00' },
+    { date: '2026-10-09x', time: '10:00' },
+    { date: '2026-10-09', time: '110:00' },
+    { date: '2026-10-09', time: '10:00x' },
+  ])('leaves the end alone when the new start %o is malformed', (newStart) => {
+    const end = { date: '2026-10-09', time: '09:30' };
+
+    expect(shiftRangeEnd({ date: '2026-10-09', time: '09:00' }, newStart, end)).toBe(end);
+  });
 });
 
 describe('shiftRangeEndDate', () => {
@@ -496,6 +507,13 @@ describe('instantInTimeZone', () => {
     );
     expect(instantInTimeZone('2026-10-25', '10:00', 'Europe/Copenhagen')).toBe(
       Date.parse('2026-10-25T09:00:00Z'),
+    );
+  });
+
+  it('keeps the seconds of an offset that is not whole minutes', () => {
+    // Liberia kept -00:44:30 until 1972.
+    expect(instantInTimeZone('1970-01-01', '11:15', 'Africa/Monrovia')).toBe(
+      Date.parse('1970-01-01T11:59:30Z'),
     );
   });
 });

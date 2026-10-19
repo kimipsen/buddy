@@ -68,6 +68,32 @@ describe('the zone and tag catalog', () => {
     expect(Object.keys(TAG_LABEL_KEYS)).toHaveLength(26);
   });
 
+  it.each([
+    ['Blue', 'sky'],
+    ['Green', 'emerald'],
+    ['Yellow', 'amber'],
+    ['Red', 'rose'],
+  ] as const)('draws the %s zone with its own keys and %s colour classes', (zone, colour) => {
+    const info = zoneInfo(zone);
+    const name = zone.toLowerCase();
+
+    expect(info.face).not.toBe('');
+    expect(info.labelKey).toBe(`feelings.zones.${name}.label`);
+    expect(info.meaningKey).toBe(`feelings.zones.${name}.meaning`);
+    expect(info.colourKey).toBe(`feelings.zones.${name}.colour`);
+    expect(info.faceNameKey).toBe(`feelings.zones.${name}.face`);
+    for (const classes of [
+      info.buttonClass,
+      info.chipClass,
+      info.dotClass,
+      info.outlineClass,
+      info.barClass,
+    ]) {
+      expect(classes).toMatch(new RegExp(`(^| )(bg|border)-${colour}-\\d+`));
+      expect(classes).toMatch(new RegExp(`(^| )dark:(bg|border)-`));
+    }
+  });
+
   it('gives each zone a distinct face', () => {
     expect(new Set(ZONES.map((z) => z.face)).size).toBe(4);
     expect(zoneInfo('Red').face).toBe('😡');

@@ -83,12 +83,34 @@ describe('FeaturesService', () => {
   });
 
   it('keeps every feature on and warns when the API answers with an error', async () => {
-    fetchMock.mockResolvedValue({ ok: false, status: 503, statusText: 'Service Unavailable' });
+    // An error body is not a flags object, even when it parses as JSON.
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 503,
+      statusText: 'Service Unavailable',
+      json: async () => ({ medicines: false }),
+    });
 
     await service.load();
 
     expect(names.every((name) => service.enabled(name))).toBe(true);
-    expect(console.warn).toHaveBeenCalledTimes(1);
+    expect(console.warn).toHaveBeenCalledExactlyOnceWith(
+      'Could not load the feature flags; showing every feature.',
+      new Error('503 Service Unavailable'),
+    );
+  });
+
+  it('clears the load timeout once the flags have loaded', async () => {
+    vi.useFakeTimers();
+    try {
+      fetchMock.mockResolvedValue({ ok: true, json: async () => allOn });
+
+      await service.load();
+
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps every feature on when the API cannot be reached', async () => {

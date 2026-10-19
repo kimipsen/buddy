@@ -1,8 +1,17 @@
-import { Route } from '@angular/router';
-import { describe, expect, it } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import {
+  ActivatedRouteSnapshot,
+  CanActivateFn,
+  provideRouter,
+  Route,
+  RouterStateSnapshot,
+  UrlTree,
+} from '@angular/router';
+import { describe, expect, it, vi } from 'vitest';
 
 import { routes } from './app.routes';
 import { authGuard } from './core/auth.guard';
+import { FeaturesService } from './core/features.service';
 import { roleRedirectGuard } from './core/role.guard';
 import { CHILD_ROUTES } from './features/child/child.routes';
 import { GUARDIAN_ROUTES } from './features/guardian/guardian.routes';
@@ -50,12 +59,33 @@ describe('app routes', () => {
   });
 
   it.each([
+    ['shared/sleep-diary/:token', 'sleepDiary'],
+    ['shared/feelings/:token', 'feelings'],
+    ['shared/visit-summary/:token', 'visitSummaries'],
+  ] as const)('guards %s with the %s feature flag', (path, feature) => {
+    const enabled = vi.fn(() => false);
+    TestBed.configureTestingModule({
+      providers: [provideRouter([]), { provide: FeaturesService, useValue: { enabled } }],
+    });
+    const guards = route(path).canActivate as CanActivateFn[];
+
+    expect(guards).toHaveLength(1);
+    const result = TestBed.runInInjectionContext(() =>
+      guards[0]({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+    );
+
+    expect(enabled).toHaveBeenCalledExactlyOnceWith(feature);
+    expect(result).toBeInstanceOf(UrlTree);
+  });
+
+  it.each([
     ['guardian', GUARDIAN_ROUTES],
     ['child', CHILD_ROUTES],
   ])('lazy-loads the %s tree behind authGuard', async (path, children) => {
     const r = route(path);
 
     expect(r.canActivate).toEqual([authGuard]);
+    expect(r.canActivateChild).toEqual([authGuard]);
     await expect((r.loadChildren as () => Promise<unknown>)()).resolves.toBe(children);
   });
 

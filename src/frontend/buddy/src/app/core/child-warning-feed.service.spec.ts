@@ -111,6 +111,25 @@ describe('ChildWarningFeed', () => {
     expect(api.getMine).toHaveBeenCalledTimes(2);
   });
 
+  it('does not force a reload unless asked to', async () => {
+    const { feed, api } = setup(ON);
+
+    await feed.refresh(false, NOW);
+    await feed.refresh(undefined, NOW + 60_000);
+
+    expect(api.getMine).toHaveBeenCalledTimes(1);
+  });
+
+  it('reloads as soon as the day changes, even within 10 minutes', async () => {
+    const { feed, api } = setup(ON);
+
+    // 23:58 and 00:01 in Copenhagen.
+    await feed.refresh(false, Date.parse('2026-10-13T21:58:00Z'));
+    await feed.refresh(false, Date.parse('2026-10-13T22:01:00Z'));
+
+    expect(api.getMine).toHaveBeenCalledTimes(2);
+  });
+
   it("loads the child's today and computes the warnings due", async () => {
     const { feed, calendars, pickups } = setup(ON);
 

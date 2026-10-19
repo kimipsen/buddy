@@ -125,6 +125,9 @@ describe('first-then', () => {
       expect(thenDeadlineMs(board())).toBeNull();
       expect(thenDeadlineMs(unlocked({ thenMinutes: null }))).toBeNull();
       expect(thenDeadlineMs(unlocked({ unlockedAt: null }))).toBeNull();
+      // Locked again (or cleared), the Then has no running time even if an old unlock is reported.
+      expect(thenDeadlineMs(unlocked({ state: 'Waiting' }))).toBeNull();
+      expect(thenDeadlineMs(unlocked({ state: 'None' }))).toBeNull();
     });
 
     it('is time’s up from the deadline on, never before or without a length', () => {

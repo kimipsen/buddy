@@ -12,6 +12,7 @@ import { RuntimeConfigService } from './runtime-config.service';
 // TaskTemplateResponse.TotalDuration in CreateTaskTemplate.Endpoint.cs). The service converts to
 // and from whole minutes at this boundary so components never touch the wire string directly.
 function parseDurationMinutes(duration: string): number {
+  // Stryker disable next-line Regex: the seconds group is unread and the pattern has no end anchor, so (\d) matches wherever (\d+) does.
   const match = /^-?(?:(\d+)\.)?(\d+):(\d+):(\d+)/.exec(duration);
 
   if (!match) {

@@ -129,6 +129,20 @@ describe('CalendarsService', () => {
     });
   });
 
+  describe('getCalendar', () => {
+    it('GETs the calendar by id and resolves with its detail', async () => {
+      const detail = { ...calendar({ id: 'cal-7' }), timeZoneId: 'Europe/Copenhagen' };
+
+      const promise = service.getCalendar('cal-7');
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/calendars/cal-7`);
+      expect(req.request.method).toBe('GET');
+      req.flush(detail);
+
+      await expect(promise).resolves.toEqual(detail);
+    });
+  });
+
   describe('createCalendar', () => {
     it('POSTs the request body and resolves with the created calendar', async () => {
       const request: CreateCalendarRequest = {
@@ -811,6 +825,28 @@ describe('CalendarsService', () => {
       httpMock.expectOne(`${apiBaseUrl}/calendars`).flush([]);
 
       await expect(promise).resolves.toEqual([]);
+    });
+
+    it('passes includeSkipped through to every calendar, and leaves it out by default', async () => {
+      const plain = service.listOccurrencesInRange('2026-08-01', '2026-08-31');
+      httpMock.expectOne(`${apiBaseUrl}/calendars`).flush([calendar()]);
+      await flushMicrotasks();
+      const plainReq = httpMock.expectOne(
+        (r) => r.url === `${apiBaseUrl}/calendars/cal-1/occurrences`,
+      );
+      expect(plainReq.request.params.has('includeSkipped')).toBe(false);
+      plainReq.flush([]);
+      await plain;
+
+      const withSkipped = service.listOccurrencesInRange('2026-08-01', '2026-08-31', true);
+      httpMock.expectOne(`${apiBaseUrl}/calendars`).flush([calendar()]);
+      await flushMicrotasks();
+      const skippedReq = httpMock.expectOne(
+        (r) => r.url === `${apiBaseUrl}/calendars/cal-1/occurrences`,
+      );
+      expect(skippedReq.request.params.get('includeSkipped')).toBe('true');
+      skippedReq.flush([]);
+      await withSkipped;
     });
 
     it('resolves with an empty array when calendars exist but none have occurrences in range', async () => {

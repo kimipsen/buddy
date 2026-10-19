@@ -115,6 +115,7 @@ describe('authInterceptor', () => {
       });
       expect(error).toBeInstanceOf(HttpErrorResponse);
       expect((error as HttpErrorResponse).status).toBe(401);
+      expect((error as HttpErrorResponse).statusText).toBe('Unauthorized');
       expect((error as HttpErrorResponse).url).toBe(`${API_BASE_URL}/calendars?from=1`);
     });
 

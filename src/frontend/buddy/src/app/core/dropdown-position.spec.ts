@@ -48,6 +48,16 @@ describe('dropdownPosition', () => {
     expect(style['max-height']).toBe('188px');
   });
 
+  it('stays below when the room above is no larger than the room below', () => {
+    const short = { width: 393, height: 300 };
+    const style = dropdownPosition(anchorAt(134), size, short);
+
+    // Below: 300 - 166 - 4 - 16 = 114; above: 134 - 4 - 16 = 114.
+    expect(style['top']).toBe('170px');
+    expect(style['bottom']).toBeUndefined();
+    expect(style['max-height']).toBe('114px');
+  });
+
   it('shrinks a flipped list to the room above it', () => {
     const short = { width: 393, height: 300 };
     const style = dropdownPosition(anchorAt(200), size, short);

@@ -47,6 +47,13 @@ describe('pending-guardian-invite-token', () => {
       expect(sessionStorage).toHaveLength(0);
     });
 
+    it('leaves an empty stored value alone rather than consuming it', () => {
+      sessionStorage.setItem(STORAGE_KEY, '');
+
+      expect(takePendingGuardianInviteToken()).toBe('');
+      expect(sessionStorage.getItem(STORAGE_KEY)).toBe('');
+    });
+
     it('does not read a value stored under a different key', () => {
       sessionStorage.setItem('some_other_key', 'guardian-invite-token-value');
 

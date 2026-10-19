@@ -234,6 +234,24 @@ describe('DeleteAccount', () => {
     expect(backdrop(compiled)).toBeFalsy();
   });
 
+  it('ignores Escape while the dialog is closed, leaving focus where it is', () => {
+    const { fixture } = setup();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const elsewhere = document.createElement('button');
+    document.body.appendChild(elsewhere);
+    try {
+      elsewhere.focus();
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      fixture.detectChanges();
+
+      expect(backdrop(compiled)).toBeFalsy();
+      expect(document.activeElement).toBe(elsewhere);
+    } finally {
+      elsewhere.remove();
+    }
+  });
+
   it('keeps the confirm dialog open on Escape while the delete request is in flight', () => {
     const deleteCurrentUser = vi.fn(() => new Promise<void>(() => undefined));
     const { fixture } = setup({ users: { deleteCurrentUser } });

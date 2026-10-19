@@ -950,6 +950,29 @@ describe('ChildCalendar', () => {
     expect(text.indexOf('Soup')).toBeLessThan(text.indexOf('Park trip'));
   });
 
+  it('tracks every meal and item row of a day by its own key', async () => {
+    const warn = vi.spyOn(console, 'warn');
+    const { fixture } = await setup({
+      calendars: {
+        listOccurrencesInRange: vi.fn(async () => [
+          occurrence({ itemId: 'swim', title: 'Early swim' }),
+          occurrence({ itemId: 'read', title: 'Reading time' }),
+        ]),
+      },
+      mealplans: {
+        listMealPlan: vi.fn(async () => [
+          mealEntry({ slot: 'Breakfast', mealName: 'Pancakes' }),
+          mealEntry({ slot: 'Lunch', mealId: 'meal-2', mealName: 'Soup' }),
+        ]),
+      },
+    });
+    await settle(fixture);
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Soup');
+    // Angular warns (NG0955) when a @for's track expression gives two rows the same key.
+    expect(warn.mock.calls.flat().join('\n')).not.toContain('NG0955');
+  });
+
   it.each([
     ['Lunch' as MealSlot, 'Lunch'],
     ['Dinner' as MealSlot, 'Dinner'],

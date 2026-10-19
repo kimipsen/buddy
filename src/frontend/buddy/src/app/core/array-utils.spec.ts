@@ -17,7 +17,7 @@ describe('firstAndLast', () => {
   });
 
   it('throws for an empty array', () => {
-    expect(() => firstAndLast([])).toThrow(RangeError);
+    expect(() => firstAndLast([])).toThrow(new RangeError('firstAndLast needs at least one item'));
   });
 });
 
@@ -79,7 +79,9 @@ describe('swapped', () => {
   });
 
   it('throws when either index is out of range', () => {
-    expect(() => swapped(['a', 'b'], 0, 2)).toThrow(RangeError);
+    expect(() => swapped(['a', 'b'], 0, 2)).toThrow(
+      new RangeError('swapped index out of range: 0, 2 (length 2)'),
+    );
     expect(() => swapped(['a', 'b'], -1, 1)).toThrow(RangeError);
   });
 });

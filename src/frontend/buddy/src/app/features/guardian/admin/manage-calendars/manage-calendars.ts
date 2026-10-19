@@ -59,6 +59,7 @@ export class ManageCalendars {
   protected readonly newCalendarIcon = signal(DEFAULT_ICON);
   protected readonly newCalendarTimeZoneId = signal(resolveDefaultTimeZoneId(this.timeZoneIds));
   // Defaults to the first manageable group once they load.
+  // Stryker disable next-line StringLiteral: with no manageable group the create form isn't rendered, and loading one recomputes this
   protected readonly newCalendarGroupId = linkedSignal(() => this.manageableGroups()[0]?.id ?? '');
   protected readonly creating = createAction();
 
