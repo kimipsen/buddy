@@ -299,6 +299,7 @@ if containerapp_exists keycloak; then
     --name keycloak \
     --resource-group "$RESOURCE_GROUP" \
     --image "$KEYCLOAK_IMAGE" \
+    --cpu 0.5 --memory 1.0Gi \
     --set-env-vars "${KEYCLOAK_ENV_VARS[@]}" \
     --remove-env-vars KC_PROXY KEYCLOAK_ADMIN KEYCLOAK_ADMIN_PASSWORD \
     -o none
@@ -315,7 +316,7 @@ else
     --target-port 8080 \
     --ingress external \
     --min-replicas 1 --max-replicas 1 \
-    --cpu 1.0 --memory 2.0Gi \
+    --cpu 0.5 --memory 1.0Gi \
     --secrets \
       "pg-password=$PG_ADMIN_PASSWORD" \
       "keycloak-admin-password=$KEYCLOAK_ADMIN_PASSWORD" \
@@ -324,7 +325,7 @@ else
 fi
 
 # Keycloak's health endpoints are on the management port (9000), which the ingress (8080) doesn't
-# expose, so they stay private. /health/ready includes its database check. A cold start on one CPU
+# expose, so they stay private. /health/ready includes its database check. A cold start on half a CPU
 # (realm caches, theme) can take a few minutes, hence the startup probe's 5 min allowance.
 echo "==> Configuring Keycloak's health probes"
 set_probes keycloak '[
