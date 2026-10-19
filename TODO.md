@@ -6,20 +6,6 @@
 
 ## Open
 
-### Validation gaps found while documenting (2026-10-19)
-
-Found while writing the `## Validation` tables; each is documented as the code behaves today. Ask
-before changing behavior.
-
-- [ ] **Unvalidated fields.** Meal, medicine, calendar-item and task-template icon/color;
-      `UpdateCalendarItemDetails` title; `CreateGroup` name; `UpdateCurrentName`; invite emails
-      (`InviteGuardian`, `InviteToGroup`); undefined enum numbers (dose status, recurrence
-      frequency, roles, child kind).
-- [ ] **Probable 500s and leaks.** A `null` entry in `ConfigureGoalPosts` reaches the endpoint
-      unchecked; `StartAiSession` looks up must-include meals without checking the family.
-- [ ] **Untrimmed names.** Meal, medicine, calendar, task-template and subtask names and the
-      provider API key count surrounding whitespace toward their limits.
-
 ### Backend unit tests as the primary test source (2026-10-16)
 
 Make backend unit tests the primary test source, with integration tests on demand. Plan in
@@ -832,3 +818,13 @@ they reuse data the app already keeps. Each has a design doc.
       property names; template icons use both `Icon` and `Icon.Value`. Keys mix PascalCase and
       camelCase across domains. Every key is now the camelCase
       JSON path of the request field (`ValidationProblem` normalizes them).
+- [x] **Unvalidated fields.** Icons follow the shared icon rule and colors are capped at 32
+      characters on meals, medicines, calendars, calendar items and task templates; edited item
+      titles, group names, the guardian's own name and invite emails are validated; undefined enum
+      values (dose status, recurrence frequency, roles, child kind, permission policies) are
+      rejected; inviting as group owner is a 400 under `role` (2026-10-19).
+- [x] **Probable 500s and leaks.** A `null` goal post is a 400, and `StartAiSession` only checks
+      must-include meals of the family (2026-10-19).
+- [x] **Untrimmed names.** Meal, medicine, calendar, task-template and subtask names, the
+      provider API key (now at least 8 characters) and email changes are trimmed before
+      validation and storage (2026-10-19).
