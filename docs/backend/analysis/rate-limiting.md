@@ -54,10 +54,11 @@ It follows the same principle as
 cross-cutting HTTP behavior is implemented once in `Common/`, and handlers don't change.
 
 **Counters are held in memory, per API instance.** The Oracle VM runs one API container. Azure
-scales the API from 1 to 3 replicas (`--min-replicas 1 --max-replicas 3`, `deploy.sh:378`), so on
-Azure a caller can get up to 3× the configured rate when its requests land on different replicas.
-That's acceptable for the job this does. It protects the database from floods and runaway clients.
-It isn't a billing quota, so it doesn't need to be exact.
+runs the API as a single replica too (`--min-replicas 1 --max-replicas 1` in `deploy.sh`, on both
+create and update), so the counters are exact. If the API is ever scaled out, a caller could get up
+to N× the configured rate when its requests land on different replicas. That would still be
+acceptable for the job this does. It protects the database from floods and runaway clients. It
+isn't a billing quota, so it doesn't need to be exact.
 
 Rejected:
 
@@ -65,7 +66,7 @@ Rejected:
   exact across replicas, but every request would pay for a database write. That puts load on the
   resource the limiter is there to protect.
 - **Redis.** It is the usual store for a distributed limiter, but it would be a new piece of
-  infrastructure in both deployments and in the devcontainer, all to fix a 3× inaccuracy.
+  infrastructure in both deployments and in the devcontainer, all to fix an inaccuracy that only appears when scaled out.
 - **Limiting at the proxy** (Caddy's `rate_limit`, Azure Front Door or API Management WAF rules).
   Caddy needs a custom build with a third-party module. Azure's options exist only on the Azure
   path, cost money, and can't see who the user is. Both deployments would also need separate
