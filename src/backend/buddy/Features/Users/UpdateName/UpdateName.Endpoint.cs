@@ -12,13 +12,14 @@ public static class UpdateCurrentNameEndpoint
 {
     public static RouteGroupBuilder MapUpdateCurrentName(this RouteGroupBuilder users)
     {
-        users.MapPatch("/me/name", async Task<Results<Ok<UserResponse>, NotFound>> (
+        users.MapPatch("/me/name", async Task<Results<Ok<UserResponse>, BadRequest<ErrorEnvelope>, NotFound>> (
             ClaimsPrincipal principal,
             UpdateNameRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var command = UpdateName.FromClaims(principal, Name.New(request.GivenName, request.FamilyName));
+            var command = UpdateName.FromClaims(principal, Name.New(request.GivenName.Trim(), request.FamilyName.Trim()));
 
             var result = await bus.InvokeAsync<Result<User>>(command, cancellationToken);
 
@@ -26,10 +27,10 @@ public static class UpdateCurrentNameEndpoint
             {
                 Result<User>.Success(var user) => TypedResults.Ok(UserResponse.FromUser(user)),
                 Result<User>.NotFound => TypedResults.NotFound(),
-                // UpdateNameHandler never produces Forbidden or Validation -- collapsed to
-                // NotFound since this route declares no other status for them.
+                // UpdateNameHandler never produces Forbidden -- collapsed to NotFound since this
+                // route declares no other status for it.
                 Result<User>.Forbidden => TypedResults.NotFound(),
-                Result<User>.Validation => TypedResults.NotFound(),
+                Result<User>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };
         })
         .WithName("UpdateCurrentName");

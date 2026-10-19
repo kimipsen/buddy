@@ -20,6 +20,7 @@ namespace Internal.Generated.WolverineHandlers
 
         public override async System.Threading.Tasks.Task HandleAsync(Wolverine.Runtime.MessageContext context, System.Threading.CancellationToken cancellation)
         {
+            var updateNameValidator = new buddy.Features.Users.UpdateNameValidator();
             // The actual message body
             var updateName = (buddy.Features.Users.UpdateName)context.Envelope.Message;
 
@@ -30,7 +31,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Users.UpdateNameHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Users.UpdateNameHandler.Handle(updateName, _userEventStore, _timeProvider, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Users.UpdateNameHandler.Handle(updateName, updateNameValidator, _userEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

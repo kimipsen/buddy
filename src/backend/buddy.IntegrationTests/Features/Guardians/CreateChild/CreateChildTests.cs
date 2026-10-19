@@ -149,6 +149,25 @@ public sealed class CreateChildTests(BuddyApiFixture fixture)
         Assert.Equal(username, child.Username);
     }
 
+    [Fact]
+    public async Task Rejects_an_undefined_kind()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        // The binder accepts an enum as a number, so an out-of-range one reaches the validator.
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { GivenName = "Child", FamilyName = "Child", Username = $"bad-kind-{Guid.CreateVersion7():N}", Kind = 99 })
+                .ToUrl("/users/me/children/");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal("kind", Assert.Single(error.Details.Keys));
+    }
+
     private async Task<ErrorEnvelope> PostInvalidChildAsync(string guardianToken, string givenName, string familyName, string username)
     {
         var response = await fixture.Host.Scenario(_ =>

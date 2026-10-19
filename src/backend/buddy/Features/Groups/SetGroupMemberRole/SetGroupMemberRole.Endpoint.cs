@@ -22,11 +22,6 @@ public static class SetGroupMemberRoleEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            if (request.Role == GroupRole.Owner)
-            {
-                return TypedResults.BadRequest(buddy.Common.Validation.ValidationProblem.Of("Ownership cannot be granted through this endpoint.").ToEnvelope(httpContext));
-            }
-
             var command = SetGroupMemberRole.FromClaims(principal, new GroupId(groupId), new UserId(memberId), request.Role);
             var result = await bus.InvokeAsync<Result<Unit>>(command, cancellationToken);
 
@@ -35,8 +30,6 @@ public static class SetGroupMemberRoleEndpoint
                 Result<Unit>.Success => TypedResults.NoContent(),
                 Result<Unit>.Forbidden => TypedResults.Forbid(),
                 Result<Unit>.NotFound => TypedResults.NotFound(),
-                // SetGroupMemberRoleHandler never produces Validation, but BadRequest is already
-                // part of this route's declared results (used above), so map it there if it ever did.
                 Result<Unit>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };
         })

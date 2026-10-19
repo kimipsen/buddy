@@ -1,11 +1,19 @@
 using buddy.Common;
+using buddy.Common.Validation;
+
+using FluentValidation;
 
 namespace buddy.Features.Users;
 
 public static class UpdateNameHandler
 {
-    public static async Task<Result<User>> Handle(UpdateName command, IUserEventStore events, TimeProvider time, CancellationToken cancellationToken)
+    public static async Task<Result<User>> Handle(UpdateName command, IValidator<UpdateName> validator, IUserEventStore events, TimeProvider time, CancellationToken cancellationToken)
     {
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new Result<User>.Validation(problem);
+        }
+
         var userId = command.UserId;
 
         var existingEvents = await events.ReadAsync(userId, cancellationToken);

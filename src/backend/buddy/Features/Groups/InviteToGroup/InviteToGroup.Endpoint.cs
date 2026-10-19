@@ -14,7 +14,7 @@ public static class InviteToGroupEndpoint
 {
     public static RouteGroupBuilder MapInviteToGroup(this RouteGroupBuilder groups)
     {
-        groups.MapPost("/{groupId:guid}/invites", async Task<Results<Ok<SentGroupInviteResponse>, NotFound, ForbidHttpResult, Conflict<ErrorEnvelope>>> (
+        groups.MapPost("/{groupId:guid}/invites", async Task<Results<Ok<SentGroupInviteResponse>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>, Conflict<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid groupId,
             InviteToGroupRequest request,
@@ -30,6 +30,7 @@ public static class InviteToGroupEndpoint
                 InviteToGroupOutcome.Success(var invite) => TypedResults.Ok(SentGroupInviteResponse.FromSummary(invite)),
                 InviteToGroupOutcome.Forbidden => TypedResults.Forbid(),
                 InviteToGroupOutcome.NotFound => TypedResults.NotFound(),
+                InviteToGroupOutcome.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 ResendCooldownActive cooldown => cooldown.ToConflict(httpContext),
             };
         })

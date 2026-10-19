@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
@@ -30,19 +31,26 @@ public sealed class SetGroupMemberRoleTests(BuddyApiFixture fixture)
         Assert.Equal(GroupRole.Admin, grantedMember.Role);
     }
 
-    [Fact]
-    public async Task Granting_ownership_through_this_endpoint_is_rejected()
+    [Theory]
+    [InlineData(GroupRole.Owner)]
+    [InlineData((GroupRole)99)]
+    public async Task Granting_ownership_or_an_undefined_role_is_rejected(GroupRole role)
     {
         var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
         var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, ownerToken, "Team");
         var (_, _, otherId) = await fixture.CreateAuthenticatedUserAsync();
 
-        await fixture.Host.Scenario(_ =>
+        // Sent as a number: the binder accepts an enum that way, so an out-of-range one reaches the validator.
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {ownerToken}");
-            _.Put.Json(new { Role = GroupRole.Owner }).ToUrl($"/groups/{groupId}/members/{otherId}");
+            _.Put.Json(new { Role = (int)role }).ToUrl($"/groups/{groupId}/members/{otherId}");
             _.StatusCodeShouldBe(400);
         });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal("role", Assert.Single(error.Details.Keys));
     }
 
     [Fact]

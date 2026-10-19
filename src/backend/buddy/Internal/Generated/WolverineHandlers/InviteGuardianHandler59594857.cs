@@ -31,6 +31,7 @@ namespace Internal.Generated.WolverineHandlers
 
         public override async System.Threading.Tasks.Task HandleAsync(Wolverine.Runtime.MessageContext context, System.Threading.CancellationToken cancellation)
         {
+            var inviteGuardianValidator = new buddy.Features.Guardians.InviteGuardianValidator();
             // The actual message body
             var inviteGuardian = (buddy.Features.Guardians.InviteGuardian)context.Envelope.Message;
 
@@ -41,7 +42,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Guardians.InviteGuardianHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Guardians.InviteGuardianHandler.Handle(inviteGuardian, _guardianLinkEventStore, _guardianInviteEventStore, _userEventStore, _emailSender, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Guardians.InviteGuardianHandler.Handle(inviteGuardian, inviteGuardianValidator, _guardianLinkEventStore, _guardianInviteEventStore, _userEventStore, _emailSender, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

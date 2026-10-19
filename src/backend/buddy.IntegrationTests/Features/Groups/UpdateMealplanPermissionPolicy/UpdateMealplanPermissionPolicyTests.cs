@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Mealplans;
 using buddy.IntegrationTests.Fixtures;
@@ -141,5 +142,38 @@ public sealed class UpdateMealplanPermissionPolicyTests(BuddyApiFixture fixture)
             _.Put.Json(new { Policy = policy }).ToUrl($"/groups/{groupId}/mealplan-permission-policy");
             _.StatusCodeShouldBe(403);
         });
+    }
+
+    // Sent as numbers: the binder accepts an enum that way, so an out-of-range one reaches the validator.
+    [Theory]
+    [InlineData("99", 0)]
+    [InlineData(null, 99)]
+    public async Task A_policy_with_an_undefined_role_or_permission_is_rejected(string? extraRole, int ownerTier)
+    {
+        var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, ownerToken, "Team");
+
+        var policy = new Dictionary<string, object>
+        {
+            ["Owner"] = ownerTier,
+            ["Admin"] = "Manage",
+            ["Member"] = "Manage",
+        };
+
+        if (extraRole is not null)
+        {
+            policy[extraRole] = "Manage";
+        }
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {ownerToken}");
+            _.Put.Json(new { Policy = policy }).ToUrl($"/groups/{groupId}/mealplan-permission-policy");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal("policy", Assert.Single(error.Details.Keys));
     }
 }

@@ -1,6 +1,9 @@
 using buddy.Common.RateLimiting;
+using buddy.Common.Validation;
 using buddy.Email;
 using buddy.Features.Users;
+
+using FluentValidation;
 
 namespace buddy.Features.Guardians;
 
@@ -8,6 +11,7 @@ public static class InviteGuardianHandler
 {
     public static async Task<InviteGuardianOutcome> Handle(
         InviteGuardian command,
+        IValidator<InviteGuardian> validator,
         IGuardianLinkEventStore guardianLinks,
         IGuardianInviteEventStore invites,
         IUserEventStore users,
@@ -16,6 +20,11 @@ public static class InviteGuardianHandler
         TimeProvider time,
         CancellationToken cancellationToken)
     {
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new InviteGuardianOutcome.Validation(problem);
+        }
+
         var userId = command.UserId;
 
         // Any active guardian of this child can invite a co-guardian -- GuardianKind never gates

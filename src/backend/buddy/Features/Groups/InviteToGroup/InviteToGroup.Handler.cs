@@ -1,5 +1,8 @@
 using buddy.Common.RateLimiting;
+using buddy.Common.Validation;
 using buddy.Email;
+
+using FluentValidation;
 
 namespace buddy.Features.Groups;
 
@@ -7,6 +10,7 @@ public static class InviteToGroupHandler
 {
     public static async Task<InviteToGroupOutcome> Handle(
         InviteToGroup command,
+        IValidator<InviteToGroup> validator,
         IGroupEventStore groups,
         IEmailSender emailSender,
         FrontendLinks links,
@@ -14,10 +18,9 @@ public static class InviteToGroupHandler
         TimeProvider time,
         CancellationToken cancellationToken)
     {
-        if (command.Role == GroupRole.Owner)
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
-            // Ownership is assigned only at creation, same restriction as SetGroupMemberRole.
-            return new InviteToGroupOutcome.Forbidden();
+            return new InviteToGroupOutcome.Validation(problem);
         }
 
         var userId = command.UserId;

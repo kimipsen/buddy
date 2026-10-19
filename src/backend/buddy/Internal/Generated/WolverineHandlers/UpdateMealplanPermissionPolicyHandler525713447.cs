@@ -20,6 +20,7 @@ namespace Internal.Generated.WolverineHandlers
 
         public override async System.Threading.Tasks.Task HandleAsync(Wolverine.Runtime.MessageContext context, System.Threading.CancellationToken cancellation)
         {
+            var updateMealplanPermissionPolicyValidator = new buddy.Features.Groups.UpdateMealplanPermissionPolicyValidator();
             // The actual message body
             var updateMealplanPermissionPolicy = (buddy.Features.Groups.UpdateMealplanPermissionPolicy)context.Envelope.Message;
 
@@ -30,7 +31,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Groups.UpdateMealplanPermissionPolicyHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Groups.UpdateMealplanPermissionPolicyHandler.Handle(updateMealplanPermissionPolicy, _groupEventStore, _timeProvider, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Groups.UpdateMealplanPermissionPolicyHandler.Handle(updateMealplanPermissionPolicy, updateMealplanPermissionPolicyValidator, _groupEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

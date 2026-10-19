@@ -20,7 +20,7 @@ public static class UpdateCurrentEmailEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var command = UpdateEmail.FromClaims(principal, request.Email);
+            var command = UpdateEmail.FromClaims(principal, request.Email.Trim());
 
             var result = await bus.InvokeAsync<Result<User>>(command, cancellationToken);
 

@@ -23,6 +23,7 @@ namespace Internal.Generated.WolverineHandlers
 
         public override async System.Threading.Tasks.Task HandleAsync(Wolverine.Runtime.MessageContext context, System.Threading.CancellationToken cancellation)
         {
+            var setGroupMemberRoleValidator = new buddy.Features.Groups.SetGroupMemberRoleValidator();
             // The actual message body
             var setGroupMemberRole = (buddy.Features.Groups.SetGroupMemberRole)context.Envelope.Message;
 
@@ -33,7 +34,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Groups.SetGroupMemberRoleHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Groups.SetGroupMemberRoleHandler.Handle(setGroupMemberRole, _groupEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Groups.SetGroupMemberRoleHandler.Handle(setGroupMemberRole, setGroupMemberRoleValidator, _groupEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

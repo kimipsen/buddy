@@ -211,6 +211,19 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
           "404": {
             "description": "Not Found"
           },
@@ -228,19 +241,6 @@
             },
             "x-error-codes": [
               "user_not_provisioned"
-            ]
-          },
-          "400": {
-            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "x-error-codes": [
-              "validation_error"
             ]
           },
           "409": {
@@ -2095,6 +2095,20 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060invalid_idempotency_key\u0060, \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "invalid_idempotency_key",
+              "validation_error"
+            ]
+          },
           "404": {
             "description": "Not Found"
           },
@@ -2129,20 +2143,6 @@
             },
             "x-error-codes": [
               "user_not_provisioned"
-            ]
-          },
-          "400": {
-            "description": "Bad Request. ErrorEnvelope code: \u0060invalid_idempotency_key\u0060, \u0060validation_error\u0060.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "x-error-codes": [
-              "invalid_idempotency_key",
-              "validation_error"
             ]
           },
           "429": {
@@ -2693,6 +2693,20 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060invalid_idempotency_key\u0060, \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "invalid_idempotency_key",
+              "validation_error"
+            ]
+          },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
@@ -2707,20 +2721,6 @@
             },
             "x-error-codes": [
               "user_not_provisioned"
-            ]
-          },
-          "400": {
-            "description": "Bad Request. ErrorEnvelope code: \u0060invalid_idempotency_key\u0060, \u0060validation_error\u0060.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "x-error-codes": [
-              "invalid_idempotency_key",
-              "validation_error"
             ]
           },
           "409": {
@@ -3576,6 +3576,20 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060invalid_idempotency_key\u0060, \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "invalid_idempotency_key",
+              "validation_error"
+            ]
+          },
           "404": {
             "description": "Not Found"
           },
@@ -3611,20 +3625,6 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
-          },
-          "400": {
-            "description": "Bad Request. ErrorEnvelope code: \u0060invalid_idempotency_key\u0060, \u0060validation_error\u0060.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "x-error-codes": [
-              "invalid_idempotency_key",
-              "validation_error"
-            ]
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"

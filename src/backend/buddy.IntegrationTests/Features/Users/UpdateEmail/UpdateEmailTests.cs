@@ -119,6 +119,23 @@ public sealed class UpdateEmailTests(BuddyApiFixture fixture)
         Assert.Contains("email", error.Details.Keys);
     }
 
+    [Fact]
+    public async Task Trims_the_email_before_validating_and_storing_it()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        // 200 characters once trimmed; the padded value would exceed the limit.
+        var email = EmailOfLength(200);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Patch.Json(new { Email = $"  {email} " }).ToUrl("/users/me/email");
+            _.StatusCodeShouldBeOk();
+        });
+
+        Assert.Equal(email, response.ReadAsJson<EmailResponseEnvelope>().Email.Value);
+    }
+
     // A unique, well-formed address of exactly `length` characters. The padding goes into
     // DNS-sized domain labels (at most 59 characters each) rather than the local part, so the
     // address stays deliverable to Mailpit.

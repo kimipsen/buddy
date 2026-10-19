@@ -15,7 +15,7 @@ public static class InviteGuardianEndpoint
 {
     public static RouteGroupBuilder MapInviteGuardian(this RouteGroupBuilder children)
     {
-        children.MapPost("/{childId:guid}/guardian-invites", async Task<Results<Ok<GuardianInviteResponse>, NotFound, Conflict<ErrorEnvelope>>> (
+        children.MapPost("/{childId:guid}/guardian-invites", async Task<Results<Ok<GuardianInviteResponse>, NotFound, BadRequest<ErrorEnvelope>, Conflict<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid childId,
             InviteGuardianRequest request,
@@ -30,6 +30,7 @@ public static class InviteGuardianEndpoint
             {
                 InviteGuardianOutcome.Success(var invite) => TypedResults.Ok(GuardianInviteResponse.FromSummary(invite)),
                 InviteGuardianOutcome.NotFound => TypedResults.NotFound(),
+                InviteGuardianOutcome.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 ResendCooldownActive cooldown => cooldown.ToConflict(httpContext),
             };
         })

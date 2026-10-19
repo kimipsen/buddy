@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common.RateLimiting;
+using buddy.Common.Validation;
 using buddy.Features.Users;
 
 namespace buddy.Features.Guardians;
@@ -18,9 +19,10 @@ public sealed record GuardianInviteSummary(Guid Id, string Email, GuardianKind K
 }
 
 // Distinct from the shared Result<T> only for the resend cooldown (409, see ResendCooldown). The
-// handler never produces Forbidden or a validation failure, so neither is a case here.
-public union InviteGuardianOutcome(InviteGuardianOutcome.Success, InviteGuardianOutcome.NotFound, ResendCooldownActive)
+// handler never produces Forbidden, so it isn't a case here.
+public union InviteGuardianOutcome(InviteGuardianOutcome.Success, InviteGuardianOutcome.NotFound, InviteGuardianOutcome.Validation, ResendCooldownActive)
 {
     public sealed record Success(GuardianInviteSummary Invite);
     public sealed record NotFound;
+    public sealed record Validation(ValidationProblem Problem);
 }

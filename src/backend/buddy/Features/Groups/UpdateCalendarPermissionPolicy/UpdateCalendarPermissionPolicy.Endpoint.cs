@@ -38,9 +38,6 @@ public static class UpdateCalendarPermissionPolicyEndpoint
                 Result<Unit>.Success => TypedResults.NoContent(),
                 Result<Unit>.Forbidden => TypedResults.Forbid(),
                 Result<Unit>.NotFound => TypedResults.NotFound(),
-                // UpdateCalendarPermissionPolicyHandler never produces Validation, but BadRequest
-                // is already part of this route's declared results (used above), so map it there
-                // if it ever did.
                 Result<Unit>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };
         })

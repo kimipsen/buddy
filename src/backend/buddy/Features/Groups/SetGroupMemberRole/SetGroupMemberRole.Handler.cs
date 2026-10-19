@@ -1,15 +1,17 @@
 using buddy.Common;
+using buddy.Common.Validation;
+
+using FluentValidation;
 
 namespace buddy.Features.Groups;
 
 public static class SetGroupMemberRoleHandler
 {
-    public static async Task<Result<Unit>> Handle(SetGroupMemberRole command, IGroupEventStore groups, ILogger<SetGroupMemberRole> logger, TimeProvider time, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(SetGroupMemberRole command, IValidator<SetGroupMemberRole> validator, IGroupEventStore groups, ILogger<SetGroupMemberRole> logger, TimeProvider time, CancellationToken cancellationToken)
     {
-        if (command.Role == GroupRole.Owner)
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
-            // Ownership is assigned only at creation and never granted through this endpoint.
-            return new Result<Unit>.Forbidden();
+            return new Result<Unit>.Validation(problem);
         }
 
         var userId = command.UserId;

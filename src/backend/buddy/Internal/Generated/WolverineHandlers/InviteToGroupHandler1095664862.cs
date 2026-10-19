@@ -28,6 +28,7 @@ namespace Internal.Generated.WolverineHandlers
 
         public override async System.Threading.Tasks.Task HandleAsync(Wolverine.Runtime.MessageContext context, System.Threading.CancellationToken cancellation)
         {
+            var inviteToGroupValidator = new buddy.Features.Groups.InviteToGroupValidator();
             // The actual message body
             var inviteToGroup = (buddy.Features.Groups.InviteToGroup)context.Envelope.Message;
 
@@ -38,7 +39,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Groups.InviteToGroupHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Groups.InviteToGroupHandler.Handle(inviteToGroup, _groupEventStore, _emailSender, _frontendLinks, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Groups.InviteToGroupHandler.Handle(inviteToGroup, inviteToGroupValidator, _groupEventStore, _emailSender, _frontendLinks, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

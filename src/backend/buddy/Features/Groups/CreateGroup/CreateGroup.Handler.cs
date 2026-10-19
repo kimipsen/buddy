@@ -1,10 +1,13 @@
 using System.Collections.Immutable;
 
+using buddy.Common.Validation;
 using buddy.Features.Calendars;
 using buddy.Features.Guardians;
 using buddy.Features.Mealplans;
 using buddy.Features.Medicines;
 using buddy.Features.Users;
+
+using FluentValidation;
 
 namespace buddy.Features.Groups;
 
@@ -34,15 +37,20 @@ public static class CreateGroupHandler
         .Add(GroupRole.Admin, MedicineAccessTier.Manage)
         .Add(GroupRole.Member, MedicineAccessTier.None);
 
-    // Creating a group can't fail for a provisioned caller, so this returns the group directly.
-    public static async Task<GroupWithMemberDetails> Handle(
+    public static async Task<CreateGroupOutcome> Handle(
         CreateGroup command,
+        IValidator<CreateGroup> validator,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
         IUserEventStore users,
         TimeProvider time,
         CancellationToken cancellationToken)
     {
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new CreateGroupOutcome.Validation(problem);
+        }
+
         var ownerId = command.UserId;
 
         var groupId = GroupId.New();
@@ -53,6 +61,6 @@ public static class CreateGroupHandler
         var group = Group.Replay(events);
         var members = await GroupMemberResolver.ResolveAsync(group, guardians, users, cancellationToken);
 
-        return new GroupWithMemberDetails(group, members);
+        return new CreateGroupOutcome.Success(new GroupWithMemberDetails(group, members));
     }
 }
