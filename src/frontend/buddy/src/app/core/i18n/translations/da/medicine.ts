@@ -83,8 +83,8 @@ export const medicine = {
     },
     periods: {
       title: 'Efter dosisperiode',
-      intro: 'De seneste 92 dage, samlet efter den medicin og dosis, dit barn fik.',
-      empty: 'Ingen dage vurderet de seneste 92 dage endnu.',
+      intro: 'De seneste 3 måneder, samlet efter den medicin og dosis, dit barn fik.',
+      empty: 'Ingen dage vurderet de seneste 3 måneder endnu.',
       baseline: 'Ingen medicin',
       range: '{from} – {to}',
       days: '{count} dage vurderet',

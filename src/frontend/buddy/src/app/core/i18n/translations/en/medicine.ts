@@ -81,8 +81,8 @@ export const medicine = {
     },
     periods: {
       title: 'By dose period',
-      intro: 'The last 92 days, grouped by the medicine and dosage your child was on.',
-      empty: 'No days rated in the last 92 days yet.',
+      intro: 'The last 3 months, grouped by the medicine and dosage your child was on.',
+      empty: 'No days rated in the last 3 months yet.',
       baseline: 'No medicine',
       range: '{from} – {to}',
       days: '{count} days rated',

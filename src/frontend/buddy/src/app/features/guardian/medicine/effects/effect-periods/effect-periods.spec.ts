@@ -33,7 +33,7 @@ describe('EffectPeriods', () => {
   it('says so when nothing was rated', async () => {
     const compiled = await setup([]);
 
-    expect(compiled.textContent).toContain('No days rated in the last 92 days yet.');
+    expect(compiled.textContent).toContain('No days rated in the last 3 months yet.');
   });
 
   it('shows the newest dose period first with counts written out and the median wear-off', async () => {

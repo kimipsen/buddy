@@ -45,7 +45,7 @@ export class EffectPeriods {
   private readonly translation = inject(TranslationService);
 
   readonly notes = input.required<MedicineEffectNote[]>();
-  // The medicine page's "last 92 days" line; a visit summary has its own period and leaves it out.
+  // The medicine page's "last 3 months" line; a visit summary has its own period and leaves it out.
   readonly showIntro = input(true);
 
   protected readonly rows = computed((): PeriodRow[] => {

@@ -147,7 +147,7 @@ describe('VisitSummaryReport', () => {
     expect(medicineTable.textContent).toContain('1 of 2');
     expect(medicineTable.textContent).toContain('07:15');
     expect(compiled.textContent).toContain('By dose period');
-    expect(compiled.textContent).not.toContain('The last 92 days');
+    expect(compiled.textContent).not.toContain('The last 3 months');
   });
 
   it('summarises sleep and feelings', async () => {

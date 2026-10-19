@@ -14,6 +14,7 @@ import { EffectPeriods } from './effect-periods/effect-periods';
 // The day list pages by two weeks, the sleep diary's window.
 export const DAYS_SHOWN = 14;
 // The summary looks back over the API's longest range (ListMedicineEffectNotesHandler.MaxRangeDays).
+// The intro calls this "the last 3 months" (a quarter: at most 31 + 31 + 30 days).
 export const PERIOD_DAYS = 92;
 
 interface NotesRequest {
