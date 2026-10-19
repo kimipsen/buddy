@@ -433,6 +433,7 @@ if containerapp_exists api; then
     --name api \
     --resource-group "$RESOURCE_GROUP" \
     --image "$API_IMAGE" \
+    --min-replicas 1 --max-replicas 1 \
     --cpu 1.0 --memory 2.0Gi \
     --set-env-vars "${API_ENV_VARS[@]}" \
     -o none
@@ -448,7 +449,7 @@ else
     --registry-password "$ACR_PASSWORD" \
     --target-port 8080 \
     --ingress external \
-    --min-replicas 1 --max-replicas 3 \
+    --min-replicas 1 --max-replicas 1 \
     --cpu 1.0 --memory 2.0Gi \
     --secrets "${API_SECRETS[@]}" \
     --env-vars "${API_ENV_VARS[@]}" \
