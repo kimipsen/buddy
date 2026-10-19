@@ -59,18 +59,39 @@ sequenceDiagram
 
 ## Endpoints
 
-| Method | Route                                                          | Behavior                                                                                                            |
-| ------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `GET`  | `/first-then/children/{childId}`                               | The board plus the recent cards (`GuardianFirstThenResponse`); `State = None, Revision = 0` before the first set    |
-| `PUT`  | `/first-then/children/{childId}`                               | Set (or replace) the board; `400` on titles outside 1–60 characters, a missing emoji or `thenMinutes` outside 5–120 |
-| `POST` | `/first-then/children/{childId}/first/complete`                | `Waiting` → `Unlocked`; no-op when already unlocked; `404` with no board                                            |
-| `POST` | `/first-then/children/{childId}/first/reopen`                  | `Unlocked` → `Waiting`; no-op when waiting; `404` with no board                                                     |
-| `POST` | `/first-then/children/{childId}/end`                           | → `None`; no-op with no board                                                                                       |
-| `GET`  | `/first-then/me`                                               | The child's own board (no recent cards)                                                                             |
-| `POST` | `/first-then/me/first/complete`, `/me/first/reopen`, `/me/end` | The same actions on the child's own board                                                                           |
+| Method | Route                                                          | Behavior                                                                                                         |
+| ------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/first-then/children/{childId}`                               | The board plus the recent cards (`GuardianFirstThenResponse`); `State = None, Revision = 0` before the first set |
+| `PUT`  | `/first-then/children/{childId}`                               | Set (or replace) the board                                                                                       |
+| `POST` | `/first-then/children/{childId}/first/complete`                | `Waiting` → `Unlocked`; no-op when already unlocked; `404` with no board                                         |
+| `POST` | `/first-then/children/{childId}/first/reopen`                  | `Unlocked` → `Waiting`; no-op when waiting; `404` with no board                                                  |
+| `POST` | `/first-then/children/{childId}/end`                           | → `None`; no-op with no board                                                                                    |
+| `GET`  | `/first-then/me`                                               | The child's own board (no recent cards)                                                                          |
+| `POST` | `/first-then/me/first/complete`, `/me/first/reopen`, `/me/end` | The same actions on the child's own board                                                                        |
 
 The actions are idempotent by design, so they take no `Idempotency-Key`. All routes are mapped only
 when `Features:FirstThen` is on (`404` otherwise).
+
+## Validation
+
+Every rule the endpoints enforce, validator rules first, then the handler's own checks.
+A `400 validation_error` carries the message in the `ErrorEnvelope`'s `details` under the
+key in the Field column, `""` for a check that isn't tied to one field (see
+[HTTP status codes](../http-status-codes.md#error-response-shape-implemented)). A body
+that can't be bound is rejected before these rules run, with the same envelope.
+
+A card's keys repeat the side (`First.first.title`): the card validator overrides its property
+names with `first.title` / `then.title`, and FluentValidation still prefixes the parent property.
+
+| Endpoint                                                                                                                                           | Field                                  | Rule                                                                                                                                                                                                                                            | Code                       | Status |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | ------ |
+| `SetFirstThenBoard`                                                                                                                                | `Revision`                             | At least 0.                                                                                                                                                                                                                                     | `validation_error`         | 400    |
+| `SetFirstThenBoard`                                                                                                                                | `First.first.title`, `Then.then.title` | Required: not empty after trimming. At most 60 characters after trimming. A First and a Then may share a title.                                                                                                                                 | `validation_error`         | 400    |
+| `SetFirstThenBoard`                                                                                                                                | `First.first.icon`, `Then.then.icon`   | Required: not empty after trimming. At most 64 characters; a value starting with `pictogram:` must continue with a lowercase, hyphenated slug (`[a-z0-9]+(-[a-z0-9]+)*`); any other value (an emoji) at most 16 characters (UTF-16 code units). | `validation_error`         | 400    |
+| `SetFirstThenBoard`                                                                                                                                | `ThenMinutes`                          | Between 5 and 120 inclusive. Optional (null means no countdown).                                                                                                                                                                                | `validation_error`         | 400    |
+| `SetFirstThenBoard`                                                                                                                                | —                                      | `revision` must equal the current board's revision (0 before the first set). Checked after authorization.                                                                                                                                       | `first_then_board_changed` | 409    |
+| `CompleteFirstThenFirst`, `CompleteMyFirstThenFirst`, `ReopenFirstThenFirst`, `ReopenMyFirstThenFirst`, `EndFirstThenBoard`, `EndMyFirstThenBoard` | `Revision`                             | At least 0.                                                                                                                                                                                                                                     | `validation_error`         | 400    |
+| `CompleteFirstThenFirst`, `CompleteMyFirstThenFirst`, `ReopenFirstThenFirst`, `ReopenMyFirstThenFirst`, `EndFirstThenBoard`, `EndMyFirstThenBoard` | —                                      | `revision` must equal the current board's revision (0 with no board). Checked after authorization and before the board's state.                                                                                                                 | `first_then_board_changed` | 409    |
 
 ## Privacy
 

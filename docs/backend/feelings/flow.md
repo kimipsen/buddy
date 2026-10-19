@@ -76,3 +76,35 @@ All routes are mapped only while `Features:Feelings` is on. Erasing a child dele
 the share links; erasing a guardian revokes the links they created (their observations stay with
 the child's record). The export's `feelings` section lists each child's check-ins, settings and
 links (never a token hash).
+
+## Validation
+
+Every rule the endpoints enforce, validator rules first, then the handler's own checks.
+A `400 validation_error` carries the message in the `ErrorEnvelope`'s `details` under the
+key in the Field column, `""` for a check that isn't tied to one field (see
+[HTTP status codes](../http-status-codes.md#error-response-shape-implemented)). A body
+that can't be bound is rejected before these rules run, with the same envelope.
+
+| Endpoint                                             | Field         | Rule                                                                                                | Code                          | Status |
+| ---------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------- | ----------------------------- | ------ |
+| `CheckIn`, `LogFeelingCheckIn`, `EditFeelingCheckIn` | `Zone`        | One of `Blue`, `Green`, `Yellow`, `Red`.                                                            | `validation_error`            | 400    |
+| `CheckIn`, `LogFeelingCheckIn`, `EditFeelingCheckIn` | `Tags`        | At most 3 tags, each chosen at most once. Optional (missing is none).                               | `validation_error`            | 400    |
+| `CheckIn`, `LogFeelingCheckIn`, `EditFeelingCheckIn` | `Tags[n]`     | A defined `FeelingTag`.                                                                             | `validation_error`            | 400    |
+| `CheckIn`, `LogFeelingCheckIn`, `EditFeelingCheckIn` | `Tags[n]`     | A feeling word belongs to the chosen `zone`; a situation tag fits every zone.                       | `validation_error`            | 400    |
+| `CheckIn`, `LogFeelingCheckIn`, `EditFeelingCheckIn` | `Note`        | At most 280 characters after trimming. Optional.                                                    | `validation_error`            | 400    |
+| `CheckIn`                                            | `""`          | At most 20 check-ins on the child's local today.                                                    | `validation_error`            | 400    |
+| `UndoCheckIn`                                        | —             | Only within 10 minutes of the check-in's `recordedAt`.                                              | `check_in_undo_window_closed` | 409    |
+| `LogFeelingCheckIn`                                  | `Time`        | `date` and `time` both given or both omitted (omitted is now on the child's clock).                 | `validation_error`            | 400    |
+| `LogFeelingCheckIn`                                  | `""`          | The moment is at most 5 minutes after the child's current wall-clock time; backdating is unlimited. | `validation_error`            | 400    |
+| `LogFeelingCheckIn`                                  | `""`          | At most 20 check-ins on the check-in's date.                                                        | `validation_error`            | 400    |
+| `ListFeelingCheckIns`                                | `To`          | `to` not before `from`.                                                                             | `validation_error`            | 400    |
+| `ListFeelingCheckIns`                                | `To`          | `to` at most 92 days after `from`.                                                                  | `validation_error`            | 400    |
+| `EditFeelingCheckIn`                                 | —             | Only a guardian's observation can be edited, never the child's self-report.                         | `check_in_is_self_report`     | 409    |
+| `EditFeelingCheckIn`                                 | `""`          | The moment is at most 5 minutes after the child's current wall-clock time.                          | `validation_error`            | 400    |
+| `EditFeelingCheckIn`                                 | `""`          | Moving the check-in to another date: at most 20 check-ins on that date.                             | `validation_error`            | 400    |
+| `SetCheckInPromptTimes`                              | `Times`       | At most 4 times, all different, each a whole minute (no seconds). Empty turns the prompts off.      | `validation_error`            | 400    |
+| `SetFeelingsDisplayMode`                             | `DisplayMode` | `FacesAndWords` or `FacesOnly`.                                                                     | `validation_error`            | 400    |
+| `CreateFeelingsShareLink`                            | `ExpiresAt`   | In the future. Optional (no expiry).                                                                | `validation_error`            | 400    |
+| `CreateFeelingsShareLink`                            | `ExpiresAt`   | At most 365 days from now.                                                                          | `validation_error`            | 400    |
+| `GetSharedFeelings`                                  | `To`          | When both `from` and `to` are given: `to` not before `from`. A missing end makes a 14-day range.    | `validation_error`            | 400    |
+| `GetSharedFeelings`                                  | `To`          | When both `from` and `to` are given: `to` at most 92 days after `from`.                             | `validation_error`            | 400    |

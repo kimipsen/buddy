@@ -91,6 +91,26 @@ Every book-scoped route exists twice, once under `children/{childId}` and once u
 
 `...` is `/house-rules/children/{childId}` or `/house-rules/groups/{groupId}`.
 
+## Validation
+
+Every rule the endpoints enforce, validator rules first, then the handler's own checks.
+A `400 validation_error` carries the message in the `ErrorEnvelope`'s `details` under the
+key in the Field column, `""` for a check that isn't tied to one field (see
+[HTTP status codes](../http-status-codes.md#error-response-shape-implemented)). A body
+that can't be bound is rejected before these rules run, with the same envelope.
+
+| Endpoint                                                     | Field      | Rule                                                                                                                     | Code                          | Status |
+| ------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------- | ------ |
+| `AddRule`, `AddRuleForGroup`, `EditRule`, `EditRuleForGroup` | `Title`    | Required: not empty after trimming (a missing `title` counts as empty). At most 100 characters after trimming.           | `validation_error`            | 400    |
+| `AddRule`, `AddRuleForGroup`, `EditRule`, `EditRuleForGroup` | `Body`     | At most 4000 characters, counted as typed (markdown isn't trimmed; a whitespace-only body becomes empty). Optional.      | `validation_error`            | 400    |
+| `AddRule`, `AddRuleForGroup`                                 | `""`       | At most 50 rules per book, drafts included.                                                                              | `validation_error`            | 400    |
+| `DiscardRuleDraft`, `DiscardRuleDraftForGroup`               | `""`       | The rule has been published; a never-published rule has no published version to go back to (remove it instead).          | `validation_error`            | 400    |
+| `ReorderRules`, `ReorderRulesForGroup`                       | `""`       | `newOrder` holds exactly the book's current rule ids (drafts included), each once. A missing `newOrder` counts as empty. | `validation_error`            | 400    |
+| `AcknowledgeRule`, `AcknowledgeRuleForGroup`                 | `Revision` | At least 1.                                                                                                              | `validation_error`            | 400    |
+| `AcknowledgeRule`, `AcknowledgeRuleForGroup`                 | `""`       | A Manage caller acknowledging on a child's behalf must give `childId`.                                                   | `validation_error`            | 400    |
+| `AcknowledgeRule`, `AcknowledgeRuleForGroup`                 | `""`       | `revision` is not greater than the rule's current revision.                                                              | `validation_error`            | 400    |
+| `AcknowledgeRule`, `AcknowledgeRuleForGroup`                 | —          | `revision` is not below the rule's `acknowledgementRevision` (the rule changed since it was read; `details` is empty).   | `house_rule_revision_changed` | 409    |
+
 ## Acknowledging
 
 A rule has a `revision` (`+1` on every publish) and an `acknowledgementRevision` (the last revision

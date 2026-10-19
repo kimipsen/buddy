@@ -106,6 +106,15 @@ tasks:
       - BUDDY_UPDATE_OPENAPI=1 dotnet test src/backend/backend.slnx --filter "FullyQualifiedName~OpenApiDocumentTests.The_combined_document_matches_the_committed_contract"
       - cd src/frontend/buddy && npm run api:types
 
+  docs:validation:
+    desc: >-
+      Check the `## Validation` table of every docs/backend/<domain>/flow.md against
+      docs/backend/openapi/buddy.json and the FluentValidation validators: each row's
+      operation, status and error code exist, and every operation that can answer
+      validation_error or an endpoint-specific error code has a row.
+    cmds:
+      - node scripts/check-validation-docs.mjs
+
   codegen:backend:
     desc: >-
       Regenerate the committed Wolverine handler code in

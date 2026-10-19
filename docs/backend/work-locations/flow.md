@@ -47,7 +47,7 @@ sequenceDiagram
 
 | Method   | Route                                                         | Behavior                                                                                                                                                                                                 |
 | -------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST`   | `/work-locations/me/locations`                                | Adds a location (name, icon, color). Names are unique among active locations, case-insensitive; at most 12 active.                                                                                       |
+| `POST`   | `/work-locations/me/locations`                                | Adds a location (name, icon, color).                                                                                                                                                                     |
 | `PATCH`  | `/work-locations/me/locations/{locationId}`                   | Changes name, icon and color together. Unchanged details append nothing.                                                                                                                                 |
 | `DELETE` | `/work-locations/me/locations/{locationId}`                   | Archives the location and removes it from the pattern in the same append. Overrides that use it keep resolving with `isArchived: true`.                                                                  |
 | `PUT`    | `/work-locations/me/pattern`                                  | Replaces the whole pattern: `cycleWeeks` (1–4), `anchorMonday`, and `days` of `{week, day, locationId}`. Stored sorted by week and weekday.                                                              |
@@ -56,7 +56,33 @@ sequenceDiagram
 | `GET`    | `/work-locations/guardians/{guardianId}`                      | Locations (archived included) and the pattern. No stream yet reads as an empty one-week pattern.                                                                                                         |
 | `GET`    | `/work-locations/guardians/{guardianId}/days?from=...&to=...` | One `WorkDay` per date with a `status`: `{ kind: 0 }` unplanned, `{ kind: 1 }` off (an override), or `{ kind: 2, location, source }` with the location inlined and `source` `0` pattern or `1` override. |
 
-Ranges are inclusive and limited to `to - from` ≤ 31 days.
+Date ranges are inclusive.
+
+## Validation
+
+Every rule the endpoints enforce, validator rules first, then the handler's own checks.
+A `400 validation_error` carries the message in the `ErrorEnvelope`'s `details` under the
+key in the Field column, `""` for a check that isn't tied to one field (see
+[HTTP status codes](../http-status-codes.md#error-response-shape-implemented)). A body
+that can't be bound is rejected before these rules run, with the same envelope.
+
+| Endpoint                                                                 | Field          | Rule                                                                                                                                                                                  | Code               | Status |
+| ------------------------------------------------------------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------ |
+| `AddWorkLocation`, `UpdateWorkLocation`                                  | `name`         | Required: not empty or whitespace. At most 40 characters after trimming.                                                                                                              | `validation_error` | 400    |
+| `AddWorkLocation`, `UpdateWorkLocation`                                  | `icon`         | Required: not empty or whitespace. At most 16 characters.                                                                                                                             | `validation_error` | 400    |
+| `AddWorkLocation`, `UpdateWorkLocation`                                  | `color`        | Required: not empty or whitespace. At most 32 characters.                                                                                                                             | `validation_error` | 400    |
+| `AddWorkLocation`                                                        | `""`           | At most 12 active locations per guardian.                                                                                                                                             | `validation_error` | 400    |
+| `AddWorkLocation`, `UpdateWorkLocation`                                  | `""`           | Name unique, case-insensitive, among the guardian's active locations; an archived location's name can be reused. `UpdateWorkLocation` skips the check when the details are unchanged. | `validation_error` | 400    |
+| `ReplaceWorkPattern`                                                     | `""`           | `days` has no `null` entries. Checked by the endpoint before the validator runs.                                                                                                      | `validation_error` | 400    |
+| `ReplaceWorkPattern`                                                     | `cycleWeeks`   | Between 1 and 4, inclusive.                                                                                                                                                           | `validation_error` | 400    |
+| `ReplaceWorkPattern`                                                     | `anchorMonday` | A Monday.                                                                                                                                                                             | `validation_error` | 400    |
+| `ReplaceWorkPattern`                                                     | `days[n]`      | `week` between 0 and `cycleWeeks` - 1.                                                                                                                                                | `validation_error` | 400    |
+| `ReplaceWorkPattern`                                                     | `days[n]`      | `day` a valid weekday, `0` (Sunday) to `6` (Saturday).                                                                                                                                | `validation_error` | 400    |
+| `ReplaceWorkPattern`                                                     | `days`         | At most one entry per `week` and `day`.                                                                                                                                               | `validation_error` | 400    |
+| `ReplaceWorkPattern`                                                     | `""`           | Every `locationId` is one of the guardian's active locations.                                                                                                                         | `validation_error` | 400    |
+| `SetWorkLocationOverrides`, `ClearWorkLocationOverrides`, `ListWorkDays` | `To`           | `to` is not before `from`.                                                                                                                                                            | `validation_error` | 400    |
+| `SetWorkLocationOverrides`, `ClearWorkLocationOverrides`, `ListWorkDays` | `To`           | `to` - `from` is at most 31 days.                                                                                                                                                     | `validation_error` | 400    |
+| `SetWorkLocationOverrides`                                               | `""`           | `locationId`, when not `null`, is one of the guardian's active locations.                                                                                                             | `validation_error` | 400    |
 
 ## Authorization model
 

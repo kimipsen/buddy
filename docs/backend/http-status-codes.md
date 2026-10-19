@@ -425,6 +425,10 @@ request's trace id (see [observability.md](observability.md#logs-and-correlation
 endpoint-specific mappings (some deliberately collapse `Forbidden` into `404`
 for privacy). Keep the schema stable for clients.
 
+Each domain's `flow.md` lists every rule behind these errors in its `## Validation` table:
+the operation, the `details` key, the rule, the code and the status. `task docs:validation`
+checks those tables against `openapi/buddy.json`.
+
 An unhandled exception renders through the same envelope: `500` with code
 `internal_error`, or `503` with code `dependency_unavailable` (see the 500 and 503
 sections above).

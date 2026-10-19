@@ -3,12 +3,18 @@ name: Backend tests
 on:
   pull_request:
     paths:
+      - "docs/backend/*/flow.md"
+      - "docs/backend/openapi/buddy.json"
+      - "scripts/check-validation-docs.mjs"
       - "src/backend/**"
       - ".github/workflows/backend-tests.yml"
       - ".github/scripts/coverage-report.sh"
   push:
     branches: [master]
     paths:
+      - "docs/backend/*/flow.md"
+      - "docs/backend/openapi/buddy.json"
+      - "scripts/check-validation-docs.mjs"
       - "src/backend/**"
       - ".github/workflows/backend-tests.yml"
       - ".github/scripts/coverage-report.sh"
@@ -49,6 +55,11 @@ jobs:
             echo "::error::src/backend/buddy/Internal/Generated is out of date. Run 'task codegen:backend' and commit the result."
             exit 1
           fi
+
+      # Every validator rule and handler check is listed in its domain's flow.md (## Validation)
+      # with an operation, status and error code that docs/backend/openapi/buddy.json lists.
+      - name: Check validation docs
+        run: node scripts/check-validation-docs.mjs
 
       # Testcontainers needs a Docker daemon, which the ubuntu-latest runner provides natively.
       # coverage.runsettings: coverlet, Cobertura format, the API assembly only.

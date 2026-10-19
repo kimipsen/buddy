@@ -6,12 +6,25 @@
 
 ## Open
 
-### Document all validations (2026-10-16)
+### Validation gaps found while documenting (2026-10-19)
 
-- [ ] Make the documentation list every validation rule: each of the 93 FluentValidation
-      validators in `src/backend/buddy/Features`, plus the domain checks in the handlers, belongs
-      in its domain's `docs/backend/<domain>/flow.md` (field, rule, error code, HTTP status) and
-      matches `docs/backend/openapi/buddy.json`.
+Found while writing the `## Validation` tables; each is documented as the code behaves today. Ask
+before changing behavior.
+
+- [ ] **Error keys that don't match the request.** First-Then cards report `First.first.title` /
+      `Then.then.icon` (the card validator's override plus the parent prefix); `LogSleepEntry`,
+      `UpdateCurrentEmail` (`Value`), `UpdateOnboardingProgress` (`ExpectedVersion`),
+      `StartAiSession` (`RequestedSlots`) and `PreviewMealPlanImport` (`Options.*`) use command
+      property names; template icons use both `Icon` and `Icon.Value`. Keys mix PascalCase and
+      camelCase across domains.
+- [ ] **Unvalidated fields.** Meal, medicine, calendar-item and task-template icon/color;
+      `UpdateCalendarItemDetails` title; `CreateGroup` name; `UpdateCurrentName`; invite emails
+      (`InviteGuardian`, `InviteToGroup`); undefined enum numbers (dose status, recurrence
+      frequency, roles, child kind).
+- [ ] **Probable 500s and leaks.** A `null` entry in `ConfigureGoalPosts` reaches the endpoint
+      unchecked; `StartAiSession` looks up must-include meals without checking the family.
+- [ ] **Untrimmed names.** Meal, medicine, calendar, task-template and subtask names and the
+      provider API key count surrounding whitespace toward their limits.
 
 ### Backend unit tests as the primary test source (2026-10-16)
 
@@ -807,3 +820,11 @@ they reuse data the app already keeps. Each has a design doc.
 - [x] **Inject the clock.** All production code takes an injected `TimeProvider` (handlers,
       services, static helpers); `DateTimeOffset.UtcNow` and friends are banned in the API project
       (`buddy/BannedSymbols.txt`, build error RS0030) (2026-10-16).
+
+### Document all validations (2026-10-16)
+
+- [x] Make the documentation list every validation rule: each of the 93 FluentValidation
+      validators in `src/backend/buddy/Features`, plus the domain checks in the handlers, belongs
+      in its domain's `docs/backend/<domain>/flow.md` (field, rule, error code, HTTP status) and
+      matches `docs/backend/openapi/buddy.json`. `task docs:validation` (and backend CI) checks the
+      tables against the contract (2026-10-19).

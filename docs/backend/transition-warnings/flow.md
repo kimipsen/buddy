@@ -62,3 +62,20 @@ sequenceDiagram
 
 All routes are mapped only while `Features:TransitionWarnings` is on. Erasing a child deletes the
 stream; a guardian's export lists each child's settings.
+
+## Validation
+
+Every rule the endpoints enforce, validator rules first, then the handler's own checks.
+A `400 validation_error` carries the message in the `ErrorEnvelope`'s `details` under the
+key in the Field column, `""` for a check that isn't tied to one field (see
+[HTTP status codes](../http-status-codes.md#error-response-shape-implemented)). A body
+that can't be bound is rejected before these rules run, with the same envelope.
+
+| Endpoint                                                | Field         | Rule                                                                                                            | Code                         | Status |
+| ------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------- | ------ |
+| `ConfigureTransitionWarnings`                           | `LeadMinutes` | At least one lead time, also when `enabled` is false (the switch turns warnings off).                           | `validation_error`           | 400    |
+| `ConfigureTransitionWarnings`, `SetItemWarningOverride` | `LeadMinutes` | At most 3 lead times, all different, each 1–120 minutes. An override may be empty (never warn for that item).   | `validation_error`           | 400    |
+| `ConfigureTransitionWarnings`                           | `Kinds`       | At least one kind when `enabled` is true.                                                                       | `validation_error`           | 400    |
+| `ConfigureTransitionWarnings`                           | `Kinds[n]`    | One of `Event`, `Task`, `DropOff`, `PickUp`.                                                                    | `validation_error`           | 400    |
+| `ConfigureTransitionWarnings`                           | `QuietHours`  | `from` and `to` differ. Optional.                                                                               | `validation_error`           | 400    |
+| `SetItemWarningOverride`                                | —             | A new exception when the child already has 100 for items that still exist; changing an existing one is allowed. | `too_many_warning_overrides` | 409    |

@@ -71,3 +71,23 @@ it is off when the sleep diary, medicines and feelings are all off. Erasing a ch
 summaries and link documents; erasing a guardian revokes the links they created (the summaries
 stay with a co-guardian). The export's `visitSummaries` section lists each child's summaries and
 links (never a token hash, and no report).
+
+## Validation
+
+Every rule the endpoints enforce, validator rules first, then the handler's own checks.
+A `400 validation_error` carries the message in the `ErrorEnvelope`'s `details` under the
+key in the Field column, `""` for a check that isn't tied to one field (see
+[HTTP status codes](../http-status-codes.md#error-response-shape-implemented)). A body
+that can't be bound is rejected before these rules run, with the same envelope.
+
+| Endpoint                                   | Field       | Rule                                                                                                           | Code               | Status |
+| ------------------------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------- | ------------------ | ------ |
+| `CreateVisitSummary`, `UpdateVisitSummary` | `title`     | Required: not empty after trimming (a missing `title` counts as empty). At most 100 characters after trimming. | `validation_error` | 400    |
+| `CreateVisitSummary`, `UpdateVisitSummary` | `note`      | At most 4000 characters after trimming. Optional.                                                              | `validation_error` | 400    |
+| `CreateVisitSummary`, `UpdateVisitSummary` | `sections`  | At least one section, after duplicates are dropped (a missing `sections` counts as empty).                     | `validation_error` | 400    |
+| `CreateVisitSummary`, `UpdateVisitSummary` | `sections`  | Every value a defined `VisitSummarySection` (`Medicine`, `Sleep`, `Feelings`).                                 | `validation_error` | 400    |
+| `CreateVisitSummary`, `UpdateVisitSummary` | `to`        | Not before `from`.                                                                                             | `validation_error` | 400    |
+| `CreateVisitSummary`, `UpdateVisitSummary` | `to`        | The period `from`–`to` spans at most 92 days, both ends included.                                              | `validation_error` | 400    |
+| `CreateVisitSummaryShareLink`              | `ExpiresAt` | When given: in the future. Optional.                                                                           | `validation_error` | 400    |
+| `CreateVisitSummaryShareLink`              | `ExpiresAt` | When given: at most 365 days from now.                                                                         | `validation_error` | 400    |
+| `CreateVisitSummaryShareLink`              | `""`        | At most 5 live (not revoked, not expired) links per summary.                                                   | `validation_error` | 400    |

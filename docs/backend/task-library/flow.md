@@ -79,11 +79,42 @@ sequenceDiagram
 | `POST`   | `/task-templates/{templateId}/suggestions/{suggestionId}/decline`  | A guardian declines. A repeated resolution is `200`; a different one `409 suggestion_resolved`.                                                                                                                           |
 | `POST`   | `/calendars/{calendarId}/items/from-template`                      | Schedules a non-empty, active template owned by the assignee as a specific-time calendar task.                                                                                                                            |
 
-Template and subtask names must be non-empty and at most 200 characters.
-A routine step's duration must be positive; a packing-list item has none. An
-item's optional `weekdays` limits it to those days (an empty list is `400`). Each template response includes the ordered
+An item's optional `weekdays` limits it to those days. Each template response includes the ordered
 subtasks, their total duration, archive state, and creator/modifier IDs; there
 is no separate endpoint for loading one template.
+
+## Validation
+
+Every rule the endpoints enforce, validator rules first, then the handler's own checks.
+A `400 validation_error` carries the message in the `ErrorEnvelope`'s `details` under the
+key in the Field column, `""` for a check that isn't tied to one field (see
+[HTTP status codes](../http-status-codes.md#error-response-shape-implemented)). A body
+that can't be bound is rejected before these rules run, with the same envelope.
+
+| Endpoint                                                                                  | Field               | Rule                                                                                                                                                                                         | Code                           | Status |
+| ----------------------------------------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ------ |
+| `CreateTaskTemplate`, `UpdateTaskTemplate`                                                | `Name`              | Required: not empty or whitespace. At most 200 characters (not trimmed).                                                                                                                     | `validation_error`             | 400    |
+| `CreateTaskTemplate`, `UpdateTaskTemplate`                                                | `Icon.Value`        | Required: not empty or whitespace.                                                                                                                                                           | `validation_error`             | 400    |
+| `CreateTaskTemplate`, `UpdateTaskTemplate`                                                | `Icon`              | At most 64 characters; a value starting with `pictogram:` must continue with a lowercase, hyphenated slug (`[a-z0-9]+(-[a-z0-9]+)*`). Any other value (an emoji) passes.                     | `validation_error`             | 400    |
+| `CreateTaskTemplate`                                                                      | `Kind`              | A defined `TaskTemplateKind` (`Routine`, `Checklist`). Optional, defaults to `Routine`.                                                                                                      | `validation_error`             | 400    |
+| `CreateTaskTemplate`                                                                      | `EveningBeforeFrom` | Must be null unless `Kind` is `Checklist`.                                                                                                                                                   | `validation_error`             | 400    |
+| `AddSubtask`, `UpdateSubtask`                                                             | `Title`             | Required: not empty or whitespace. At most 200 characters (not trimmed).                                                                                                                     | `validation_error`             | 400    |
+| `AddSubtask`, `UpdateSubtask`                                                             | `Icon`              | Only when an icon is given (blank or whitespace means "inherit the template's icon"): at most 64 characters; a `pictogram:` value must continue with a lowercase, hyphenated slug. Optional. | `validation_error`             | 400    |
+| `AddSubtask`, `UpdateSubtask`                                                             | `Duration`          | Not negative. Optional, defaults to zero.                                                                                                                                                    | `validation_error`             | 400    |
+| `AddSubtask`, `UpdateSubtask`                                                             | `Weekdays`          | Null (every day) or a non-empty list of defined days (`Sunday`–`Saturday`); an empty list or an undefined day number is rejected. All seven days are stored as "every day".                  | `validation_error`             | 400    |
+| `AddSubtask`, `UpdateSubtask`                                                             | `Duration`          | Depends on the template's kind: a routine step's duration must be positive, a checklist item's must be zero. Checked after the template is loaded.                                           | `validation_error`             | 400    |
+| `ReorderSubtasks`                                                                         | `""`                | `NewOrder` must contain exactly the template's current subtask ids, each exactly once.                                                                                                       | `validation_error`             | 400    |
+| `SetChecklistOptions`                                                                     | `""`                | The template must be a `Checklist` (packing list).                                                                                                                                           | `validation_error`             | 400    |
+| `CopyTaskTemplate`                                                                        | `ChildId.Value`     | The target `ChildId` must not be the empty GUID.                                                                                                                                             | `validation_error`             | 400    |
+| `SuggestChecklistItem`, `ApproveChecklistSuggestion`                                      | `Title`             | Required: not empty after trimming. At most 200 characters after trimming.                                                                                                                   | `validation_error`             | 400    |
+| `SuggestChecklistItem`, `ApproveChecklistSuggestion`                                      | `Weekdays`          | Null (every day) or a non-empty list of defined days; an empty list or an undefined day number is rejected.                                                                                  | `validation_error`             | 400    |
+| `SuggestChecklistItem`                                                                    | `""`                | The template must be a `Checklist` (packing list). Checked after the template is loaded.                                                                                                     | `validation_error`             | 400    |
+| `SuggestChecklistItem`                                                                    | —                   | The title (trimmed, case-insensitive) is already an item on the list. A pending suggestion with the same title is an idempotent `200` instead, checked first.                                | `checklist_item_exists`        | 409    |
+| `SuggestChecklistItem`                                                                    | —                   | At most 5 pending suggestions per list.                                                                                                                                                      | `too_many_pending_suggestions` | 409    |
+| `WithdrawChecklistSuggestion`, `ApproveChecklistSuggestion`, `DeclineChecklistSuggestion` | —                   | The suggestion must still be pending; repeating the same resolution is an idempotent `200`, a different one is rejected.                                                                     | `suggestion_resolved`          | 409    |
+
+`ApproveChecklistSuggestion` validates its body only for an approval that will happen: a repeated
+approval is an idempotent `200` that ignores the body, so a retry needn't resend it.
 
 ## Core lifecycle
 

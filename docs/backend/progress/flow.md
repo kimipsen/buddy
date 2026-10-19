@@ -125,6 +125,35 @@ same resolution is an idempotent `200`; resolving an already-resolved request di
 an HTTP endpoint — a star is never awarded or revoked by a client calling
 Progress directly.
 
+## Validation
+
+Every rule the endpoints enforce, validator rules first, then the handler's own checks.
+A `400 validation_error` carries the message in the `ErrorEnvelope`'s `details` under the
+key in the Field column, `""` for a check that isn't tied to one field (see
+[HTTP status codes](../http-status-codes.md#error-response-shape-implemented)). A body
+that can't be bound is rejected before these rules run, with the same envelope.
+
+| Endpoint                                                              | Field                    | Rule                                                                                                                         | Code                        | Status |
+| --------------------------------------------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------- | ------ |
+| `ConfigureGoalPosts`                                                  | `GoalPosts`              | Required: at least one goal post.                                                                                            | `validation_error`          | 400    |
+| `ConfigureGoalPosts`                                                  | `GoalPosts`              | At most 20 goal posts.                                                                                                       | `validation_error`          | 400    |
+| `ConfigureGoalPosts`                                                  | `GoalPosts`              | Thresholds strictly increasing, in list order (no duplicates).                                                               | `validation_error`          | 400    |
+| `ConfigureGoalPosts`                                                  | `GoalPosts[n].Threshold` | Greater than 0.                                                                                                              | `validation_error`          | 400    |
+| `ConfigureGoalPosts`                                                  | `GoalPosts[n].Icon`      | Required: not empty or whitespace (not trimmed, no length limit).                                                            | `validation_error`          | 400    |
+| `ConfigureGoalPosts`                                                  | `GoalPosts[n].Label`     | At most 100 characters after trimming. Optional (null or blank means none).                                                  | `validation_error`          | 400    |
+| `ConfigureRewards`                                                    | `Rewards`                | At most 30 rewards. An empty list is allowed (removes every reward).                                                         | `validation_error`          | 400    |
+| `ConfigureRewards`                                                    | `Rewards`                | Each `Id` at most once (rows without an `Id` are new rewards).                                                               | `validation_error`          | 400    |
+| `ConfigureRewards`                                                    | `Rewards[n].Name`        | Required: not empty after trimming. At most 100 characters after trimming.                                                   | `validation_error`          | 400    |
+| `ConfigureRewards`                                                    | `Rewards[n].Icon`        | Required: not empty after trimming. At most 32 characters after trimming.                                                    | `validation_error`          | 400    |
+| `ConfigureRewards`                                                    | `Rewards[n].Cost`        | Between 1 and 10,000 inclusive.                                                                                              | `validation_error`          | 400    |
+| `ConfigureRewards`                                                    | `""`                     | No `null` entries in `rewards` (checked by the endpoint, before the validator).                                              | `validation_error`          | 400    |
+| `ConfigureRewards`                                                    | `Rewards[n].Id`          | A kept reward's `Id` must be in the child's current catalog. Checked after authorization; the first unknown one is reported. | `validation_error`          | 400    |
+| `RequestReward`                                                       | —                        | No rules beyond binding the body (`rewardId`). A reward not in the caller's catalog is `404`.                                | `validation_error`          | 400    |
+| `RequestReward`                                                       | —                        | At most 10 pending requests per child. Checked before the star balance.                                                      | `too_many_pending_requests` | 409    |
+| `RequestReward`                                                       | —                        | The reward's cost must not exceed the spendable stars (lifetime stars minus spent stars minus pending reservations).         | `insufficient_stars`        | 409    |
+| `CancelRewardRequest`, `ApproveRewardRequest`, `DeclineRewardRequest` | —                        | The request must still be pending; repeating the same resolution is an idempotent `200`, a different one is rejected.        | `reward_request_resolved`   | 409    |
+| `ApproveRewardRequest`                                                | —                        | The request's cost must not exceed lifetime stars minus spent stars (a revoked star may have eaten into the reservation).    | `insufficient_stars`        | 409    |
+
 ## Core lifecycle
 
 `RecordStarChange` is not an HTTP endpoint. It is an internal command,

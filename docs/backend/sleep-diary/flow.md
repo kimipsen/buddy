@@ -61,6 +61,30 @@ sequenceDiagram
 | `DELETE` | `/sleep-diary/children/{childId}/share-links/{shareLinkId}` | Revokes a link. Idempotent. A link of another child is `404`.                                                                                           |
 | `GET`    | `/sleep-diary/shared/{token}?from=...&to=...`               | Anonymous. The child's name, the range, the link's expiry, the hygiene notes and the logged nights. Without `from`/`to`, the last 14 days ending today. |
 
+## Validation
+
+Every rule the endpoints enforce, validator rules first, then the handler's own checks.
+A `400 validation_error` carries the message in the `ErrorEnvelope`'s `details` under the
+key in the Field column, `""` for a check that isn't tied to one field (see
+[HTTP status codes](../http-status-codes.md#error-response-shape-implemented)). A body
+that can't be bound is rejected before these rules run, with the same envelope.
+
+| Endpoint                    | Field                      | Rule                                                                                                          | Code               | Status |
+| --------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------ | ------ |
+| `LogSleepEntry`             | `NightWakeUps`             | At most 20. Optional.                                                                                         | `validation_error` | 400    |
+| `LogSleepEntry`             | `NightWakeUps[n].Duration` | `durationMinutes` 1–720.                                                                                      | `validation_error` | 400    |
+| `LogSleepEntry`             | `Naps`                     | At most 20. Optional.                                                                                         | `validation_error` | 400    |
+| `LogSleepEntry`             | `Naps[n].Duration`         | `durationMinutes` 1–720.                                                                                      | `validation_error` | 400    |
+| `LogSleepEntry`             | `TotalSleepDuration`       | `totalSleepMinutes` 0–1440. Optional.                                                                         | `validation_error` | 400    |
+| `LogSleepEntry`             | `Remarks`                  | At most 2000 characters after trimming. Optional.                                                             | `validation_error` | 400    |
+| `UpdateSleepHygieneNotes`   | `Notes`                    | At most 4000 characters after trimming. Optional (`""` clears).                                               | `validation_error` | 400    |
+| `ListSleepDiaryEntries`     | `To`                       | `to` not before `from`.                                                                                       | `validation_error` | 400    |
+| `ListSleepDiaryEntries`     | `To`                       | `to` at most 92 days after `from`.                                                                            | `validation_error` | 400    |
+| `CreateSleepDiaryShareLink` | `ExpiresAt`                | In the future. Optional (no expiry).                                                                          | `validation_error` | 400    |
+| `CreateSleepDiaryShareLink` | `ExpiresAt`                | At most 365 days from now.                                                                                    | `validation_error` | 400    |
+| `GetSharedSleepDiary`       | `To`                       | `to` not before `from`, after defaulting a missing end to a 14-day range (so only fails when both are given). | `validation_error` | 400    |
+| `GetSharedSleepDiary`       | `To`                       | `to` at most 92 days after `from`, after the same defaulting.                                                 | `validation_error` | 400    |
+
 ## Entry shape
 
 | Field                                                                                                  | Type                               | Notes                                                                                    |

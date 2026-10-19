@@ -49,8 +49,20 @@ sequenceDiagram
 | `DELETE` | `/babysitters/me/{babysitterId}`  | Archives the babysitter. Idempotent `204`.                                                                   |
 | `GET`    | `/babysitters/children/{childId}` | Active babysitters of every active guardian of the child, sorted by name, each with its owning `guardianId`. |
 
-Validation: name 1–80 characters, unique (case-insensitive) among the guardian's active
-babysitters; contact info at most 200 characters; at most 20 active babysitters per guardian.
+## Validation
+
+Every rule the endpoints enforce, validator rules first, then the handler's own checks.
+A `400 validation_error` carries the message in the `ErrorEnvelope`'s `details` under the
+key in the Field column, `""` for a check that isn't tied to one field (see
+[HTTP status codes](../http-status-codes.md#error-response-shape-implemented)). A body
+that can't be bound is rejected before these rules run, with the same envelope.
+
+| Endpoint                            | Field         | Rule                                                                     | Code               | Status |
+| ----------------------------------- | ------------- | ------------------------------------------------------------------------ | ------------------ | ------ |
+| `AddBabysitter`, `UpdateBabysitter` | `name`        | Required: not empty or whitespace. At most 80 characters after trimming. | `validation_error` | 400    |
+| `AddBabysitter`, `UpdateBabysitter` | `contactInfo` | At most 200 characters after trimming. Optional.                         | `validation_error` | 400    |
+| `AddBabysitter`                     | `""`          | At most 20 active babysitters per guardian.                              | `validation_error` | 400    |
+| `AddBabysitter`, `UpdateBabysitter` | `""`          | Name unique, case-insensitive, among the guardian's active babysitters.  | `validation_error` | 400    |
 
 ## Core lifecycle
 

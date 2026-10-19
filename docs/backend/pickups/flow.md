@@ -55,6 +55,30 @@ The list response is sparse: it contains no placeholder for an unassigned
 slot. Clients construct their week or day grid and treat a missing
 `(date, slot)` pair as not planned.
 
+## Validation
+
+Every rule the endpoints enforce, validator rules first, then the handler's own checks.
+A `400 validation_error` carries the message in the `ErrorEnvelope`'s `details` under the
+key in the Field column, `""` for a check that isn't tied to one field (see
+[HTTP status codes](../http-status-codes.md#error-response-shape-implemented)). A body
+that can't be bound is rejected before these rules run, with the same envelope.
+
+| Endpoint             | Field                  | Rule                                                                                                  | Code               | Status |
+| -------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------- | ------------------ | ------ |
+| `AssignPickup`       | `Assignee.HostName`    | When the assignee is a `Playdate`: required, not empty after trimming.                                | `validation_error` | 400    |
+| `AssignPickup`       | `Assignee.HostName`    | When the assignee is a `Playdate`: at most 200 characters after trimming.                             | `validation_error` | 400    |
+| `AssignPickup`       | `Assignee.Location`    | When the assignee is a `Playdate`: at most 200 characters after trimming. Optional.                   | `validation_error` | 400    |
+| `AssignPickup`       | `Assignee.ContactInfo` | When the assignee is a `Playdate`: at most 2000 characters after trimming. Optional.                  | `validation_error` | 400    |
+| `AssignPickup`       | `Notes`                | At most 2000 characters after trimming. Optional.                                                     | `validation_error` | 400    |
+| `AssignPickup`       | `""`                   | `Guardian` assignee: `guardianId` is an active guardian of the child. Checked after authorization.    | `validation_error` | 400    |
+| `AssignPickup`       | `""`                   | `Sibling` assignee: `siblingChildId` is not the scheduled child.                                      | `validation_error` | 400    |
+| `AssignPickup`       | `""`                   | `Sibling` assignee: `siblingChildId` shares at least one guardian with the scheduled child.           | `validation_error` | 400    |
+| `AssignPickup`       | `""`                   | `Babysitter` assignee: `guardianId` is an active guardian of the child.                               | `validation_error` | 400    |
+| `AssignPickup`       | `""`                   | `Babysitter` assignee: `babysitterId` is an active (not archived) babysitter on that guardian's list. | `validation_error` | 400    |
+| `ClearPickup`        | —                      | No rules beyond binding the `date` and `slot` query values.                                           | `validation_error` | 400    |
+| `ListPickupSchedule` | `To`                   | `to` not before `from`.                                                                               | `validation_error` | 400    |
+| `ListPickupSchedule` | `To`                   | `to` at most 31 days after `from`.                                                                    | `validation_error` | 400    |
+
 ## Assignee model
 
 `AssignPickup` takes an `assignee` object whose numeric `kind` picks the case,

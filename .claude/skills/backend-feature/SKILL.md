@@ -116,6 +116,7 @@ task test:backend                                                               
 ## 5. Docs (when behavior or the contract changes)
 
 - `docs/backend/<domain>/flow.md`: add the row to the endpoint table, and extend the sequence diagram if the flow changed.
+- `docs/backend/<domain>/flow.md` `## Validation`: one row per validator rule and handler check (Endpoint = operationId, Field = the `details` key, Rule, Code, Status). After `task docs:openapi`, `task docs:validation` checks the table against `buddy.json`; CI runs it too.
 - Run `task codegen:backend` and commit the regenerated `src/backend/buddy/Internal/Generated` (every new handler gets a pre-generated class there; the backend CI job fails when it's stale).
 - Run `task docs:openapi` and commit the regenerated `docs/backend/openapi/buddy.json` and `src/frontend/buddy/src/app/core/api/buddy-api.ts`. `Meta/OpenApiDocumentTests` fails until the contract is regenerated, and frontend CI fails if the generated types are stale. `docs/backend/http-status-codes.md` holds the rules, not per-endpoint tables; change it only when a rule changes.
 - `docs/backend/glossary.md` for new domain terms or ids. Update `docs/backend/analysis/<topic>.md` if the change implements or alters a recorded design decision.
