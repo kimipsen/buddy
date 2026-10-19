@@ -342,6 +342,19 @@ public sealed class MealPlanImportTests(BuddyApiFixture fixture)
         await PreviewAsync(strangerToken, groupPath, Note, expectedStatus: 404);
     }
 
+    // Same as PreviewMealPlanImport: the format is trimmed before it's matched.
+    [Fact]
+    public async Task A_commit_format_is_trimmed_before_it_is_matched()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, token, "Alex");
+        var basePath = $"/mealplans/children/{child.Id}";
+
+        await CommitAsync(token, basePath, new { Format = "  csv \n", Entries = new[] { new { Date = Sunday, Slot = MealSlot.Dinner, NewMealName = "Soup" } } });
+
+        Assert.Equal("csv", Assert.Single(await ListImportsAsync(token, basePath)).Format);
+    }
+
     private async Task<ImportPreviewDto> PreviewAsync(string token, string basePath, string text, string? format = null, int expectedStatus = 200)
     {
         var response = await fixture.Host.Scenario(_ =>

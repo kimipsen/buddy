@@ -25,10 +25,10 @@ public static class CreateMealForGroupEndpoint
             var command = CreateMealForGroup.FromClaims(
                 principal,
                 new GroupId(groupId),
-                request.Name,
+                FreeText.Normalize(request.Name),
                 FreeText.Normalize(request.Description),
-                new Icon(request.Icon),
-                new Color(request.Color),
+                new Icon(request.Icon ?? ""),
+                new Color(FreeText.Normalize(request.Color)),
                 request.EatingOut);
 
             var result = await bus.InvokeAsync<Result<Meal>>(command, cancellationToken);

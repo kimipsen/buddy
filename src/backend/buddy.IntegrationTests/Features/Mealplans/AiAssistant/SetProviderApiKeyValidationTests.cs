@@ -53,6 +53,58 @@ public sealed class SetProviderApiKeyValidationTests(BuddyApiFixture fixture)
         Assert.Contains("apiKey", error.Details.Keys);
     }
 
+    [Theory]
+    [InlineData("1234567")]
+    [InlineData("  1234567  ")]
+    public async Task An_api_key_shorter_than_8_characters_after_trimming_is_rejected(string apiKey)
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Json(new { ApiKey = apiKey }).ToUrl($"/mealplans/children/{child.Id}/ai/providers/Anthropic/key");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("apiKey", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task An_api_key_is_trimmed_and_8_characters_are_accepted()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Json(new { ApiKey = "  1234WXYZ \n" }).ToUrl($"/mealplans/children/{child.Id}/ai/providers/Anthropic/key");
+            _.StatusCodeShouldBeOk();
+        });
+
+        // Last4 is taken from the trimmed key, so the trailing whitespace didn't reach storage.
+        var entry = Assert.Single(response.ReadAsJson<AiProviderSettingsDto>().Providers);
+        Assert.Equal("WXYZ", entry.Last4);
+    }
+
+    [Fact]
+    public async Task An_api_key_of_500_characters_after_trimming_is_accepted()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Json(new { ApiKey = $"  {new string('k', 500)}  " }).ToUrl($"/mealplans/children/{child.Id}/ai/providers/Anthropic/key");
+            _.StatusCodeShouldBeOk();
+        });
+    }
+
     [Fact]
     public async Task An_api_key_of_exactly_500_characters_is_accepted()
     {

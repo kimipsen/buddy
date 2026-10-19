@@ -118,6 +118,25 @@ public sealed class TestProviderConnectionTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task An_undefined_provider_is_rejected()
+    {
+        // Minimal APIs bind {provider} with Enum.TryParse, which accepts any numeric string.
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { ApiKey = "sk-ant-whatever" }).ToUrl($"/mealplans/children/{child.Id}/ai/providers/99/test-connection");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("provider", error.Details.Keys);
+    }
+
+    [Fact]
     public async Task A_key_longer_than_500_characters_is_rejected()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();

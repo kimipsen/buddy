@@ -55,8 +55,14 @@ public static class StartAiSessionHandler
         }
 
         // The assistant never plans eating-out meals (docs/backend/analysis/eating-out-meals.md), so
-        // asking it to include one is rejected rather than silently dropped.
-        foreach (var mealId in command.MustIncludeMealIds)
+        // asking it to include one is rejected rather than silently dropped. Only the family's own
+        // meals are looked at: an id outside the family is treated like an unknown id (accepted and
+        // never offered to the provider), so the answer can't reveal another family's meal.
+        var familyMealIds = command.MustIncludeMealIds.Count == 0
+            ? []
+            : (await MealFamilyResolution.ResolveFamilyMealIdsAsync(command.ChildId, guardians, meals, cancellationToken)).ToHashSet();
+
+        foreach (var mealId in command.MustIncludeMealIds.Where(familyMealIds.Contains))
         {
             if (await meals.FindSnapshotAsync(mealId, cancellationToken) is { EatingOut: not MealEatingOut.None })
             {

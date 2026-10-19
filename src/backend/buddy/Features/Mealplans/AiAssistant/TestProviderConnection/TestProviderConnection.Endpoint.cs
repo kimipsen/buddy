@@ -23,7 +23,7 @@ public static class TestProviderConnectionEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var command = TestProviderConnection.FromClaims(principal, new UserId(childId), provider, request.ApiKey);
+            var command = TestProviderConnection.FromClaims(principal, new UserId(childId), provider, request.ApiKey?.Trim());
             var result = await bus.InvokeAsync<Result<TestProviderConnectionResult>>(command, cancellationToken);
 
             return result switch

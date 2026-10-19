@@ -22,7 +22,7 @@ public static class SetProviderApiKeyEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var command = SetProviderApiKey.FromClaims(principal, new UserId(childId), provider, request.ApiKey);
+            var command = SetProviderApiKey.FromClaims(principal, new UserId(childId), provider, FreeText.Normalize(request.ApiKey));
             var result = await bus.InvokeAsync<Result<AiProviderSettings>>(command, cancellationToken);
 
             return result switch

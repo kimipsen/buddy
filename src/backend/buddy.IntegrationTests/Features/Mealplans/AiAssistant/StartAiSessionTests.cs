@@ -312,4 +312,31 @@ public sealed class StartAiSessionTests(BuddyApiFixture fixture)
         Assert.Equal("validation_error", error.Code);
         Assert.Equal([StartAiSessionHandler.EatingOutMustIncludeMessage], error.Details["mustIncludeMealIds"]);
     }
+
+    // Another family's eating-out meal is treated like an unknown id (accepted, never offered to the
+    // provider), so the answer doesn't reveal that the id is a meal, let alone an eating-out one.
+    [Fact]
+    public async Task Another_familys_eating_out_meal_is_treated_like_an_unknown_meal_id()
+    {
+        var (_, otherGuardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var otherChild = await GuardianTestHelpers.CreateChildAsync(fixture, otherGuardianToken, "Robin");
+        var otherRestaurant = await MealplanTestHelpers.CreateMealAsync(
+            fixture, otherGuardianToken, otherChild.Id, new CreateMealOptions(Name: "Restaurant", EatingOut: MealEatingOut.Restaurant));
+        Assert.NotNull(otherRestaurant);
+
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
+
+        foreach (var mealId in new[] { otherRestaurant.Id, Guid.NewGuid() })
+        {
+            await fixture.Host.Scenario(_ =>
+            {
+                _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+                _.Post.Json(new { From, To, Slots = new[] { MealSlot.Dinner }, MustIncludeMealIds = new[] { mealId } })
+                    .ToUrl($"/mealplans/children/{child.Id}/ai/sessions");
+                _.StatusCodeShouldBeOk();
+            });
+        }
+    }
 }

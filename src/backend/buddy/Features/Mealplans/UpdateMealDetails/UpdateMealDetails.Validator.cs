@@ -6,8 +6,6 @@ public sealed class UpdateMealDetailsValidator : AbstractValidator<UpdateMealDet
 {
     public UpdateMealDetailsValidator()
     {
-        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.Description).MaximumLength(2000);
-        RuleFor(x => x.EatingOut).IsInEnum();
+        this.ValidMealDetails(x => x.Name, x => x.Description, x => x.Icon, x => x.Color, x => x.EatingOut);
     }
 }

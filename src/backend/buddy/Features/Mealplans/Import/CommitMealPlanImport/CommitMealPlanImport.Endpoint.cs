@@ -30,7 +30,7 @@ public static class CommitMealPlanImportEndpoint
                 return TypedResults.BadRequest(Common.Validation.ValidationProblem.Of("entries must not contain null entries.").ToEnvelope(httpContext));
             }
 
-            var command = CommitMealPlanImport.FromClaims(principal, new UserId(childId), request.Format, request.ToEntries(), request.ArchiveSingleUse);
+            var command = CommitMealPlanImport.FromClaims(principal, new UserId(childId), FreeText.Normalize(request.Format), request.ToEntries(), request.ArchiveSingleUse);
             var result = await bus.InvokeAsync<Result<MealPlanImportResult>>(command, cancellationToken);
 
             return result switch
@@ -62,7 +62,7 @@ public static class CommitMealPlanImportEndpoint
                 return TypedResults.BadRequest(Common.Validation.ValidationProblem.Of("entries must not contain null entries.").ToEnvelope(httpContext));
             }
 
-            var command = CommitMealPlanImportForGroup.FromClaims(principal, new GroupId(groupId), request.Format, request.ToEntries(), request.ArchiveSingleUse);
+            var command = CommitMealPlanImportForGroup.FromClaims(principal, new GroupId(groupId), FreeText.Normalize(request.Format), request.ToEntries(), request.ArchiveSingleUse);
             var result = await bus.InvokeAsync<Result<MealPlanImportResult>>(command, cancellationToken);
 
             return result switch

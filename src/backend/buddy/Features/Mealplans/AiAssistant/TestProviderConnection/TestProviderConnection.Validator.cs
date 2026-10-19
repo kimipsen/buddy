@@ -6,6 +6,9 @@ public sealed class TestProviderConnectionValidator : AbstractValidator<TestProv
 {
     public TestProviderConnectionValidator()
     {
-        RuleFor(x => x.ApiKey).MaximumLength(500).When(x => x.ApiKey is not null);
+        // Minimal APIs bind {provider} with Enum.TryParse, which accepts any number, so "99"
+        // reaches here as an undefined AiProvider (same rule as SetProviderApiKeyValidator).
+        RuleFor(x => x.Provider).IsInEnum();
+        RuleFor(x => x.ApiKey).MaximumLength(SetProviderApiKeyValidator.MaxApiKeyLength).When(x => x.ApiKey is not null);
     }
 }
