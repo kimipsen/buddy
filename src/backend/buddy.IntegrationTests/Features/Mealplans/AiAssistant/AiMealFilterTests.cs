@@ -15,6 +15,8 @@ namespace buddy.IntegrationTests.Features.Mealplans.AiAssistant;
 public sealed class AiMealFilterTests
 {
     private static readonly DateOnly From = new(2026, 10, 12);
+    private static readonly DateOnly To = From.AddDays(6);
+    private static readonly MealSlot[] Dinner = [MealSlot.Dinner];
     private static readonly UserId Child = new(Guid.Parse("01900000-0000-7000-8000-000000000001"));
 
     private static readonly Meal RatedServed = NewMeal("Rated, served", rated: true);
@@ -39,7 +41,7 @@ public sealed class AiMealFilterTests
     [MemberData(nameof(FilterCombinations))]
     public void The_rated_and_served_filters_combine_with_and(bool ratedOnly, AiServedWindow servedWithin, string[] expected)
     {
-        var selection = AiMealFilter.Apply(AllMeals, Plan, From, ratedOnly, servedWithin, []);
+        var selection = AiMealFilter.Apply(AllMeals, Plan, From, To, Dinner, ratedOnly, servedWithin, []);
 
         Assert.Equal(expected, selection.Meals.Select(m => m.Name));
         Assert.False(selection.FilterMatchedNothing);
@@ -58,7 +60,7 @@ public sealed class AiMealFilterTests
             (From, onFrom),
             (From.AddDays(-1), lastDay));
 
-        var selection = AiMealFilter.Apply([onFirstDay, dayBefore, onFrom, lastDay], plan, From, false, AiServedWindow.Last30Days, []);
+        var selection = AiMealFilter.Apply([onFirstDay, dayBefore, onFrom, lastDay], plan, From, To, Dinner, false, AiServedWindow.Last30Days, []);
 
         Assert.Equal(["First day", "Last day"], selection.Meals.Select(m => m.Name));
     }
@@ -66,7 +68,7 @@ public sealed class AiMealFilterTests
     [Fact]
     public void A_must_include_meal_is_offered_even_when_it_fails_the_filter()
     {
-        var selection = AiMealFilter.Apply(AllMeals, Plan, From, true, AiServedWindow.Last30Days, [UnratedNotServed.Id]);
+        var selection = AiMealFilter.Apply(AllMeals, Plan, From, To, Dinner, true, AiServedWindow.Last30Days, [UnratedNotServed.Id]);
 
         Assert.Equal(["Rated, served", "Unrated, not served"], selection.Meals.Select(m => m.Name));
         Assert.False(selection.FilterMatchedNothing);
@@ -75,7 +77,7 @@ public sealed class AiMealFilterTests
     [Fact]
     public void Must_include_meals_do_not_count_as_a_filter_match()
     {
-        var selection = AiMealFilter.Apply([UnratedNotServed], Plan, From, true, AiServedWindow.Any, [UnratedNotServed.Id]);
+        var selection = AiMealFilter.Apply([UnratedNotServed], Plan, From, To, Dinner, true, AiServedWindow.Any, [UnratedNotServed.Id]);
 
         Assert.True(selection.FilterMatchedNothing);
         Assert.Equal([UnratedNotServed.Id], selection.Meals.Select(m => m.Id));
@@ -86,8 +88,8 @@ public sealed class AiMealFilterTests
     {
         var archived = RatedServed with { IsArchived = true };
 
-        var unfiltered = AiMealFilter.Apply([archived, RatedNotServed], Plan, From, false, AiServedWindow.Any, [archived.Id]);
-        var filtered = AiMealFilter.Apply([archived, RatedNotServed], Plan, From, false, AiServedWindow.Last30Days, [archived.Id]);
+        var unfiltered = AiMealFilter.Apply([archived, RatedNotServed], Plan, From, To, Dinner, false, AiServedWindow.Any, [archived.Id]);
+        var filtered = AiMealFilter.Apply([archived, RatedNotServed], Plan, From, To, Dinner, false, AiServedWindow.Last30Days, [archived.Id]);
 
         Assert.Equal(["Rated, not served"], unfiltered.Meals.Select(m => m.Name));
         Assert.Empty(filtered.Meals);
@@ -97,7 +99,7 @@ public sealed class AiMealFilterTests
     [Fact]
     public void A_family_without_a_plan_has_nothing_served()
     {
-        var selection = AiMealFilter.Apply(AllMeals, null, From, false, AiServedWindow.Last90Days, []);
+        var selection = AiMealFilter.Apply(AllMeals, null, From, To, Dinner, false, AiServedWindow.Last90Days, []);
 
         Assert.Empty(selection.Meals);
         Assert.True(selection.FilterMatchedNothing);
@@ -106,15 +108,116 @@ public sealed class AiMealFilterTests
     [Fact]
     public void An_unfiltered_family_with_no_meals_is_not_a_filter_mismatch()
     {
-        var selection = AiMealFilter.Apply([], null, From, false, AiServedWindow.Any, []);
+        var selection = AiMealFilter.Apply([], null, From, To, Dinner, false, AiServedWindow.Any, []);
 
         Assert.False(selection.FilterMatchedNothing);
+    }
+
+    // docs/backend/analysis/eating-out-meals.md, Question 3.
+    [Fact]
+    public void Eating_out_meals_are_never_offered()
+    {
+        var restaurant = NewMeal("Restaurant", rated: true) with { EatingOut = MealEatingOut.Restaurant };
+
+        var unfiltered = AiMealFilter.Apply([restaurant, RatedNotServed], Plan, From, To, Dinner, false, AiServedWindow.Any, [restaurant.Id]);
+        var filtered = AiMealFilter.Apply([restaurant, RatedNotServed], Plan, From, To, Dinner, true, AiServedWindow.Any, [restaurant.Id]);
+
+        Assert.Equal(["Rated, not served"], unfiltered.Meals.Select(m => m.Name));
+        Assert.Equal(["Rated, not served"], filtered.Meals.Select(m => m.Name));
+    }
+
+    [Fact]
+    public void Eating_out_meals_do_not_count_as_a_filter_match()
+    {
+        var grandmas = NewMeal("Grandma's", rated: true) with { EatingOut = MealEatingOut.FriendsAndFamily };
+        var plan = NewPlan((From.AddDays(-2), grandmas));
+
+        var selection = AiMealFilter.Apply([grandmas], plan, From, To, Dinner, false, AiServedWindow.Last30Days, []);
+
+        Assert.Empty(selection.Meals);
+        Assert.True(selection.FilterMatchedNothing);
+    }
+
+    [Fact]
+    public void Requested_slots_holding_an_eating_out_meal_within_the_session_are_reserved()
+    {
+        var restaurant = NewMeal("Restaurant", rated: false) with { EatingOut = MealEatingOut.Restaurant };
+        var home = NewMeal("Home", rated: false);
+        var plan = NewPlanWithSlots(
+            (From, MealSlot.Dinner, restaurant),
+            (To, MealSlot.Dinner, restaurant),
+            (From.AddDays(-1), MealSlot.Dinner, restaurant),
+            (To.AddDays(1), MealSlot.Dinner, restaurant),
+            (From.AddDays(2), MealSlot.Lunch, restaurant),
+            (From.AddDays(3), MealSlot.Dinner, home));
+
+        var selection = AiMealFilter.Apply([restaurant, home], plan, From, To, Dinner, false, AiServedWindow.Any, []);
+
+        Assert.Equal([(From, MealSlot.Dinner), (To, MealSlot.Dinner)], selection.ReservedSlots);
+        Assert.Equal(["Home"], selection.Meals.Select(m => m.Name));
+    }
+
+    [Fact]
+    public void An_archived_eating_out_meal_still_reserves_its_slot()
+    {
+        var archived = NewMeal("Grandma's", rated: false) with { EatingOut = MealEatingOut.FriendsAndFamily, IsArchived = true };
+        var plan = NewPlan((From.AddDays(1), archived));
+
+        var reserved = AiMealFilter.FindReservedSlots([archived], plan, From, To, Dinner);
+
+        Assert.Equal([(From.AddDays(1), MealSlot.Dinner)], reserved);
+    }
+
+    [Fact]
+    public void A_family_without_a_plan_has_no_reserved_slots()
+    {
+        Assert.Empty(AiMealFilter.FindReservedSlots(AllMeals, null, From, To, Dinner));
+    }
+
+    [Fact]
+    public void The_prompt_lists_reserved_slots_by_date_and_slot_only()
+    {
+        var prompt = AiSessionPromptBuilder.Build(
+            NewSession(), [RatedServed], NewStarted(false, AiServedWindow.Any), [(From.AddDays(4), MealSlot.Dinner), (From.AddDays(5), MealSlot.Dinner)]);
+
+        Assert.Contains(
+            "The family is eating out for these meals; never propose a meal for them: 2026-10-16 Dinner, 2026-10-17 Dinner.",
+            prompt,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_prompt_has_no_eating_out_line_without_reserved_slots()
+    {
+        var prompt = AiSessionPromptBuilder.Build(NewSession(), [RatedServed], NewStarted(false, AiServedWindow.Any), []);
+
+        Assert.DoesNotContain("eating out", prompt, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Propose_assignment_rejects_a_reserved_slot()
+    {
+        var reservedDay = From.AddDays(4);
+        var call = new AiRequestedToolCall(
+            "call-1",
+            AiSessionTools.ProposeAssignment,
+            JsonSerializer.Serialize(new { date = reservedDay.ToString("O", System.Globalization.CultureInfo.InvariantCulture), slot = "Dinner", meal_id = RatedServed.Id.Value }));
+
+        // propose_assignment never reads the stores (only get_calendar_conflicts does), so they're
+        // left null here to keep this a pure test.
+        var outcome = await AiSessionToolExecutor.ExecuteAsync(
+            call, MealplanAiSessionId.New(), NewSession(), [RatedServed.Id], [(reservedDay, MealSlot.Dinner)], Child, Child,
+            null!, null!, null!, null!, null!, DateTimeOffset.UtcNow, CancellationToken.None);
+
+        Assert.True(outcome.IsError);
+        Assert.Contains("The family is eating out for 2026-10-16 Dinner", outcome.ResultJson, StringComparison.Ordinal);
+        Assert.Empty(outcome.DraftEvents);
     }
 
     [Fact]
     public void The_prompt_describes_an_active_filter()
     {
-        var prompt = AiSessionPromptBuilder.Build(NewSession(), [RatedServed], NewStarted(true, AiServedWindow.Last60Days));
+        var prompt = AiSessionPromptBuilder.Build(NewSession(), [RatedServed], NewStarted(true, AiServedWindow.Last60Days), []);
 
         Assert.Contains(
             "The guardian limited the meal list to meals the children have rated that were served between 2026-08-13 and 2026-10-11",
@@ -125,7 +228,7 @@ public sealed class AiMealFilterTests
     [Fact]
     public void The_prompt_describes_a_rated_only_filter_without_dates()
     {
-        var prompt = AiSessionPromptBuilder.Build(NewSession(), [RatedServed], NewStarted(true, AiServedWindow.Any));
+        var prompt = AiSessionPromptBuilder.Build(NewSession(), [RatedServed], NewStarted(true, AiServedWindow.Any), []);
 
         Assert.Contains("The guardian limited the meal list to meals the children have rated.", prompt, StringComparison.Ordinal);
     }
@@ -135,7 +238,7 @@ public sealed class AiMealFilterTests
     {
         var started = NewStarted(false, AiServedWindow.Last30Days) with { MustIncludeMealIds = [RatedServed.Id] };
 
-        var prompt = AiSessionPromptBuilder.Build(NewSession(), [RatedServed], started);
+        var prompt = AiSessionPromptBuilder.Build(NewSession(), [RatedServed], started, []);
 
         Assert.Contains("2026-10-11, plus the meal ids they asked to include.", prompt, StringComparison.Ordinal);
     }
@@ -143,7 +246,7 @@ public sealed class AiMealFilterTests
     [Fact]
     public void The_prompt_has_no_filter_line_without_a_filter()
     {
-        var prompt = AiSessionPromptBuilder.Build(NewSession(), [RatedServed], NewStarted(false, AiServedWindow.Any));
+        var prompt = AiSessionPromptBuilder.Build(NewSession(), [RatedServed], NewStarted(false, AiServedWindow.Any), []);
 
         Assert.DoesNotContain("limited the meal list", prompt, StringComparison.Ordinal);
     }
@@ -192,9 +295,12 @@ public sealed class AiMealFilterTests
         return new Meal(new MealId(Guid.CreateVersion7()), Child, name, "", new Icon("🍝"), new Color("#ff0000"), false, ratings, Child);
     }
 
-    private static MealPlan NewPlan(params (DateOnly Date, Meal Meal)[] assignments) => new(
+    private static MealPlan NewPlan(params (DateOnly Date, Meal Meal)[] assignments) =>
+        NewPlanWithSlots([.. assignments.Select(a => (a.Date, MealSlot.Dinner, a.Meal))]);
+
+    private static MealPlan NewPlanWithSlots(params (DateOnly Date, MealSlot Slot, Meal Meal)[] assignments) => new(
         new MealPlanId(Guid.CreateVersion7()),
-        assignments.ToImmutableDictionary(a => (a.Date, MealSlot.Dinner), a => new MealPlanAssignment(a.Meal.Id, Child, "")),
+        assignments.ToImmutableDictionary(a => (a.Date, a.Slot), a => new MealPlanAssignment(a.Meal.Id, Child, "")),
         ImmutableDictionary<MealSlot, TimeOnly>.Empty,
         ImmutableDictionary<buddy.Features.Mealplans.IcalTokenId, buddy.Features.Mealplans.IcalTokenInfo>.Empty,
         SharedWithGroupId: null);

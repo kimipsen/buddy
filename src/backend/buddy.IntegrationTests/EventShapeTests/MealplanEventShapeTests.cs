@@ -22,11 +22,38 @@ public sealed class MealplanEventShapeTests
         "Mealplans/MealCreated.json");
 
     [Fact]
+    public void MealCreated_EatingOut() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MealCreated(FixedMealId, FixedChildId, FixedGuardianId, "Dinner at Grandma's", "", Icon.New("grandma"), Color.New("#ec4899"), FixedInstant,
+            MealEatingOut.FriendsAndFamily),
+        "Mealplans/MealCreated_EatingOut.json");
+
+    // Meals created before eating out existed have no EatingOut field; the constructor default
+    // reads them as None, so no upcaster is needed (docs/backend/analysis/eating-out-meals.md).
+    [Fact]
+    public void A_meal_event_written_before_eating_out_existed_reads_as_none()
+    {
+        const string olderShape = """
+            {
+              "Id": "00000000-0000-0000-0000-000000000060",
+              "Before": { "Name": "Tacos", "Description": "", "Icon": "taco", "Color": "#ffaa00" },
+              "After": { "Name": "Tacos", "Description": "New", "Icon": "taco", "Color": "#ffaa00" },
+              "ModifiedBy": "00000000-0000-0000-0000-000000000001",
+              "OccurredAt": "2025-01-01T12:00:00+00:00"
+            }
+            """;
+
+        var updated = System.Text.Json.JsonSerializer.Deserialize<MealDetailsUpdated>(olderShape, EventShapeTestSupport.CreateEventSerializerOptions());
+
+        Assert.NotNull(updated);
+        Assert.Equal(MealEatingOut.None, updated.After.EatingOut);
+    }
+
+    [Fact]
     public void MealDetailsUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new MealDetailsUpdated(
             FixedMealId,
             new MealDetails("Tacos", "Ground beef, tortillas, salsa", Icon.New("taco"), Color.New("#ffaa00")),
-            new MealDetails("Tacos", "New recipe", Icon.New("taco"), Color.New("#ffaa00")),
+            new MealDetails("Tacos", "New recipe", Icon.New("taco"), Color.New("#ffaa00"), MealEatingOut.Restaurant),
             FixedGuardianId,
             FixedInstant),
         "Mealplans/MealDetailsUpdated.json");

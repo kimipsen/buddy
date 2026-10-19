@@ -1,8 +1,22 @@
 <div class="relative">
+  @if (eatingOut()) {
+    <span
+      class="pointer-events-none absolute left-2 top-0.5 text-[0.625rem] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400"
+      >{{ 'mealplan.eatingOut.label' | translate }}</span
+    >
+  }
   <input
     #queryInput
     type="text"
-    class="w-full min-w-[9rem] rounded-lg border border-slate-300 dark:border-slate-600 py-1.5 pl-2 pr-6 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-100"
+    class="w-full min-w-[9rem] rounded-lg border py-1.5 pl-2 pr-6 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 dark:text-slate-100"
+    [class.border-slate-300]="!eatingOut()"
+    [class.dark:border-slate-600]="!eatingOut()"
+    [class.dark:bg-slate-800]="!eatingOut()"
+    [class.border-dashed]="eatingOut()"
+    [class.border-amber-500]="eatingOut()"
+    [class.bg-amber-50]="eatingOut()"
+    [class.dark:bg-amber-950]="eatingOut()"
+    [class.pt-4]="eatingOut()"
     [placeholder]="'mealplan.picker.notPlanned' | translate"
     aria-label="{{ 'mealplan.picker.notPlanned' | translate }}"
     autocomplete="off"
@@ -32,16 +46,35 @@
         </button>
       </li>
 
-      @for (meal of filteredMeals(); track meal.id) {
+      @for (meal of homeMeals(); track meal.id) {
         <li>
-          <button
-            type="button"
-            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
-            (click)="selectMeal(meal)"
-          >
-            <app-icon class="text-base leading-none" [value]="meal.icon" />
-            {{ meal.name }}
-          </button>
+          <ng-container
+            [ngTemplateOutlet]="option"
+            [ngTemplateOutletContext]="{ $implicit: meal }"
+          />
+        </li>
+      }
+
+      @if (eatingOutMeals().length > 0 || showEatingOutHint()) {
+        <li
+          class="mt-1 border-t border-slate-100 dark:border-slate-800 px-3 pb-1 pt-2 text-[0.625rem] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+        >
+          {{ 'mealplan.eatingOut.pickerGroup' | translate }}
+        </li>
+      }
+
+      @for (meal of eatingOutMeals(); track meal.id) {
+        <li>
+          <ng-container
+            [ngTemplateOutlet]="option"
+            [ngTemplateOutletContext]="{ $implicit: meal }"
+          />
+        </li>
+      }
+
+      @if (showEatingOutHint()) {
+        <li class="px-3 py-1.5 text-xs text-slate-400 dark:text-slate-500">
+          {{ 'mealplan.eatingOut.pickerEmptyHint' | translate }}
         </li>
       }
 
@@ -53,3 +86,14 @@
     </ul>
   }
 </div>
+
+<ng-template #option let-meal>
+  <button
+    type="button"
+    class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
+    (click)="selectMeal(meal)"
+  >
+    <app-icon class="text-base leading-none" [value]="meal.icon" />
+    {{ meal.name }}
+  </button>
+</ng-template>

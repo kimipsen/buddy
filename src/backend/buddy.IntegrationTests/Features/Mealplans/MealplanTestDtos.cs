@@ -18,7 +18,8 @@ internal sealed record MealDto(
     bool IsArchived,
     IReadOnlyList<MealRatingEntryDto> Ratings,
     Guid CreatedBy,
-    Guid LastModifiedBy);
+    Guid LastModifiedBy,
+    MealEatingOut EatingOut = MealEatingOut.None);
 
 internal sealed record SharedGroupResponseDto(Guid GroupId, string GroupName);
 
@@ -32,7 +33,8 @@ internal sealed record MealPlanEntryDto(
     MealRatingDto? Rating,
     string? Notes,
     Guid AssignedBy,
-    IReadOnlyList<MealRatingEntryDto> AllRatings);
+    IReadOnlyList<MealRatingEntryDto> AllRatings,
+    MealEatingOut EatingOut = MealEatingOut.None);
 
 internal sealed record MealPlanIcalTokenResponseDto(Guid TokenId, string Token, string SubscriptionPath);
 

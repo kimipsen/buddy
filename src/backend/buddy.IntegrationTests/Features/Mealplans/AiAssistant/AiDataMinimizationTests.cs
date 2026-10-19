@@ -41,7 +41,7 @@ public sealed class AiDataMinimizationTests(BuddyApiFixture fixture)
 
         var session = NewSession(DateOnly.FromDateTime(DateTime.UtcNow));
         var started = new AiSessionStarted(session.Id, olderChild, session.From, session.To, [MealSlot.Dinner], [], "", new UserId(Guid.CreateVersion7()), ratedAt);
-        var prompt = AiSessionPromptBuilder.Build(session, [pasta, soup], started);
+        var prompt = AiSessionPromptBuilder.Build(session, [pasta, soup], started, []);
 
         Assert.DoesNotContain(olderChild.Value.ToString(), prompt, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(youngerChild.Value.ToString(), prompt, StringComparison.OrdinalIgnoreCase);
@@ -114,6 +114,7 @@ public sealed class AiDataMinimizationTests(BuddyApiFixture fixture)
             call,
             MealplanAiSessionId.New(),
             NewSession(day),
+            [],
             [],
             callerId,
             sessionChildId,

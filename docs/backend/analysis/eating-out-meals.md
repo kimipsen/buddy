@@ -1,6 +1,6 @@
 # Eating-out Meals
 
-Status: Proposed (not yet implemented)
+Status: Implemented. `MealEatingOut` on `MealCreated`, `MealDetails` and `Meal`, returned on `MealResponse` and `MealPlanEntry`; `AiMealFilter` drops eating-out meals and computes `ReservedSlots`, which the prompt lists, `propose_assignment` rejects and `ApplyAiSessionDraft` skips; `StartAiSession` rejects an eating-out must-include meal. On `/guardian/mealplan` the meal library has an eating-out choice when creating a meal and a per-meal select, the picker groups eating-out meals, and the grid marks eating-out slots; the child's meal plan shows a badge and the AI start form says eating-out meals are skipped.
 
 ## Context
 
@@ -83,8 +83,8 @@ It is added as a trailing parameter with default `None` to `MealCreated` and `Me
 moves through the existing create and update-details paths and needs no new event.**
 
 ```csharp
-// Types/MealEatingOut.cs (new). Numeric over HTTP, like AiServedWindow and MealSlot; stored as a
-// string in event JSON.
+// Types/MealEatingOut.cs (new). By member name over HTTP ("Restaurant"), like every enum in the
+// API, and stored as a string in event JSON.
 public enum MealEatingOut
 {
     None = 0,
@@ -193,11 +193,12 @@ public sealed record AiMealSelection(IReadOnlyList<Meal> Meals, bool FilterMatch
 public sealed record AiMealSelection(
     IReadOnlyList<Meal> Meals,
     bool FilterMatchedNothing,
-    IReadOnlySet<(DateOnly Date, MealSlot Slot)> ReservedSlots);
+    IReadOnlyCollection<(DateOnly Date, MealSlot Slot)> ReservedSlots);
 ```
 
 `Apply` gains `DateOnly to` and `IReadOnlyCollection<MealSlot> requestedSlots`. The reserved set is
-computed as follows:
+computed by `AiMealFilter.FindReservedSlots`, which `LoadReservedSlotsAsync` also exposes for
+`ApplyAiSessionDraft`:
 
 ```csharp
 familyPlan.Assignments
@@ -229,8 +230,8 @@ The reserved set feeds three places:
 Blast radius:
 
 - `AiMealFilter` (`Apply` and `LoadAsync` signatures, 2 handler callers plus `AiMealFilterTests`)
-- `AiSessionPromptBuilder.Build`: takes the selection instead of the meal list
-  (2 callers: the handler and `AiDataMinimizationTests`)
+- `AiSessionPromptBuilder.Build`: one new `reservedSlots` parameter (callers: the handler,
+  `AiDataMinimizationTests` and `AiMealFilterTests`)
 - `AiSessionToolExecutor.ExecuteAsync`: one new parameter, passed through `RunToolLoopAsync`
 - `ApplyAiSessionDraftHandler`: one snapshot read and one `continue`
 - Not affected: events, the `MealplanAiSession` aggregate and golden files.
@@ -256,8 +257,8 @@ The iCal feed is unchanged: the event title is the meal name, which already read
 No new routes. Changed shapes:
 
 ```text
-POST  /mealplans/children/{childId}/meals                     CreateMeal         body += eatingOut: 0|1|2 (default 0)
-PATCH /mealplans/children/{childId}/meals/{mealId}/details    UpdateMealDetails  body += eatingOut (default 0)
+POST  /mealplans/children/{childId}/meals                     CreateMeal         body += eatingOut: "None"|"FriendsAndFamily"|"Restaurant" (default "None")
+PATCH /mealplans/children/{childId}/meals/{mealId}/details    UpdateMealDetails  body += eatingOut (default "None")
       (and the /groups/{groupId}/... twins)
 GET   .../meals, .../plan                                      response += eatingOut on MealResponse / MealPlanEntry
 POST  /mealplans/children/{childId}/ai/sessions                StartAiSession     400 when a must-include meal is eating out
@@ -276,21 +277,25 @@ code):
   the generated `MealResponse`, `MealPlanEntry` and `UpdateMealDetailsRequest` types gain
   `eatingOut`. `createMeal` and `updateMealDetails` pass it through.
 - `manage-meals/`:
-  - The create and edit form gets an "Eating out" pill group (No / Friends & family / Restaurant),
-    using the same `role="button"` pill markup as the AI start form's slot selector.
+  - The create form gets an "Eating out" `app-segmented-control` (No / Friends & family /
+    Restaurant).
+  - The library has no edit form, so each meal row gets a small select (At home / Friends & family /
+    Restaurant) that sends a full `updateMealDetails` with the meal's other details unchanged.
   - A one-line hint says eating-out meals are never suggested by the AI assistant.
   - Eating-out meals in the list get an amber badge with the kind.
 - `meal-picker/`: eating-out meals are listed under their own "Eating out" heading below the home
   meals, so that picking "Restaurant" is a quick, deliberate choice. When the family has none, the
   group shows a one-line hint (`mealplan.eatingOut.pickerEmptyHint`) saying how to mark a meal as
   eating out in the meal library.
-- `assign-mealplan/`: a slot whose entry has `eatingOut != 0` gets a dashed amber border and an
-  "Eating out" label above the meal name. Drag-and-drop is unchanged.
+- `assign-mealplan/`: a slot whose entry has `eatingOut !== 'None'` passes `[eatingOut]` to its
+  picker, which draws a dashed amber border and an "Eating out" label above the meal name. It reads
+  the entry, not the library, so an archived eating-out meal still shows. Drag-and-drop is
+  unchanged.
 - `ai-assistant/`: one static hint under the slot pills: "Meals marked as eating out are skipped."
   The session panel needs no change.
 - Child: `features/child/mealplan/child-mealplan` shows the same badge on eating-out entries.
 - i18n:
-  - `mealplan.eatingOut.{label, none, friendsAndFamily, restaurant, badge, aiHint, pickerGroup, pickerEmptyHint}`
+  - `mealplan.eatingOut.{label, none, friendsAndFamily, restaurant, atHome, badge, aiHint, rowLabel, updateError, pickerGroup, pickerEmptyHint}`
   - `mealplan.aiAssistant.start.eatingOutSkipped`
   - Add en and da together, then run the parity check.
 - Screenshots: no new route. The meal planner, AI assistant and child meal plan pages change
@@ -339,7 +344,7 @@ code):
 | Existing meals and events written before the change     | Deserialize as `EatingOut = None`; no upcaster                                              |
 | `eatingOut` omitted on create                           | `None`                                                                                      |
 | `eatingOut` omitted on update details                   | `None`: full replace, like name and colour. The frontend always sends the current value     |
-| `eatingOut` not 0/1/2                                   | `400` from the validator (`IsInEnum`)                                                       |
+| `eatingOut` an unknown number (e.g. `7`)                | `400` from the validator (`IsInEnum`); an unknown name fails JSON binding                   |
 | Meal changed from eating out to `None` after assignment | Its slots are home meals again; the AI may draft over them on the next turn                 |
 | Slot marked eating out after the AI drafted it          | Draft entry skipped on apply; the eating-out meal stays                                     |
 | Eating-out meal archived                                | Still shows on existing slots, which stay reserved; can't be newly assigned (existing rule) |

@@ -1,6 +1,7 @@
 using Alba;
 
 using buddy.Common;
+using buddy.Features.Mealplans;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
@@ -25,6 +26,57 @@ public sealed class CreateMealTests(BuddyApiFixture fixture)
         Assert.Equal("Tacos", meal.Name);
         Assert.False(meal.IsArchived);
         Assert.Empty(meal.Ratings);
+        Assert.Equal(MealEatingOut.None, meal.EatingOut);
+    }
+
+    [Fact]
+    public async Task A_meal_can_be_created_as_eating_out()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var meal = await MealplanTestHelpers.CreateMealAsync(
+            fixture, guardianToken, child.Id, new CreateMealOptions(Name: "Restaurant", EatingOut: MealEatingOut.Restaurant));
+
+        Assert.NotNull(meal);
+        Assert.Equal(MealEatingOut.Restaurant, meal.EatingOut);
+    }
+
+    [Fact]
+    public async Task An_unknown_eating_out_kind_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { Name = "Picnic", Icon = "taco", Color = "#ffaa00", EatingOut = 7 })
+                .ToUrl($"/mealplans/children/{child.Id}/meals");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("EatingOut", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task A_group_meal_can_be_created_as_eating_out()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var groupId = await MealplanTestHelpers.ShareWithNewGroupAsync(fixture, guardianToken, child.Id);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { Name = "Dinner at Grandma's", Icon = "grandma", Color = "#ec4899", EatingOut = "FriendsAndFamily" })
+                .ToUrl($"/mealplans/groups/{groupId}/meals");
+            _.StatusCodeShouldBeOk();
+        });
+
+        Assert.Equal(MealEatingOut.FriendsAndFamily, response.ReadAsJson<MealDto>().EatingOut);
     }
 
     [Fact]

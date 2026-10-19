@@ -16,6 +16,7 @@ describe('MealPicker', () => {
       ratings: [],
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      eatingOut: 'None',
       ...overrides,
     };
   }
@@ -380,6 +381,75 @@ describe('MealPicker', () => {
       fixture.detectChanges();
 
       expect(compiled.querySelector('ul')).toBeFalsy();
+    });
+  });
+
+  describe('eating out', () => {
+    const restaurant = meal({
+      id: 'meal-out',
+      name: 'Restaurant',
+      icon: '🍽️',
+      eatingOut: 'Restaurant',
+    });
+
+    it('lists eating-out meals under their own heading, after the home meals', async () => {
+      const { fixture, compiled } = await setup({ meals: [restaurant, pancakes, tacos] });
+      openDropdown(fixture);
+
+      const items = Array.from(compiled.querySelectorAll('ul li')).map((li) =>
+        li.textContent?.trim(),
+      );
+      expect(items).toEqual([
+        'Not planned',
+        '🥞 Pancakes',
+        '🌮 Tacos',
+        'Eating out',
+        '🍽️ Restaurant',
+      ]);
+      expect(compiled.textContent).not.toContain('Mark a meal as eating out');
+    });
+
+    it('picks the first home meal on Enter before an eating-out match', async () => {
+      const { fixture, onMealIdChange } = await setup({
+        meals: [
+          meal({ id: 'meal-out', name: 'Ramen bar', eatingOut: 'Restaurant' }),
+          meal({ id: 'home', name: 'Ramen' }),
+        ],
+      });
+      openDropdown(fixture);
+      typeQuery(fixture, 'ram');
+      pressKey(fixture, 'Enter');
+
+      expect(onMealIdChange).toHaveBeenCalledWith('home');
+    });
+
+    it('explains how to add one when the family has no eating-out meals', async () => {
+      const { fixture, compiled } = await setup();
+      openDropdown(fixture);
+
+      expect(compiled.textContent).toContain('Eating out');
+      expect(compiled.textContent).toContain(
+        'Mark a meal as eating out in the meal library to plan meals away from home.',
+      );
+    });
+
+    it('leaves the empty group out while searching', async () => {
+      const { fixture, compiled } = await setup();
+      openDropdown(fixture);
+      typeQuery(fixture, 'pan');
+
+      expect(compiled.textContent).not.toContain('Eating out');
+    });
+
+    it('labels and styles the input when the slot holds an eating-out meal', async () => {
+      const { fixture, compiled } = await setup({ meals: [restaurant], mealId: restaurant.id });
+      expect(compiled.textContent).not.toContain('Eating out');
+
+      fixture.componentRef.setInput('eatingOut', true);
+      fixture.detectChanges();
+
+      expect(compiled.textContent).toContain('Eating out');
+      expect(textInput(compiled).classList).toContain('border-dashed');
     });
   });
 });

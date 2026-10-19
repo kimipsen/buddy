@@ -104,7 +104,7 @@ public static class SendAiSessionMessageHandler
         // The prompt's meal list and the propose_assignment allowlist are the same filtered set,
         // so the server only accepts meals it actually offered.
         var selection = await AiMealFilter.LoadAsync(
-            command.ChildId, started.From, started.RatedOnly, started.ServedWithin, started.MustIncludeMealIds,
+            command.ChildId, started.From, started.To, started.RequestedSlots, started.RatedOnly, started.ServedWithin, started.MustIncludeMealIds,
             guardians, meals, mealPlans, cancellationToken);
 
         if (selection.FilterMatchedNothing)
@@ -117,13 +117,13 @@ public static class SendAiSessionMessageHandler
         }
 
         HashSet<MealId> offeredMealIds = [.. selection.Meals.Select(m => m.Id)];
-        var systemPrompt = AiSessionPromptBuilder.Build(session, selection.Meals, started);
+        var systemPrompt = AiSessionPromptBuilder.Build(session, selection.Meals, started, selection.ReservedSlots);
 
         List<AiChatMessage> history = [.. AiSessionHistoryBuilder.Build(existingEvents), new AiChatMessage(AiChatMessageRole.User, command.Text, [])];
         List<MealplanAiSessionEvent> newEvents = [new AiUserMessageSent(sessionId, command.Text, userId, time.GetUtcNow())];
 
         var toolLoopResult = await RunToolLoopAsync(
-            apiKey, chatClient, systemPrompt, history, newEvents, sessionId, session, offeredMealIds, userId, started.ChildId,
+            apiKey, chatClient, systemPrompt, history, newEvents, sessionId, session, offeredMealIds, selection.ReservedSlots, userId, started.ChildId,
             calendars, calendarItems, taskTemplates, groups, guardians, activeProvider, logger, time, cancellationToken);
 
         if (toolLoopResult is not Result<string>.Success(var finalText))
@@ -158,6 +158,7 @@ public static class SendAiSessionMessageHandler
         MealplanAiSessionId sessionId,
         MealplanAiSession session,
         IReadOnlyCollection<MealId> familyMealIds,
+        IReadOnlyCollection<(DateOnly Date, MealSlot Slot)> reservedSlots,
         UserId userId,
         UserId sessionChildId,
         ICalendarEventStore calendars,
@@ -198,7 +199,7 @@ public static class SendAiSessionMessageHandler
             foreach (var toolCall in completion.ToolCalls)
             {
                 var outcome = await AiSessionToolExecutor.ExecuteAsync(
-                    toolCall, sessionId, session, familyMealIds, userId, sessionChildId, calendars, calendarItems, taskTemplates, groups, guardians, now, cancellationToken);
+                    toolCall, sessionId, session, familyMealIds, reservedSlots, userId, sessionChildId, calendars, calendarItems, taskTemplates, groups, guardians, now, cancellationToken);
 
                 newEvents.Add(new AiToolInvocationRecorded(sessionId, toolCall.ToolCallId, toolCall.ToolName, toolCall.ArgumentsJson, outcome.ResultJson, outcome.IsError, now));
                 turnInvocations.Add(new AiToolInvocation(toolCall.ToolCallId, toolCall.ToolName, toolCall.ArgumentsJson, outcome.ResultJson, outcome.IsError));

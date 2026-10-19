@@ -289,4 +289,27 @@ public sealed class StartAiSessionTests(BuddyApiFixture fixture)
         Assert.Equal("validation_error", error.Code);
         Assert.Contains("ServedWithin", error.Details.Keys);
     }
+
+    [Fact]
+    public async Task Asking_the_assistant_to_include_an_eating_out_meal_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
+        var restaurant = await MealplanTestHelpers.CreateMealAsync(
+            fixture, guardianToken, child.Id, new CreateMealOptions(Name: "Restaurant", EatingOut: MealEatingOut.Restaurant));
+        Assert.NotNull(restaurant);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { From, To, Slots = new[] { MealSlot.Dinner }, MustIncludeMealIds = new[] { restaurant.Id } })
+                .ToUrl($"/mealplans/children/{child.Id}/ai/sessions");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal([StartAiSessionHandler.EatingOutMustIncludeMessage], error.Details["MustIncludeMealIds"]);
+    }
 }

@@ -30,6 +30,7 @@ describe('MealplanToday', () => {
       notes: '',
       assignedBy: 'guardian-1',
       allRatings: [],
+      eatingOut: 'None',
       ...overrides,
     };
   }

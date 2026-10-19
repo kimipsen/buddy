@@ -32,6 +32,6 @@ public static class UpdateMealDetailsForGroupHandler
         }
 
         return await UpdateMealDetailsHandler.UpdateForChildAsync(
-            access.AnchorChildId, command.MealId, command.UserId, command.Name, command.Description, command.Icon, command.Color, meals, guardians, time, cancellationToken);
+            access.AnchorChildId, command.MealId, command.UserId, command.Name, command.Description, command.Icon, command.Color, command.EatingOut, meals, guardians, time, cancellationToken);
     }
 }

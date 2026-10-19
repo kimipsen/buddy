@@ -41,6 +41,11 @@ export type IssuedMealplanIcalToken = Schemas['MealPlanIcalTokenResponse'];
 
 export type MealDetails = Schemas['UpdateMealDetailsRequest'];
 
+// A meal eaten away from home: never offered to the AI assistant, and a slot holding it is skipped
+// by AI drafts (see docs/backend/analysis/eating-out-meals.md).
+export type MealEatingOut = Schemas['MealEatingOut'];
+export const EATING_OUT_NONE: MealEatingOut = 'None';
+
 export type ImportLineKind = Schemas['ImportLineKind'];
 export type ImportGroupAction = Schemas['ImportGroupAction'];
 export type ImportWeekStart = Schemas['ImportWeekStart'];

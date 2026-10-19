@@ -32,13 +32,13 @@ public static class UpdateMealDetailsHandler
             return access.ToDeniedResult<Meal>();
         }
 
-        return await UpdateForChildAsync(command.ChildId, command.MealId, userId, command.Name, command.Description, command.Icon, command.Color, meals, guardians, time, cancellationToken);
+        return await UpdateForChildAsync(command.ChildId, command.MealId, userId, command.Name, command.Description, command.Icon, command.Color, command.EatingOut, meals, guardians, time, cancellationToken);
     }
 
     // Shared with UpdateMealDetailsForGroupHandler -- see CreateMealHandler.CreateForChildAsync
     // for the same pattern and rationale.
     internal static async Task<Result<Meal>> UpdateForChildAsync(
-        UserId childId, MealId mealId, UserId modifiedBy, string name, string description, Icon icon, Color color,
+        UserId childId, MealId mealId, UserId modifiedBy, string name, string description, Icon icon, Color color, MealEatingOut eatingOut,
         IMealEventStore meals, IGuardianLinkEventStore guardians, TimeProvider time, CancellationToken cancellationToken)
     {
         var events = await meals.ReadAsync(mealId, cancellationToken);
@@ -56,8 +56,8 @@ public static class UpdateMealDetailsHandler
             return new Result<Meal>.NotFound();
         }
 
-        var before = new MealDetails(meal.Name, meal.Description, meal.Icon, meal.Color);
-        var after = new MealDetails(name, description, icon, color);
+        var before = new MealDetails(meal.Name, meal.Description, meal.Icon, meal.Color, meal.EatingOut);
+        var after = new MealDetails(name, description, icon, color, eatingOut);
 
         if (before == after)
         {
@@ -66,6 +66,6 @@ public static class UpdateMealDetailsHandler
 
         await meals.AppendAsync(mealId, [new MealDetailsUpdated(mealId, before, after, modifiedBy, time.GetUtcNow())], cancellationToken);
 
-        return new Result<Meal>.Success(meal with { Name = name, Description = description, Icon = icon, Color = color, LastModifiedBy = modifiedBy });
+        return new Result<Meal>.Success(meal with { Name = name, Description = description, Icon = icon, Color = color, EatingOut = eatingOut, LastModifiedBy = modifiedBy });
     }
 }

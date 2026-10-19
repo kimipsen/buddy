@@ -32,7 +32,7 @@ public static class CreateMealHandler
             return access.ToDeniedResult<Meal>();
         }
 
-        var meal = await CreateForChildAsync(command.ChildId, userId, command.Name, command.Description, command.Icon, command.Color, meals, time, cancellationToken);
+        var meal = await CreateForChildAsync(command.ChildId, userId, command.Name, command.Description, command.Icon, command.Color, command.EatingOut, meals, time, cancellationToken);
 
         return new Result<Meal>.Success(meal);
     }
@@ -43,12 +43,12 @@ public static class CreateMealHandler
     // new meal is indexed under childId regardless of which route created it, same as any
     // guardian-created meal.
     internal static async Task<Meal> CreateForChildAsync(
-        UserId childId, UserId createdBy, string name, string description, Icon icon, Color color, IMealEventStore meals, TimeProvider time, CancellationToken cancellationToken)
+        UserId childId, UserId createdBy, string name, string description, Icon icon, Color color, MealEatingOut eatingOut, IMealEventStore meals, TimeProvider time, CancellationToken cancellationToken)
     {
         var mealId = MealId.New();
         var now = time.GetUtcNow();
 
-        var created = new MealCreated(mealId, childId, createdBy, name, description, icon, color, now);
+        var created = new MealCreated(mealId, childId, createdBy, name, description, icon, color, now, eatingOut);
 
         var events = await meals.CreateAsync(mealId, [created], cancellationToken);
 

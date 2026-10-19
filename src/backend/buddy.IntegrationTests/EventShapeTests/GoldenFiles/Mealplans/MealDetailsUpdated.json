@@ -4,13 +4,15 @@
     "Name": "Tacos",
     "Description": "Ground beef, tortillas, salsa",
     "Icon": "taco",
-    "Color": "#ffaa00"
+    "Color": "#ffaa00",
+    "EatingOut": "None"
   },
   "After": {
     "Name": "Tacos",
     "Description": "New recipe",
     "Icon": "taco",
-    "Color": "#ffaa00"
+    "Color": "#ffaa00",
+    "EatingOut": "Restaurant"
   },
   "ModifiedBy": "00000000-0000-0000-0000-000000000001",
   "OccurredAt": "2025-01-01T12:00:00+00:00"

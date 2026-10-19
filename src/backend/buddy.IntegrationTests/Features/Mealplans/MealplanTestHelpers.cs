@@ -1,11 +1,14 @@
 using Alba;
 
+using buddy.Features.Mealplans;
+
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Fixtures;
 
 namespace buddy.IntegrationTests.Features.Mealplans;
 
-internal sealed record CreateMealOptions(string Name = "Tacos", string? Description = "Ground beef, tortillas, salsa");
+internal sealed record CreateMealOptions(
+    string Name = "Tacos", string? Description = "Ground beef, tortillas, salsa", MealEatingOut EatingOut = MealEatingOut.None);
 
 internal static class MealplanTestHelpers
 {
@@ -17,7 +20,7 @@ internal static class MealplanTestHelpers
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Post.Json(new { options.Name, options.Description, Icon = "taco", Color = "#ffaa00" })
+            _.Post.Json(new { options.Name, options.Description, Icon = "taco", Color = "#ffaa00", EatingOut = options.EatingOut.ToString() })
                 .ToUrl($"/mealplans/children/{childId}/meals");
             _.StatusCodeShouldBe(expectedStatus);
         });

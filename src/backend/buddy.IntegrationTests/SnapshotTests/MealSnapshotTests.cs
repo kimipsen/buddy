@@ -31,7 +31,7 @@ public sealed class MealSnapshotTests(BuddyApiFixture fixture)
         await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Patch.Json(new { Name = "Tacos (renamed)", Description = "New recipe", Icon = "burrito", Color = "#00aaff" })
+            _.Patch.Json(new { Name = "Tacos (renamed)", Description = "New recipe", Icon = "burrito", Color = "#00aaff", EatingOut = "Restaurant" })
                 .ToUrl($"/mealplans/children/{child.Id}/meals/{meal.Id}/details");
             _.StatusCodeShouldBeOk();
         });
@@ -60,5 +60,6 @@ public sealed class MealSnapshotTests(BuddyApiFixture fixture)
         Assert.NotNull(replayed);
         Assert.NotNull(snapshot);
         Assert.Equivalent(replayed, snapshot, strict: true);
+        Assert.Equal(MealEatingOut.Restaurant, snapshot.EatingOut);
     }
 }

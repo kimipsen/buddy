@@ -40,7 +40,8 @@ public sealed record MealCreated(
     string Description,
     Icon Icon,
     Color Color,
-    DateTimeOffset OccurredAt);
+    DateTimeOffset OccurredAt,
+    MealEatingOut EatingOut = MealEatingOut.None);
 
 public sealed record MealDetailsUpdated(MealId Id, MealDetails Before, MealDetails After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 

@@ -39,6 +39,7 @@ describe('ChildMealplan', () => {
       notes: '',
       assignedBy: 'guardian-1',
       allRatings: [],
+      eatingOut: 'None',
       ...overrides,
     };
   }
@@ -109,6 +110,7 @@ describe('ChildMealplan', () => {
       ratings,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      eatingOut: 'None',
     };
   }
 
@@ -142,6 +144,26 @@ describe('ChildMealplan', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('No meals planned for this week');
+  });
+
+  it('marks an eating-out meal with a badge', async () => {
+    const { fixture } = await setup({
+      mealplans: {
+        listMealPlan: vi.fn(async (_scope, from: string) => [
+          entryAt(from, 'Lunch', 'meal-home'),
+          entryAt(from, 'Dinner', 'meal-out', {
+            mealName: 'Dinner at Grandma’s',
+            eatingOut: 'FriendsAndFamily',
+          }),
+        ]),
+      },
+    });
+    await settle(fixture);
+
+    const badges = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('app-eating-out-badge'),
+    ).map((badge) => badge.textContent?.trim());
+    expect(badges).toEqual(['', 'Eating out · Friends & family']);
   });
 
   it('shows the translated error message when loading the plan fails', async () => {
@@ -228,6 +250,7 @@ describe('ChildMealplan', () => {
       ratings: [{ childId: 'child-1', stars: 3, comment: '', ratedAt: '2026-01-01T00:00:00Z' }],
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      eatingOut: 'None' as const,
     }));
 
     const { fixture } = await setup({
@@ -268,6 +291,7 @@ describe('ChildMealplan', () => {
       ],
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      eatingOut: 'None' as const,
     }));
 
     const { fixture } = await setup({

@@ -36,6 +36,7 @@ describe('ManageMeals', () => {
       ratings: [],
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      eatingOut: 'None',
       ...overrides,
     };
   }
@@ -294,6 +295,7 @@ describe('ManageMeals', () => {
         description: '',
         icon: '🧇',
         color: '#0ea5e9',
+        eatingOut: 'None',
       });
     });
 
@@ -488,6 +490,102 @@ describe('ManageMeals', () => {
       const compiled = fixture.nativeElement as HTMLElement;
       expect(findButtonByText(compiled, 'Archive')).toBeDefined();
       expect(compiled.textContent).not.toContain('read-only access');
+    });
+  });
+
+  describe('eating out', () => {
+    function eatingOutSelect(compiled: HTMLElement, mealName: string): HTMLSelectElement {
+      return compiled.querySelector(`select[aria-label="Eating out: ${mealName}"]`)!;
+    }
+
+    it('shows a badge with the kind on eating-out meals only', async () => {
+      const { fixture } = await setup(familyScope, {
+        initialMeals: [
+          meal({ id: 'home', name: 'Tacos' }),
+          meal({ id: 'out', name: 'Restaurant', eatingOut: 'Restaurant' }),
+        ],
+      });
+      await settle(fixture);
+
+      const badges = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('app-eating-out-badge'),
+      ).map((badge) => badge.textContent?.trim() ?? '');
+
+      expect(badges).toEqual(['', 'Eating out · Restaurant']);
+    });
+
+    it('creates a meal as eating out with the chosen kind, then resets the choice', async () => {
+      const { fixture, mealplans } = await setup(familyScope);
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      setInputValue(nameInput(compiled), 'Dinner at Grandma’s');
+      findButtonByText(compiled, 'Friends & family')!.click();
+      fixture.detectChanges();
+      compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(mealplans.createMeal).toHaveBeenCalledWith(
+        familyScope,
+        expect.objectContaining({ name: 'Dinner at Grandma’s', eatingOut: 'FriendsAndFamily' }),
+      );
+      expect(findButtonByText(compiled, 'No')!.getAttribute('aria-checked')).toBe('true');
+      expect(compiled.textContent).toContain(
+        'Eating-out meals are never suggested by the AI assistant.',
+      );
+    });
+
+    it('changes an existing meal’s kind with a full details update', async () => {
+      const updateMealDetails = vi.fn(async () => meal());
+      const { fixture } = await setup(familyScope, {
+        initialMeals: [meal({ id: 'meal-1', name: 'Pizza', description: 'Friday', color: '#f00' })],
+        mealplans: { updateMealDetails },
+      });
+      await settle(fixture);
+
+      const select = eatingOutSelect(fixture.nativeElement, 'Pizza');
+      expect(Array.from(select.options).map((option) => option.textContent?.trim())).toEqual([
+        'At home',
+        'Friends & family',
+        'Restaurant',
+      ]);
+
+      select.value = 'Restaurant';
+      select.dispatchEvent(new Event('change'));
+      await settle(fixture);
+
+      expect(updateMealDetails).toHaveBeenCalledWith(familyScope, 'meal-1', {
+        name: 'Pizza',
+        description: 'Friday',
+        icon: '🥞',
+        color: '#f00',
+        eatingOut: 'Restaurant',
+      });
+    });
+
+    it('shows an error when changing the kind fails', async () => {
+      const { fixture } = await setup(familyScope, {
+        initialMeals: [meal({ name: 'Pizza' })],
+        mealplans: { updateMealDetails: vi.fn(async () => Promise.reject(new Error('nope'))) },
+      });
+      await settle(fixture);
+
+      const select = eatingOutSelect(fixture.nativeElement, 'Pizza');
+      select.value = 'Restaurant';
+      select.dispatchEvent(new Event('change'));
+      await settle(fixture);
+
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Unable to update this meal.',
+      );
+      expect(select.value).toBe('None');
+    });
+
+    it('hides the kind select for a read-only group', async () => {
+      const { fixture } = await setup(groupViewScope, { initialMeals: [meal({ name: 'Pizza' })] });
+      await settle(fixture);
+
+      expect((fixture.nativeElement as HTMLElement).querySelector('select')).toBeNull();
     });
   });
 });

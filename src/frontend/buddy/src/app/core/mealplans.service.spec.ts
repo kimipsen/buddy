@@ -48,6 +48,7 @@ describe('MealplansService', () => {
       notes: '',
       assignedBy: 'guardian-1',
       allRatings: [],
+      eatingOut: 'None',
       ...overrides,
     };
   }
@@ -63,6 +64,7 @@ describe('MealplansService', () => {
       ratings: [],
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      eatingOut: 'None',
       ...overrides,
     };
   }

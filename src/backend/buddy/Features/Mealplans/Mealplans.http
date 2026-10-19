@@ -15,6 +15,21 @@ Content-Type: application/json
 
 ###
 
+# An eating-out meal (None / FriendsAndFamily / Restaurant): never offered to the AI assistant,
+# and a slot holding it is skipped by AI drafts
+POST {{buddy_HostAddress}}/mealplans/children/{{childId}}/meals
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Name": "Restaurant",
+  "Icon": "🍽️",
+  "Color": "#8b5cf6",
+  "EatingOut": "Restaurant"
+}
+
+###
+
 # List a child's meal library (guardian or child)
 GET {{buddy_HostAddress}}/mealplans/children/{{childId}}/meals
 Authorization: Bearer {{guardianToken}}

@@ -15,6 +15,7 @@ import { ChildSummary, GuardiansService } from '../../../../core/guardians.servi
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import {
+  EATING_OUT_NONE,
   Meal,
   MealPlanEntry,
   MealplanAccessTier,
@@ -213,6 +214,13 @@ export class AssignMealplan implements OnInit {
 
   protected entryFor(date: string, slot: MealSlot): MealPlanEntry | undefined {
     return this.entriesByKey()[this.key(date, slot)];
+  }
+
+  // From the entry, not the meal library, so a slot holding an archived eating-out meal still
+  // shows as eating out.
+  protected isEatingOut(date: string, slot: MealSlot): boolean {
+    const entry = this.entryFor(date, slot);
+    return entry !== undefined && entry.eatingOut !== EATING_OUT_NONE;
   }
 
   protected starDisplay(stars: number): string {

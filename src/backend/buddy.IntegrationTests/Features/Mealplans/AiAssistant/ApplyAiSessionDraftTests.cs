@@ -6,6 +6,8 @@ using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using Xunit;
 
 namespace buddy.IntegrationTests.Features.Mealplans.AiAssistant;
@@ -90,5 +92,49 @@ public sealed class ApplyAiSessionDraftTests(BuddyApiFixture fixture)
             _.Post.Url($"/mealplans/children/{child.Id}/ai/sessions/current/apply");
             _.StatusCodeShouldBe(403);
         });
+    }
+
+    // docs/backend/analysis/eating-out-meals.md, Question 3: a slot marked eating out after the
+    // model drafted it keeps the eating-out meal; the rest of the draft still applies.
+    [Fact]
+    public async Task A_drafted_slot_since_marked_eating_out_is_skipped_on_apply()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
+        var tacos = await MealplanTestHelpers.CreateMealAsync(fixture, guardianToken, child.Id);
+        var grandmas = await MealplanTestHelpers.CreateMealAsync(
+            fixture, guardianToken, child.Id, new CreateMealOptions(Name: "Dinner at Grandma's", EatingOut: MealEatingOut.FriendsAndFamily));
+        Assert.NotNull(tacos);
+        Assert.NotNull(grandmas);
+        var view = await AiAssistantTestHelpers.StartSessionAsync(fixture, guardianToken, child.Id, From, To, [MealSlot.Dinner]);
+
+        // No fake provider: the draft is written the way propose_assignment would write it.
+        var sessionId = new MealplanAiSessionId(view.Id);
+        await fixture.Host.Services.GetRequiredService<IAiSessionEventStore>().AppendAsync(
+            sessionId,
+            [
+                new AiDraftAssignmentSet(sessionId, From, MealSlot.Dinner, new MealId(tacos.Id), DateTimeOffset.UtcNow),
+                new AiDraftAssignmentSet(sessionId, From.AddDays(1), MealSlot.Dinner, new MealId(tacos.Id), DateTimeOffset.UtcNow)
+            ],
+            CancellationToken.None);
+        await AiAssistantTestHelpers.AssignDinnerAsync(fixture, guardianToken, child.Id, grandmas.Id, From);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Url($"/mealplans/children/{child.Id}/ai/sessions/current/apply");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var plan = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url($"/mealplans/children/{child.Id}/plan?from={From:yyyy-MM-dd}&to={To:yyyy-MM-dd}");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var entries = plan.ReadAsJson<List<MealPlanEntryDto>>();
+        Assert.Equal([(From, grandmas.Id), (From.AddDays(1), tacos.Id)], entries.Select(e => (e.Date, e.MealId)));
     }
 }

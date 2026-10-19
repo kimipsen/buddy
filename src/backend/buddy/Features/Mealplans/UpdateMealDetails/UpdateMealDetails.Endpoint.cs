@@ -30,7 +30,8 @@ public static class UpdateMealDetailsEndpoint
                 request.Name,
                 FreeText.Normalize(request.Description),
                 new Icon(request.Icon),
-                new Color(request.Color));
+                new Color(request.Color),
+                request.EatingOut);
 
             var result = await bus.InvokeAsync<Result<Meal>>(command, cancellationToken);
 
@@ -48,4 +49,6 @@ public static class UpdateMealDetailsEndpoint
     }
 }
 
-public sealed record UpdateMealDetailsRequest(string Name, string Icon, string Color, string? Description = null);
+// EatingOut is part of the full replace: omitting it sets the meal back to None, as omitting
+// Description clears it.
+public sealed record UpdateMealDetailsRequest(string Name, string Icon, string Color, string? Description = null, MealEatingOut EatingOut = MealEatingOut.None);

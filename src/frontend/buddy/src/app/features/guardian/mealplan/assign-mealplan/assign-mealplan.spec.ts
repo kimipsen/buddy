@@ -50,6 +50,7 @@ describe('AssignMealplan', () => {
       ratings: [],
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      eatingOut: 'None',
       ...overrides,
     };
   }
@@ -69,6 +70,7 @@ describe('AssignMealplan', () => {
       notes: '',
       assignedBy: 'guardian-1',
       allRatings: [],
+      eatingOut: 'None',
       ...overrides,
     };
   }
@@ -206,6 +208,33 @@ describe('AssignMealplan', () => {
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Loading the meal plan…');
+  });
+
+  it('marks a slot holding an eating-out meal, in both the table and the day list', async () => {
+    const restaurant = meal({ id: 'meal-out', name: 'Restaurant', eatingOut: 'Restaurant' });
+    const { fixture } = await setup({
+      meals: [pancakes, restaurant],
+      mealplans: {
+        listMealPlan: vi.fn(async () => [
+          entry({ slot: 'Breakfast' }),
+          entry({
+            slot: 'Dinner',
+            mealId: 'meal-out',
+            mealName: 'Restaurant',
+            eatingOut: 'Restaurant',
+          }),
+        ]),
+      },
+    });
+    await settle(fixture);
+
+    const marked = (fixture.nativeElement as HTMLElement).querySelectorAll(
+      'app-meal-picker input.border-dashed',
+    );
+    expect(marked.length).toBe(2);
+    expect(
+      Array.from(marked).every((input) => (input as HTMLInputElement).value.includes('Restaurant')),
+    ).toBe(true);
   });
 
   it('shows the "no meals" state once loading finishes with an empty meal library', async () => {

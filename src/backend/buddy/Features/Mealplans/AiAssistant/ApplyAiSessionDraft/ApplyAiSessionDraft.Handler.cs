@@ -39,11 +39,22 @@ public static class ApplyAiSessionDraftHandler
             return new Result<AiSessionView>.Validation(ValidationProblem.Of("This AI session has already been applied or discarded."));
         }
 
+        // Re-read at apply time, not taken from the last turn: a slot may have been marked eating
+        // out after the model drafted it. Those entries are skipped so the eating-out meal stays
+        // (docs/backend/analysis/eating-out-meals.md).
+        var reservedSlots = await AiMealFilter.LoadReservedSlotsAsync(
+            command.ChildId, session.From, session.To, session.RequestedSlots, guardians, meals, mealPlans, cancellationToken);
+
         // Reuses the real MealPlan write path unchanged -- the session's draft never becomes a
         // real assignment any other way, so existing authorization and domain rules are the only
         // path from an AI suggestion to a committed change (see the AI mealplan plan).
         foreach (var entry in session.Draft)
         {
+            if (reservedSlots.Contains(entry.Key))
+            {
+                continue;
+            }
+
             var assignResult = await AssignMealToSlotHandler.AssignForChildAsync(
                 command.ChildId, entry.Key.Date, entry.Key.Slot, entry.Value, "Proposed by the AI assistant.", userId,
                 mealPlans, meals, guardians, time, cancellationToken);

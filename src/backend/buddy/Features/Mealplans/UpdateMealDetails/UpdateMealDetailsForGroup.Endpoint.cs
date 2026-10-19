@@ -30,7 +30,8 @@ public static class UpdateMealDetailsForGroupEndpoint
                 request.Name,
                 FreeText.Normalize(request.Description),
                 new Icon(request.Icon),
-                new Color(request.Color));
+                new Color(request.Color),
+                request.EatingOut);
 
             var result = await bus.InvokeAsync<Result<Meal>>(command, cancellationToken);
 

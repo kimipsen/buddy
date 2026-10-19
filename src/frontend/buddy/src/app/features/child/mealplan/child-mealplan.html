@@ -56,9 +56,10 @@
                     class="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
                     >{{ slotLabels[entry.slot] | translate }}</span
                   >
-                  <span class="flex items-center gap-2 text-lg font-semibold">
+                  <span class="flex flex-wrap items-center gap-2 text-lg font-semibold">
                     <app-icon [value]="entry.icon" />
                     {{ entry.mealName }}
+                    <app-eating-out-badge [kind]="entry.eatingOut" />
                   </span>
                 </div>
 

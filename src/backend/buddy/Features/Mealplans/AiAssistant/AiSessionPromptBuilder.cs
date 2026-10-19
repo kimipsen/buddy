@@ -10,9 +10,14 @@ namespace buddy.Features.Mealplans;
 // it repeats near-verbatim across a session's turns (see the AI mealplan plan's caching note).
 public static class AiSessionPromptBuilder
 {
-    // offeredMeals is already filtered by AiMealFilter (archived meals and the session's meal
-    // filter applied); the archived check below stays as a guard.
-    public static string Build(MealplanAiSession session, IReadOnlyCollection<Meal> offeredMeals, AiSessionStarted started)
+    // offeredMeals is already filtered by AiMealFilter (archived and eating-out meals dropped, the
+    // session's meal filter applied); the archived check below stays as a guard. reservedSlots are
+    // the slots the family eats out for (AiMealFilter.FindReservedSlots).
+    public static string Build(
+        MealplanAiSession session,
+        IReadOnlyCollection<Meal> offeredMeals,
+        AiSessionStarted started,
+        IReadOnlyCollection<(DateOnly Date, MealSlot Slot)> reservedSlots)
     {
         var mustIncludeMealIds = started.MustIncludeMealIds;
         var notes = started.Notes;
@@ -25,6 +30,14 @@ public static class AiSessionPromptBuilder
         if (DescribeFilter(started) is { } filterLine)
         {
             builder.AppendLine(filterLine);
+        }
+
+        // Date and slot only: the eating-out meal's name, kind and the slot's notes ("Grandma's")
+        // stay in Buddy (data minimization, see docs/backend/analysis/eating-out-meals.md).
+        if (reservedSlots.Count > 0)
+        {
+            builder.AppendLine(CultureInfo.InvariantCulture,
+                $"The family is eating out for these meals; never propose a meal for them: {string.Join(", ", reservedSlots.Select(s => string.Create(CultureInfo.InvariantCulture, $"{s.Date:yyyy-MM-dd} {s.Slot}")))}.");
         }
 
         if (mustIncludeMealIds.Count > 0)

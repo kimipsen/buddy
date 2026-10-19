@@ -3430,6 +3430,7 @@ export interface components {
       icon: string;
       color: string;
       description?: null | string;
+      eatingOut?: components['schemas']['MealEatingOut'];
     };
     CreateMedicineScheduleRequest: {
       name: string;
@@ -3910,6 +3911,8 @@ export interface components {
       totalSleepMinutes?: null | number;
       remarks?: null | string;
     };
+    /** @enum {string} */
+    MealEatingOut: 'None' | 'FriendsAndFamily' | 'Restaurant';
     /** Format: uuid */
     MealId: string;
     /** @enum {string} */
@@ -3929,6 +3932,7 @@ export interface components {
       /** Format: uuid */
       assignedBy: string;
       allRatings: components['schemas']['MealPlanEntryRating'][];
+      eatingOut: components['schemas']['MealEatingOut'];
     };
     MealPlanEntryRating: {
       childId: components['schemas']['UserId'];
@@ -4045,6 +4049,7 @@ export interface components {
       createdBy: string;
       /** Format: uuid */
       lastModifiedBy: string;
+      eatingOut: components['schemas']['MealEatingOut'];
     };
     /** @enum {string} */
     MealSlot: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack';
@@ -4840,6 +4845,7 @@ export interface components {
       icon: string;
       color: string;
       description?: null | string;
+      eatingOut?: components['schemas']['MealEatingOut'];
     };
     UpdateMealplanPermissionPolicyRequest: {
       policy: {

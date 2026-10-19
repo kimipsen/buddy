@@ -18,7 +18,8 @@ public sealed record Meal(
     Color Color,
     bool IsArchived,
     ImmutableDictionary<UserId, MealRating> Ratings,
-    UserId LastModifiedBy)
+    UserId LastModifiedBy,
+    MealEatingOut EatingOut = MealEatingOut.None)
 {
     public static Meal? Rehydrate(IEnumerable<MealEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
@@ -41,7 +42,8 @@ public sealed record Meal(
             created.Color,
             IsArchived: false,
             ImmutableDictionary<UserId, MealRating>.Empty,
-            created.CreatedBy),
+            created.CreatedBy,
+            created.EatingOut),
         _ => throw EventReplay.NotAStartEvent(nameof(Meal), @event.EventType)
     };
 
@@ -53,6 +55,7 @@ public sealed record Meal(
             Description = updated.After.Description,
             Icon = updated.After.Icon,
             Color = updated.After.Color,
+            EatingOut = updated.After.EatingOut,
             LastModifiedBy = updated.ModifiedBy
         },
         MealArchived archived => meal with { IsArchived = true, LastModifiedBy = archived.ModifiedBy },

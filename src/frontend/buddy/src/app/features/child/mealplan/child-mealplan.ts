@@ -16,6 +16,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
 import { UsersService } from '../../../core/users.service';
 import { createAction } from '../../../shared/action-state/action-state';
+import { EatingOutBadge } from '../../../shared/eating-out-badge/eating-out-badge';
 import { ChildPage } from '../child-page/child-page';
 import { Icon } from '../../../shared/icon/icon';
 
@@ -66,7 +67,7 @@ function defaultAnchor(todayIsoDate: string): string {
 
 @Component({
   selector: 'app-child-mealplan',
-  imports: [Icon, ChildPage, TranslatePipe],
+  imports: [Icon, ChildPage, TranslatePipe, EatingOutBadge],
   templateUrl: './child-mealplan.html',
 })
 export class ChildMealplan {

@@ -8,6 +8,7 @@ namespace buddy.Features.Mealplans;
 public static class StartAiSessionHandler
 {
     public const string NoMatchingMealsMessage = "No meals match this filter. Choose a longer period or include unrated meals.";
+    public const string EatingOutMustIncludeMessage = "Eating-out meals can't be planned by the assistant. Assign them to a slot yourself.";
 
     public static async Task<AiSessionOutcome> Handle(
         StartAiSession command,
@@ -53,12 +54,25 @@ public static class StartAiSessionHandler
             return new AiSessionOutcome.DataSharingNotAcknowledged();
         }
 
+        // The assistant never plans eating-out meals (docs/backend/analysis/eating-out-meals.md), so
+        // asking it to include one is rejected rather than silently dropped.
+        foreach (var mealId in command.MustIncludeMealIds)
+        {
+            if (await meals.FindSnapshotAsync(mealId, cancellationToken) is { EatingOut: not MealEatingOut.None })
+            {
+                return new AiSessionOutcome.Validation(new ValidationProblem(new Dictionary<string, string[]>
+                {
+                    [nameof(StartAiSession.MustIncludeMealIds)] = [EatingOutMustIncludeMessage]
+                }));
+            }
+        }
+
         // Checked before anything is created or discarded, so a filter that matches nothing leaves
         // the family's current session untouched and sends nothing to the provider.
         if (AiMealFilter.IsActive(command.RatedOnly, command.ServedWithin))
         {
             var selection = await AiMealFilter.LoadAsync(
-                command.ChildId, command.From, command.RatedOnly, command.ServedWithin, command.MustIncludeMealIds,
+                command.ChildId, command.From, command.To, command.RequestedSlots, command.RatedOnly, command.ServedWithin, command.MustIncludeMealIds,
                 guardians, meals, mealPlans, cancellationToken);
 
             if (selection.FilterMatchedNothing)

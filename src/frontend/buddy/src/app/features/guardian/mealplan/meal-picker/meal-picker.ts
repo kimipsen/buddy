@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   Component,
   ElementRef,
@@ -11,7 +12,7 @@ import {
 } from '@angular/core';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { Meal } from '../../../../core/mealplans.service';
+import { EATING_OUT_NONE, Meal } from '../../../../core/mealplans.service';
 import { DropdownSize, dropdownPosition } from '../../../../core/dropdown-position';
 import { iconText } from '../../../../core/pictograms';
 import { Icon } from '../../../../shared/icon/icon';
@@ -21,13 +22,16 @@ const LIST_SIZE: DropdownSize = { maxHeight: 224, minWidth: 192 };
 
 @Component({
   selector: 'app-meal-picker',
-  imports: [Icon, TranslatePipe],
+  imports: [Icon, NgTemplateOutlet, TranslatePipe],
   templateUrl: './meal-picker.html',
 })
 export class MealPicker {
   readonly meals = input.required<Meal[]>();
   readonly mealId = input('');
   readonly disabled = input(false);
+  // The slot holds an eating-out meal: the input is styled and labelled so the guardian sees at a
+  // glance that the family is out (docs/backend/analysis/eating-out-meals.md).
+  readonly eatingOut = input(false);
 
   readonly mealIdChange = output<string>();
 
@@ -53,7 +57,7 @@ export class MealPicker {
     return meal ? [iconText(meal.icon), meal.name].filter(Boolean).join(' ') : '';
   });
 
-  protected readonly filteredMeals = computed((): Meal[] => {
+  private readonly matchingMeals = computed((): Meal[] => {
     const query = this.query().trim().toLowerCase();
 
     if (!query) {
@@ -62,6 +66,24 @@ export class MealPicker {
 
     return this.meals().filter((meal) => meal.name.toLowerCase().includes(query));
   });
+
+  // Eating-out meals are listed under their own heading below the home meals, so picking
+  // "Restaurant" is a deliberate choice rather than a typo away from "Ramen".
+  protected readonly homeMeals = computed(() =>
+    this.matchingMeals().filter((meal) => meal.eatingOut === EATING_OUT_NONE),
+  );
+  protected readonly eatingOutMeals = computed(() =>
+    this.matchingMeals().filter((meal) => meal.eatingOut !== EATING_OUT_NONE),
+  );
+  // With no eating-out meals at all, an unfiltered list shows the group with a hint on how to add
+  // one; while searching, the empty group is left out.
+  protected readonly showEatingOutHint = computed(
+    () => !this.query().trim() && this.meals().every((meal) => meal.eatingOut === EATING_OUT_NONE),
+  );
+  protected readonly filteredMeals = computed((): Meal[] => [
+    ...this.homeMeals(),
+    ...this.eatingOutMeals(),
+  ]);
 
   protected openDropdown(): void {
     if (this.disabled()) {

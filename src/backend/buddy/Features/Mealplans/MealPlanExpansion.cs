@@ -82,7 +82,8 @@ public static class MealPlanExpansion
                 date, slot, meal.Id, meal.Name, meal.Icon.Value, meal.Color.Value,
                 viewerId is { } viewer ? meal.Ratings.GetValueOrDefault(viewer) : null,
                 assignment.Notes, assignment.AssignedBy.Value,
-                [.. meal.Ratings.Select(pair => new MealPlanEntryRating(pair.Key, pair.Value.Stars, pair.Value.Comment, pair.Value.RatedAt))]));
+                [.. meal.Ratings.Select(pair => new MealPlanEntryRating(pair.Key, pair.Value.Stars, pair.Value.Comment, pair.Value.RatedAt))],
+                meal.EatingOut));
         }
 
         entries.Sort((a, b) =>

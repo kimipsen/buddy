@@ -28,7 +28,8 @@ public static class CreateMealEndpoint
                 request.Name,
                 FreeText.Normalize(request.Description),
                 new Icon(request.Icon),
-                new Color(request.Color));
+                new Color(request.Color),
+                request.EatingOut);
 
             var result = await bus.InvokeAsync<Result<Meal>>(command, cancellationToken);
 
@@ -46,7 +47,7 @@ public static class CreateMealEndpoint
     }
 }
 
-public sealed record CreateMealRequest(string Name, string Icon, string Color, string? Description = null);
+public sealed record CreateMealRequest(string Name, string Icon, string Color, string? Description = null, MealEatingOut EatingOut = MealEatingOut.None);
 
 public sealed record MealRatingResponse(Guid ChildId, int Stars, string Comment, DateTimeOffset RatedAt);
 
@@ -62,7 +63,8 @@ public sealed record MealResponse(
     bool IsArchived,
     IReadOnlyList<MealRatingResponse> Ratings,
     Guid CreatedBy,
-    Guid LastModifiedBy)
+    Guid LastModifiedBy,
+    MealEatingOut EatingOut)
 {
     public static MealResponse FromMeal(Meal meal) => new(
         meal.Id,
@@ -73,5 +75,6 @@ public sealed record MealResponse(
         meal.IsArchived,
         [.. meal.Ratings.Select(pair => new MealRatingResponse(pair.Key.Value, pair.Value.Stars, pair.Value.Comment, pair.Value.RatedAt))],
         meal.CreatedBy.Value,
-        meal.LastModifiedBy.Value);
+        meal.LastModifiedBy.Value,
+        meal.EatingOut);
 }

@@ -25,6 +25,7 @@ function meal(overrides: Partial<Meal> = {}): Meal {
     ratings: [],
     createdBy: 'me',
     lastModifiedBy: 'me',
+    eatingOut: 'None',
     ...overrides,
   };
 }

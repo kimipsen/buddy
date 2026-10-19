@@ -20,6 +20,7 @@ public static class AiSessionToolExecutor
         MealplanAiSessionId sessionId,
         MealplanAiSession session,
         IReadOnlyCollection<MealId> familyMealIds,
+        IReadOnlyCollection<(DateOnly Date, MealSlot Slot)> reservedSlots,
         UserId callerId,
         UserId sessionChildId,
         ICalendarEventStore calendars,
@@ -30,7 +31,7 @@ public static class AiSessionToolExecutor
         DateTimeOffset now,
         CancellationToken cancellationToken) => call.ToolName switch
         {
-            AiSessionTools.ProposeAssignment => ExecuteProposeAssignment(call, sessionId, session, familyMealIds, now),
+            AiSessionTools.ProposeAssignment => ExecuteProposeAssignment(call, sessionId, session, familyMealIds, reservedSlots, now),
             AiSessionTools.ClearDraftAssignment => ExecuteClearDraftAssignment(call, sessionId, now),
             AiSessionTools.GetCalendarConflicts => await ExecuteGetCalendarConflictsAsync(
                 call, session, callerId, sessionChildId, calendars, calendarItems, taskTemplates, groups, guardians, cancellationToken),
@@ -38,7 +39,12 @@ public static class AiSessionToolExecutor
         };
 
     private static ExecutionOutcome ExecuteProposeAssignment(
-        AiRequestedToolCall call, MealplanAiSessionId sessionId, MealplanAiSession session, IReadOnlyCollection<MealId> familyMealIds, DateTimeOffset now)
+        AiRequestedToolCall call,
+        MealplanAiSessionId sessionId,
+        MealplanAiSession session,
+        IReadOnlyCollection<MealId> familyMealIds,
+        IReadOnlyCollection<(DateOnly Date, MealSlot Slot)> reservedSlots,
+        DateTimeOffset now)
     {
         if (!TryParseArguments(call.ArgumentsJson, out var args, out var parseError))
         {
@@ -70,6 +76,11 @@ public static class AiSessionToolExecutor
         if (!session.RequestedSlots.Contains(slot))
         {
             return new ExecutionOutcome(Error($"{slot} was not one of the requested meal slots for this session."), true, []);
+        }
+
+        if (reservedSlots.Contains((date, slot)))
+        {
+            return new ExecutionOutcome(Error($"The family is eating out for {date:yyyy-MM-dd} {slot}; leave it empty."), true, []);
         }
 
         if (!familyMealIds.Contains(mealId))

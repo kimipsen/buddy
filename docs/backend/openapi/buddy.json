@@ -24909,6 +24909,9 @@
               "null",
               "string"
             ]
+          },
+          "eatingOut": {
+            "$ref": "#/components/schemas/MealEatingOut"
           }
         }
       },
@@ -26508,6 +26511,14 @@
           }
         }
       },
+      "MealEatingOut": {
+        "enum": [
+          "None",
+          "FriendsAndFamily",
+          "Restaurant"
+        ],
+        "type": "string"
+      },
       "MealId": {
         "type": "string",
         "format": "uuid"
@@ -26536,7 +26547,8 @@
           "rating",
           "notes",
           "assignedBy",
-          "allRatings"
+          "allRatings",
+          "eatingOut"
         ],
         "type": "object",
         "properties": {
@@ -26581,6 +26593,9 @@
             "items": {
               "$ref": "#/components/schemas/MealPlanEntryRating"
             }
+          },
+          "eatingOut": {
+            "$ref": "#/components/schemas/MealEatingOut"
           }
         }
       },
@@ -26950,7 +26965,8 @@
           "isArchived",
           "ratings",
           "createdBy",
-          "lastModifiedBy"
+          "lastModifiedBy",
+          "eatingOut"
         ],
         "type": "object",
         "properties": {
@@ -26985,6 +27001,9 @@
           "lastModifiedBy": {
             "type": "string",
             "format": "uuid"
+          },
+          "eatingOut": {
+            "$ref": "#/components/schemas/MealEatingOut"
           }
         }
       },
@@ -29792,6 +29811,9 @@
               "null",
               "string"
             ]
+          },
+          "eatingOut": {
+            "$ref": "#/components/schemas/MealEatingOut"
           }
         }
       },

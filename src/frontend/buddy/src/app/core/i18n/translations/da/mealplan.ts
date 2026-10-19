@@ -75,6 +75,20 @@ export const mealplan = {
     notPlanned: 'Ikke planlagt',
     noMatches: 'Ingen måltider matcher.',
   },
+  eatingOut: {
+    label: 'Spiser ude',
+    none: 'Nej',
+    friendsAndFamily: 'Venner og familie',
+    restaurant: 'Restaurant',
+    atHome: 'Hjemme',
+    badge: 'Spiser ude · {kind}',
+    aiHint: 'AI-assistenten foreslår aldrig måltider, hvor I spiser ude.',
+    rowLabel: 'Spiser ude: {meal}',
+    updateError: 'Kunne ikke opdatere måltidet.',
+    pickerGroup: 'Spiser ude',
+    pickerEmptyHint:
+      'Markér et måltid som "spiser ude" i måltidslisten for at planlægge måltider ude.',
+  },
   aiAssistant: {
     entryButton: 'Planlæg med AI',
     eyebrow: 'AI-madplansassistent',
@@ -118,6 +132,7 @@ export const mealplan = {
       servedWithinDays: '{days} dage',
       noMatchingMeals:
         'Ingen måltider passer til filteret. Vælg en længere periode, eller tag måltider uden bedømmelse med.',
+      eatingOutSkipped: 'Måltider markeret som "spiser ude" springes over.',
     },
     session: {
       statusDrafting: 'Udkast',

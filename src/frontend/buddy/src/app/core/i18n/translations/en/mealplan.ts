@@ -75,6 +75,19 @@ export const mealplan = {
     notPlanned: 'Not planned',
     noMatches: 'No meals match.',
   },
+  eatingOut: {
+    label: 'Eating out',
+    none: 'No',
+    friendsAndFamily: 'Friends & family',
+    restaurant: 'Restaurant',
+    atHome: 'At home',
+    badge: 'Eating out · {kind}',
+    aiHint: 'Eating-out meals are never suggested by the AI assistant.',
+    rowLabel: 'Eating out: {meal}',
+    updateError: 'Unable to update this meal.',
+    pickerGroup: 'Eating out',
+    pickerEmptyHint: 'Mark a meal as eating out in the meal library to plan meals away from home.',
+  },
   aiAssistant: {
     entryButton: 'Plan with AI',
     eyebrow: 'AI mealplan assistant',
@@ -117,6 +130,7 @@ export const mealplan = {
       servedWithinDays: '{days} days',
       noMatchingMeals:
         'No meals match this filter. Choose a longer period or include unrated meals.',
+      eatingOutSkipped: 'Meals marked as eating out are skipped.',
     },
     session: {
       statusDrafting: 'Drafting',

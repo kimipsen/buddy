@@ -44,6 +44,28 @@ public sealed class ListMealPlanTests(BuddyApiFixture fixture)
         var entry = Assert.Single(response.ReadAsJson<List<MealPlanEntryDto>>());
         Assert.Equal(MealSlot.Dinner, entry.Slot);
         Assert.Equal(meal.Id, entry.MealId);
+        Assert.Equal(MealEatingOut.None, entry.EatingOut);
+    }
+
+    [Fact]
+    public async Task A_plan_entry_for_an_eating_out_meal_says_so()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var meal = await MealplanTestHelpers.CreateMealAsync(
+            fixture, guardianToken, child.Id, new CreateMealOptions(Name: "Restaurant", EatingOut: MealEatingOut.Restaurant));
+        Assert.NotNull(meal);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        await AiAssistant.AiAssistantTestHelpers.AssignDinnerAsync(fixture, guardianToken, child.Id, meal.Id, today);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url($"/mealplans/children/{child.Id}/plan?from={today:yyyy-MM-dd}&to={today:yyyy-MM-dd}");
+            _.StatusCodeShouldBeOk();
+        });
+
+        Assert.Equal(MealEatingOut.Restaurant, Assert.Single(response.ReadAsJson<List<MealPlanEntryDto>>()).EatingOut);
     }
 
     [Fact]

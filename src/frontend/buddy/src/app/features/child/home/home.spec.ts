@@ -104,6 +104,7 @@ describe('ChildHome', () => {
       ratings,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      eatingOut: 'None',
     };
   }
 
@@ -134,6 +135,7 @@ describe('ChildHome', () => {
       notes: '',
       assignedBy: 'guardian-1',
       allRatings: [],
+      eatingOut: 'None',
       ...overrides,
     };
   }
@@ -335,6 +337,7 @@ describe('ChildHome', () => {
       ratings: [{ childId: 'child-1', stars: 4, comment: '', ratedAt: '2026-01-01T00:00:00Z' }],
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      eatingOut: 'None' as const,
     }));
 
     const { fixture } = await setup({
@@ -369,6 +372,7 @@ describe('ChildHome', () => {
       ],
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      eatingOut: 'None' as const,
     }));
 
     const { fixture } = await setup({
