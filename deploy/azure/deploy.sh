@@ -489,6 +489,7 @@ if containerapp_exists frontend; then
     --name frontend \
     --resource-group "$RESOURCE_GROUP" \
     --image "$FRONTEND_IMAGE" \
+    --min-replicas 1 --max-replicas 1 \
     -o none
 else
   echo "==> Deploying the frontend ($FRONTEND_HOSTNAME)"
@@ -502,7 +503,7 @@ else
     --registry-password "$ACR_PASSWORD" \
     --target-port 80 \
     --ingress external \
-    --min-replicas 1 --max-replicas 3 \
+    --min-replicas 1 --max-replicas 1 \
     --cpu 0.25 --memory 0.5Gi \
     -o none
 fi
