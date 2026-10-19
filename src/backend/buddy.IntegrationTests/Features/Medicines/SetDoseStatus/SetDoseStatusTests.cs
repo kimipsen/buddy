@@ -118,4 +118,34 @@ public sealed class SetDoseStatusTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(404);
         });
     }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task An_undefined_status_number_is_rejected(bool viaGroup)
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var doseTime = new TimeOnly(8, 0);
+        var schedule = await MedicineTestHelpers.CreateMedicineScheduleAsync(
+            fixture, guardianToken, child.Id, new CreateMedicineScheduleOptions(Times: [doseTime], StartDate: today));
+        Assert.NotNull(schedule);
+        var url = viaGroup
+            ? $"/medicines/groups/{await MedicineTestHelpers.ShareWithNewGroupAsync(fixture, guardianToken, child.Id)}/children/{child.Id}/doses/{schedule.Id}"
+            : $"/medicines/children/{child.Id}/doses/{schedule.Id}";
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            // JsonStringEnumConverter accepts a number too; 3 isn't a DoseStatus.
+            _.Put.Json(new { Status = 3 })
+                .ToUrl(url)
+                .QueryString("date", $"{today:yyyy-MM-dd}")
+                .QueryString("time", $"{doseTime:HH:mm:ss}");
+            _.StatusCodeShouldBe(400);
+        });
+
+        MedicineTestHelpers.AssertValidationError(response, "status");
+    }
 }

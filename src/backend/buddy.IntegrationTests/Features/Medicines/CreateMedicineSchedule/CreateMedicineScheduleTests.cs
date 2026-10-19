@@ -97,6 +97,104 @@ public sealed class CreateMedicineScheduleTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task The_name_and_dosage_are_trimmed_before_their_length_check_and_storage()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var response = await PostScheduleAsync(
+            guardianToken, ChildUrl(child.Id), Body(name: $"  {new string('n', 200)}  ", dosage: $" {new string('d', 200)} "), 200);
+
+        var schedule = response.ReadAsJson<MedicineScheduleDto>();
+        Assert.Equal(new string('n', 200), schedule.Name);
+        Assert.Equal(new string('d', 200), schedule.Dosage);
+    }
+
+    [Fact]
+    public async Task A_whitespace_only_name_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var response = await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(name: "   "), 400);
+
+        MedicineTestHelpers.AssertValidationError(response, "name");
+    }
+
+    [Fact]
+    public async Task A_malformed_pictogram_icon_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var response = await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(icon: "pictogram:Not A Slug"), 400);
+
+        MedicineTestHelpers.AssertValidationError(response, "icon");
+    }
+
+    [Fact]
+    public async Task An_emoji_icon_of_16_characters_is_accepted_but_17_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(icon: new string('i', 16)), 200);
+        var response = await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(icon: new string('i', 17)), 400);
+
+        MedicineTestHelpers.AssertValidationError(response, "icon");
+    }
+
+    [Fact]
+    public async Task A_pictogram_icon_longer_than_an_emoji_and_an_empty_icon_and_color_are_accepted()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var pictogram = await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(icon: "pictogram:take-medicine-tablet"), 200);
+        var blank = await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(icon: "", color: ""), 200);
+
+        Assert.Equal("pictogram:take-medicine-tablet", pictogram.ReadAsJson<MedicineScheduleDto>().Icon);
+        Assert.Equal("", blank.ReadAsJson<MedicineScheduleDto>().Color);
+    }
+
+    [Fact]
+    public async Task A_color_of_32_characters_after_trimming_is_accepted_but_33_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var accepted = await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(color: $"  {new string('c', 32)}  "), 200);
+        var response = await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(color: new string('c', 33)), 400);
+
+        Assert.Equal(new string('c', 32), accepted.ReadAsJson<MedicineScheduleDto>().Color);
+        MedicineTestHelpers.AssertValidationError(response, "color");
+    }
+
+    [Fact]
+    public async Task A_group_schedule_with_an_invalid_icon_or_too_long_color_is_rejected()
+    {
+        var (guardianToken, groupUrl) = await CreateSharedGroupAsync();
+
+        var icon = await PostScheduleAsync(guardianToken, groupUrl, Body(icon: "pictogram:Bad"), 400);
+        var color = await PostScheduleAsync(guardianToken, groupUrl, Body(color: new string('c', 33)), 400);
+
+        MedicineTestHelpers.AssertValidationError(icon, "icon");
+        MedicineTestHelpers.AssertValidationError(color, "color");
+    }
+
+    [Fact]
+    public async Task A_group_schedule_name_and_dosage_are_trimmed()
+    {
+        var (guardianToken, groupUrl) = await CreateSharedGroupAsync();
+
+        var response = await PostScheduleAsync(guardianToken, groupUrl, Body(name: $" {new string('n', 200)} ", dosage: " 5 ml "), 200);
+
+        var schedule = response.ReadAsJson<MedicineScheduleDto>();
+        Assert.Equal(new string('n', 200), schedule.Name);
+        Assert.Equal("5 ml", schedule.Dosage);
+    }
+
+    [Fact]
     public async Task A_group_schedule_with_no_dose_times_is_rejected()
     {
         var (guardianToken, groupUrl) = await CreateSharedGroupAsync();
@@ -184,14 +282,16 @@ public sealed class CreateMedicineScheduleTests(BuddyApiFixture fixture)
     private static object Body(
         string name = "Amoxicillin",
         string dosage = "5 ml",
+        string icon = "pill",
+        string color = "#ff8800",
         TimeOnly[]? times = null,
         DateOnly? startDate = null,
         DateOnly? endDate = null) => new
         {
             Name = name,
             Dosage = dosage,
-            Icon = "pill",
-            Color = "#ff8800",
+            Icon = icon,
+            Color = color,
             Times = times ?? [new TimeOnly(8, 0)],
             StartDate = startDate ?? DateOnly.FromDateTime(DateTime.UtcNow),
             EndDate = endDate

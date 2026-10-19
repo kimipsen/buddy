@@ -264,6 +264,29 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_recurrence_with_an_undefined_frequency_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var error = await PostInvalidScheduleAsync(
+            token, calendarId, Guid.CreateVersion7(), "Morning routine", new RecurrenceRuleRequest((RecurrenceFrequency)9, 1, null));
+
+        Assert.Contains("recurrence.frequency", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task A_color_longer_than_32_characters_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var error = await PostInvalidScheduleAsync(token, calendarId, Guid.CreateVersion7(), "Morning routine", recurrence: null, color: new string('c', 33));
+
+        Assert.Contains("color", error.Details.Keys);
+    }
+
+    [Fact]
     public async Task A_200_character_title_and_a_recurrence_interval_count_of_one_are_accepted()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
@@ -294,7 +317,7 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
     }
 
     private async Task<ErrorEnvelope> PostInvalidScheduleAsync(
-        string token, Guid calendarId, Guid taskTemplateId, string title, RecurrenceRuleRequest? recurrence)
+        string token, Guid calendarId, Guid taskTemplateId, string title, RecurrenceRuleRequest? recurrence, string color = "#ff0000")
     {
         var response = await fixture.Host.Scenario(_ =>
         {
@@ -308,7 +331,7 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
                 AssignedTo = (Guid?)null,
                 Title = title,
                 Icon = "task",
-                Color = "#ff0000"
+                Color = color
             }).ToUrl($"/calendars/{calendarId}/items/from-template");
             _.StatusCodeShouldBe(400);
         });

@@ -568,6 +568,49 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
         Assert.Contains("schedule", error.Details.Keys);
     }
 
+    [Fact]
+    public async Task A_recurrence_with_an_undefined_frequency_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var error = await PostInvalidItemAsync(token, calendarId, TaskBody("#ff0000", new { Frequency = 9, IntervalCount = 1, Until = (DateOnly?)null }));
+
+        Assert.Contains("recurrence.frequency", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task An_item_color_of_32_characters_after_trimming_is_accepted_but_33_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var accepted = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Post.Json(TaskBody($"  {new string('c', 32)}  ")).ToUrl($"/calendars/{calendarId}/items");
+            _.StatusCodeShouldBeOk();
+        });
+        var error = await PostInvalidItemAsync(token, calendarId, TaskBody(new string('c', 33)));
+
+        Assert.Equal(new string('c', 32), accepted.ReadAsJson<CalendarItemDto>().Color);
+        Assert.Contains("color", error.Details.Keys);
+    }
+
+    private static object TaskBody(string color, object? recurrence = null) => new
+    {
+        Title = "Water plants",
+        Icon = "task",
+        Color = color,
+        Recurrence = recurrence,
+        Schedule = new
+        {
+            Kind = (int)CalendarItemKind.Task,
+            IsAllDay = false,
+            DueDate = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(17, 0) }
+        }
+    };
+
     private async Task<ErrorEnvelope> PostInvalidItemAsync(string token, Guid calendarId, object body)
     {
         var response = await fixture.Host.Scenario(_ =>

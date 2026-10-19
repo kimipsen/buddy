@@ -10,6 +10,9 @@ public sealed class ScheduleTaskFromTemplateValidator : AbstractValidator<Schedu
 
         RuleFor(x => x.Icon!.Value).ValidIcon().OverridePropertyName("Icon").When(x => x.Icon is not null);
 
+        // Optional; the endpoint trims it.
+        RuleFor(x => x.Color.Value).MaximumLength(Color.MaxLength).OverridePropertyName("Color");
+
         RuleFor(x => x.TaskTemplateId).NotEmpty();
 
         RuleFor(x => x.Alarms).ValidAlarms();

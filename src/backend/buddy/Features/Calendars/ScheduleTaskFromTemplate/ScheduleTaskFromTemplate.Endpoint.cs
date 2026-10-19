@@ -31,7 +31,7 @@ public static class ScheduleTaskFromTemplateEndpoint
                 request.AssignedTo is { } assignedTo ? new UserId(assignedTo) : null,
                 request.Title,
                 request.Icon is { } icon && !string.IsNullOrWhiteSpace(icon) ? new Icon(icon) : null,
-                new Color(request.Color),
+                new Color(request.Color.Trim()),
                 ItemAlarms.From(request.Alarms));
 
             var result = await bus.InvokeAsync<Result<CalendarItem>>(command, cancellationToken);

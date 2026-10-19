@@ -117,6 +117,59 @@ public sealed class UpdateMedicineDetailsTests(BuddyApiFixture fixture)
         MedicineTestHelpers.AssertValidationError(response, "dosage");
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task The_name_and_dosage_are_trimmed_before_their_length_check_and_storage(bool viaGroup)
+    {
+        var (guardianToken, url) = await CreateScheduleAsync(viaGroup);
+
+        var response = await PatchDetailsAsync(guardianToken, url, $"  {new string('n', 200)}  ", $" {new string('d', 200)} ", 200);
+
+        var updated = response.ReadAsJson<MedicineScheduleDto>();
+        Assert.Equal(new string('n', 200), updated.Name);
+        Assert.Equal(new string('d', 200), updated.Dosage);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task A_malformed_pictogram_icon_is_rejected(bool viaGroup)
+    {
+        var (guardianToken, url) = await CreateScheduleAsync(viaGroup);
+
+        var response = await PatchDetailsAsync(guardianToken, url, "Amoxicillin", "5 ml", 400, icon: "pictogram:Not A Slug");
+
+        MedicineTestHelpers.AssertValidationError(response, "icon");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task An_emoji_icon_of_16_characters_is_accepted_but_17_is_rejected(bool viaGroup)
+    {
+        var (guardianToken, url) = await CreateScheduleAsync(viaGroup);
+
+        await PatchDetailsAsync(guardianToken, url, "Amoxicillin", "5 ml", 200, icon: new string('i', 16));
+        var response = await PatchDetailsAsync(guardianToken, url, "Amoxicillin", "5 ml", 400, icon: new string('i', 17));
+
+        MedicineTestHelpers.AssertValidationError(response, "icon");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task A_color_of_32_characters_after_trimming_is_accepted_but_33_is_rejected(bool viaGroup)
+    {
+        var (guardianToken, url) = await CreateScheduleAsync(viaGroup);
+
+        var accepted = await PatchDetailsAsync(guardianToken, url, "Amoxicillin", "5 ml", 200, color: $" {new string('c', 32)} ");
+        var response = await PatchDetailsAsync(guardianToken, url, "Amoxicillin", "5 ml", 400, color: new string('c', 33));
+
+        Assert.Equal(new string('c', 32), accepted.ReadAsJson<MedicineScheduleDto>().Color);
+        MedicineTestHelpers.AssertValidationError(response, "color");
+    }
+
     // Returns the schedule's details URL, either the child-keyed route or (viaGroup) the
     // group-keyed one after sharing the child's medicine with a group the guardian owns.
     private async Task<(string GuardianToken, string Url)> CreateScheduleAsync(bool viaGroup = false)
@@ -135,11 +188,12 @@ public sealed class UpdateMedicineDetailsTests(BuddyApiFixture fixture)
         return (guardianToken, $"/medicines/groups/{groupId}/children/{child.Id}/schedules/{schedule.Id}/details");
     }
 
-    private Task<IScenarioResult> PatchDetailsAsync(string token, string url, string name, string dosage, int expectedStatus) =>
+    private Task<IScenarioResult> PatchDetailsAsync(
+        string token, string url, string name, string dosage, int expectedStatus, string icon = "pill", string color = "#ff8800") =>
         fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
-            _.Patch.Json(new { Name = name, Dosage = dosage, Icon = "pill", Color = "#ff8800" }).ToUrl(url);
+            _.Patch.Json(new { Name = name, Dosage = dosage, Icon = icon, Color = color }).ToUrl(url);
             _.StatusCodeShouldBe(expectedStatus);
         });
 }

@@ -3,17 +3,25 @@ using buddy.Common.Validation;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
 
+using FluentValidation;
+
 namespace buddy.Features.Medicines;
 
 public static class SetDoseStatusHandler
 {
     public static async Task<Result<MedicineDoseOccurrence>> Handle(
         SetDoseStatus command,
+        IValidator<SetDoseStatus> validator,
         IMedicineEventStore medicines,
         IGuardianLinkEventStore guardians,
         TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new Result<MedicineDoseOccurrence>.Validation(problem);
+        }
+
         var userId = command.UserId;
 
         var access = await MedicineAuthorization.CheckMark(command.ChildId, userId, guardians, cancellationToken);

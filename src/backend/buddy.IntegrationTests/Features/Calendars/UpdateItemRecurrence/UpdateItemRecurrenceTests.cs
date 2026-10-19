@@ -58,6 +58,28 @@ public sealed class UpdateItemRecurrenceTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task An_undefined_frequency_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var item = await CalendarTestHelpers.CreateEventAsync(fixture, token, calendarId);
+        Assert.NotNull(item);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            // JsonStringEnumConverter accepts a number too; 9 isn't a RecurrenceFrequency.
+            _.Patch.Json(new { Recurrence = new { Frequency = 9, IntervalCount = 1, Until = (DateOnly?)null } })
+                .ToUrl($"/calendars/{calendarId}/items/{item.Id}/recurrence");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("recurrence.frequency", error.Details.Keys);
+    }
+
+    [Fact]
     public async Task A_recurrence_ending_before_the_items_start_is_rejected()
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();

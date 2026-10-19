@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Calendars;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
@@ -36,12 +37,34 @@ public sealed class SetMemberRoleTests(BuddyApiFixture fixture)
         var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, ownerToken, "Shared");
         var (_, _, otherId) = await fixture.CreateAuthenticatedUserAsync();
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {ownerToken}");
             _.Put.Json(new { Role = CalendarRole.Owner }).ToUrl($"/calendars/{calendarId}/members/{otherId}");
             _.StatusCodeShouldBe(400);
         });
+
+        Assert.Contains("role", response.ReadAsJson<ErrorEnvelope>().Details.Keys);
+    }
+
+    [Fact]
+    public async Task An_undefined_role_number_is_rejected()
+    {
+        var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, ownerToken, "Shared");
+        var (_, _, otherId) = await fixture.CreateAuthenticatedUserAsync();
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {ownerToken}");
+            // JsonStringEnumConverter accepts a number too; 7 isn't a CalendarRole.
+            _.Put.Json(new { Role = 7 }).ToUrl($"/calendars/{calendarId}/members/{otherId}");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("role", error.Details.Keys);
     }
 
     [Fact]

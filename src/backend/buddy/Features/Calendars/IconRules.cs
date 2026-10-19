@@ -18,6 +18,15 @@ public static partial class IconRules
             .Must(IsEmojiOrPictogram)
             .WithMessage(PictogramMessage);
 
+    public static string EmojiLengthMessage => $"An emoji icon must be at most {Icon.MaxEmojiLength} characters.";
+
+    // ValidIcon plus the emoji length: a pictogram name may run to Icon.MaxLength, an emoji (one
+    // glyph with its skin-tone and ZWJ modifiers) to Icon.MaxEmojiLength.
+    public static IRuleBuilderOptions<T, string> ValidSizedIcon<T>(this IRuleBuilder<T, string> rule) =>
+        rule.ValidIcon()
+            .Must(value => value.StartsWith(Icon.PictogramPrefix, StringComparison.Ordinal) || value.Length <= Icon.MaxEmojiLength)
+            .WithMessage(EmojiLengthMessage);
+
     private static bool IsEmojiOrPictogram(string value) =>
         !value.StartsWith(Icon.PictogramPrefix, StringComparison.Ordinal)
         || Slug().IsMatch(value[Icon.PictogramPrefix.Length..]);

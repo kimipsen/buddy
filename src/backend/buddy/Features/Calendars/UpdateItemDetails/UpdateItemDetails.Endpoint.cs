@@ -27,7 +27,7 @@ public static class UpdateItemDetailsEndpoint
                 new CalendarItemId(itemId),
                 request.Title,
                 request.Icon is { } icon && !string.IsNullOrWhiteSpace(icon) ? new Icon(icon) : null,
-                new Color(request.Color));
+                new Color(request.Color.Trim()));
 
             var result = await bus.InvokeAsync<Result<CalendarItem>>(command, cancellationToken);
 

@@ -6,6 +6,6 @@ public sealed class UpdateCalendarIconValidator : AbstractValidator<UpdateCalend
 {
     public UpdateCalendarIconValidator()
     {
-        RuleFor(x => x.Icon.Value).NotEmpty().WithMessage("Icon must not be empty.").OverridePropertyName("Icon");
+        RuleFor(x => x.Icon.Value).NotEmpty().WithMessage("Icon must not be empty.").ValidSizedIcon().OverridePropertyName("Icon");
     }
 }

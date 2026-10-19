@@ -6,6 +6,8 @@ namespace buddy.Features.Calendars;
 // the request's own field paths.
 public static class RecurrenceRules
 {
+    public const string FrequencyKey = "recurrence.frequency";
+
     public const string IntervalCountKey = "recurrence.intervalCount";
 
     public const string UntilKey = "recurrence.until";
@@ -17,6 +19,13 @@ public static class RecurrenceRules
         if (recurrence is not Recurrence.Repeating repeating)
         {
             yield break;
+        }
+
+        // JsonStringEnumConverter also accepts integers, so an undefined one would bind and expand
+        // to just the first date.
+        if (!Enum.IsDefined(repeating.Frequency))
+        {
+            yield return (FrequencyKey, "Recurrence frequency must be Daily, Weekly, Monthly or Yearly.");
         }
 
         if (repeating.IntervalCount < 1)

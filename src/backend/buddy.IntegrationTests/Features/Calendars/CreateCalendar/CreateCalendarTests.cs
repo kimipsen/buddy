@@ -185,12 +185,50 @@ public sealed class CreateCalendarTests(BuddyApiFixture fixture)
         });
     }
 
-    private async Task<ErrorEnvelope> PostInvalidCalendarAsync(string token, string name, Guid groupId)
+    [Fact]
+    public async Task The_name_is_trimmed_before_its_length_check_and_storage()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, token, "Team");
+        var name = new string('c', 200);
+
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, $"  {name}  ", groupId);
+
+        Assert.Equal(name, (await CalendarTestHelpers.GetCalendarAsync(fixture, token, calendarId)).Name);
+    }
+
+    [Theory]
+    [InlineData("pictogram:Not A Slug")]
+    [InlineData("iiiiiiiiiiiiiiiii")]
+    public async Task A_malformed_pictogram_or_an_emoji_longer_than_16_characters_is_rejected(string icon)
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, token, "Team");
+
+        var error = await PostInvalidCalendarAsync(token, "Family", groupId, icon);
+
+        Assert.Contains("icon", error.Details.Keys);
+    }
+
+    [Theory]
+    [InlineData("pictogram:brush-teeth-before-bed")]
+    [InlineData("iiiiiiiiiiiiiiii")]
+    public async Task A_pictogram_or_an_emoji_of_16_characters_is_accepted(string icon)
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, token, "Team");
+
+        var created = await CreateWithIconAsync(token, groupId, icon);
+
+        Assert.Equal(icon, created.Icon);
+    }
+
+    private async Task<ErrorEnvelope> PostInvalidCalendarAsync(string token, string name, Guid groupId, string? icon = null)
     {
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
-            _.Post.Json(new { Name = name, TimeZoneId = CalendarTestHelpers.DefaultTimeZone, GroupId = groupId }).ToUrl("/calendars/");
+            _.Post.Json(new { Name = name, TimeZoneId = CalendarTestHelpers.DefaultTimeZone, GroupId = groupId, Icon = icon }).ToUrl("/calendars/");
             _.StatusCodeShouldBe(400);
         });
 

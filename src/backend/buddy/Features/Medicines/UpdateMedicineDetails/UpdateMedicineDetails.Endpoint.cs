@@ -27,10 +27,10 @@ public static class UpdateMedicineDetailsEndpoint
                 principal,
                 new UserId(childId),
                 new MedicineId(medicineId),
-                request.Name,
-                request.Dosage,
-                new Icon(request.Icon),
-                new Color(request.Color));
+                request.Name.Trim(),
+                request.Dosage.Trim(),
+                new Icon(request.Icon.Trim()),
+                new Color(request.Color.Trim()));
 
             var result = await bus.InvokeAsync<Result<MedicineSchedule>>(command, cancellationToken);
 

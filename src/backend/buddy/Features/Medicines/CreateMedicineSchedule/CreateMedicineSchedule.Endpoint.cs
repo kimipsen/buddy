@@ -25,10 +25,10 @@ public static class CreateMedicineScheduleEndpoint
             var command = CreateMedicineSchedule.FromClaims(
                 principal,
                 new UserId(childId),
-                request.Name,
-                request.Dosage,
-                new Icon(request.Icon),
-                new Color(request.Color),
+                request.Name.Trim(),
+                request.Dosage.Trim(),
+                new Icon(request.Icon.Trim()),
+                new Color(request.Color.Trim()),
                 request.Times,
                 request.StartDate,
                 request.EndDate);

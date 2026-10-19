@@ -1,16 +1,19 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Groups;
+
+using FluentValidation;
 
 namespace buddy.Features.Calendars;
 
 public static class SetMemberRoleHandler
 {
-    public static async Task<Result<Unit>> Handle(SetMemberRole command, ICalendarEventStore calendars, IGroupEventStore groups, ILogger<SetMemberRole> logger, TimeProvider time, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(SetMemberRole command, IValidator<SetMemberRole> validator, ICalendarEventStore calendars, IGroupEventStore groups, ILogger<SetMemberRole> logger, TimeProvider time, CancellationToken cancellationToken)
     {
-        if (command.Role == CalendarRole.Owner)
+        // The validator also rejects Owner: ownership is never granted through this endpoint.
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
-            // Ownership is assigned only at creation and never granted through this endpoint.
-            return new Result<Unit>.Forbidden();
+            return new Result<Unit>.Validation(problem);
         }
 
         var userId = command.UserId;

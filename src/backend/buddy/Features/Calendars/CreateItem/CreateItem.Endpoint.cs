@@ -27,7 +27,7 @@ public static class CreateItemEndpoint
                 new CalendarId(calendarId),
                 request.Title,
                 request.Icon is { } icon && !string.IsNullOrWhiteSpace(icon) ? new Icon(icon) : null,
-                new Color(request.Color),
+                new Color(request.Color.Trim()),
                 request.Schedule.ToSchedule(),
                 RecurrenceRuleRequest.ToRecurrence(request.Recurrence),
                 ItemAlarms.From(request.Alarms));

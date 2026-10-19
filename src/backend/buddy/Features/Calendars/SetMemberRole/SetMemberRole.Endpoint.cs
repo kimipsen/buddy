@@ -22,11 +22,6 @@ public static class SetMemberRoleEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            if (request.Role == CalendarRole.Owner)
-            {
-                return TypedResults.BadRequest(buddy.Common.Validation.ValidationProblem.Of("Ownership cannot be granted through this endpoint.").ToEnvelope(httpContext));
-            }
-
             var command = SetMemberRole.FromClaims(principal, new CalendarId(calendarId), new UserId(memberId), request.Role);
             var result = await bus.InvokeAsync<Result<Unit>>(command, cancellationToken);
 
@@ -35,8 +30,6 @@ public static class SetMemberRoleEndpoint
                 Result<Unit>.Success => TypedResults.NoContent(),
                 Result<Unit>.Forbidden => TypedResults.Forbid(),
                 Result<Unit>.NotFound => TypedResults.NotFound(),
-                // SetMemberRoleHandler never produces Validation, but BadRequest is already part
-                // of this route's declared results (used above), so map it there if it ever did.
                 Result<Unit>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };
         })

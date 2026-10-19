@@ -25,6 +25,7 @@ namespace Internal.Generated.WolverineHandlers
 
         public override async System.Threading.Tasks.Task HandleAsync(Wolverine.Runtime.MessageContext context, System.Threading.CancellationToken cancellation)
         {
+            var setDoseStatusForGroupValidator = new buddy.Features.Medicines.SetDoseStatusForGroupValidator();
             // The actual message body
             var setDoseStatusForGroup = (buddy.Features.Medicines.SetDoseStatusForGroup)context.Envelope.Message;
 
@@ -35,7 +36,7 @@ namespace Internal.Generated.WolverineHandlers
                 System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Medicines.SetDoseStatusForGroupHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.Medicines.SetDoseStatusForGroupHandler.Handle(setDoseStatusForGroup, _medicineEventStore, _medicineSharingEventStore, _groupEventStore, _timeProvider, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.Medicines.SetDoseStatusForGroupHandler.Handle(setDoseStatusForGroup, setDoseStatusForGroupValidator, _medicineEventStore, _medicineSharingEventStore, _groupEventStore, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

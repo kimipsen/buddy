@@ -10,6 +10,9 @@ public sealed class CreateItemValidator : AbstractValidator<CreateItem>
 
         RuleFor(x => x.Icon!.Value).ValidIcon().OverridePropertyName("Icon").When(x => x.Icon is not null);
 
+        // Optional; the endpoint trims it.
+        RuleFor(x => x.Color.Value).MaximumLength(Color.MaxLength).OverridePropertyName("Color");
+
         RuleFor(x => x.Alarms).ValidAlarms();
 
         RuleFor(x => x.Recurrence).Custom((recurrence, context) =>

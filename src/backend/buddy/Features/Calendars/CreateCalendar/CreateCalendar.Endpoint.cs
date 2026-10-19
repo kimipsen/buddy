@@ -22,7 +22,7 @@ public static class CreateCalendarEndpoint
         {
             var command = CreateCalendar.FromClaims(
                 principal,
-                request.Name,
+                request.Name.Trim(),
                 new TimeZoneId(request.TimeZoneId),
                 new GroupId(request.GroupId),
                 string.IsNullOrWhiteSpace(request.Icon) ? Calendar.DefaultIcon : new Icon(request.Icon));
