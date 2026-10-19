@@ -23,6 +23,9 @@ in real time.
 
 ### Guardian
 
+- [ ] Mealie integration: connect the family's self-hosted Mealie, link meals to recipes, import
+      Mealie's meal plan and send the week's recipes to a Mealie shopping list (proposed, not yet
+      implemented — see [Mealie integration](docs/backend/analysis/mealie-integration.md))
 - [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
       child for something new such as the dentist or a trip (proposed, not yet implemented — see
       [Social stories](docs/backend/analysis/social-stories.md))
@@ -240,6 +243,7 @@ deploy/      Production Docker Compose and Caddy deployment
 - [Meal plan iCal feed](docs/backend/analysis/mealplan-ical-feed.md)
 - [Importing historical meal plans](docs/backend/analysis/mealplan-import.md)
 - [AI assistant meal filter](docs/backend/analysis/ai-assistant-meal-filter.md)
+- [Mealie integration](docs/backend/analysis/mealie-integration.md)
 - [Pickup and drop-off schedules](docs/backend/analysis/pickup-schedules.md)
 - [Babysitters](docs/backend/analysis/babysitters.md)
 - [Gamified progress](docs/backend/analysis/gamified-progress.md)
