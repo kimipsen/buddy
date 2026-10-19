@@ -95,6 +95,66 @@ public sealed class CreateTaskTemplateTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_task_template_name_is_trimmed_before_its_length_check_and_storage()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var name = new string('a', 200);
+
+        var template = await TaskLibraryTestHelpers.CreateTaskTemplateAsync(
+            fixture, guardianToken, child.Id, new CreateTaskTemplateOptions(Name: $"  {name}  "));
+
+        Assert.NotNull(template);
+        Assert.Equal(name, template.Name);
+    }
+
+    [Fact]
+    public async Task A_task_template_color_of_32_characters_is_accepted_after_trimming()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var color = new string('c', 32);
+
+        var template = await TaskLibraryTestHelpers.CreateTaskTemplateAsync(
+            fixture, guardianToken, child.Id, new CreateTaskTemplateOptions(Color: $" {color} "));
+
+        Assert.NotNull(template);
+        Assert.Equal(color, template.Color);
+    }
+
+    [Fact]
+    public async Task A_task_template_without_a_color_is_accepted()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var template = await TaskLibraryTestHelpers.CreateTaskTemplateAsync(
+            fixture, guardianToken, child.Id, new CreateTaskTemplateOptions(Color: " "));
+
+        Assert.NotNull(template);
+        Assert.Equal("", template.Color);
+    }
+
+    [Fact]
+    public async Task A_task_template_color_of_33_characters_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { Name = "Morning", Icon = "sunrise", Color = new string('c', 33) })
+                .ToUrl($"/task-templates/children/{child.Id}");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("color", error.Details.Keys);
+    }
+
+    [Fact]
     public async Task The_child_cannot_create_their_own_task_template()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();

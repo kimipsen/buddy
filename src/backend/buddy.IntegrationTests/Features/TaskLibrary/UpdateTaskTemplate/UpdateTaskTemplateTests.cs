@@ -133,4 +133,45 @@ public sealed class UpdateTaskTemplateTests(BuddyApiFixture fixture)
 
         AssertValidationErrorOn(response, "name");
     }
+
+    [Fact]
+    public async Task A_task_template_name_is_trimmed_before_its_length_check_and_storage()
+    {
+        var (guardianToken, templateId) = await CreateTemplateAsync();
+        var name = new string('a', 200);
+
+        var response = await PatchNameAsync(guardianToken, templateId, $"  {name}  ", expectedStatus: 200);
+
+        Assert.Equal(name, response.ReadAsJson<TaskTemplateDto>().Name);
+    }
+
+    private async Task<IScenarioResult> PatchColorAsync(string guardianToken, Guid templateId, string color, int expectedStatus) =>
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { Name = "Evening routine", Icon = "moon", Color = color })
+                .ToUrl($"/task-templates/{templateId}");
+            _.StatusCodeShouldBe(expectedStatus);
+        });
+
+    [Fact]
+    public async Task A_task_template_color_of_32_characters_is_accepted_after_trimming()
+    {
+        var (guardianToken, templateId) = await CreateTemplateAsync();
+        var color = new string('c', 32);
+
+        var response = await PatchColorAsync(guardianToken, templateId, $" {color} ", expectedStatus: 200);
+
+        Assert.Equal(color, response.ReadAsJson<TaskTemplateDto>().Color);
+    }
+
+    [Fact]
+    public async Task A_task_template_color_of_33_characters_is_rejected()
+    {
+        var (guardianToken, templateId) = await CreateTemplateAsync();
+
+        var response = await PatchColorAsync(guardianToken, templateId, new string('c', 33), expectedStatus: 400);
+
+        AssertValidationErrorOn(response, "color");
+    }
 }

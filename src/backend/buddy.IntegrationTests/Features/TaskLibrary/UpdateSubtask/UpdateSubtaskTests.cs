@@ -117,6 +117,17 @@ public sealed class UpdateSubtaskTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_subtask_title_is_trimmed_before_its_length_check_and_storage()
+    {
+        var (guardianToken, templateId, subtaskId) = await CreateTemplateWithSubtaskAsync();
+        var title = new string('a', 200);
+
+        var response = await PatchSubtaskAsync(guardianToken, templateId, subtaskId, $"  {title}  ", "00:02:00", expectedStatus: 200);
+
+        Assert.Equal(title, Assert.Single(response.ReadAsJson<TaskTemplateDto>().Subtasks).Title);
+    }
+
+    [Fact]
     public async Task A_subtask_cannot_be_updated_to_zero_duration()
     {
         var (guardianToken, templateId, subtaskId) = await CreateTemplateWithSubtaskAsync();

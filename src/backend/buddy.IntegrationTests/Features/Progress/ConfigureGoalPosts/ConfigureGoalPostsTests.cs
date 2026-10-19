@@ -218,6 +218,52 @@ public sealed class ConfigureGoalPostsTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_goal_post_icon_is_trimmed_and_32_characters_are_accepted()
+    {
+        var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();
+        var icon = new string('i', 32);
+
+        var response = await PutGoalPostsAsync(childId, guardianToken, [new GoalPostBody(1, $"  {icon}  ", null)], expectedStatus: 200);
+
+        Assert.Equal(icon, Assert.Single(response.ReadAsJson<ProgressSummary>().GoalPosts).Icon);
+    }
+
+    [Fact]
+    public async Task A_goal_post_icon_of_33_characters_is_rejected()
+    {
+        var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();
+
+        var response = await PutGoalPostsAsync(childId, guardianToken, [new GoalPostBody(1, new string('i', 33), null)], expectedStatus: 400);
+
+        AssertValidationErrorOn(response, "goalPosts[0].icon");
+    }
+
+    [Fact]
+    public async Task A_blank_goal_post_icon_is_rejected()
+    {
+        var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();
+
+        var response = await PutGoalPostsAsync(childId, guardianToken, [new GoalPostBody(1, "   ", null)], expectedStatus: 400);
+
+        AssertValidationErrorOn(response, "goalPosts[0].icon");
+    }
+
+    [Fact]
+    public async Task A_null_goal_post_in_the_list_is_rejected_rather_than_failing()
+    {
+        var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Json(new { GoalPosts = new object?[] { null } }).ToUrl($"/progress/children/{childId}/goals");
+            _.StatusCodeShouldBe(400);
+        });
+
+        AssertValidationErrorOn(response, "");
+    }
+
+    [Fact]
     public async Task Progress_keeps_generating_goal_posts_past_the_configured_list()
     {
         var (calendarId, childId, guardianToken, _) = await CreateChildWithCalendarAsync();

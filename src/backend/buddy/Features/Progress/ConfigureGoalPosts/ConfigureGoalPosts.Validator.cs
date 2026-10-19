@@ -16,7 +16,8 @@ public sealed class ConfigureGoalPostsValidator : AbstractValidator<ConfigureGoa
         RuleForEach(x => x.GoalPosts).ChildRules(post =>
         {
             post.RuleFor(p => p.Threshold).GreaterThan(0);
-            post.RuleFor(p => p.Icon).NotEmpty();
+            // Same rule as a reward's icon (ConfigureRewardsValidator).
+            post.RuleFor(p => p.Icon).NotEmpty().MaximumLength(32);
             // Optional caption; "" means none (FreeText). Kept short -- it labels a badge.
             post.RuleFor(p => p.Label).MaximumLength(100);
         });

@@ -22,7 +22,14 @@ public static class ConfigureGoalPostsEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var goalPosts = request.GoalPosts.Select(p => new GoalPost(p.Threshold, p.Icon, FreeText.Normalize(p.Label))).ToImmutableArray();
+            // RespectNullableAnnotations doesn't cover collection elements (as ConfigureRewards).
+            if (request.GoalPosts.Any(p => p is null))
+            {
+                return TypedResults.BadRequest(Common.Validation.ValidationProblem.Of("goalPosts must not contain null entries.").ToEnvelope(httpContext));
+            }
+
+            // Icon is trimmed like a reward's, so the validator and the stored event see the same text.
+            var goalPosts = request.GoalPosts.Select(p => new GoalPost(p.Threshold, p.Icon.Trim(), FreeText.Normalize(p.Label))).ToImmutableArray();
             var command = ConfigureGoalPosts.FromClaims(principal, new UserId(childId), goalPosts);
             var result = await bus.InvokeAsync<Result<ProgressSummary>>(command, cancellationToken);
 

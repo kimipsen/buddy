@@ -129,6 +129,18 @@ public sealed class AddSubtaskTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_subtask_title_is_trimmed_before_its_length_check_and_storage()
+    {
+        var (guardianToken, templateId) = await CreateTemplateAsync();
+        var title = new string('a', 200);
+
+        var updated = await TaskLibraryTestHelpers.AddSubtaskAsync(fixture, guardianToken, templateId, new AddSubtaskOptions(Title: $"  {title}  "));
+
+        Assert.NotNull(updated);
+        Assert.Equal(title, Assert.Single(updated.Subtasks).Title);
+    }
+
+    [Fact]
     public async Task The_child_cannot_add_a_subtask()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
