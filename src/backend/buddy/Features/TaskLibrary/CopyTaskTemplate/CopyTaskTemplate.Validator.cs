@@ -6,6 +6,6 @@ public sealed class CopyTaskTemplateValidator : AbstractValidator<CopyTaskTempla
 {
     public CopyTaskTemplateValidator()
     {
-        RuleFor(x => x.ChildId.Value).NotEmpty().WithMessage("ChildId must not be empty.");
+        RuleFor(x => x.ChildId.Value).NotEmpty().WithMessage("ChildId must not be empty.").OverridePropertyName("ChildId");
     }
 }

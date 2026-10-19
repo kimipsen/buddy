@@ -45,7 +45,7 @@ public sealed class SendAiSessionMessageTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Text", error.Details.Keys);
+        Assert.Contains("text", error.Details.Keys);
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public sealed class SendAiSessionMessageTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Text", error.Details.Keys);
+        Assert.Contains("text", error.Details.Keys);
     }
 
     [Fact]
@@ -121,6 +121,6 @@ public sealed class SendAiSessionMessageTests(BuddyApiFixture fixture)
         });
 
         var error = response.ReadAsJson<ErrorEnvelope>();
-        Assert.Equal([SendAiSessionMessageHandler.NoMatchingMealsMessage], error.Details["ServedWithin"]);
+        Assert.Equal([SendAiSessionMessageHandler.NoMatchingMealsMessage], error.Details["servedWithin"]);
     }
 }

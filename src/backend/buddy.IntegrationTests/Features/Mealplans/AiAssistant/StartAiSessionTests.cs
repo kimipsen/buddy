@@ -85,7 +85,7 @@ public sealed class StartAiSessionTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Equal([$"The requested range cannot exceed {StartAiSessionValidator.MaxRangeDays} days."], error.Details["To"]);
+        Assert.Equal([$"The requested range cannot exceed {StartAiSessionValidator.MaxRangeDays} days."], error.Details["to"]);
     }
 
     [Fact]
@@ -105,7 +105,7 @@ public sealed class StartAiSessionTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Equal(["At least one meal slot must be requested."], error.Details["RequestedSlots"]);
+        Assert.Equal(["At least one meal slot must be requested."], error.Details["slots"]);
     }
 
     [Fact]
@@ -156,7 +156,7 @@ public sealed class StartAiSessionTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Equal(["'to' must not be before 'from'."], error.Details["To"]);
+        Assert.Equal(["'to' must not be before 'from'."], error.Details["to"]);
     }
 
     [Fact]
@@ -205,7 +205,7 @@ public sealed class StartAiSessionTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Notes", error.Details.Keys);
+        Assert.Contains("notes", error.Details.Keys);
     }
 
     [Fact]
@@ -257,7 +257,7 @@ public sealed class StartAiSessionTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Equal([StartAiSessionHandler.NoMatchingMealsMessage], error.Details["ServedWithin"]);
+        Assert.Equal([StartAiSessionHandler.NoMatchingMealsMessage], error.Details["servedWithin"]);
 
         var stillCurrent = await fixture.Host.Scenario(_ =>
         {
@@ -287,7 +287,7 @@ public sealed class StartAiSessionTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("ServedWithin", error.Details.Keys);
+        Assert.Contains("servedWithin", error.Details.Keys);
     }
 
     [Fact]
@@ -310,6 +310,6 @@ public sealed class StartAiSessionTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Equal([StartAiSessionHandler.EatingOutMustIncludeMessage], error.Details["MustIncludeMealIds"]);
+        Assert.Equal([StartAiSessionHandler.EatingOutMustIncludeMessage], error.Details["mustIncludeMealIds"]);
     }
 }

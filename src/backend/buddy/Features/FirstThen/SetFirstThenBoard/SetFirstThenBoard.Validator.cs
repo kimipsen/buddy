@@ -15,8 +15,8 @@ public sealed class SetFirstThenBoardValidator : AbstractValidator<SetFirstThenB
     public SetFirstThenBoardValidator()
     {
         RuleFor(x => x.Revision).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.First).SetValidator(new FirstThenCardValidator("first"));
-        RuleFor(x => x.Then).SetValidator(new FirstThenCardValidator("then"));
+        RuleFor(x => x.First).SetValidator(new FirstThenCardValidator());
+        RuleFor(x => x.Then).SetValidator(new FirstThenCardValidator());
         RuleFor(x => x.ThenMinutes)
             .InclusiveBetween(MinThenMinutes, MaxThenMinutes)
             .When(x => x.ThenMinutes is not null)
@@ -25,17 +25,18 @@ public sealed class SetFirstThenBoardValidator : AbstractValidator<SetFirstThenB
 
     private sealed class FirstThenCardValidator : AbstractValidator<FirstThenCard>
     {
-        public FirstThenCardValidator(string card)
+        // Keys come out under the parent property: First.Title -> `first.title`, First.Icon -> `first.icon`.
+        public FirstThenCardValidator()
         {
-            RuleFor(c => c.Title).NotEmpty().MaximumLength(MaxTitleLength).OverridePropertyName($"{card}.title");
+            RuleFor(c => c.Title).NotEmpty().MaximumLength(MaxTitleLength);
             // Required: a First-Then board is a visual support, and many children who need one
             // don't read yet.
-            RuleFor(c => c.Icon.Value).NotEmpty().ValidIcon().OverridePropertyName($"{card}.icon");
+            RuleFor(c => c.Icon.Value).NotEmpty().ValidIcon().OverridePropertyName(nameof(FirstThenCard.Icon));
             // A pictogram name may be longer than an emoji (docs/frontend/analysis/pictograms.md).
             RuleFor(c => c.Icon.Value)
                 .MaximumLength(Icon.MaxEmojiLength)
                 .When(c => !c.Icon.IsPictogram)
-                .OverridePropertyName($"{card}.icon");
+                .OverridePropertyName(nameof(FirstThenCard.Icon));
         }
     }
 }

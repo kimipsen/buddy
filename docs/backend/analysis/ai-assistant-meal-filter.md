@@ -1,6 +1,6 @@
 # AI Assistant Meal Filter
 
-Status: Implemented. `AiServedWindow` and `RatedOnly`/`ServedWithin` on `AiSessionStarted`, `StartAiSession` and `AiSessionView`; `AiMealFilter` feeds both the prompt and the `propose_assignment` allowlist in `SendAiSessionMessage`; `400` keyed on `ServedWithin` when nothing matches. The start form on `/guardian/mealplan/ai-assistant` has a "rated only" toggle and an "any time / 30 / 60 / 90 days" segmented control (last choice kept in `localStorage`), and the session panel summarises an active filter.
+Status: Implemented. `AiServedWindow` and `RatedOnly`/`ServedWithin` on `AiSessionStarted`, `StartAiSession` and `AiSessionView`; `AiMealFilter` feeds both the prompt and the `propose_assignment` allowlist in `SendAiSessionMessage`; `400` keyed on `servedWithin` when nothing matches. The start form on `/guardian/mealplan/ai-assistant` has a "rated only" toggle and an "any time / 30 / 60 / 90 days" segmented control (last choice kept in `localStorage`), and the session panel summarises an active filter.
 
 ## Context
 
@@ -257,13 +257,13 @@ registration change). `AiSessionPromptBuilder.Build` takes the `AiSessionStarted
 
 Here "nothing" means no meals pass the filter, not counting must-include meals. The check runs after
 the access and credential checks, so a guardian without access still gets `404`. The error is a
-`ValidationProblem` keyed on `ServedWithin`
+`ValidationProblem` keyed on `servedWithin`
 (`"No meals match this filter. Choose a longer period or include unrated meals."`), so the
 frontend can show a dedicated message instead of the generic `startError`.
 
 The meal set can also become empty mid-session, for example when the only matching assignment in the
 window is cleared, or the only matching meal is archived. `SendAiSessionMessage` then returns the
-same kind of `400`, also keyed on `ServedWithin` so the frontend can tell it from a provider
+same kind of `400`, also keyed on `servedWithin` so the frontend can tell it from a provider
 rejection ("No meals match this session's filter any more -- start a new session"), and doesn't
 call the provider. It is rare, and calling the model with an empty list would only produce
 a confused reply that the guardian paid for.
@@ -354,8 +354,8 @@ response fields. Update `Mealplans.http` with a filtered start request.
 | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | Both filters off / fields omitted                     | Today's behavior: every active meal                                                             |
 | `servedWithin` not 0/30/60/90                         | `400` from the validator (`IsInEnum`)                                                           |
-| Filter matches no meals at start                      | `400` keyed on `ServedWithin`; no session created, nothing sent                                 |
-| Filter matches nothing on a later turn                | `400` keyed on `ServedWithin`, "start a new session"; provider not called; message not recorded |
+| Filter matches no meals at start                      | `400` keyed on `servedWithin`; no session created, nothing sent                                 |
+| Filter matches nothing on a later turn                | `400` keyed on `servedWithin`, "start a new session"; provider not called; message not recorded |
 | Family has no `MealPlan` yet, `ServedWithin != Any`   | Served set is empty, so the start is rejected with `400` (unless must-include meals exist)      |
 | Must-include meal fails the filter                    | Still offered and still accepted by `propose_assignment`                                        |
 | Model proposes a family meal outside the filtered set | Tool error "not in the family's available meal library", as for an unknown id today             |

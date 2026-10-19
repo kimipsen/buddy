@@ -69,21 +69,21 @@ key in the Field column, `""` for a check that isn't tied to one field (see
 [HTTP status codes](../http-status-codes.md#error-response-shape-implemented)). A body
 that can't be bound is rejected before these rules run, with the same envelope.
 
-| Endpoint                    | Field                      | Rule                                                                                                          | Code               | Status |
-| --------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------ | ------ |
-| `LogSleepEntry`             | `NightWakeUps`             | At most 20. Optional.                                                                                         | `validation_error` | 400    |
-| `LogSleepEntry`             | `NightWakeUps[n].Duration` | `durationMinutes` 1–720.                                                                                      | `validation_error` | 400    |
-| `LogSleepEntry`             | `Naps`                     | At most 20. Optional.                                                                                         | `validation_error` | 400    |
-| `LogSleepEntry`             | `Naps[n].Duration`         | `durationMinutes` 1–720.                                                                                      | `validation_error` | 400    |
-| `LogSleepEntry`             | `TotalSleepDuration`       | `totalSleepMinutes` 0–1440. Optional.                                                                         | `validation_error` | 400    |
-| `LogSleepEntry`             | `Remarks`                  | At most 2000 characters after trimming. Optional.                                                             | `validation_error` | 400    |
-| `UpdateSleepHygieneNotes`   | `Notes`                    | At most 4000 characters after trimming. Optional (`""` clears).                                               | `validation_error` | 400    |
-| `ListSleepDiaryEntries`     | `To`                       | `to` not before `from`.                                                                                       | `validation_error` | 400    |
-| `ListSleepDiaryEntries`     | `To`                       | `to` at most 92 days after `from`.                                                                            | `validation_error` | 400    |
-| `CreateSleepDiaryShareLink` | `ExpiresAt`                | In the future. Optional (no expiry).                                                                          | `validation_error` | 400    |
-| `CreateSleepDiaryShareLink` | `ExpiresAt`                | At most 365 days from now.                                                                                    | `validation_error` | 400    |
-| `GetSharedSleepDiary`       | `To`                       | `to` not before `from`, after defaulting a missing end to a 14-day range (so only fails when both are given). | `validation_error` | 400    |
-| `GetSharedSleepDiary`       | `To`                       | `to` at most 92 days after `from`, after the same defaulting.                                                 | `validation_error` | 400    |
+| Endpoint                    | Field                             | Rule                                                                                                          | Code               | Status |
+| --------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------ | ------ |
+| `LogSleepEntry`             | `nightWakeUps`                    | At most 20. Optional.                                                                                         | `validation_error` | 400    |
+| `LogSleepEntry`             | `nightWakeUps[n].durationMinutes` | `durationMinutes` 1–720.                                                                                      | `validation_error` | 400    |
+| `LogSleepEntry`             | `naps`                            | At most 20. Optional.                                                                                         | `validation_error` | 400    |
+| `LogSleepEntry`             | `naps[n].durationMinutes`         | `durationMinutes` 1–720.                                                                                      | `validation_error` | 400    |
+| `LogSleepEntry`             | `totalSleepMinutes`               | `totalSleepMinutes` 0–1440. Optional.                                                                         | `validation_error` | 400    |
+| `LogSleepEntry`             | `remarks`                         | At most 2000 characters after trimming. Optional.                                                             | `validation_error` | 400    |
+| `UpdateSleepHygieneNotes`   | `notes`                           | At most 4000 characters after trimming. Optional (`""` clears).                                               | `validation_error` | 400    |
+| `ListSleepDiaryEntries`     | `to`                              | `to` not before `from`.                                                                                       | `validation_error` | 400    |
+| `ListSleepDiaryEntries`     | `to`                              | `to` at most 92 days after `from`.                                                                            | `validation_error` | 400    |
+| `CreateSleepDiaryShareLink` | `expiresAt`                       | In the future. Optional (no expiry).                                                                          | `validation_error` | 400    |
+| `CreateSleepDiaryShareLink` | `expiresAt`                       | At most 365 days from now.                                                                                    | `validation_error` | 400    |
+| `GetSharedSleepDiary`       | `to`                              | `to` not before `from`, after defaulting a missing end to a 14-day range (so only fails when both are given). | `validation_error` | 400    |
+| `GetSharedSleepDiary`       | `to`                              | `to` at most 92 days after `from`, after the same defaulting.                                                 | `validation_error` | 400    |
 
 ## Entry shape
 

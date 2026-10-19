@@ -179,7 +179,7 @@ public sealed class ListMealPlanTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Equal(["'to' must not be before 'from'."], error.Details["To"]);
+        Assert.Equal(["'to' must not be before 'from'."], error.Details["to"]);
     }
 
     [Fact]
@@ -198,7 +198,7 @@ public sealed class ListMealPlanTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Equal([$"The requested range cannot exceed {ListMealPlanHandler.MaxRangeDays} days."], error.Details["To"]);
+        Assert.Equal([$"The requested range cannot exceed {ListMealPlanHandler.MaxRangeDays} days."], error.Details["to"]);
     }
 
     [Fact]
@@ -249,7 +249,7 @@ public sealed class ListMealPlanTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Equal(["'to' must not be before 'from'."], error.Details["To"]);
+        Assert.Equal(["'to' must not be before 'from'."], error.Details["to"]);
     }
 
     [Fact]
@@ -269,7 +269,7 @@ public sealed class ListMealPlanTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Equal([$"The requested range cannot exceed {ListMealPlanHandler.MaxRangeDays} days."], error.Details["To"]);
+        Assert.Equal([$"The requested range cannot exceed {ListMealPlanHandler.MaxRangeDays} days."], error.Details["to"]);
     }
 
     [Fact]

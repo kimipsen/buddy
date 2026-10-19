@@ -61,7 +61,7 @@ public sealed partial class RequestBindingFailureMiddleware(RequestDelegate next
 
             if (errors.Count > 0)
             {
-                return new ValidationProblem(errors);
+                return ValidationProblem.FromJsonPaths(errors);
             }
         }
 
@@ -69,7 +69,7 @@ public sealed partial class RequestBindingFailureMiddleware(RequestDelegate next
             ? "The request body is not valid JSON for this endpoint."
             : $"The {field} field is missing, null or has the wrong type.";
 
-        return new ValidationProblem(new Dictionary<string, string[]> { [field] = [message] });
+        return ValidationProblem.FromJsonPaths(new Dictionary<string, string[]> { [field] = [message] });
     }
 
     private static string FieldFromPath(string? path) =>

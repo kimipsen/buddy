@@ -66,7 +66,7 @@ public sealed class ItemWarningOverrideTests(BuddyApiFixture fixture)
         foreach (var leadMinutes in new[] { new[] { 15, 10, 5, 1 }, [5, 5], [0], [121] })
         {
             var response = await SetOverrideAsync(fixture, family.GuardianToken, family.Child.Id, family.Event.Id, leadMinutes, expectedStatus: 400);
-            Assert.Contains("LeadMinutes", response.ReadAsJson<ErrorEnvelope>().Details.Keys);
+            Assert.Contains("leadMinutes", response.ReadAsJson<ErrorEnvelope>().Details.Keys);
         }
     }
 

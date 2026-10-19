@@ -34,7 +34,7 @@ public sealed class CreateMedicineScheduleTests(BuddyApiFixture fixture)
 
         var response = await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(times: []), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Times");
+        MedicineTestHelpers.AssertValidationError(response, "times");
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public sealed class CreateMedicineScheduleTests(BuddyApiFixture fixture)
 
         var response = await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(startDate: today, endDate: today.AddDays(-1)), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "EndDate");
+        MedicineTestHelpers.AssertValidationError(response, "endDate");
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public sealed class CreateMedicineScheduleTests(BuddyApiFixture fixture)
 
         var response = await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(name: ""), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Name");
+        MedicineTestHelpers.AssertValidationError(response, "name");
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public sealed class CreateMedicineScheduleTests(BuddyApiFixture fixture)
         await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(name: new string('n', 200)), 200);
         var response = await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(name: new string('n', 201)), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Name");
+        MedicineTestHelpers.AssertValidationError(response, "name");
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public sealed class CreateMedicineScheduleTests(BuddyApiFixture fixture)
         await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(dosage: new string('d', 200)), 200);
         var response = await PostScheduleAsync(guardianToken, ChildUrl(child.Id), Body(dosage: new string('d', 201)), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Dosage");
+        MedicineTestHelpers.AssertValidationError(response, "dosage");
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public sealed class CreateMedicineScheduleTests(BuddyApiFixture fixture)
 
         var response = await PostScheduleAsync(guardianToken, groupUrl, Body(times: []), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Times");
+        MedicineTestHelpers.AssertValidationError(response, "times");
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public sealed class CreateMedicineScheduleTests(BuddyApiFixture fixture)
         await PostScheduleAsync(guardianToken, groupUrl, Body(startDate: today, endDate: today), 200);
         var response = await PostScheduleAsync(guardianToken, groupUrl, Body(startDate: today, endDate: today.AddDays(-1)), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "EndDate");
+        MedicineTestHelpers.AssertValidationError(response, "endDate");
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public sealed class CreateMedicineScheduleTests(BuddyApiFixture fixture)
 
         var response = await PostScheduleAsync(guardianToken, groupUrl, Body(name: ""), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Name");
+        MedicineTestHelpers.AssertValidationError(response, "name");
     }
 
     [Fact]
@@ -136,7 +136,7 @@ public sealed class CreateMedicineScheduleTests(BuddyApiFixture fixture)
         await PostScheduleAsync(guardianToken, groupUrl, Body(name: new string('n', 200)), 200);
         var response = await PostScheduleAsync(guardianToken, groupUrl, Body(name: new string('n', 201)), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Name");
+        MedicineTestHelpers.AssertValidationError(response, "name");
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public sealed class CreateMedicineScheduleTests(BuddyApiFixture fixture)
         await PostScheduleAsync(guardianToken, groupUrl, Body(dosage: new string('d', 200)), 200);
         var response = await PostScheduleAsync(guardianToken, groupUrl, Body(dosage: new string('d', 201)), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Dosage");
+        MedicineTestHelpers.AssertValidationError(response, "dosage");
     }
 
     [Fact]

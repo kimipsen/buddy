@@ -85,7 +85,7 @@ public sealed class ListPickupScheduleTests(BuddyApiFixture fixture)
 
         var response = await GetScheduleAsync(guardianToken, child.Id, today, today.AddDays(-1), 400);
 
-        AssertValidationError(response, "To");
+        AssertValidationError(response, "to");
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public sealed class ListPickupScheduleTests(BuddyApiFixture fixture)
         await GetScheduleAsync(guardianToken, child.Id, today, today.AddDays(31), 200);
         var response = await GetScheduleAsync(guardianToken, child.Id, today, today.AddDays(32), 400);
 
-        AssertValidationError(response, "To");
+        AssertValidationError(response, "to");
     }
 
     private Task<IScenarioResult> GetScheduleAsync(string token, Guid childId, DateOnly from, DateOnly to, int expectedStatus) =>

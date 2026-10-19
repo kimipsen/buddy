@@ -9,7 +9,7 @@ namespace buddy.Features.Calendars;
 // (ItemAlarms.From), so the count is of distinct offsets: a repeated offset is merged, not rejected.
 public static class ItemAlarmRules
 {
-    public const string Key = "Alarms";
+    public const string Key = "alarms";
 
     private static readonly string TooMany = string.Create(CultureInfo.InvariantCulture, $"An item can have at most {ItemAlarms.Max} alarms.");
 

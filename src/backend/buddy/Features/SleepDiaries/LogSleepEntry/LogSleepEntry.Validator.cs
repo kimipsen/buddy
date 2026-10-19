@@ -26,7 +26,8 @@ public sealed class LogSleepEntryValidator : AbstractValidator<LogSleepEntry>
 
         RuleFor(x => x.TotalSleepDuration)
             .Must(total => total is null || (total >= TimeSpan.Zero && total <= MaxTotalSleep))
-            .WithMessage("totalSleepMinutes must be between 0 and 1440.");
+            .WithMessage("totalSleepMinutes must be between 0 and 1440.")
+            .OverridePropertyName("totalSleepMinutes");
 
         RuleFor(x => x.Remarks).MaximumLength(MaxRemarksLength);
     }
@@ -34,5 +35,6 @@ public sealed class LogSleepEntryValidator : AbstractValidator<LogSleepEntry>
     private static void IntervalRules(InlineValidator<SleepInterval> interval) =>
         interval.RuleFor(i => i.Duration)
             .Must(d => d > TimeSpan.Zero && d <= MaxIntervalDuration)
-            .WithMessage("durationMinutes must be between 1 and 720.");
+            .WithMessage("durationMinutes must be between 1 and 720.")
+            .OverridePropertyName("durationMinutes");
 }

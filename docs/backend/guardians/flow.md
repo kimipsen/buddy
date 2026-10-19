@@ -75,13 +75,13 @@ that can't be bound is rejected before these rules run, with the same envelope.
 
 | Endpoint                    | Field          | Rule                                                                                                       | Code                        | Status |
 | --------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------- | ------ |
-| `CreateChild`               | `GivenName`    | Required: not empty after trimming. At most 200 characters after trimming.                                 | `validation_error`          | 400    |
-| `CreateChild`               | `FamilyName`   | Required: not empty after trimming. At most 200 characters after trimming.                                 | `validation_error`          | 400    |
-| `CreateChild`               | `Username`     | Required: not empty after trimming. At most 200 characters after trimming.                                 | `validation_error`          | 400    |
+| `CreateChild`               | `givenName`    | Required: not empty after trimming. At most 200 characters after trimming.                                 | `validation_error`          | 400    |
+| `CreateChild`               | `familyName`   | Required: not empty after trimming. At most 200 characters after trimming.                                 | `validation_error`          | 400    |
+| `CreateChild`               | `username`     | Required: not empty after trimming. At most 200 characters after trimming.                                 | `validation_error`          | 400    |
 | `CreateChild`               | —              | The username isn't already taken in Keycloak.                                                              | `username_unavailable`      | 409    |
 | `DeleteChild`               | —              | The caller is the child's only active guardian.                                                            | `child_has_other_guardians` | 409    |
-| `UpdateChildLanguage`       | `Language`     | A supported language: `en` or `da` (exact, case-sensitive).                                                | `validation_error`          | 400    |
-| `UpdateChildTimeZone`       | `TimeZoneId`   | A time zone id the server recognizes (IANA, e.g. `Europe/Copenhagen`).                                     | `validation_error`          | 400    |
+| `UpdateChildLanguage`       | `language`     | A supported language: `en` or `da` (exact, case-sensitive).                                                | `validation_error`          | 400    |
+| `UpdateChildTimeZone`       | `timeZoneId`   | A time zone id the server recognizes (IANA, e.g. `Europe/Copenhagen`).                                     | `validation_error`          | 400    |
 | `UpdateChildVisualTimers`   | —              | No rules beyond binding the body (`showVisualTimers`, a boolean).                                          | `validation_error`          | 400    |
 | `UpdateChildHomeworkChunks` | `focusMinutes` | 5 to 45, inclusive.                                                                                        | `validation_error`          | 400    |
 | `UpdateChildHomeworkChunks` | `breakMinutes` | 1 to 15, inclusive.                                                                                        | `validation_error`          | 400    |

@@ -174,7 +174,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
         });
 
         // CreateItemValidator reports the end-after-start rule against the schedule.
-        Assert.Contains("Schedule", error.Details.Keys);
+        Assert.Contains("schedule", error.Details.Keys);
     }
 
     [Fact]
@@ -217,7 +217,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             }
         });
 
-        Assert.Contains("Title", error.Details.Keys);
+        Assert.Contains("title", error.Details.Keys);
     }
 
     [Fact]
@@ -253,7 +253,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             }
         });
 
-        Assert.Contains("Recurrence.IntervalCount", error.Details.Keys);
+        Assert.Contains("recurrence.intervalCount", error.Details.Keys);
     }
 
     [Fact]
@@ -277,7 +277,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             }
         });
 
-        Assert.Contains("Recurrence.Until", error.Details.Keys);
+        Assert.Contains("recurrence.until", error.Details.Keys);
     }
 
     [Fact]
@@ -408,14 +408,14 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
 
     public static TheoryData<RecurrenceFrequency, int, int, int[], string> InvalidWeekdayRules => new()
     {
-        { RecurrenceFrequency.Daily, 1, -1, [], "Recurrence.Weekdays" },
-        { RecurrenceFrequency.Daily, 1, -1, [9], "Recurrence.Weekdays" },
-        { RecurrenceFrequency.Monthly, 1, -1, [1], "Recurrence.Weekdays" },
-        { RecurrenceFrequency.Daily, 2, -1, [1], "Recurrence.IntervalCount" },
+        { RecurrenceFrequency.Daily, 1, -1, [], "recurrence.weekdays" },
+        { RecurrenceFrequency.Daily, 1, -1, [9], "recurrence.weekdays" },
+        { RecurrenceFrequency.Monthly, 1, -1, [1], "recurrence.weekdays" },
+        { RecurrenceFrequency.Daily, 2, -1, [1], "recurrence.intervalCount" },
         // Seeded on a Sunday and ending the next day, a Tuesday-only rule never occurs.
-        { RecurrenceFrequency.Daily, 1, 1, [2], "Recurrence.Weekdays" },
+        { RecurrenceFrequency.Daily, 1, 1, [2], "recurrence.weekdays" },
         // Every other week from a Sunday: the next Monday is in the skipped week.
-        { RecurrenceFrequency.Weekly, 2, 7, [1], "Recurrence.Weekdays" },
+        { RecurrenceFrequency.Weekly, 2, 7, [1], "recurrence.weekdays" },
     };
 
     [Theory]

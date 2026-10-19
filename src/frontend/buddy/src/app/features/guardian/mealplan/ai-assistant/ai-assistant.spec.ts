@@ -60,7 +60,7 @@ describe('MealplanAiAssistant', () => {
   function noMatchingMeals(): HttpErrorResponse {
     return new HttpErrorResponse({
       status: 400,
-      error: { code: 'validation_error', details: { ServedWithin: ['No meals match.'] } },
+      error: { code: 'validation_error', details: { servedWithin: ['No meals match.'] } },
     });
   }
 

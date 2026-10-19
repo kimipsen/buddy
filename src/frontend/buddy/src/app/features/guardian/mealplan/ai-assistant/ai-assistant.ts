@@ -43,7 +43,7 @@ const SERVED_WINDOWS: readonly Exclude<AiServedWindow, 'Any'>[] = [
   'Last90Days',
 ];
 
-// The backend keys a "no meals match the filter" rejection on ServedWithin, for both starting a
+// The backend keys a "no meals match the filter" rejection on servedWithin, for both starting a
 // session and sending a message (docs/backend/analysis/ai-assistant-meal-filter.md, Question 6).
 function isNoMatchingMeals(error: unknown): boolean {
   if (!(error instanceof HttpErrorResponse) || error.status !== 400) {
@@ -51,7 +51,7 @@ function isNoMatchingMeals(error: unknown): boolean {
   }
 
   const details = (error.error as { details?: Record<string, string[]> } | null)?.details;
-  return details?.['ServedWithin'] !== undefined;
+  return details?.['servedWithin'] !== undefined;
 }
 
 function todayIsoDate(): string {

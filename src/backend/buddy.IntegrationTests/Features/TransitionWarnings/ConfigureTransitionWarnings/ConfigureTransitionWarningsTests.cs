@@ -103,7 +103,7 @@ public sealed class ConfigureTransitionWarningsTests(BuddyApiFixture fixture)
         foreach (var leadMinutes in new[] { Array.Empty<int>(), [15, 10, 5, 1], [5, 5], [0], [121] })
         {
             var error = await ConfigureInvalidAsync(family, Settings(true, leadMinutes));
-            Assert.Contains("LeadMinutes", error.Details.Keys);
+            Assert.Contains("leadMinutes", error.Details.Keys);
         }
     }
 
@@ -113,7 +113,7 @@ public sealed class ConfigureTransitionWarningsTests(BuddyApiFixture fixture)
         var family = await CreateFamilyAsync(fixture);
 
         var error = await ConfigureInvalidAsync(family, Settings(true, [5], []));
-        Assert.Contains("Kinds", error.Details.Keys);
+        Assert.Contains("kinds", error.Details.Keys);
 
         await ConfigureAsync(fixture, family.GuardianToken, family.Child.Id, Settings(false, [5], []));
     }
@@ -125,7 +125,7 @@ public sealed class ConfigureTransitionWarningsTests(BuddyApiFixture fixture)
 
         var error = await ConfigureInvalidAsync(family, Settings(true, [5], quietHours: new QuietHoursDto(new TimeOnly(9, 0), new TimeOnly(9, 0))));
 
-        Assert.Contains("QuietHours", error.Details.Keys);
+        Assert.Contains("quietHours", error.Details.Keys);
     }
 
     [Fact]

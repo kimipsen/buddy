@@ -54,7 +54,7 @@ public sealed class UpdateItemRecurrenceTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Recurrence.IntervalCount", error.Details.Keys);
+        Assert.Contains("recurrence.intervalCount", error.Details.Keys);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public sealed class UpdateItemRecurrenceTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Recurrence.Until", error.Details.Keys);
+        Assert.Contains("recurrence.until", error.Details.Keys);
     }
 
     [Fact]
@@ -186,6 +186,6 @@ public sealed class UpdateItemRecurrenceTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(400);
         });
 
-        Assert.Contains("Recurrence.Weekdays", response.ReadAsJson<ErrorEnvelope>().Details.Keys);
+        Assert.Contains("recurrence.weekdays", response.ReadAsJson<ErrorEnvelope>().Details.Keys);
     }
 }

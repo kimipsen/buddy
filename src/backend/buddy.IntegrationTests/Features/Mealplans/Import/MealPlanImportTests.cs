@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Mealplans;
 using buddy.Features.Users;
@@ -216,6 +217,14 @@ public sealed class MealPlanImportTests(BuddyApiFixture fixture)
         await PreviewAsync(token, basePath, Note, format: "spreadsheet", expectedStatus: 400);
         await PreviewAsync(token, basePath, "Just some text\nthat is not a plan", expectedStatus: 400);
         await PreviewAsync(token, basePath, "U2\nMa: Burger", format: "weekly-note", expectedStatus: 400);
+
+        var badOptions = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Post.Json(new { Text = Note, WeekStart = 42, Slot = 42 }).ToUrl($"{basePath}/imports/preview");
+            _.StatusCodeShouldBe(400);
+        });
+        Assert.Equal(["slot", "weekStart"], badOptions.ReadAsJson<ErrorEnvelope>().Details.Keys.Order(StringComparer.Ordinal));
 
         var tooMany = Enumerable.Range(0, CommitMealPlanImportRules.MaxEntries + 1)
             .Select(i => new { Date = Sunday.AddDays(i), Slot = MealSlot.Dinner, NewMealName = "Soup" })

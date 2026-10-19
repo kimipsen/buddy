@@ -6,11 +6,11 @@ namespace buddy.Features.Calendars;
 // the request's own field paths.
 public static class RecurrenceRules
 {
-    public const string IntervalCountKey = "Recurrence.IntervalCount";
+    public const string IntervalCountKey = "recurrence.intervalCount";
 
-    public const string UntilKey = "Recurrence.Until";
+    public const string UntilKey = "recurrence.until";
 
-    public const string WeekdaysKey = "Recurrence.Weekdays";
+    public const string WeekdaysKey = "recurrence.weekdays";
 
     public static IEnumerable<(string Key, string Message)> Problems(Recurrence recurrence, DateOnly seed)
     {

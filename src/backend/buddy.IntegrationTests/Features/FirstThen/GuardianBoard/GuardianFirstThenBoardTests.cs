@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.FirstThen;
 using buddy.Features.Users;
 using buddy.IntegrationTests.Features.Guardians;
@@ -129,6 +130,23 @@ public sealed class GuardianFirstThenBoardTests(BuddyApiFixture fixture)
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, token);
 
         await SetAsync(fixture, token, child.Id, Board(0, first: firstTitle, firstIcon: firstIcon, thenMinutes: thenMinutes), expectedStatus: 400);
+    }
+
+    [Fact]
+    public async Task An_invalid_board_reports_each_problem_under_the_request_field()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, token);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Put.Json(Board(0, first: "", thenIcon: "", thenMinutes: 4)).ToUrl($"/first-then/children/{child.Id}");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal(["first.title", "then.icon", "thenMinutes"], error.Details.Keys.Order(StringComparer.Ordinal));
     }
 
     [Fact]

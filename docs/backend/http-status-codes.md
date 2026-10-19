@@ -417,9 +417,11 @@ built from FluentValidation's `ValidationResult` via
 }
 ```
 
-`details` keys are field names as FluentValidation derives them from the
-command's property names (or `""` for a general, non-field-specific error,
-e.g. a resend-cooldown rejection). `requestId` is `HttpContext.TraceIdentifier`, which is the
+`details` keys are camelCase JSON paths of the request field the client sent
+(`name`, `recurrence.until`, `days[0].week`; a route or query value by its parameter
+name, such as `to`), the same keys a binding failure carries, or `""` for a general,
+non-field-specific error (e.g. a resend-cooldown rejection). `ValidationProblem`
+camel-cases every key once, whether a validator or a handler built it. `requestId` is `HttpContext.TraceIdentifier`, which is the
 request's trace id (see [observability.md](observability.md#logs-and-correlation)).
 `NotFound`/`Forbidden` outcomes are unaffected — they keep their existing,
 endpoint-specific mappings (some deliberately collapse `Forbidden` into `404`

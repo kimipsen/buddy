@@ -11,12 +11,6 @@
 Found while writing the `## Validation` tables; each is documented as the code behaves today. Ask
 before changing behavior.
 
-- [ ] **Error keys that don't match the request.** First-Then cards report `First.first.title` /
-      `Then.then.icon` (the card validator's override plus the parent prefix); `LogSleepEntry`,
-      `UpdateCurrentEmail` (`Value`), `UpdateOnboardingProgress` (`ExpectedVersion`),
-      `StartAiSession` (`RequestedSlots`) and `PreviewMealPlanImport` (`Options.*`) use command
-      property names; template icons use both `Icon` and `Icon.Value`. Keys mix PascalCase and
-      camelCase across domains.
 - [ ] **Unvalidated fields.** Meal, medicine, calendar-item and task-template icon/color;
       `UpdateCalendarItemDetails` title; `CreateGroup` name; `UpdateCurrentName`; invite emails
       (`InviteGuardian`, `InviteToGroup`); undefined enum numbers (dose status, recurrence
@@ -828,3 +822,13 @@ they reuse data the app already keeps. Each has a design doc.
       in its domain's `docs/backend/<domain>/flow.md` (field, rule, error code, HTTP status) and
       matches `docs/backend/openapi/buddy.json`. `task docs:validation` (and backend CI) checks the
       tables against the contract (2026-10-19).
+
+### Validation gaps found while documenting (2026-10-19)
+
+- [x] **Error keys that don't match the request.** First-Then cards report `First.first.title` /
+      `Then.then.icon` (the card validator's override plus the parent prefix); `LogSleepEntry`,
+      `UpdateCurrentEmail` (`Value`), `UpdateOnboardingProgress` (`ExpectedVersion`),
+      `StartAiSession` (`RequestedSlots`) and `PreviewMealPlanImport` (`Options.*`) use command
+      property names; template icons use both `Icon` and `Icon.Value`. Keys mix PascalCase and
+      camelCase across domains. Every key is now the camelCase
+      JSON path of the request field (`ValidationProblem` normalizes them).

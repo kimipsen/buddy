@@ -88,6 +88,6 @@ that can't be bound is rejected before these rules run, with the same envelope.
 | `CreateVisitSummary`, `UpdateVisitSummary` | `sections`  | Every value a defined `VisitSummarySection` (`Medicine`, `Sleep`, `Feelings`).                                 | `validation_error` | 400    |
 | `CreateVisitSummary`, `UpdateVisitSummary` | `to`        | Not before `from`.                                                                                             | `validation_error` | 400    |
 | `CreateVisitSummary`, `UpdateVisitSummary` | `to`        | The period `from`–`to` spans at most 92 days, both ends included.                                              | `validation_error` | 400    |
-| `CreateVisitSummaryShareLink`              | `ExpiresAt` | When given: in the future. Optional.                                                                           | `validation_error` | 400    |
-| `CreateVisitSummaryShareLink`              | `ExpiresAt` | When given: at most 365 days from now.                                                                         | `validation_error` | 400    |
+| `CreateVisitSummaryShareLink`              | `expiresAt` | When given: in the future. Optional.                                                                           | `validation_error` | 400    |
+| `CreateVisitSummaryShareLink`              | `expiresAt` | When given: at most 365 days from now.                                                                         | `validation_error` | 400    |
 | `CreateVisitSummaryShareLink`              | `""`        | At most 5 live (not revoked, not expired) links per summary.                                                   | `validation_error` | 400    |

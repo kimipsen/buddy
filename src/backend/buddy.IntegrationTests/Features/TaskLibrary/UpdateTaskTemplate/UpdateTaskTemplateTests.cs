@@ -110,7 +110,7 @@ public sealed class UpdateTaskTemplateTests(BuddyApiFixture fixture)
 
         var response = await PatchNameAsync(guardianToken, templateId, " ", expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "Name");
+        AssertValidationErrorOn(response, "name");
     }
 
     [Fact]
@@ -131,6 +131,6 @@ public sealed class UpdateTaskTemplateTests(BuddyApiFixture fixture)
 
         var response = await PatchNameAsync(guardianToken, templateId, new string('a', 201), expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "Name");
+        AssertValidationErrorOn(response, "name");
     }
 }

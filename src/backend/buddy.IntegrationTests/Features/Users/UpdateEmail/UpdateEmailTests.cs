@@ -48,7 +48,7 @@ public sealed class UpdateEmailTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Value", error.Details.Keys);
+        Assert.Contains("email", error.Details.Keys);
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public sealed class UpdateEmailTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Value", error.Details.Keys);
+        Assert.Contains("email", error.Details.Keys);
     }
 
     [Fact]
@@ -116,7 +116,7 @@ public sealed class UpdateEmailTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Value", error.Details.Keys);
+        Assert.Contains("email", error.Details.Keys);
     }
 
     // A unique, well-formed address of exactly `length` characters. The padding goes into

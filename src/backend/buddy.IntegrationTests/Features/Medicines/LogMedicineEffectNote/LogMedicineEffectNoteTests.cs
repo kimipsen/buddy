@@ -178,7 +178,7 @@ public sealed class LogMedicineEffectNoteTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(400);
         });
 
-        MedicineTestHelpers.AssertValidationError(response, "Note");
+        MedicineTestHelpers.AssertValidationError(response, "note");
     }
 
     [Fact]

@@ -81,7 +81,7 @@ public sealed class AddSubtaskTests(BuddyApiFixture fixture)
 
         var response = await PostRejectedSubtaskAsync(guardianToken, templateId, "Brush teeth", "00:00:00");
 
-        AssertValidationErrorOn(response, "Duration");
+        AssertValidationErrorOn(response, "duration");
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public sealed class AddSubtaskTests(BuddyApiFixture fixture)
 
         var response = await PostRejectedSubtaskAsync(guardianToken, templateId, " ", "00:02:00");
 
-        AssertValidationErrorOn(response, "Title");
+        AssertValidationErrorOn(response, "title");
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public sealed class AddSubtaskTests(BuddyApiFixture fixture)
 
         var response = await PostRejectedSubtaskAsync(guardianToken, templateId, new string('a', 201), "00:02:00");
 
-        AssertValidationErrorOn(response, "Title");
+        AssertValidationErrorOn(response, "title");
     }
 
     [Fact]

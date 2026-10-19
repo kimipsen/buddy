@@ -125,7 +125,7 @@ public sealed class UpdateMealDetailsTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Name", error.Details.Keys);
+        Assert.Contains("name", error.Details.Keys);
     }
 
     [Fact]
@@ -187,7 +187,7 @@ public sealed class UpdateMealDetailsTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Name", error.Details.Keys);
+        Assert.Contains("name", error.Details.Keys);
     }
 
     [Fact]
@@ -208,7 +208,7 @@ public sealed class UpdateMealDetailsTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Description", error.Details.Keys);
+        Assert.Contains("description", error.Details.Keys);
     }
 
     [Fact]
@@ -230,7 +230,7 @@ public sealed class UpdateMealDetailsTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Name", error.Details.Keys);
+        Assert.Contains("name", error.Details.Keys);
     }
 
     [Fact]
@@ -276,7 +276,7 @@ public sealed class UpdateMealDetailsTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Name", error.Details.Keys);
+        Assert.Contains("name", error.Details.Keys);
     }
 
     [Fact]
@@ -298,6 +298,6 @@ public sealed class UpdateMealDetailsTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Description", error.Details.Keys);
+        Assert.Contains("description", error.Details.Keys);
     }
 }

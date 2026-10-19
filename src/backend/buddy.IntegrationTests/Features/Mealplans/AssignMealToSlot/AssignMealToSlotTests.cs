@@ -293,7 +293,7 @@ public sealed class AssignMealToSlotTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Notes", error.Details.Keys);
+        Assert.Contains("notes", error.Details.Keys);
     }
 
     [Theory]
@@ -328,7 +328,7 @@ public sealed class AssignMealToSlotTests(BuddyApiFixture fixture)
         {
             var error = response.ReadAsJson<ErrorEnvelope>();
             Assert.Equal("validation_error", error.Code);
-            Assert.Equal(["Notes"], error.Details.Keys);
+            Assert.Equal(["notes"], error.Details.Keys);
         }
     }
 }

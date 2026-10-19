@@ -98,15 +98,15 @@ public sealed class CreateChildTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("GivenName", error.Details.Keys);
+        Assert.Contains("givenName", error.Details.Keys);
     }
 
     [Theory]
-    [InlineData("GivenName", "", "Child", "blank-given")]
-    [InlineData("FamilyName", "Child", "", "blank-family")]
-    [InlineData("FamilyName", "Child", "   ", "whitespace-family")]
-    [InlineData("Username", "Child", "Child", "")]
-    [InlineData("Username", "Child", "Child", "   ")]
+    [InlineData("givenName", "", "Child", "blank-given")]
+    [InlineData("familyName", "Child", "", "blank-family")]
+    [InlineData("familyName", "Child", "   ", "whitespace-family")]
+    [InlineData("username", "Child", "Child", "")]
+    [InlineData("username", "Child", "Child", "   ")]
     public async Task Rejects_a_blank_name_or_username_naming_the_field(string field, string givenName, string familyName, string username)
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
@@ -117,9 +117,9 @@ public sealed class CreateChildTests(BuddyApiFixture fixture)
     }
 
     [Theory]
-    [InlineData("GivenName")]
-    [InlineData("FamilyName")]
-    [InlineData("Username")]
+    [InlineData("givenName")]
+    [InlineData("familyName")]
+    [InlineData("username")]
     public async Task Rejects_a_name_or_username_longer_than_200_characters_naming_the_field(string field)
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
@@ -127,9 +127,9 @@ public sealed class CreateChildTests(BuddyApiFixture fixture)
 
         var error = await PostInvalidChildAsync(
             guardianToken,
-            field == "GivenName" ? tooLong : "Child",
-            field == "FamilyName" ? tooLong : "Child",
-            field == "Username" ? tooLong : $"too-long-{Guid.CreateVersion7():N}");
+            field == "givenName" ? tooLong : "Child",
+            field == "familyName" ? tooLong : "Child",
+            field == "username" ? tooLong : $"too-long-{Guid.CreateVersion7():N}");
 
         Assert.Equal(field, Assert.Single(error.Details.Keys));
     }

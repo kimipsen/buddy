@@ -85,7 +85,7 @@ public sealed class UpdateCallingNameTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("CallingName", error.Details.Keys);
+        Assert.Contains("callingName", error.Details.Keys);
     }
 
     [Fact]

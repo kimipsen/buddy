@@ -46,6 +46,6 @@ public sealed class UpdateCalendarIconTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Icon.Value", error.Details.Keys);
+        Assert.Contains("icon", error.Details.Keys);
     }
 }

@@ -83,7 +83,7 @@ public sealed class ListTodaysDosesTests(BuddyApiFixture fixture)
 
         var response = await GetDosesAsync(guardianToken, $"/medicines/children/{child.Id}/doses", today, today.AddDays(-1), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "To");
+        MedicineTestHelpers.AssertValidationError(response, "to");
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public sealed class ListTodaysDosesTests(BuddyApiFixture fixture)
         await GetDosesAsync(guardianToken, url, today, today.AddDays(31), 200);
         var response = await GetDosesAsync(guardianToken, url, today, today.AddDays(32), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "To");
+        MedicineTestHelpers.AssertValidationError(response, "to");
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public sealed class ListTodaysDosesTests(BuddyApiFixture fixture)
         await GetDosesAsync(guardianToken, url, today, today, 200);
         var response = await GetDosesAsync(guardianToken, url, today, today.AddDays(-1), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "To");
+        MedicineTestHelpers.AssertValidationError(response, "to");
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public sealed class ListTodaysDosesTests(BuddyApiFixture fixture)
         await GetDosesAsync(guardianToken, url, today, today.AddDays(31), 200);
         var response = await GetDosesAsync(guardianToken, url, today, today.AddDays(32), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "To");
+        MedicineTestHelpers.AssertValidationError(response, "to");
     }
 
     private async Task<(string GuardianToken, string Url)> CreateSharedGroupDosesUrlAsync()

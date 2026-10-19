@@ -80,7 +80,7 @@ public sealed class ConfigureRewardsTests(BuddyApiFixture fixture)
         var response = await PutRewardsAsync(fixture, family.GuardianToken, family.ChildId,
             [new { Id = Guid.NewGuid(), Name = "Made up", Icon = "🎁", Cost = 5 }], expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "Rewards[0].Id");
+        AssertValidationErrorOn(response, "rewards[0].id");
     }
 
     [Fact]
@@ -95,14 +95,14 @@ public sealed class ConfigureRewardsTests(BuddyApiFixture fixture)
             new { Id = rewardId, Name = "B", Icon = "🎁", Cost = 6 }
         ], expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "Rewards");
+        AssertValidationErrorOn(response, "rewards");
     }
 
     [Theory]
-    [InlineData("", "🎁", 5, "Rewards[0].Name")]
-    [InlineData("Screen time", "", 5, "Rewards[0].Icon")]
-    [InlineData("Screen time", "🎁", 0, "Rewards[0].Cost")]
-    [InlineData("Screen time", "🎁", 10_001, "Rewards[0].Cost")]
+    [InlineData("", "🎁", 5, "rewards[0].name")]
+    [InlineData("Screen time", "", 5, "rewards[0].icon")]
+    [InlineData("Screen time", "🎁", 0, "rewards[0].cost")]
+    [InlineData("Screen time", "🎁", 10_001, "rewards[0].cost")]
     public async Task An_invalid_reward_is_rejected(string name, string icon, int cost, string field)
     {
         var family = await CreateFamilyAsync(fixture);
@@ -121,7 +121,7 @@ public sealed class ConfigureRewardsTests(BuddyApiFixture fixture)
         var response = await PutRewardsAsync(fixture, family.GuardianToken, family.ChildId,
             [new { Name = new string('a', 101), Icon = "🎁", Cost = 5 }], expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "Rewards[0].Name");
+        AssertValidationErrorOn(response, "rewards[0].name");
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public sealed class ConfigureRewardsTests(BuddyApiFixture fixture)
         await PutRewardsAsync(fixture, family.GuardianToken, family.ChildId, Rewards(30));
         var response = await PutRewardsAsync(fixture, family.GuardianToken, family.ChildId, Rewards(31), expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "Rewards");
+        AssertValidationErrorOn(response, "rewards");
     }
 
     [Fact]

@@ -78,7 +78,7 @@ public sealed class PictogramIconTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Icon", error.Details.Keys);
+        Assert.Contains("icon", error.Details.Keys);
     }
 
     [Fact]

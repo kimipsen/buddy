@@ -60,7 +60,7 @@ public sealed class UpdateMedicineDetailsTests(BuddyApiFixture fixture)
 
         var response = await PatchDetailsAsync(guardianToken, url, "", "5 ml", 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Name");
+        MedicineTestHelpers.AssertValidationError(response, "name");
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public sealed class UpdateMedicineDetailsTests(BuddyApiFixture fixture)
         await PatchDetailsAsync(guardianToken, url, new string('n', 200), "5 ml", 200);
         var response = await PatchDetailsAsync(guardianToken, url, new string('n', 201), "5 ml", 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Name");
+        MedicineTestHelpers.AssertValidationError(response, "name");
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public sealed class UpdateMedicineDetailsTests(BuddyApiFixture fixture)
         await PatchDetailsAsync(guardianToken, url, "Amoxicillin", new string('d', 200), 200);
         var response = await PatchDetailsAsync(guardianToken, url, "Amoxicillin", new string('d', 201), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Dosage");
+        MedicineTestHelpers.AssertValidationError(response, "dosage");
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public sealed class UpdateMedicineDetailsTests(BuddyApiFixture fixture)
 
         var response = await PatchDetailsAsync(guardianToken, url, "", "5 ml", 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Name");
+        MedicineTestHelpers.AssertValidationError(response, "name");
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public sealed class UpdateMedicineDetailsTests(BuddyApiFixture fixture)
         await PatchDetailsAsync(guardianToken, url, new string('n', 200), "5 ml", 200);
         var response = await PatchDetailsAsync(guardianToken, url, new string('n', 201), "5 ml", 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Name");
+        MedicineTestHelpers.AssertValidationError(response, "name");
     }
 
     [Fact]
@@ -114,7 +114,7 @@ public sealed class UpdateMedicineDetailsTests(BuddyApiFixture fixture)
         await PatchDetailsAsync(guardianToken, url, "Amoxicillin", new string('d', 200), 200);
         var response = await PatchDetailsAsync(guardianToken, url, "Amoxicillin", new string('d', 201), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Dosage");
+        MedicineTestHelpers.AssertValidationError(response, "dosage");
     }
 
     // Returns the schedule's details URL, either the child-keyed route or (viaGroup) the

@@ -6,6 +6,6 @@ public sealed class UpdateEmailValidator : AbstractValidator<UpdateEmail>
 {
     public UpdateEmailValidator()
     {
-        RuleFor(x => x.Value).NotEmpty().EmailAddress().MaximumLength(200);
+        RuleFor(x => x.Value).NotEmpty().EmailAddress().MaximumLength(200).OverridePropertyName("email");
     }
 }

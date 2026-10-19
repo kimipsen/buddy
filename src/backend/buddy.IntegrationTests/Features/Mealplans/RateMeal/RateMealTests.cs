@@ -117,7 +117,7 @@ public sealed class RateMealTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Equal(["Stars must be between 1 and 5."], error.Details["Stars"]);
+        Assert.Equal(["Stars must be between 1 and 5."], error.Details["stars"]);
     }
 
     [Fact]
@@ -154,7 +154,7 @@ public sealed class RateMealTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Equal(["Stars must be between 1 and 5."], error.Details["Stars"]);
+        Assert.Equal(["Stars must be between 1 and 5."], error.Details["stars"]);
     }
 
     [Fact]
@@ -197,6 +197,6 @@ public sealed class RateMealTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Comment", error.Details.Keys);
+        Assert.Contains("comment", error.Details.Keys);
     }
 }

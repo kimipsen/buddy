@@ -42,7 +42,7 @@ public sealed class CreateTaskTemplateTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Name", error.Details.Keys);
+        Assert.Contains("name", error.Details.Keys);
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public sealed class CreateTaskTemplateTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(400);
         });
 
-        Assert.Contains("Icon.Value", response.ReadAsJson<ErrorEnvelope>().Details.Keys);
+        Assert.Contains("icon", response.ReadAsJson<ErrorEnvelope>().Details.Keys);
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public sealed class CreateTaskTemplateTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Name", error.Details.Keys);
+        Assert.Contains("name", error.Details.Keys);
     }
 
     [Fact]

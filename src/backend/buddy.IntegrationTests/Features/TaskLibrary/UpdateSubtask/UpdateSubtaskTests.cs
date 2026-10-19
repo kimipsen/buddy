@@ -92,7 +92,7 @@ public sealed class UpdateSubtaskTests(BuddyApiFixture fixture)
 
         var response = await PatchSubtaskAsync(guardianToken, templateId, subtaskId, " ", "00:02:00", expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "Title");
+        AssertValidationErrorOn(response, "title");
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public sealed class UpdateSubtaskTests(BuddyApiFixture fixture)
 
         var response = await PatchSubtaskAsync(guardianToken, templateId, subtaskId, new string('a', 201), "00:02:00", expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "Title");
+        AssertValidationErrorOn(response, "title");
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public sealed class UpdateSubtaskTests(BuddyApiFixture fixture)
 
         var response = await PatchSubtaskAsync(guardianToken, templateId, subtaskId, "Brush teeth", "00:00:00", expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "Duration");
+        AssertValidationErrorOn(response, "duration");
     }
 
     [Fact]

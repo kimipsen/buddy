@@ -30,7 +30,7 @@ public sealed class SetProviderApiKeyValidationTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Provider", error.Details.Keys);
+        Assert.Contains("provider", error.Details.Keys);
     }
 
     [Theory]
@@ -50,7 +50,7 @@ public sealed class SetProviderApiKeyValidationTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("ApiKey", error.Details.Keys);
+        Assert.Contains("apiKey", error.Details.Keys);
     }
 
     [Fact]
@@ -86,6 +86,6 @@ public sealed class SetProviderApiKeyValidationTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("ApiKey", error.Details.Keys);
+        Assert.Contains("apiKey", error.Details.Keys);
     }
 }

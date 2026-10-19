@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
@@ -111,7 +112,8 @@ public sealed class CopyTaskTemplateTests(BuddyApiFixture fixture)
         var family = await CreateFamilyAsync(fixture);
         var source = await ChecklistWithItemsAsync(fixture, family, "Lunchbox");
 
-        await CopyAsync(family.GuardianToken, source.Id, Guid.Empty, expectedStatus: 400);
+        var rejected = await CopyAsync(family.GuardianToken, source.Id, Guid.Empty, expectedStatus: 400);
+        Assert.Equal(["childId"], rejected.ReadAsJson<ErrorEnvelope>().Details.Keys);
 
         await fixture.Host.Scenario(_ =>
         {

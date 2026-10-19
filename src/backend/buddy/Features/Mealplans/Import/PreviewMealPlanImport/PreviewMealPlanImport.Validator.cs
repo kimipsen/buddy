@@ -17,8 +17,8 @@ public sealed class PreviewMealPlanImportValidator : AbstractValidator<PreviewMe
     {
         RuleFor(x => x.Text).NotEmpty().MaximumLength(PreviewMealPlanImportRules.MaxTextLength);
         RuleFor(x => x.Format).Must(PreviewMealPlanImportRules.IsKnownFormat).WithMessage("Unknown import format.");
-        RuleFor(x => x.Options.WeekStart).IsInEnum();
-        RuleFor(x => x.Options.Slot).IsInEnum();
+        RuleFor(x => x.Options.WeekStart).IsInEnum().OverridePropertyName("weekStart");
+        RuleFor(x => x.Options.Slot).IsInEnum().OverridePropertyName("slot");
     }
 }
 
@@ -28,7 +28,7 @@ public sealed class PreviewMealPlanImportForGroupValidator : AbstractValidator<P
     {
         RuleFor(x => x.Text).NotEmpty().MaximumLength(PreviewMealPlanImportRules.MaxTextLength);
         RuleFor(x => x.Format).Must(PreviewMealPlanImportRules.IsKnownFormat).WithMessage("Unknown import format.");
-        RuleFor(x => x.Options.WeekStart).IsInEnum();
-        RuleFor(x => x.Options.Slot).IsInEnum();
+        RuleFor(x => x.Options.WeekStart).IsInEnum().OverridePropertyName("weekStart");
+        RuleFor(x => x.Options.Slot).IsInEnum().OverridePropertyName("slot");
     }
 }

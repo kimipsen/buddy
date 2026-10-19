@@ -52,7 +52,7 @@ public sealed class UpdateChildLanguageTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Language", error.Details.Keys);
+        Assert.Contains("language", error.Details.Keys);
     }
 
     [Fact]

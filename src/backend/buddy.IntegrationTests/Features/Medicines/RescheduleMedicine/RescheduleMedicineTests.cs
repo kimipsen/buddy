@@ -45,7 +45,7 @@ public sealed class RescheduleMedicineTests(BuddyApiFixture fixture)
 
         var response = await PatchScheduleAsync(guardianToken, url, [new TimeOnly(9, 0)], today, today.AddDays(-1), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "EndDate");
+        MedicineTestHelpers.AssertValidationError(response, "endDate");
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public sealed class RescheduleMedicineTests(BuddyApiFixture fixture)
 
         var response = await PatchScheduleAsync(guardianToken, url, [], today, null, 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Times");
+        MedicineTestHelpers.AssertValidationError(response, "times");
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public sealed class RescheduleMedicineTests(BuddyApiFixture fixture)
 
         var response = await PatchScheduleAsync(guardianToken, url, [], today, null, 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "Times");
+        MedicineTestHelpers.AssertValidationError(response, "times");
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public sealed class RescheduleMedicineTests(BuddyApiFixture fixture)
         await PatchScheduleAsync(guardianToken, url, [new TimeOnly(9, 0)], today, today, 200);
         var response = await PatchScheduleAsync(guardianToken, url, [new TimeOnly(9, 0)], today, today.AddDays(-1), 400);
 
-        MedicineTestHelpers.AssertValidationError(response, "EndDate");
+        MedicineTestHelpers.AssertValidationError(response, "endDate");
     }
 
     // Returns the schedule's reschedule URL, either the child-keyed route or (viaGroup) the

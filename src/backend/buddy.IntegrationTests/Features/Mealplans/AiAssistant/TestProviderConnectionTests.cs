@@ -132,6 +132,6 @@ public sealed class TestProviderConnectionTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("ApiKey", error.Details.Keys);
+        Assert.Contains("apiKey", error.Details.Keys);
     }
 }

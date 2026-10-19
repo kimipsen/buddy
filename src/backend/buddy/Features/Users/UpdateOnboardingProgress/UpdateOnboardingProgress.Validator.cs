@@ -10,7 +10,7 @@ public sealed class UpdateOnboardingProgressValidator : AbstractValidator<Update
             .Must(status => Enum.IsDefined(status) && status != OnboardingStatus.NotStarted)
             .WithMessage("Status must be Active, Deferred or Completed.");
 
-        RuleFor(x => x.ExpectedVersion).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.ExpectedVersion).GreaterThanOrEqualTo(0).OverridePropertyName("version");
 
         RuleFor(x => x.SetupGroupId)
             .Must(id => id is null || id.Value != Guid.Empty)

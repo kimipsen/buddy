@@ -79,7 +79,7 @@ public sealed partial class VerifyEmailTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Token", error.Details.Keys);
+        Assert.Contains("token", error.Details.Keys);
     }
 
     [Fact]

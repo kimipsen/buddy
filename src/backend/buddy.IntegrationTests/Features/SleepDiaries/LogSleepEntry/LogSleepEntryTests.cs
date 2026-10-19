@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.SleepDiaries;
 using buddy.Features.Users;
 using buddy.IntegrationTests.Features.Guardians;
@@ -147,16 +148,23 @@ public sealed class LogSleepEntryTests(BuddyApiFixture fixture)
     }
 
     [Theory]
-    [InlineData("{\"nightWakeUps\":[{\"startTime\":\"03:00\",\"durationMinutes\":0}]}")]
-    [InlineData("{\"naps\":[{\"startTime\":\"13:00\",\"durationMinutes\":721}]}")]
-    [InlineData("{\"totalSleepMinutes\":-1}")]
-    [InlineData("{\"totalSleepMinutes\":1441}")]
-    public async Task Out_of_range_durations_are_rejected(string json)
+    [InlineData("{\"nightWakeUps\":[{\"startTime\":\"03:00\",\"durationMinutes\":0}]}", "nightWakeUps[0].durationMinutes")]
+    [InlineData("{\"naps\":[{\"startTime\":\"13:00\",\"durationMinutes\":721}]}", "naps[0].durationMinutes")]
+    [InlineData("{\"totalSleepMinutes\":-1}", "totalSleepMinutes")]
+    [InlineData("{\"totalSleepMinutes\":1441}", "totalSleepMinutes")]
+    public async Task Out_of_range_durations_are_rejected_under_the_request_field(string json, string field)
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, token, "Alex");
 
-        await LogAsync(fixture, token, child.Id, Monday, System.Text.Json.JsonElement.Parse(json), expectedStatus: 400);
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Put.Json(System.Text.Json.JsonElement.Parse(json)).ToUrl($"/sleep-diary/children/{child.Id}/entries/{Monday:yyyy-MM-dd}");
+            _.StatusCodeShouldBe(400);
+        });
+
+        Assert.Equal([field], response.ReadAsJson<ErrorEnvelope>().Details.Keys);
     }
 
     [Fact]

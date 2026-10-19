@@ -11,7 +11,7 @@ public sealed class CreateTaskTemplateValidator : AbstractValidator<CreateTaskTe
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
 
         // A template always has its own icon (its subtasks may inherit it), so blank is rejected.
-        RuleFor(x => x.Icon.Value).NotEmpty().WithMessage("Icon must not be empty.");
+        RuleFor(x => x.Icon.Value).NotEmpty().WithMessage("Icon must not be empty.").OverridePropertyName("Icon");
         RuleFor(x => x.Icon.Value).ValidIcon().OverridePropertyName("Icon");
 
         RuleFor(x => x.Kind).IsInEnum();

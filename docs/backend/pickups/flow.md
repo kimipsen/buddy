@@ -65,19 +65,19 @@ that can't be bound is rejected before these rules run, with the same envelope.
 
 | Endpoint             | Field                  | Rule                                                                                                  | Code               | Status |
 | -------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------- | ------------------ | ------ |
-| `AssignPickup`       | `Assignee.HostName`    | When the assignee is a `Playdate`: required, not empty after trimming.                                | `validation_error` | 400    |
-| `AssignPickup`       | `Assignee.HostName`    | When the assignee is a `Playdate`: at most 200 characters after trimming.                             | `validation_error` | 400    |
-| `AssignPickup`       | `Assignee.Location`    | When the assignee is a `Playdate`: at most 200 characters after trimming. Optional.                   | `validation_error` | 400    |
-| `AssignPickup`       | `Assignee.ContactInfo` | When the assignee is a `Playdate`: at most 2000 characters after trimming. Optional.                  | `validation_error` | 400    |
-| `AssignPickup`       | `Notes`                | At most 2000 characters after trimming. Optional.                                                     | `validation_error` | 400    |
+| `AssignPickup`       | `assignee.hostName`    | When the assignee is a `Playdate`: required, not empty after trimming.                                | `validation_error` | 400    |
+| `AssignPickup`       | `assignee.hostName`    | When the assignee is a `Playdate`: at most 200 characters after trimming.                             | `validation_error` | 400    |
+| `AssignPickup`       | `assignee.location`    | When the assignee is a `Playdate`: at most 200 characters after trimming. Optional.                   | `validation_error` | 400    |
+| `AssignPickup`       | `assignee.contactInfo` | When the assignee is a `Playdate`: at most 2000 characters after trimming. Optional.                  | `validation_error` | 400    |
+| `AssignPickup`       | `notes`                | At most 2000 characters after trimming. Optional.                                                     | `validation_error` | 400    |
 | `AssignPickup`       | `""`                   | `Guardian` assignee: `guardianId` is an active guardian of the child. Checked after authorization.    | `validation_error` | 400    |
 | `AssignPickup`       | `""`                   | `Sibling` assignee: `siblingChildId` is not the scheduled child.                                      | `validation_error` | 400    |
 | `AssignPickup`       | `""`                   | `Sibling` assignee: `siblingChildId` shares at least one guardian with the scheduled child.           | `validation_error` | 400    |
 | `AssignPickup`       | `""`                   | `Babysitter` assignee: `guardianId` is an active guardian of the child.                               | `validation_error` | 400    |
 | `AssignPickup`       | `""`                   | `Babysitter` assignee: `babysitterId` is an active (not archived) babysitter on that guardian's list. | `validation_error` | 400    |
 | `ClearPickup`        | —                      | No rules beyond binding the `date` and `slot` query values.                                           | `validation_error` | 400    |
-| `ListPickupSchedule` | `To`                   | `to` not before `from`.                                                                               | `validation_error` | 400    |
-| `ListPickupSchedule` | `To`                   | `to` at most 31 days after `from`.                                                                    | `validation_error` | 400    |
+| `ListPickupSchedule` | `to`                   | `to` not before `from`.                                                                               | `validation_error` | 400    |
+| `ListPickupSchedule` | `to`                   | `to` at most 31 days after `from`.                                                                    | `validation_error` | 400    |
 
 ## Assignee model
 

@@ -100,7 +100,7 @@ public sealed class CreateCalendarTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("TimeZoneId", error.Details.Keys);
+        Assert.Contains("timeZoneId", error.Details.Keys);
     }
 
     [Theory]
@@ -113,7 +113,7 @@ public sealed class CreateCalendarTests(BuddyApiFixture fixture)
 
         var error = await PostInvalidCalendarAsync(token, name, groupId);
 
-        Assert.Contains("Name", error.Details.Keys);
+        Assert.Contains("name", error.Details.Keys);
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public sealed class CreateCalendarTests(BuddyApiFixture fixture)
 
         var error = await PostInvalidCalendarAsync(token, new string('c', 201), groupId);
 
-        Assert.Contains("Name", error.Details.Keys);
+        Assert.Contains("name", error.Details.Keys);
     }
 
     [Fact]

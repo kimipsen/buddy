@@ -292,7 +292,7 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
 
         var response = await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = (int)PickupAssigneeKind.Playdate, HostName = "" } }, 400);
 
-        AssertValidationError(response, "Assignee.HostName");
+        AssertValidationError(response, "assignee.hostName");
     }
 
     [Fact]
@@ -303,7 +303,7 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = (int)PickupAssigneeKind.Playdate, HostName = new string('h', 200) } }, 200);
         var response = await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = (int)PickupAssigneeKind.Playdate, HostName = new string('h', 201) } }, 400);
 
-        AssertValidationError(response, "Assignee.HostName");
+        AssertValidationError(response, "assignee.hostName");
     }
 
     [Fact]
@@ -322,7 +322,7 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = (int)PickupAssigneeKind.Playdate, HostName = "Mia's mom", Location = new string('l', 200) } }, 200);
         var response = await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = (int)PickupAssigneeKind.Playdate, HostName = "Mia's mom", Location = new string('l', 201) } }, 400);
 
-        AssertValidationError(response, "Assignee.Location");
+        AssertValidationError(response, "assignee.location");
     }
 
     [Fact]
@@ -333,7 +333,7 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = (int)PickupAssigneeKind.Playdate, HostName = "Mia's mom", ContactInfo = new string('c', 2000) } }, 200);
         var response = await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = (int)PickupAssigneeKind.Playdate, HostName = "Mia's mom", ContactInfo = new string('c', 2001) } }, 400);
 
-        AssertValidationError(response, "Assignee.ContactInfo");
+        AssertValidationError(response, "assignee.contactInfo");
     }
 
     [Fact]
@@ -344,7 +344,7 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = (int)PickupAssigneeKind.SelfEscort }, Notes = new string('n', 2000) }, 200);
         var response = await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = (int)PickupAssigneeKind.SelfEscort }, Notes = new string('n', 2001) }, 400);
 
-        AssertValidationError(response, "Notes");
+        AssertValidationError(response, "notes");
     }
 
     private async Task<(string GuardianToken, Guid ChildId)> CreateChildAsync()

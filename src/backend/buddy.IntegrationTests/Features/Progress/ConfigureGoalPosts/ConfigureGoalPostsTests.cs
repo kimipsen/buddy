@@ -117,7 +117,7 @@ public sealed class ConfigureGoalPostsTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(400);
         });
 
-        AssertValidationErrorOn(response, "GoalPosts");
+        AssertValidationErrorOn(response, "goalPosts");
     }
 
     [Fact]
@@ -137,7 +137,7 @@ public sealed class ConfigureGoalPostsTests(BuddyApiFixture fixture)
 
         var response = await PutGoalPostsAsync(childId, guardianToken, AscendingGoalPosts(21), expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "GoalPosts");
+        AssertValidationErrorOn(response, "goalPosts");
     }
 
     [Fact]
@@ -148,7 +148,7 @@ public sealed class ConfigureGoalPostsTests(BuddyApiFixture fixture)
         var response = await PutGoalPostsAsync(
             childId, guardianToken, [new GoalPostBody(2, "🥉", null), new GoalPostBody(2, "🥈", null)], expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "GoalPosts");
+        AssertValidationErrorOn(response, "goalPosts");
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public sealed class ConfigureGoalPostsTests(BuddyApiFixture fixture)
         var response = await PutGoalPostsAsync(
             childId, guardianToken, [new GoalPostBody(2, "🥉", null), new GoalPostBody(1, "🥈", null)], expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "GoalPosts");
+        AssertValidationErrorOn(response, "goalPosts");
     }
 
     [Fact]
@@ -179,7 +179,7 @@ public sealed class ConfigureGoalPostsTests(BuddyApiFixture fixture)
 
         var response = await PutGoalPostsAsync(childId, guardianToken, [new GoalPostBody(0, "🥉", null)], expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "GoalPosts[0].Threshold");
+        AssertValidationErrorOn(response, "goalPosts[0].threshold");
     }
 
     [Fact]
@@ -190,7 +190,7 @@ public sealed class ConfigureGoalPostsTests(BuddyApiFixture fixture)
         await PutGoalPostsAsync(childId, guardianToken, [new GoalPostBody(1, "⭐", new string('l', 100))], expectedStatus: 200);
         var response = await PutGoalPostsAsync(childId, guardianToken, [new GoalPostBody(1, "⭐", new string('l', 101))], expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "GoalPosts[0].Label");
+        AssertValidationErrorOn(response, "goalPosts[0].label");
     }
 
     [Fact]
@@ -214,7 +214,7 @@ public sealed class ConfigureGoalPostsTests(BuddyApiFixture fixture)
 
         var response = await PutGoalPostsAsync(childId, guardianToken, [new GoalPostBody(1, "", null)], expectedStatus: 400);
 
-        AssertValidationErrorOn(response, "GoalPosts[0].Icon");
+        AssertValidationErrorOn(response, "goalPosts[0].icon");
     }
 
     [Fact]

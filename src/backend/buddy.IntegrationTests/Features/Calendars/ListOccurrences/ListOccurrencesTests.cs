@@ -58,7 +58,7 @@ public sealed class ListOccurrencesTests(BuddyApiFixture fixture)
 
         var error = await GetInvalidRangeAsync(token, calendarId, today, today.AddDays(-1));
 
-        Assert.Contains("To", error.Details.Keys);
+        Assert.Contains("to", error.Details.Keys);
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public sealed class ListOccurrencesTests(BuddyApiFixture fixture)
 
         var error = await GetInvalidRangeAsync(token, calendarId, today, today.AddDays(400));
 
-        Assert.Contains("To", error.Details.Keys);
+        Assert.Contains("to", error.Details.Keys);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public sealed class ListOccurrencesTests(BuddyApiFixture fixture)
 
         var error = await GetInvalidRangeAsync(token, calendarId, today, today.AddDays(367));
 
-        Assert.Contains("To", error.Details.Keys);
+        Assert.Contains("to", error.Details.Keys);
     }
 
     [Theory]

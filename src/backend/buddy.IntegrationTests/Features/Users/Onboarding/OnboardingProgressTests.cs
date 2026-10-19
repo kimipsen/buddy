@@ -157,7 +157,17 @@ public sealed class OnboardingProgressTests(BuddyApiFixture fixture)
 
         var response = await OnboardingTestHelpers.PutRawAsync(fixture, token, status, null, false, version: 0, expectedStatus: 400);
 
-        Assert.Contains("Status", response.ReadAsJson<ErrorEnvelope>().Details.Keys);
+        Assert.Contains("status", response.ReadAsJson<ErrorEnvelope>().Details.Keys);
+    }
+
+    [Fact]
+    public async Task A_negative_version_is_rejected_under_the_version_field()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        var response = await OnboardingTestHelpers.PutRawAsync(fixture, token, OnboardingStatus.Active, null, false, version: -1, expectedStatus: 400);
+
+        Assert.Equal(["version"], response.ReadAsJson<ErrorEnvelope>().Details.Keys);
     }
 
     [Fact]

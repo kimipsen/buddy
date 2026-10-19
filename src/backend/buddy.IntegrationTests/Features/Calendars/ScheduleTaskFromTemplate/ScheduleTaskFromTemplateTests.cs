@@ -210,7 +210,7 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
 
         var error = await PostInvalidScheduleAsync(token, calendarId, Guid.CreateVersion7(), new string('t', 201), recurrence: null);
 
-        Assert.Contains("Title", error.Details.Keys);
+        Assert.Contains("title", error.Details.Keys);
     }
 
     [Fact]
@@ -221,7 +221,7 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
 
         var error = await PostInvalidScheduleAsync(token, calendarId, Guid.Empty, "Morning routine", recurrence: null);
 
-        Assert.Contains("TaskTemplateId", error.Details.Keys);
+        Assert.Contains("taskTemplateId", error.Details.Keys);
     }
 
     [Fact]
@@ -233,7 +233,7 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
         var error = await PostInvalidScheduleAsync(
             token, calendarId, Guid.CreateVersion7(), "Morning routine", new RecurrenceRuleRequest(RecurrenceFrequency.Daily, 0, null));
 
-        Assert.Contains("Recurrence.IntervalCount", error.Details.Keys);
+        Assert.Contains("recurrence.intervalCount", error.Details.Keys);
     }
 
     [Fact]
@@ -247,7 +247,7 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
             token, calendarId, Guid.CreateVersion7(), "Morning routine",
             new RecurrenceRuleRequest(RecurrenceFrequency.Daily, 1, DateOnly.FromDateTime(DateTime.UtcNow)));
 
-        Assert.Contains("Recurrence.Until", error.Details.Keys);
+        Assert.Contains("recurrence.until", error.Details.Keys);
     }
 
     [Fact]
@@ -260,7 +260,7 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
             token, calendarId, Guid.CreateVersion7(), "Morning routine",
             new RecurrenceRuleRequest(RecurrenceFrequency.Monthly, 1, null, [DayOfWeek.Monday]));
 
-        Assert.Contains("Recurrence.Weekdays", error.Details.Keys);
+        Assert.Contains("recurrence.weekdays", error.Details.Keys);
     }
 
     [Fact]
