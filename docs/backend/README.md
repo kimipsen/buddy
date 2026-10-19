@@ -79,6 +79,7 @@ model or permissions logic.
 - [Medicine effect and side-effect notes](analysis/medicine-effect-notes.md)
 - [Doctor visit summary](analysis/doctor-visit-summary.md)
 - [Skipping single occurrences](analysis/skip-occurrences.md)
+- [Publishing Docker images on GitHub](analysis/publish-docker-images.md)
 
 ## Current focus areas
 

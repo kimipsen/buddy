@@ -119,6 +119,8 @@ in real time.
 
 ### Platform
 
+- [ ] Versioned multi-arch Docker images published to GitHub (proposed, not yet implemented — see
+      [Publishing Docker images on GitHub](docs/backend/analysis/publish-docker-images.md))
 - [x] Keycloak authentication, token lifecycle, and role-based routing
 - [x] Group and guardian invitations and email-verification flows; an invitation can only be
       accepted by an account with a verified email address that matches the invited one
