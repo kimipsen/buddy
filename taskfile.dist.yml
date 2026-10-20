@@ -307,6 +307,19 @@ tasks:
         # Only reached when every service came up (healthy where it has a healthcheck): :latest = last good deploy.
         for svc in api frontend keycloak; do docker tag "buddy-$svc:$BUDDY_IMAGE_TAG" "buddy-$svc:latest"; done
 
+  deploy:pull:
+    desc: 'Start the production stack from the published release images (ghcr.io) instead of building them - on the Oracle VM only. Usage: check out the release tag, then task deploy:pull (or task deploy:pull VERSION=1.5.3)'
+    dir: deploy
+    vars:
+      VERSION: '{{.VERSION | default .CLI_ARGS | trim}}'
+    preconditions:
+      - sh: test -f .env
+        msg: "deploy/.env not found — copy deploy/.env.example to deploy/.env and fill in real values first."
+    cmds:
+      # Same guard as task deploy: refuses inside a container and unless DEPLOY_HOST in .env matches `hostname`.
+      - ./preflight.sh
+      - ./deploy-pull.sh "{{.VERSION}}"
+
   deploy:azure:
     desc: Deploy backend + frontend + Keycloak + Postgres to Azure Container Apps (deploy/azure/deploy.sh)
     dir: deploy/azure

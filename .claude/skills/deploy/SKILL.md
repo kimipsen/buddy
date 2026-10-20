@@ -14,8 +14,19 @@ read-only.
 Sources (re-read them if anything below looks out of date): `deploy/README.md` (Oracle VM),
 `deploy/README-azure.md`, `deploy/docker-compose.prod.yml`, `deploy/preflight.sh`,
 `deploy/Caddyfile`, `deploy/azure/deploy.sh`, `deploy/azure/keycloak/Dockerfile` (used by both
-targets), `deploy/azure/.env.example`, and the `deploy` / `deploy:azure` tasks in
-`taskfile.dist.yml`.
+targets), `deploy/azure/.env.example`, `deploy/deploy-pull.sh`, and the `deploy` /
+`deploy:pull` / `deploy:azure` tasks in `taskfile.dist.yml`.
+
+**Build or pull.** Each target can build the checkout or run a published release image
+(`ghcr.io/kimipsen/buddy-{api,frontend,keycloak}:<version>`, published by
+`.github/workflows/publish-images.yml`). Oracle: `task deploy` builds on the VM, `task
+deploy:pull` (same preflight, then `deploy/deploy-pull.sh`) pulls the release HEAD is on, or
+`VERSION=x.y.z`. Azure: `BUDDY_IMAGE_VERSION=x.y.z` in `deploy/azure/.env` makes `deploy.sh`
+`az acr import` the images instead of `az acr build`. Either way the checkout must be on the
+release tag (`git describe --tags --exact-match`), because compose/Caddyfile/`.env`/`deploy.sh`
+come from it; deploy-pull.sh refuses without a version otherwise and warns on a mismatch. For a
+release, prefer the pull: it skips the build and runs exactly the scanned image. Ask which one
+the user wants when it isn't clear, and say which in the step 3 summary.
 
 ## 1. Pick the target
 
@@ -130,6 +141,8 @@ back to step 2 and confirm again.
 ```bash
 # Oracle (on the VM)
 task deploy > "$SCRATCH/deploy-oracle-$(date +%Y%m%d-%H%M%S).log" 2>&1
+# Oracle, published release (on the VM, checkout on the release tag)
+task deploy:pull > "$SCRATCH/deploy-oracle-$(date +%Y%m%d-%H%M%S).log" 2>&1
 # Azure
 task deploy:azure > "$SCRATCH/deploy-azure-$(date +%Y%m%d-%H%M%S).log" 2>&1
 ```
@@ -195,6 +208,8 @@ Documented in `deploy/README.md` "8. Rollback" (+ "7. Backups and restore") and
 `deploy/README-azure.md` "8. Rollback". Every command there changes production: list it for the
 user and get their go-ahead before running it, same as a deploy.
 
+- **Oracle, after `task deploy:pull`**: check out the earlier release tag and run `task
+deploy:pull` again (its images are still on the VM or are pulled again from GHCR).
 - **Oracle**: `task deploy` tags images `buddy-{api,frontend,keycloak}:<git sha>[-dirty]` and
   retags `:latest` after a successful `--wait`. Rollback without rebuild: `BUDDY_IMAGE_TAG=<sha>
 docker compose -f docker-compose.prod.yml up -d --no-build --wait` from `deploy/`, then retag
@@ -205,6 +220,8 @@ docker compose -f docker-compose.prod.yml up -d --no-build --wait` from `deploy/
 db`, written to `~/buddy-backups/` on the VM (README step 7, which also has the restore:
   stop api+keycloak, drop/recreate DB, `pg_restore`). Offer one before every deploy. The volume is
   `deploy_postgres-data`; don't tar it while `db` runs.
+- **Azure, with `BUDDY_IMAGE_VERSION`**: also possible to check out the earlier tag, set
+  `BUDDY_IMAGE_VERSION` to it and rerun `deploy.sh` (imports that release's images).
 - **Azure**: single revision mode (deploy.sh passes no `--revisions-mode`), images pinned by
   digest. Rollback = `az containerapp revision copy --from-revision <good>` or `az containerapp
 update --image <acr>/buddy-<app>@<old digest>`; find them with `az containerapp revision list

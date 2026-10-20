@@ -89,6 +89,28 @@ fail if a service with a healthcheck (db, keycloak, api) doesn't become
 healthy within 10 minutes. Without Task, run the preflight and the compose
 command yourself.
 
+**Or deploy a published release without building.** Every release is
+published as ready-made images for both `linux/amd64` and `linux/arm64`
+(`ghcr.io/kimipsen/buddy-{api,frontend,keycloak}`, see
+[docs/versioning.md](../docs/versioning.md#published-images)). Check out the
+release tag, then:
+
+```bash
+git fetch --tags && git checkout v1.5.3
+task deploy:pull               # the release HEAD is on; or VERSION=1.5.3
+```
+
+After the same preflight, [`deploy-pull.sh`](deploy-pull.sh) pulls the three
+images (the VM gets the `arm64` ones), starts the stack with
+`up -d --no-build --wait` and tags them `buddy-<service>:latest` like
+`task deploy` does. It saves the VM several minutes of .NET and Angular
+builds. The compose file, the edge Caddyfile and `.env` still come from the
+checkout, which is why it wants HEAD on the release tag: with no `VERSION` it
+refuses otherwise, and with one it warns. `VERSION=edge` runs the newest
+`master` build. A fork that publishes its own images sets
+`BUDDY_IMAGE_REGISTRY=ghcr.io/<owner>` in `.env`. `task deploy` keeps
+building from the checkout, for unreleased changes.
+
 This builds the API, frontend and Keycloak images, starts Postgres (creating both the
 app DB and, via `init-keycloak-db.sql`, the `keycloak` DB), starts Keycloak
 in production mode (from `deploy/azure/keycloak/Dockerfile`, the same image
@@ -267,7 +289,12 @@ linked to Keycloak user ids, so mixing timestamps can orphan accounts.
 
 ## 8. Rollback
 
-Images are built on the VM, and `task deploy` tags each build with the git
+**After `task deploy:pull`**, roll back by deploying the earlier release the
+same way: check out its tag and run `task deploy:pull` again. Its images are
+still on the VM, or are pulled again from the registry, so they are never
+gone.
+
+**After `task deploy`**, images are built on the VM, and it tags each build with the git
 commit (`buddy-api:<sha>`, `buddy-frontend:<sha>`, `buddy-keycloak:<sha>`,
 with a `-dirty` suffix if the tree had uncommitted changes), so earlier builds
 stay on the VM until you delete them:
@@ -327,18 +354,10 @@ tell you about a release instead:
   If the VM can't reach the remote, it says so and compares against the tags
   it already has.
 
-Each release is also published as multi-arch images (`linux/amd64` and
-`linux/arm64`) to the GitHub Container Registry:
-`ghcr.io/kimipsen/buddy-api`, `buddy-frontend` and `buddy-keycloak`, tagged
-`1.5.3`, `1.5`, `1` and `latest`, plus `edge` for the newest `master`
-(see [docs/versioning.md](../docs/versioning.md#published-images)).
-`task deploy` still builds on the VM for now; pulling the published images
-instead is planned in
-[publish-docker-images.md](../docs/backend/analysis/publish-docker-images.md).
-
 To upgrade, read the release notes, take a backup (step 7), check out the tag
 (`git fetch --tags && git checkout v1.3.0`, or merge it into your fork) and
-run `task deploy`. Events don't roll back (step 8), so a release that adds
+run `task deploy:pull` (the published images) or `task deploy` (a build on
+the VM; the way for a fork without published images). Events don't roll back (step 8), so a release that adds
 event types is a one-way step unless you restore the backup.
 
 ## Notes

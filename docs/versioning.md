@@ -66,6 +66,10 @@ same gate as `security-scan.yml`) and carries build provenance and an SBOM; chec
 The frontend image works for any deployment: it reads `API_BASE_URL`, `KEYCLOAK_AUTHORITY` and
 the optional `REPOSITORY_URL` from its environment when it starts.
 
+Both deploy paths can run these images instead of building: `task deploy:pull` on the Oracle VM
+([deploy/README.md](../deploy/README.md), step 4) and `BUDDY_IMAGE_VERSION` in
+`deploy/azure/.env` ([deploy/README-azure.md](../deploy/README-azure.md), step 3).
+
 ## Finding out about new releases
 
 A running installation never checks for updates. The operator watches the repository's

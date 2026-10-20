@@ -7,6 +7,10 @@
 # (default "latest" for a manual `docker compose up`), so earlier builds stay
 # on the host and a rollback can start them again with --no-build.
 #
+# `task deploy:pull` (deploy-pull.sh) runs the published images instead: it
+# sets BUDDY_IMAGE_PREFIX to the registry (ghcr.io/kimipsen/) and
+# BUDDY_IMAGE_TAG to the release, and starts them with --no-build.
+#
 # `task deploy` also sets BUDDY_VERSION/BUDDY_COMMIT from deploy/version.sh (git
 # tags, see docs/versioning.md); the api reports them at GET /version.
 
@@ -31,7 +35,7 @@ services:
       - frontend
 
   frontend:
-    image: buddy-frontend:${BUDDY_IMAGE_TAG:-latest}
+    image: ${BUDDY_IMAGE_PREFIX:-}buddy-frontend:${BUDDY_IMAGE_TAG:-latest}
     build:
       context: ../src/frontend/buddy
       args:
@@ -54,7 +58,7 @@ services:
       - buddy_network
 
   api:
-    image: buddy-api:${BUDDY_IMAGE_TAG:-latest}
+    image: ${BUDDY_IMAGE_PREFIX:-}buddy-api:${BUDDY_IMAGE_TAG:-latest}
     build:
       context: ../src/backend
       dockerfile: buddy/Dockerfile
@@ -121,7 +125,7 @@ services:
       - buddy_network
 
   keycloak:
-    image: buddy-keycloak:${BUDDY_IMAGE_TAG:-latest}
+    image: ${BUDDY_IMAGE_PREFIX:-}buddy-keycloak:${BUDDY_IMAGE_TAG:-latest}
     # Same image as Azure: stock 26.x + `kc.sh build --db=postgres` + the
     # buddy theme baked in. The stock image is built for dev-file (H2), and
     # `start --optimized` (the image's CMD) doesn't re-run the build, so the

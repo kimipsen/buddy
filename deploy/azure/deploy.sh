@@ -25,6 +25,21 @@ BUDDY_COMMIT="$("$REPO_ROOT/deploy/version.sh" --commit)"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/.env"
 
+# Optional - blank builds the images from this checkout in the ACR; a release (1.5.3) imports the
+# published ones (publish-images.yml) instead. See acr_image below.
+BUDDY_IMAGE_VERSION="${BUDDY_IMAGE_VERSION:-}"
+BUDDY_IMAGE_VERSION="${BUDDY_IMAGE_VERSION#v}"
+: "${BUDDY_IMAGE_REGISTRY:=ghcr.io/kimipsen}"
+BUDDY_IMAGE_REGISTRY="${BUDDY_IMAGE_REGISTRY%/}"
+
+if [[ -n "$BUDDY_IMAGE_VERSION" ]]; then
+  echo "==> Deploying the published $BUDDY_IMAGE_VERSION images from $BUDDY_IMAGE_REGISTRY"
+  # The images come from the registry, but this script and its env vars come from the checkout.
+  if [[ "$(git -C "$REPO_ROOT" describe --tags --exact-match --match 'v[0-9]*.[0-9]*.[0-9]*' HEAD 2>/dev/null || true)" != "v$BUDDY_IMAGE_VERSION" ]]; then
+    echo "!! WARNING: HEAD isn't on v$BUDDY_IMAGE_VERSION; deploy.sh may not match the $BUDDY_IMAGE_VERSION images. Check out the release tag first." >&2
+  fi
+fi
+
 # Optional - blank means "use the Azure-assigned default domain".
 : "${FRONTEND_CUSTOM_DOMAIN:=}"
 : "${API_CUSTOM_DOMAIN:=}"
@@ -41,6 +56,25 @@ source "$SCRIPT_DIR/.env"
 : "${MAIL_FROM_NAME:=Buddy}"
 BREVO_SMTP_HOST=smtp-relay.brevo.com
 BREVO_SMTP_PORT=587
+
+# Puts buddy-<name>:latest in the ACR, where the caller reads its digest. With BUDDY_IMAGE_VERSION
+# it imports the published image (a public GHCR package needs no credentials; the ACR keeps the
+# multi-arch index and Container Apps runs its amd64 image); otherwise it builds this checkout with
+# the remaining arguments (build args, --file, context).
+acr_image() {
+  local name=$1
+  shift
+  if [[ -n "$BUDDY_IMAGE_VERSION" ]]; then
+    az acr import \
+      --name "$ACR_NAME" \
+      --source "$BUDDY_IMAGE_REGISTRY/buddy-$name:$BUDDY_IMAGE_VERSION" \
+      --image "buddy-$name:latest" \
+      --force \
+      -o none
+  else
+    az acr build --registry "$ACR_NAME" --image "buddy-$name:latest" "$@"
+  fi
+}
 
 containerapp_exists() {
   local name=$1
@@ -252,10 +286,8 @@ KEYCLOAK_HOSTNAME="${KEYCLOAK_CUSTOM_DOMAIN:-$KEYCLOAK_FQDN}"
 API_HOSTNAME="${API_CUSTOM_DOMAIN:-$API_FQDN}"
 FRONTEND_HOSTNAME="${FRONTEND_CUSTOM_DOMAIN:-$FRONTEND_FQDN}"
 
-echo "==> Building the Keycloak image (base image + buddy theme)"
-az acr build \
-  --registry "$ACR_NAME" \
-  --image buddy-keycloak:latest \
+echo "==> Keycloak image (base image + buddy theme)"
+acr_image keycloak \
   --build-arg HEALTH_ENABLED=true \
   --file "$REPO_ROOT/deploy/azure/keycloak/Dockerfile" \
   "$REPO_ROOT"
@@ -346,10 +378,8 @@ else
   echo "!! BREVO_SMTP_LOGIN / BREVO_SMTP_KEY / MAIL_FROM_ADDRESS not all set in .env - the API and Keycloak will deploy without outbound email. See \"Mail\" in README-azure.md." >&2
 fi
 
-echo "==> Building the API image (version $BUDDY_VERSION)"
-az acr build \
-  --registry "$ACR_NAME" \
-  --image buddy-api:latest \
+echo "==> API image (version ${BUDDY_IMAGE_VERSION:-$BUDDY_VERSION})"
+acr_image api \
   --build-arg "BUDDY_VERSION=$BUDDY_VERSION" \
   --build-arg "BUDDY_COMMIT=$BUDDY_COMMIT" \
   --file "$REPO_ROOT/src/backend/buddy/Dockerfile" \
@@ -470,10 +500,8 @@ set_probes api '[
 
 bind_custom_domain api "$API_CUSTOM_DOMAIN" "$API_FQDN"
 
-echo "==> Building the frontend image (version $BUDDY_VERSION)"
-az acr build \
-  --registry "$ACR_NAME" \
-  --image buddy-frontend:latest \
+echo "==> Frontend image (version ${BUDDY_IMAGE_VERSION:-$BUDDY_VERSION})"
+acr_image frontend \
   --build-arg "BUDDY_VERSION=$BUDDY_VERSION" \
   "$REPO_ROOT/src/frontend/buddy"
 

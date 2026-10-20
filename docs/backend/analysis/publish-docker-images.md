@@ -1,11 +1,14 @@
 # Publishing Docker images on GitHub
 
-Status: Implemented (phase 1: publishing).
-[`publish-images.yml`](../../../.github/workflows/publish-images.yml) publishes the three images
-to GHCR on release tags, `master` pushes and manual runs, and the frontend reads its URLs at
-container start. Phase 2 (deployments pull the published images) and retention are open in
-`TODO.md`. Two details changed from the proposal: Trivy scans each architecture's digest in its
-build job, and there is no retention job yet (see [Retention](#retention)).
+Status: Implemented. [`publish-images.yml`](../../../.github/workflows/publish-images.yml)
+publishes the three images to GHCR on release tags, `master` pushes and manual runs (first
+published release: `v1.5.3`), and the frontend reads its URLs at container start. Phase 2 is in
+too: `task deploy:pull` ([`deploy/deploy-pull.sh`](../../../deploy/deploy-pull.sh)) runs the
+published images on the Oracle VM, and `BUDDY_IMAGE_VERSION` makes `deploy/azure/deploy.sh`
+`az acr import` them. Details that changed from the proposal: Trivy scans each architecture's
+digest in its build job; the compose image names take a `BUDDY_IMAGE_PREFIX` set only by
+`deploy:pull`, so `task deploy` keeps its local names; and there is no retention job yet (see
+[Retention](#retention)), which is still open in `TODO.md`.
 
 ## Context
 
@@ -176,7 +179,7 @@ when every build job has passed.**
 **Decision: phase 1 only publishes. Phase 2 changes `task deploy` and `deploy/azure/deploy.sh` to
 pull the published images.**
 
-- Phase 2 for compose: image names become `${BUDDY_REGISTRY:-buddy}/buddy-api:${BUDDY_IMAGE_TAG}`.
+- Phase 2 for compose: image names become `${BUDDY_IMAGE_PREFIX:-}buddy-api:${BUDDY_IMAGE_TAG}`.
   The `build:` sections stay, so building on the host keeps working for forks and unreleased
   changes. A new `task deploy:pull VERSION=1.5.3` runs `docker compose pull` and
   `up -d --no-build`, and a rollback becomes "deploy the previous tag".

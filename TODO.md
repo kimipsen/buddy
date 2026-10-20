@@ -10,11 +10,9 @@
 
 Plan in [Publishing Docker images on GitHub](docs/backend/analysis/publish-docker-images.md).
 
-- [ ] **First run.** After the first run of `publish-images.yml`, make the three `buddy-*`
-      packages public in their GitHub package settings, and check that
-      `docker pull ghcr.io/kimipsen/buddy-api:edge` works on the arm64 VM without logging in.
-- [ ] **Phase 2: deploy from the published images.** `task deploy:pull VERSION=x.y.z` (compose
-      `pull` + `up -d --no-build`, rollback by tag), and `az acr import` in `deploy/azure/deploy.sh`.
+- [ ] **First deploy from the published images.** Run `task deploy:pull` on the arm64 VM (from
+      the release tag) and `deploy.sh` with `BUDDY_IMAGE_VERSION` on Azure once each, and check
+      step 6/7 of the deploy guides. Only tried with a stubbed `docker` so far.
 - [ ] **Retention.** Clean up old `sha-*` and orphaned untagged versions with a tool that keeps
       the platform images of a multi-arch image (not `actions/delete-package-versions`).
 
@@ -860,3 +858,10 @@ they reuse data the app already keeps. Each has a design doc.
       release, `edge` and `sha-` tags, build provenance and an SBOM. The frontend image reads
       `API_BASE_URL`/`KEYCLOAK_AUTHORITY` at container start instead of at build time
       (2026-10-19).
+- [x] **First run.** `publish-images.yml` published `v1.5.3`; the three `buddy-*` packages are
+      public (an anonymous pull of `ghcr.io/kimipsen/buddy-frontend:1.5.3` works) and carry
+      `linux/amd64` and `linux/arm64` (2026-10-20).
+- [x] **Phase 2: deploy from the published images.** `task deploy:pull` (`deploy/deploy-pull.sh`:
+      pulls the release images, `up -d --no-build --wait`, rollback by checking out the earlier
+      tag) and `BUDDY_IMAGE_VERSION` in `deploy/azure/.env` (`az acr import` instead of
+      `az acr build`) (2026-10-20).

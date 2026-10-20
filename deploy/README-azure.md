@@ -81,7 +81,9 @@ This, in order:
    real URLs on first create, with no create-then-patch step needed.
 6. Builds the Keycloak image (`quay.io/keycloak/keycloak:26.8.1` + the
    `themes/buddy` theme) via `az acr build` — builds happen in Azure, no
-   local Docker daemon required — and deploys it.
+   local Docker daemon required — and deploys it. With `BUDDY_IMAGE_VERSION`
+   set, steps 6-8 import the published images instead of building them (see
+   "Deploying a published release" below).
 7. Builds and deploys the API image, wired up with Brevo SMTP if
    `BREVO_SMTP_LOGIN`/`BREVO_SMTP_KEY`/`MAIL_FROM_ADDRESS` are set in `.env` —
    see "Mail" below.
@@ -94,6 +96,30 @@ This, in order:
    the realm doesn't exist until you finish step 4 ("Configure the realm").
 
 At the end it prints the three `https://*.azurecontainerapps.io` URLs.
+
+### Deploying a published release
+
+Every release is published as ready-made images
+(`ghcr.io/kimipsen/buddy-{api,frontend,keycloak}`, see
+[docs/versioning.md](../docs/versioning.md#published-images)). To deploy one
+instead of building the checkout, check out its tag and set the version in
+`.env`:
+
+```bash
+git fetch --tags && git checkout v1.5.3
+# in deploy/azure/.env:
+BUDDY_IMAGE_VERSION=1.5.3
+./deploy.sh
+```
+
+`deploy.sh` then copies the three images into your ACR with `az acr import`
+(the packages are public, so no GitHub credentials are needed) instead of
+`az acr build`, which saves the build minutes. Everything else is
+unchanged: the apps still run from the ACR, pinned by digest. The script and
+its env vars come from the checkout, so it warns when HEAD isn't on
+`v<BUDDY_IMAGE_VERSION>`. Blank `BUDDY_IMAGE_VERSION` to build again, e.g. for
+unreleased changes. A fork that publishes its own images sets
+`BUDDY_IMAGE_REGISTRY=ghcr.io/<owner>`.
 
 ## 4. Configure the realm
 
@@ -319,7 +345,9 @@ commit before running it again.
 
 The alternative that needs no revision handling: `git checkout <last good
 commit>` and rerun `./deploy.sh`. That rebuilds all three images, so it's
-slower and produces new digests, but it's the same path as any deploy.
+slower and produces new digests, but it's the same path as any deploy. For
+a published release, check out its tag and set `BUDDY_IMAGE_VERSION` to it
+instead, which imports the release's images rather than rebuilding them.
 
 ### Data: events don't roll back
 
@@ -350,7 +378,8 @@ fetches tags and warns (without failing) when the commit you're deploying
 doesn't contain the newest `vX.Y.Z` release, with a link to its notes.
 
 To upgrade, read the release notes, check out the tag (`git fetch --tags &&
-git checkout v1.3.0`, or merge it into your fork) and rerun `./deploy.sh`.
+git checkout v1.3.0`, or merge it into your fork), set `BUDDY_IMAGE_VERSION`
+to the release if you deploy the published images, and rerun `./deploy.sh`.
 Events don't roll back (step 8); Flexible Server's point-in-time restore is
 the way back across a release that adds event types.
 
