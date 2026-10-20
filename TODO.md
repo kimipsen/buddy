@@ -6,6 +6,19 @@
 
 ## Open
 
+### SBOM generation (2026-10-20)
+
+Generate a software bill of materials for every build and upload it to GitHub next to the build
+output.
+
+- [ ] **Docker images.** Generate an SBOM for each image in `publish-images.yml` (e.g. BuildKit's
+      `sbom: true` attestation or Syft) and attach it to the pushed image and the release.
+- [ ] **Backend.** Generate a CycloneDX SBOM of the .NET NuGet dependencies in the backend build
+      and upload it as a workflow artifact.
+- [ ] **Frontend.** Generate a CycloneDX SBOM of the npm dependencies in the frontend build and
+      upload it as a workflow artifact.
+- [ ] **Releases.** Attach the backend, frontend and image SBOMs to the GitHub release as assets.
+
 ### Publishing Docker images (2026-10-19)
 
 Plan in [Publishing Docker images on GitHub](docs/backend/analysis/publish-docker-images.md).
