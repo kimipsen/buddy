@@ -266,6 +266,16 @@
           [showIntro]="false"
         />
       }
+      @if (medicine.section.excludedMedicineCount > 0) {
+        <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">
+          {{
+            (medicine.section.excludedMedicineCount === 1
+              ? 'visitSummaries.report.medicine.excludedOne'
+              : 'visitSummaries.report.medicine.excludedMany'
+            ) | translate: { count: medicine.section.excludedMedicineCount }
+          }}
+        </p>
+      }
     </section>
   }
 

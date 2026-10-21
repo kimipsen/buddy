@@ -29,18 +29,6 @@ Plan in [Publishing Docker images on GitHub](docs/backend/analysis/publish-docke
 - [ ] **Retention.** Clean up old `sha-*` and orphaned untagged versions with a tool that keeps
       the platform images of a multi-arch image (not `actions/delete-package-versions`).
 
-### Leave medicines out of the effect summary (2026-10-19)
-
-Some medicines (vitamin D, melatonin) aren't relevant to an ADHD doctor visit, but they split dose
-periods and clutter the summary. Design in
-[Leaving medicines out of the effect summary](docs/backend/analysis/medicine-effect-inclusion.md).
-
-- [ ] Settle the open questions (whether the shared summary says medicines were left out).
-- [ ] Backend: `MedicineEffectInclusionChanged`, `SetMedicineEffectInclusion`, the flag on the
-      schedule and regimen responses, and filtering in `MedicineVisitSummarySource`.
-- [ ] Frontend: switches in the "By dose period" card, `groupByDosePeriod` skipping excluded
-      medicines, the "Not included" line, en+da strings, specs, e2e and screenshots.
-
 ### Backend unit tests as the primary test source (2026-10-16)
 
 Make backend unit tests the primary test source, with integration tests on demand. Plan in
@@ -878,3 +866,16 @@ they reuse data the app already keeps. Each has a design doc.
       pulls the release images, `up -d --no-build --wait`, rollback by checking out the earlier
       tag) and `BUDDY_IMAGE_VERSION` in `deploy/azure/.env` (`az acr import` instead of
       `az acr build`) (2026-10-20).
+
+### Leave medicines out of the effect summary (2026-10-19)
+
+Some medicines (vitamin D, melatonin) aren't relevant to an ADHD doctor visit, but they split dose
+periods and clutter the summary. Design in
+[Leaving medicines out of the effect summary](docs/backend/analysis/medicine-effect-inclusion.md).
+
+- [x] Settle the open questions: the shared summary says how many medicines were left out, without
+      names; the switch lives only on the effects page (2026-10-21).
+- [x] Backend: `MedicineEffectInclusionChanged`, `SetMedicineEffectInclusion`, the flag on the
+      schedule and regimen responses, and filtering in `MedicineVisitSummarySource`.
+- [x] Frontend: switches in the "By dose period" card, `groupByDosePeriod` skipping excluded
+      medicines, the "Not included" line, en+da strings, specs, e2e and screenshots (2026-10-21).

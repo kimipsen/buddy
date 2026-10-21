@@ -55,6 +55,11 @@ public sealed class MedicineEventShapeTests
         new DoseStatusChanged(FixedMedicineId, FixedStartDate, new TimeOnly(8, 0), DoseStatus.Pending, DoseStatus.Taken, FixedChildId, FixedInstant),
         "Medicines/DoseStatusChanged.json");
 
+    [Fact]
+    public void MedicineEffectInclusionChanged() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MedicineEffectInclusionChanged(FixedMedicineId, false, true, FixedGuardianId, FixedInstant),
+        "Medicines/MedicineEffectInclusionChanged.json");
+
     private static readonly MedicineSharingId FixedSharingId = new(Guid.Parse("00000000-0000-0000-0000-000000000051"));
     private static readonly GroupId FixedGroupId = new(Guid.Parse("00000000-0000-0000-0000-000000000010"));
 

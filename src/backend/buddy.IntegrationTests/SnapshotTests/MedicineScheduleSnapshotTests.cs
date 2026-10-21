@@ -60,6 +60,8 @@ public sealed class MedicineScheduleSnapshotTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(204);
         });
 
+        await MedicineEffectNoteTestHelpers.SetEffectInclusionAsync(fixture, guardianToken, child.Id, schedule.Id, included: false);
+
         var medicines = fixture.Host.Services.GetRequiredService<IMedicineEventStore>();
         var id = new MedicineId(schedule.Id);
 

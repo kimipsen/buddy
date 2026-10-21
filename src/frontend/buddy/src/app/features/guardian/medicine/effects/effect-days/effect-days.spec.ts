@@ -20,6 +20,7 @@ function note(date: string, overrides: Partial<MedicineEffectNote> = {}): Medici
           { time: '07:30', status: 'Taken' },
           { time: '12:00', status: 'Skipped' },
         ],
+        isExcludedFromEffects: false,
       },
     ],
     loggedBy: 'guardian-1',

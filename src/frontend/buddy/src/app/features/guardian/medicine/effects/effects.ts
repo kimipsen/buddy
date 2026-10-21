@@ -8,6 +8,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MedicineEffectNote, MedicinesService } from '../../../../core/medicines.service';
 import { Page } from '../../../../shared/page/page';
 import { EffectDays } from './effect-days/effect-days';
+import { EffectInclusion } from './effect-inclusion/effect-inclusion';
 import { EffectNoteForm } from './effect-note-form/effect-note-form';
 import { EffectPeriods } from './effect-periods/effect-periods';
 
@@ -31,7 +32,15 @@ function sameRequest(a: NotesRequest | undefined, b: NotesRequest | undefined): 
 // dose-period summary for a doctor's appointment (docs/backend/analysis/medicine-effect-notes.md).
 @Component({
   selector: 'app-guardian-medicine-effects',
-  imports: [FormsModule, EffectDays, EffectNoteForm, EffectPeriods, Page, TranslatePipe],
+  imports: [
+    FormsModule,
+    EffectDays,
+    EffectInclusion,
+    EffectNoteForm,
+    EffectPeriods,
+    Page,
+    TranslatePipe,
+  ],
   templateUrl: './effects.html',
 })
 export class GuardianMedicineEffects {

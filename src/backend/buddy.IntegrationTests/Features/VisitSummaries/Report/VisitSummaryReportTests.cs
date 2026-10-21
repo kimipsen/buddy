@@ -119,6 +119,37 @@ public sealed class VisitSummaryReportTests(BuddyApiFixture fixture) : IAsyncLif
     }
 
     [Fact]
+    public async Task A_medicine_left_out_of_the_effect_summaries_is_only_counted()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, token);
+        var kept = await MedicineTestHelpers.CreateMedicineScheduleAsync(fixture, token, child.Id,
+            new CreateMedicineScheduleOptions(Name: "Concerta", Dosage: "18 mg", Times: [new TimeOnly(7, 15)], StartDate: From.AddDays(-30)));
+        var vitamin = await MedicineTestHelpers.CreateMedicineScheduleAsync(fixture, token, child.Id,
+            new CreateMedicineScheduleOptions(Name: "Vitamin D", Dosage: "1 tablet", Times: [new TimeOnly(7, 30)], StartDate: From.AddDays(-30)));
+        // Stopped with no recorded dose, so only the note's regimen ties it to the period.
+        var melatonin = await MedicineTestHelpers.CreateMedicineScheduleAsync(fixture, token, child.Id,
+            new CreateMedicineScheduleOptions(Name: "Melatonin", Dosage: "3 mg", Times: [new TimeOnly(19, 0)], StartDate: From.AddDays(-30)));
+        await MedicineEffectNoteTestHelpers.LogAsync(fixture, token, child.Id, From, MedicineEffectNoteTestHelpers.GoodFocusPoorAppetite());
+        await MedicineEffectNoteTestHelpers.StopAsync(fixture, token, child.Id, melatonin!.Id);
+        await MedicineEffectNoteTestHelpers.SetEffectInclusionAsync(fixture, token, child.Id, vitamin!.Id, included: false);
+        await MedicineEffectNoteTestHelpers.SetEffectInclusionAsync(fixture, token, child.Id, melatonin.Id, included: false);
+        var summary = await CreateAsync(fixture, token, child.Id, Body(sections: ["Medicine"]));
+        var link = await CreateShareLinkAsync(fixture, token, child.Id, summary.Id);
+
+        var guardians = (await GetAsync(fixture, token, child.Id, summary.Id))!.Report.Medicine!;
+        var doctors = (await GetSharedAsync(fixture, link.Token))!.Report.Medicine!;
+
+        foreach (var medicine in new[] { guardians, doctors })
+        {
+            Assert.Equal(kept!.Id, Assert.Single(medicine.Schedules).Id);
+            Assert.All(medicine.Doses, d => Assert.Equal(kept.Id, d.MedicineId));
+            Assert.Equal(kept.Id, Assert.Single(Assert.Single(medicine.EffectNotes).Regimen).MedicineId);
+            Assert.Equal(2, medicine.ExcludedMedicineCount);
+        }
+    }
+
+    [Fact]
     public async Task A_section_whose_feature_is_switched_off_is_left_out()
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();

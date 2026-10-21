@@ -60,8 +60,11 @@ export interface DosePeriod {
   medianWoreOffAt: string | null;
 }
 
+// A medicine the guardian left out of the summaries neither names nor splits a period
+// (docs/backend/analysis/medicine-effect-inclusion.md, Question 3).
 function regimenOf(note: MedicineEffectNote): PeriodMedicine[] {
   return note.regimen
+    .filter((m) => !m.isExcludedFromEffects)
     .map(({ name, dosage }) => ({ name, dosage }))
     .sort((a, b) => a.name.localeCompare(b.name) || a.dosage.localeCompare(b.dosage));
 }
@@ -127,6 +130,25 @@ function summarize(
     sideEffects,
     medianWoreOffAt: medianTime(notes.flatMap((n) => (n.woreOffAt ? [n.woreOffAt] : []))),
   };
+}
+
+export interface RegimenMedicine {
+  medicineId: string;
+  name: string;
+  isExcludedFromEffects: boolean;
+}
+
+// Every medicine named in the notes' regimens, once each with its newest name, sorted by name.
+export function regimenMedicines(notes: readonly MedicineEffectNote[]): RegimenMedicine[] {
+  const byId = new Map<string, RegimenMedicine>();
+
+  for (const note of [...notes].sort((a, b) => a.date.localeCompare(b.date))) {
+    for (const { medicineId, name, isExcludedFromEffects } of note.regimen) {
+      byId.set(medicineId, { medicineId, name, isExcludedFromEffects });
+    }
+  }
+
+  return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
 // Walks the notes in date order and starts a new period whenever the regimen (the set of name +

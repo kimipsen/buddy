@@ -69,6 +69,7 @@ public sealed record MedicineScheduleResponse(
     DateOnly StartDate,
     DateOnly? EndDate,
     bool IsStopped,
+    bool IsExcludedFromEffects,
     Guid CreatedBy,
     Guid LastModifiedBy)
 {
@@ -83,6 +84,7 @@ public sealed record MedicineScheduleResponse(
         schedule.StartDate,
         schedule.EndDate,
         schedule.IsStopped,
+        schedule.IsExcludedFromEffects,
         schedule.CreatedBy.Value,
         schedule.LastModifiedBy.Value);
 }

@@ -30,9 +30,12 @@ internal sealed record ReportScheduleDto(Guid Id, string Name, string Dosage, bo
 
 internal sealed record ReportDoseDto(Guid MedicineId, string Name, DateOnly Date, TimeOnly Time, string Status);
 
-internal sealed record ReportEffectNoteDto(DateOnly Date, string Note);
+internal sealed record ReportRegimenDto(Guid MedicineId, string Name);
 
-internal sealed record ReportMedicineDto(List<ReportScheduleDto> Schedules, List<ReportDoseDto> Doses, List<ReportEffectNoteDto> EffectNotes);
+internal sealed record ReportEffectNoteDto(DateOnly Date, string Note, List<ReportRegimenDto> Regimen);
+
+internal sealed record ReportMedicineDto(
+    List<ReportScheduleDto> Schedules, List<ReportDoseDto> Doses, List<ReportEffectNoteDto> EffectNotes, int ExcludedMedicineCount);
 
 internal sealed record ReportCheckInDto(string Zone, string Note, bool IsSelfReport);
 

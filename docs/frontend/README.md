@@ -113,7 +113,8 @@ The guardian routes currently include:
   CSV: preview, per-meal review, import and undo
 - `/guardian/medicine` — medicine schedule management
 - `/guardian/medicine/effects` — rate a day's medicine effects and side effects, review 14 days at a
-  time, and a printable summary grouped by dose period (`core/medicine-effects.ts`)
+  time, and a printable summary grouped by dose period (`core/medicine-effects.ts`), with switches to
+  leave medicines such as vitamin D out of it
 - `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner
 - `/guardian/sleep-diary` — log a night, review 14 nights at a time, hygiene notes and share links
 - `/guardian/feelings` — a child's feelings check-ins: the 14-day grid (`shared/feelings-trend`,
@@ -239,7 +240,7 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
   `shared/visual-timer`
 - `MealplansService` calls meal-library, meal-plan, rating, group-sharing, iCal
   subscription-token and import (preview, commit, list, undo) endpoints
-- `MedicinesService` manages medicine schedules, dose status, effect notes, and group sharing
+- `MedicinesService` manages medicine schedules, dose status, effect notes, which medicines the effect summaries leave out, and group sharing
 - `OnboardingService` reads and version-checks the guided setup's progress
   (`/users/me/onboarding`), decides whether a guardian enters the guide (`onboardingEntryGuard`
   on the guardian home), and derives each step's completion from the existing domain services

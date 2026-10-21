@@ -8613,6 +8613,108 @@
         ]
       }
     },
+    "/medicines/children/{childId}/schedules/{medicineId}/effect-inclusion": {
+      "put": {
+        "tags": [
+          "Medicines"
+        ],
+        "operationId": "SetMedicineEffectInclusion",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "medicineId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetMedicineEffectInclusionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
     "/medicines/children/{childId}/effect-notes/{date}": {
       "put": {
         "tags": [
@@ -27145,6 +27247,7 @@
           "startDate",
           "endDate",
           "isStopped",
+          "isExcludedFromEffects",
           "createdBy",
           "lastModifiedBy"
         ],
@@ -27188,6 +27291,9 @@
             "format": "date"
           },
           "isStopped": {
+            "type": "boolean"
+          },
+          "isExcludedFromEffects": {
             "type": "boolean"
           },
           "createdBy": {
@@ -27972,7 +28078,8 @@
           "medicineId",
           "name",
           "dosage",
-          "doses"
+          "doses",
+          "isExcludedFromEffects"
         ],
         "type": "object",
         "properties": {
@@ -27991,6 +28098,9 @@
             "items": {
               "$ref": "#/components/schemas/RegimenDoseResponse"
             }
+          },
+          "isExcludedFromEffects": {
+            "type": "boolean"
           }
         }
       },
@@ -28681,6 +28791,17 @@
               "type": "integer",
               "format": "int32"
             }
+          }
+        }
+      },
+      "SetMedicineEffectInclusionRequest": {
+        "required": [
+          "included"
+        ],
+        "type": "object",
+        "properties": {
+          "included": {
+            "type": "boolean"
           }
         }
       },
@@ -30084,7 +30205,8 @@
         "required": [
           "schedules",
           "doses",
-          "effectNotes"
+          "effectNotes",
+          "excludedMedicineCount"
         ],
         "type": "object",
         "properties": {
@@ -30105,6 +30227,10 @@
             "items": {
               "$ref": "#/components/schemas/MedicineEffectNoteResponse"
             }
+          },
+          "excludedMedicineCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

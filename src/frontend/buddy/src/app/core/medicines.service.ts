@@ -105,6 +105,17 @@ export class MedicinesService {
     );
   }
 
+  // Leaves a medicine out of (or back in) the effect summaries
+  // (docs/backend/analysis/medicine-effect-inclusion.md).
+  setEffectInclusion(childId: string, medicineId: string, included: boolean): Promise<void> {
+    return firstValueFrom(
+      this.http.put<void>(
+        `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/schedules/${medicineId}/effect-inclusion`,
+        { included },
+      ),
+    );
+  }
+
   listDoses(childId: string, from: string, to: string): Promise<MedicineDoseOccurrence[]> {
     return firstValueFrom(
       this.http.get<MedicineDoseOccurrence[]>(

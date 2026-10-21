@@ -32,7 +32,15 @@ function note(date: string, overrides: Partial<MedicineEffectNote> = {}): Medici
     sideEffects: [],
     woreOffAt: null,
     note: '',
-    regimen: [{ medicineId: 'med-1', name: 'Ritalin', dosage: '10 mg', doses: [] }],
+    regimen: [
+      {
+        medicineId: 'med-1',
+        name: 'Ritalin',
+        dosage: '10 mg',
+        doses: [],
+        isExcludedFromEffects: false,
+      },
+    ],
     loggedBy: 'guardian-1',
     ...overrides,
   };
@@ -194,5 +202,24 @@ describe('GuardianMedicineEffects', () => {
     expect(compiled.textContent).toContain(
       'Link a child from Settings before rating their medicine.',
     );
+  });
+
+  it('reloads the summary after a medicine is switched out of it', async () => {
+    const setEffectInclusion = vi.fn(async () => undefined);
+    const { fixture, compiled, medicines } = await setup({ medicines: { setEffectInclusion } });
+    const summaryLoads = () =>
+      vi.mocked(medicines.listEffectNotes!).mock.calls.filter(([, from]) => from === '2025-12-13')
+        .length;
+    expect(summaryLoads()).toBe(1);
+
+    const toggle = compiled.querySelector<HTMLButtonElement>(
+      'app-effect-inclusion button[role="switch"]',
+    );
+    expect(toggle?.getAttribute('aria-label')).toBe('Include Ritalin in the summary');
+    toggle?.click();
+    await settle(fixture);
+
+    expect(setEffectInclusion).toHaveBeenCalledWith('c1', 'med-1', false);
+    expect(summaryLoads()).toBe(2);
   });
 });

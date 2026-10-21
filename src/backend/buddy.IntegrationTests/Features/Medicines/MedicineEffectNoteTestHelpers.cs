@@ -17,7 +17,7 @@ internal sealed record MedicineEffectNoteDto(
     IReadOnlyList<RegimenMedicineDto> Regimen,
     Guid LoggedBy);
 
-internal sealed record RegimenMedicineDto(Guid MedicineId, string Name, string Dosage, IReadOnlyList<RegimenDoseDto> Doses);
+internal sealed record RegimenMedicineDto(Guid MedicineId, string Name, string Dosage, IReadOnlyList<RegimenDoseDto> Doses, bool IsExcludedFromEffects);
 
 internal sealed record RegimenDoseDto(TimeOnly Time, DoseStatus Status);
 
@@ -83,6 +83,15 @@ internal static class MedicineEffectNoteTestHelpers
             _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Delete.Url($"/medicines/children/{childId}/schedules/{medicineId}");
             _.StatusCodeShouldBe(204);
+        });
+
+    public static async Task SetEffectInclusionAsync(
+        BuddyApiFixture fixture, string token, Guid childId, Guid medicineId, bool included, int expectedStatus = 204) =>
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Put.Json(new { Included = included }).ToUrl($"/medicines/children/{childId}/schedules/{medicineId}/effect-inclusion");
+            _.StatusCodeShouldBe(expectedStatus);
         });
 
     public static async Task MarkTakenAsync(BuddyApiFixture fixture, string token, Guid childId, Guid medicineId, DateOnly date, TimeOnly time) =>

@@ -8,7 +8,8 @@ public union MedicineEvent(
     MedicineDetailsUpdated,
     MedicineScheduleRescheduled,
     MedicineScheduleStopped,
-    DoseStatusChanged
+    DoseStatusChanged,
+    MedicineEffectInclusionChanged
 )
 {
     public static MedicineEvent FromPayload(object payload) => payload switch
@@ -18,6 +19,7 @@ public union MedicineEvent(
         MedicineScheduleRescheduled e => e,
         MedicineScheduleStopped e => e,
         DoseStatusChanged e => e,
+        MedicineEffectInclusionChanged e => e,
         _ => throw new ArgumentException($"Unknown medicine event payload: {payload.GetType().Name}", nameof(payload)),
     };
 
@@ -28,6 +30,7 @@ public union MedicineEvent(
         MedicineScheduleRescheduled => nameof(MedicineScheduleRescheduled),
         MedicineScheduleStopped => nameof(MedicineScheduleStopped),
         DoseStatusChanged => nameof(DoseStatusChanged),
+        MedicineEffectInclusionChanged => nameof(MedicineEffectInclusionChanged),
     };
 }
 
@@ -53,3 +56,7 @@ public sealed record MedicineScheduleStopped(MedicineId Id, UserId ModifiedBy, D
 // Also used to undo a mark -- After: DoseStatus.Pending, no separate "unmark" event, the same way
 // RecurrenceUpdated covers both adding and removing a recurrence via After: Recurrence.OneOff.
 public sealed record DoseStatusChanged(MedicineId Id, DateOnly Date, TimeOnly Time, DoseStatus Before, DoseStatus After, UserId ModifiedBy, DateTimeOffset OccurredAt);
+
+// Before/After are IsExcludedFromEffects: true leaves the medicine out of the effect summaries
+// (docs/backend/analysis/medicine-effect-inclusion.md). Allowed on a stopped schedule too.
+public sealed record MedicineEffectInclusionChanged(MedicineId Id, bool Before, bool After, UserId ModifiedBy, DateTimeOffset OccurredAt);

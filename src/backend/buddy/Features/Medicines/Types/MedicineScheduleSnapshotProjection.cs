@@ -33,4 +33,7 @@ public sealed class MedicineScheduleSnapshotProjection : SingleStreamProjection<
 
     public MedicineScheduleSnapshot Apply(MedicineScheduleSnapshot current, DoseStatusChanged changed) =>
         current with { MedicineSchedule = MedicineSchedule.Advance(current.MedicineSchedule, MedicineEvent.FromPayload(changed)) };
+
+    public MedicineScheduleSnapshot Apply(MedicineScheduleSnapshot current, MedicineEffectInclusionChanged changed) =>
+        current with { MedicineSchedule = MedicineSchedule.Advance(current.MedicineSchedule, MedicineEvent.FromPayload(changed)) };
 }

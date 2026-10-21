@@ -1220,6 +1220,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/medicines/children/{childId}/schedules/{medicineId}/effect-inclusion': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['SetMedicineEffectInclusion'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/medicines/children/{childId}/effect-notes/{date}': {
     parameters: {
       query?: never;
@@ -4098,6 +4114,7 @@ export interface components {
       /** Format: date */
       endDate: null | string;
       isStopped: boolean;
+      isExcludedFromEffects: boolean;
       /** Format: uuid */
       createdBy: string;
       /** Format: uuid */
@@ -4319,6 +4336,7 @@ export interface components {
       name: string;
       dosage: string;
       doses: components['schemas']['RegimenDoseResponse'][];
+      isExcludedFromEffects: boolean;
     };
     RenamePrintTemplateRequest: {
       name: string;
@@ -4505,6 +4523,9 @@ export interface components {
     };
     SetItemWarningOverrideRequest: {
       leadMinutes: number[];
+    };
+    SetMedicineEffectInclusionRequest: {
+      included: boolean;
     };
     SetMemberRoleRequest: {
       role: components['schemas']['CalendarRole'];
@@ -4922,6 +4943,8 @@ export interface components {
       schedules: components['schemas']['MedicineScheduleResponse'][];
       doses: components['schemas']['MedicineDoseOccurrence'][];
       effectNotes: components['schemas']['MedicineEffectNoteResponse'][];
+      /** Format: int32 */
+      excludedMedicineCount: number;
     };
     VisitSummaryReport: {
       childGivenName: string;
@@ -10255,6 +10278,69 @@ export interface operations {
         content: {
           'application/json': components['schemas']['MedicineDoseOccurrence'];
         };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  SetMedicineEffectInclusion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+        medicineId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetMedicineEffectInclusionRequest'];
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
       400: {

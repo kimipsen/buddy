@@ -66,3 +66,14 @@ DELETE {{buddy_HostAddress}}/medicines/children/{{childId}}/effect-notes/2025-06
 Authorization: Bearer {{guardianToken}}
 
 ###
+
+# Leave a medicine out of the effect summaries, or back in with true (guardian only)
+PUT {{buddy_HostAddress}}/medicines/children/{{childId}}/schedules/{{medicineId}}/effect-inclusion
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Included": false
+}
+
+###

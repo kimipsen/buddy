@@ -74,7 +74,13 @@
 
       <div class="space-y-6 print:col-span-2">
         @if (periodNotes.hasValue()) {
-          <app-effect-periods class="block" [notes]="periodNotes.value()" />
+          <app-effect-periods class="block" [notes]="periodNotes.value()">
+            <app-effect-inclusion
+              [childId]="childId"
+              [notes]="periodNotes.value()"
+              (changed)="periodNotes.reload()"
+            />
+          </app-effect-periods>
         } @else if (periodNotes.error()) {
           <p class="text-sm text-red-600 dark:text-red-400">
             {{ 'medicine.effects.loadError' | translate }}

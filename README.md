@@ -23,9 +23,6 @@ in real time.
 
 ### Guardian
 
-- [ ] Leave medicines out of the effect summary: switch off medicines such as vitamin D in the
-      dose-period summary and doctor visit summary (proposed, not yet implemented — see
-      [Leaving medicines out of the effect summary](docs/backend/analysis/medicine-effect-inclusion.md))
 - [ ] Mealie integration: connect the family's self-hosted Mealie, link meals to recipes, import
       Mealie's meal plan and send the week's recipes to a Mealie shopping list (proposed, not yet
       implemented — see [Mealie integration](docs/backend/analysis/mealie-integration.md))
@@ -86,6 +83,9 @@ in real time.
       [House rules publishing](docs/backend/analysis/house-rules-publishing.md))
 - [x] Mark meals as eating out (at friends/family or a restaurant), so the AI assistant never
       suggests them and leaves those slots alone
+- [x] Leave medicines out of the effect summary: switch off medicines such as vitamin D in the
+      dose-period summary; the doctor visit summary drops them and says how many were left out (see
+      [Leaving medicines out of the effect summary](docs/backend/analysis/medicine-effect-inclusion.md))
 
 ### Child
 

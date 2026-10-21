@@ -7,6 +7,8 @@
       {{ 'medicine.effects.periods.intro' | translate }}
     </p>
   }
+  <!-- The medicine page puts the inclusion switches here; a visit summary leaves it empty. -->
+  <ng-content />
 
   @for (row of rows(); track row.period.from) {
     <section class="border-t border-slate-100 dark:border-slate-800 py-4 break-inside-avoid">
@@ -71,6 +73,14 @@
   } @empty {
     <p class="text-sm text-slate-500 dark:text-slate-400">
       {{ 'medicine.effects.periods.empty' | translate }}
+    </p>
+  }
+
+  @if (notIncluded(); as names) {
+    <p
+      class="mt-2 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-3 py-2 text-sm text-slate-600 dark:text-slate-300"
+    >
+      {{ 'medicine.effects.periods.notIncluded' | translate: { names } }}
     </p>
   }
 </app-card>

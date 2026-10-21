@@ -37,6 +37,7 @@ describe('ManageMedicines', () => {
       startDate: '2026-08-01',
       endDate: null,
       isStopped: false,
+      isExcludedFromEffects: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       ...overrides,

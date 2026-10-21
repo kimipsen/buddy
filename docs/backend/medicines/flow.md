@@ -58,6 +58,7 @@ sequenceDiagram
 | `PUT`    | `/medicines/children/{childId}/effect-notes/{date}`                              | Logs or overwrites one day's effect and side-effect note (guardians only).                             |
 | `DELETE` | `/medicines/children/{childId}/effect-notes/{date}`                              | Clears one day's note; a day without one is a no-op (guardians only).                                  |
 | `GET`    | `/medicines/children/{childId}/effect-notes`                                     | Lists notes for a `from`/`to` range of at most 92 days, each with live dose statuses (guardians only). |
+| `PUT`    | `/medicines/children/{childId}/schedules/{medicineId}/effect-inclusion`          | Leaves a medicine out of, or back in, the effect summaries; stopped schedules too (guardians only).    |
 | `GET`    | `/medicines/children/{childId}/group-share`                                      | Returns the group the child's medicine schedules are currently shared with, if any.                    |
 | `POST`   | `/medicines/groups/{groupId}/children/{childId}/schedules`                       | Creates a medicine schedule for a shared child via group access.                                       |
 | `GET`    | `/medicines/groups/{groupId}/children/{childId}/schedules`                       | Lists a shared child's schedules via group access.                                                     |
@@ -113,6 +114,8 @@ For listing and display, the backend does not persist a generated occurrence lis
 ## Effect notes
 
 A second per-child aggregate, `MedicineEffectLog` (stream id equal to the child's id, no index document), holds at most one `MedicineEffectNote` per local date: effect ratings, side-effect severities, a wear-off time, a free note, and the regimen (medicine name and dosage) resolved from the child's active schedules when the day is first logged. Edits keep that regimen; dose statuses are joined live from each schedule's dose log on every read. Only guardians can read or write notes; the child gets `403`. Every list is audit-logged (event 9003). See [Medicine effect and side-effect notes](../analysis/medicine-effect-notes.md).
+
+A guardian can leave a medicine (vitamin D, say) out of the effect summaries with `SetMedicineEffectInclusion`, which sets `IsExcludedFromEffects` on the schedule (`MedicineEffectInclusionChanged`). Notes keep their full regimen; each regimen entry carries the schedule's live flag, the dose-period summary ignores flagged entries, and the doctor visit summary's medicine section drops them on the server, keeping only `ExcludedMedicineCount`. See [Leaving medicines out of the effect summary](../analysis/medicine-effect-inclusion.md).
 
 ## Authorization model
 

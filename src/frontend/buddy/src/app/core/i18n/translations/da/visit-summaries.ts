@@ -111,6 +111,8 @@ export const visitSummaries = {
       takenOf: '{taken} af {due}',
       stopped: 'Stoppet',
       empty: 'Ingen medicin i perioden.',
+      excludedOne: 'Forælderen har udeladt 1 medicin fra denne oversigt.',
+      excludedMany: 'Forælderen har udeladt {count} slags medicin fra denne oversigt.',
     },
     sleep: {
       title: 'Søvn',

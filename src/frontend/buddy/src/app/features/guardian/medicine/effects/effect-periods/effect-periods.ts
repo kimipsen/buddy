@@ -3,13 +3,24 @@ import { Component, computed, inject, input } from '@angular/core';
 import { parseIsoDate } from '../../../../../core/date-utils';
 import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../../core/i18n/translation.service';
-import { DosePeriod, LevelCount, groupByDosePeriod } from '../../../../../core/medicine-effects';
-import { MedicineEffectNote } from '../../../../../core/medicines.service';
+import {
+  DosePeriod,
+  LevelCount,
+  groupByDosePeriod,
+  regimenMedicines,
+} from '../../../../../core/medicine-effects';
+import {
+  EffectLevel,
+  MedicineEffectNote,
+  SideEffectSeverity,
+} from '../../../../../core/medicines.service';
 import { TimeOfDayPipe } from '../../../../../core/time-of-day.pipe';
 import { Card } from '../../../../../shared/card/card';
 
+type Level = EffectLevel | SideEffectSeverity;
+
 // Bar segment colours per level, worst to best read left to right as the scale is listed.
-const LEVEL_COLOURS: Record<string, string> = {
+const LEVEL_COLOURS: Record<Level, string> = {
   Poor: 'bg-red-400 dark:bg-red-500',
   Okay: 'bg-amber-300 dark:bg-amber-500',
   Good: 'bg-emerald-500 dark:bg-emerald-400',
@@ -47,6 +58,15 @@ export class EffectPeriods {
   readonly notes = input.required<MedicineEffectNote[]>();
   // The medicine page's "last 3 months" line; a visit summary has its own period and leaves it out.
   readonly showIntro = input(true);
+
+  // Printed under the periods, so the paper copy says what was left out. Empty in a visit summary,
+  // whose notes arrive with the left-out medicines already removed.
+  protected readonly notIncluded = computed(() =>
+    regimenMedicines(this.notes())
+      .filter((m) => m.isExcludedFromEffects)
+      .map((m) => m.name)
+      .join(', '),
+  );
 
   protected readonly rows = computed((): PeriodRow[] => {
     const t = (key: string, params?: Record<string, string | number>) =>
@@ -88,14 +108,15 @@ export class EffectPeriods {
       .join(', ');
   }
 
-  private segments(counts: LevelCount<string>[]): BarSegment[] {
+  // groupByDosePeriod only keeps rated areas and side effects, so total is at least 1.
+  private segments(counts: LevelCount<Level>[]): BarSegment[] {
     const total = counts.reduce((sum, c) => sum + c.count, 0);
 
     return counts.map(({ value, count }) => ({
       value,
       count,
-      percent: total === 0 ? 0 : (count / total) * 100,
-      colour: LEVEL_COLOURS[value] ?? '',
+      percent: (count / total) * 100,
+      colour: LEVEL_COLOURS[value],
     }));
   }
 }

@@ -43,6 +43,18 @@ internal static class MedicineTestHelpers
         return expectedStatus == 200 ? response.ReadAsJson<MedicineScheduleDto>() : null;
     }
 
+    public static async Task<List<MedicineScheduleDto>?> ListMedicineSchedulesAsync(BuddyApiFixture fixture, string token, Guid childId)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Get.Url($"/medicines/children/{childId}/schedules");
+            _.StatusCodeShouldBeOk();
+        });
+
+        return response.ReadAsJson<List<MedicineScheduleDto>>();
+    }
+
     // Creates a group owned by the guardian (Owner holds Manage on the default medicine policy) and
     // shares the child's medicine with it, so the guardian can drive the /medicines/groups/... routes.
     public static async Task<Guid> ShareWithNewGroupAsync(BuddyApiFixture fixture, string guardianToken, Guid childId)

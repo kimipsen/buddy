@@ -89,6 +89,13 @@ export const medicine = {
       range: '{from} – {to}',
       days: '{count} dage vurderet',
       woreOff: 'Aftog som regel omkring {time}',
+      notIncluded: 'Ikke med: {names}.',
+    },
+    inclusion: {
+      title: 'Medicin i oversigten',
+      hint: 'Gælder også lægebesøgsoversigter og deres delte links.',
+      toggle: 'Medtag {name} i oversigten',
+      saveError: 'Ændringen kunne ikke gemmes. Prøv igen.',
     },
   },
   manageMedicines: {

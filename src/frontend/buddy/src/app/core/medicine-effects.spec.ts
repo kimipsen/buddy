@@ -5,6 +5,7 @@ import {
   SIDE_EFFECTS,
   groupByDosePeriod,
   medianTime,
+  regimenMedicines,
 } from './medicine-effects';
 import type { MedicineEffectNote } from './medicines.service';
 
@@ -24,6 +25,7 @@ function note(
       name,
       dosage,
       doses: [],
+      isExcludedFromEffects: false,
     })),
     loggedBy: 'guardian-1',
     ...overrides,
@@ -137,6 +139,63 @@ describe('groupByDosePeriod', () => {
     ]);
     expect(period.medianWoreOffAt).toBe('14:30');
     expect(period.days).toBe(3);
+  });
+});
+
+describe('left-out medicines', () => {
+  function withRegimen(
+    date: string,
+    regimen: { id: string; name: string; dosage: string; excluded?: boolean }[],
+  ): MedicineEffectNote {
+    return note(date, [], {
+      regimen: regimen.map(({ id, name, dosage, excluded = false }) => ({
+        medicineId: id,
+        name,
+        dosage,
+        doses: [],
+        isExcludedFromEffects: excluded,
+      })),
+    });
+  }
+
+  it('merges periods that differ only by a left-out medicine and leaves it out of the regimen', () => {
+    const ritalin = { id: 'r', name: 'Ritalin', dosage: '10 mg' };
+    const melatonin = { id: 'm', name: 'Melatonin', dosage: '3 mg', excluded: true };
+
+    const periods = groupByDosePeriod([
+      withRegimen('2026-03-02', [ritalin]),
+      withRegimen('2026-03-03', [ritalin, melatonin]),
+      withRegimen('2026-03-04', [ritalin, { ...melatonin, dosage: '5 mg' }]),
+    ]);
+
+    expect(periods).toHaveLength(1);
+    expect(periods[0]?.regimen).toEqual([{ name: 'Ritalin', dosage: '10 mg' }]);
+    expect(periods[0]?.days).toBe(3);
+  });
+
+  it('makes a day with only left-out medicines a baseline day', () => {
+    const periods = groupByDosePeriod([
+      withRegimen('2026-03-02', [{ id: 'v', name: 'Vitamin D', dosage: '1', excluded: true }]),
+      withRegimen('2026-03-03', []),
+    ]);
+
+    expect(periods).toHaveLength(1);
+    expect(periods[0]?.regimen).toEqual([]);
+  });
+
+  it('lists every medicine once by its newest name, sorted by name', () => {
+    expect(
+      regimenMedicines([
+        withRegimen('2026-03-03', [{ id: 'v', name: 'Vitamin D3', dosage: '1', excluded: true }]),
+        withRegimen('2026-03-02', [
+          { id: 'v', name: 'Vitamin D', dosage: '1' },
+          { id: 'r', name: 'Ritalin', dosage: '10 mg' },
+        ]),
+      ]),
+    ).toEqual([
+      { medicineId: 'r', name: 'Ritalin', isExcludedFromEffects: false },
+      { medicineId: 'v', name: 'Vitamin D3', isExcludedFromEffects: true },
+    ]);
   });
 });
 

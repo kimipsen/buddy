@@ -16,6 +16,7 @@ internal sealed record MedicineScheduleDto(
     DateOnly StartDate,
     DateOnly? EndDate,
     bool IsStopped,
+    bool IsExcludedFromEffects,
     Guid CreatedBy,
     Guid LastModifiedBy);
 

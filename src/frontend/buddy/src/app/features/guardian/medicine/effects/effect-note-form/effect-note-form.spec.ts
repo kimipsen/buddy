@@ -25,6 +25,7 @@ function savedNote(overrides: Partial<MedicineEffectNote> = {}): MedicineEffectN
         name: 'Ritalin',
         dosage: '10 mg',
         doses: [{ time: '07:30', status: 'Taken' }],
+        isExcludedFromEffects: false,
       },
     ],
     loggedBy: 'guardian-1',

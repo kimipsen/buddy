@@ -12,7 +12,8 @@ public sealed record MedicineEffectNoteResponse(
     Guid LoggedBy)
 {
     // The regimen's name and dosage come from the note (as they were that day); the dose statuses
-    // come live from the schedules, so a dose marked after the note was saved still shows.
+    // and IsExcludedFromEffects come live from the schedules, so a dose marked, or a medicine left
+    // out, after the note was saved still shows. A schedule that doesn't load counts as included.
     public static MedicineEffectNoteResponse From(MedicineEffectNote note, IReadOnlyDictionary<MedicineId, MedicineSchedule> schedules) =>
         new(
             note.Date,
@@ -24,10 +25,11 @@ public sealed record MedicineEffectNoteResponse(
                 m.MedicineId.Value,
                 m.Name,
                 m.Dosage,
-                MedicineEffectNotes.DosesOn(schedules.GetValueOrDefault(m.MedicineId), note.Date)))],
+                MedicineEffectNotes.DosesOn(schedules.GetValueOrDefault(m.MedicineId), note.Date),
+                schedules.GetValueOrDefault(m.MedicineId)?.IsExcludedFromEffects ?? false))],
             note.LoggedBy.Value);
 }
 
-public sealed record RegimenMedicineResponse(Guid MedicineId, string Name, string Dosage, IReadOnlyList<RegimenDoseResponse> Doses);
+public sealed record RegimenMedicineResponse(Guid MedicineId, string Name, string Dosage, IReadOnlyList<RegimenDoseResponse> Doses, bool IsExcludedFromEffects);
 
 public sealed record RegimenDoseResponse(TimeOnly Time, DoseStatus Status);

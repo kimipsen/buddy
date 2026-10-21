@@ -49,6 +49,7 @@ function schedule(id: string, name = 'Concerta', dosage = '18 mg'): MedicineSche
     startDate: '2026-03-01',
     endDate: null,
     isStopped: false,
+    isExcludedFromEffects: false,
     createdBy: 'guardian-1',
     lastModifiedBy: 'guardian-1',
   };
@@ -78,7 +79,9 @@ function note(date: string, dosage: string): MedicineEffectNote {
     sideEffects: [],
     woreOffAt: null,
     note: '',
-    regimen: [{ medicineId: 'm1', name: 'Concerta', dosage, doses: [] }],
+    regimen: [
+      { medicineId: 'm1', name: 'Concerta', dosage, doses: [], isExcludedFromEffects: false },
+    ],
     loggedBy: 'guardian-1',
   };
 }
@@ -149,6 +152,7 @@ describe('visit summary stats', () => {
         dose('m2', '2026-03-02', 'Taken'),
       ],
       effectNotes: [],
+      excludedMedicineCount: 0,
     };
 
     const adherence = medicineAdherence(section, '2026-03-04');
@@ -211,6 +215,7 @@ describe('visit summary stats', () => {
       schedules: [schedule('m1')],
       doses: [dose('m1', '2026-03-04', 'Taken'), dose('m1', '2026-03-05', 'Pending')],
       effectNotes: [note('2026-03-04', '18 mg'), note('2026-03-05', '27 mg')],
+      excludedMedicineCount: 0,
     };
 
     const weeks = overviewWeeks(

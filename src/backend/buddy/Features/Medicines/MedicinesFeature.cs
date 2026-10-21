@@ -27,6 +27,7 @@ public static class MedicinesFeature
         typeof(MedicineScheduleRescheduled),
         typeof(MedicineScheduleStopped),
         typeof(DoseStatusChanged),
+        typeof(MedicineEffectInclusionChanged),
         typeof(MedicineSharedWithGroup),
         typeof(MedicineUnsharedFromGroup),
         typeof(MedicineEffectLogStarted),
@@ -112,6 +113,7 @@ public static class MedicinesFeature
         medicines.MapListMedicineSchedules();
         medicines.MapListTodaysDoses();
         medicines.MapSetDoseStatus();
+        medicines.MapSetMedicineEffectInclusion();
 
         medicines.MapLogMedicineEffectNote();
         medicines.MapClearMedicineEffectNote();

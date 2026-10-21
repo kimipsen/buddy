@@ -34,6 +34,7 @@ describe('MedicinesService', () => {
       startDate: '2026-08-01',
       endDate: null,
       isStopped: false,
+      isExcludedFromEffects: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       ...overrides,
@@ -228,6 +229,19 @@ describe('MedicinesService', () => {
     });
   });
 
+  describe('setEffectInclusion', () => {
+    it('PUTs whether the medicine is included', async () => {
+      const promise = service.setEffectInclusion(childId, 'med-1', false);
+
+      const req = httpMock.expectOne(`${base()}/schedules/med-1/effect-inclusion`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({ included: false });
+      req.flush(null);
+
+      await promise;
+    });
+  });
+
   describe('listDoses', () => {
     it('GETs doses with from/to params', async () => {
       const doses = [dose()];
@@ -366,6 +380,7 @@ describe('MedicinesService', () => {
             name: 'Ritalin',
             dosage: '10 mg',
             doses: [{ time: '07:30:00', status: 'Taken' }],
+            isExcludedFromEffects: false,
           },
         ],
         loggedBy: 'guardian-1',

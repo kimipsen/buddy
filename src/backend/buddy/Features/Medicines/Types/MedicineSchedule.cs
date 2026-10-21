@@ -19,7 +19,10 @@ public sealed record MedicineSchedule(
     DateOnly? EndDate,
     ImmutableDictionary<(DateOnly Date, TimeOnly Time), DoseStatus> DoseLog,
     UserId LastModifiedBy,
-    bool IsStopped = false)
+    bool IsStopped = false,
+    // False (the default for streams written before the flag existed) keeps the medicine in the
+    // effect summaries (docs/backend/analysis/medicine-effect-inclusion.md, Question 1).
+    bool IsExcludedFromEffects = false)
 {
     public static MedicineSchedule? Rehydrate(IEnumerable<MedicineEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
@@ -68,6 +71,7 @@ public sealed record MedicineSchedule(
             LastModifiedBy = rescheduled.ModifiedBy
         },
         MedicineScheduleStopped stopped => schedule with { IsStopped = true, LastModifiedBy = stopped.ModifiedBy },
+        MedicineEffectInclusionChanged changed => schedule with { IsExcludedFromEffects = changed.After, LastModifiedBy = changed.ModifiedBy },
         // Sparse log: a (Date, Time) with no entry is implicitly Pending, so an undo
         // (After: Pending) removes the key rather than storing it explicitly -- keeps the
         // log's size proportional to guardian/child actions, not to elapsed calendar time.

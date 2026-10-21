@@ -48,6 +48,7 @@ function report(overrides: Partial<Report> = {}): Report {
           startDate: '2026-02-01',
           endDate: null,
           isStopped: true,
+          isExcludedFromEffects: false,
           createdBy: 'guardian-1',
           lastModifiedBy: 'guardian-1',
         },
@@ -81,10 +82,19 @@ function report(overrides: Partial<Report> = {}): Report {
           sideEffects: [],
           woreOffAt: null,
           note: '',
-          regimen: [{ medicineId: 'm1', name: 'Concerta', dosage: '18 mg', doses: [] }],
+          regimen: [
+            {
+              medicineId: 'm1',
+              name: 'Concerta',
+              dosage: '18 mg',
+              doses: [],
+              isExcludedFromEffects: false,
+            },
+          ],
           loggedBy: 'guardian-1',
         },
       ],
+      excludedMedicineCount: 0,
     },
     feelings: {
       from: '2026-03-02',
@@ -150,6 +160,22 @@ describe('VisitSummaryReport', () => {
     expect(compiled.textContent).not.toContain('The last 3 months');
   });
 
+  it('says how many medicines the guardian left out, without naming them', async () => {
+    const base = report();
+    const withCount = (count: number) =>
+      report({ medicine: { ...base.medicine!, excludedMedicineCount: count } });
+
+    expect((await setup(base)).textContent).not.toContain('out of this summary');
+    TestBed.resetTestingModule();
+    expect((await setup(withCount(1))).textContent).toContain(
+      'The guardian left 1 medicine out of this summary.',
+    );
+    TestBed.resetTestingModule();
+    expect((await setup(withCount(2))).textContent).toContain(
+      'The guardian left 2 medicines out of this summary.',
+    );
+  });
+
   it('summarises sleep and feelings', async () => {
     const compiled = await setup(report());
     const text = compiled.textContent ?? '';
@@ -178,7 +204,7 @@ describe('VisitSummaryReport', () => {
     const compiled = await setup(
       report({
         sleep: { sleepHygieneNotes: '', entries: [] },
-        medicine: { schedules: [], doses: [], effectNotes: [] },
+        medicine: { schedules: [], doses: [], effectNotes: [], excludedMedicineCount: 0 },
         feelings: {
           from: '2026-03-02',
           to: '2026-03-08',

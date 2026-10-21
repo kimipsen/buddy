@@ -87,6 +87,13 @@ export const medicine = {
       range: '{from} – {to}',
       days: '{count} days rated',
       woreOff: 'Usually wore off around {time}',
+      notIncluded: 'Not included: {names}.',
+    },
+    inclusion: {
+      title: 'Medicines in this summary',
+      hint: 'Also applies to visit summaries and their shared links.',
+      toggle: 'Include {name} in the summary',
+      saveError: 'Could not save the change. Try again.',
     },
   },
   manageMedicines: {

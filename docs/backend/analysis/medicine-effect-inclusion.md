@@ -1,6 +1,12 @@
 # Leaving Medicines Out of the Effect Summary
 
-Status: Proposed (not yet implemented)
+Status: Implemented. `MedicineSchedule.IsExcludedFromEffects` and the `MedicineEffectInclusionChanged`
+event, the `SetMedicineEffectInclusion` slice on
+`PUT /medicines/children/{childId}/schedules/{medicineId}/effect-inclusion`, the live
+`isExcludedFromEffects` on each effect note's regimen entry, `MedicineVisitSummarySource` dropping
+left-out medicines and reporting `ExcludedMedicineCount`, and on `/guardian/medicine/effects` the
+"Medicines in this summary" switches and the "Not included" line; the visit summary says how many
+medicines were left out, without names. Extends [medicine-effect-notes.md](medicine-effect-notes.md).
 
 ## Context
 
@@ -78,7 +84,9 @@ client-side; the visit summary is filtered on the server.**
   so it can't receive them pre-filtered.
 - **Visit summary** (guardian's page and the doctor's anonymous `/shared/visit-summary/...` page):
   `MedicineVisitSummarySource` drops excluded medicines from `Schedules`, `Doses` and each note's
-  `Regimen`. That is data minimization: an anonymous link holder never receives a medicine the
+  `Regimen`, and adds `ExcludedMedicineCount`: how many left-out medicines had a dose in the period
+  or appear in one of its notes. The report shows that count, without names ("The guardian left 1
+  medicine out of this summary."), so the doctor knows to ask. That is data minimization: an anonymous link holder never receives a medicine the
   guardian marked as irrelevant, which matters because the section is health data
   ([gdpr-data-protection.md](gdpr-data-protection.md)).
 - `groupByDosePeriod` ignores excluded entries in both cases, so the shared `EffectPeriods`
@@ -179,9 +187,9 @@ Changed read slices: `ListMedicineSchedules` and the other `MedicineScheduleResp
 
 ## Routes
 
-| Route                                                                   | Method | Slice                        | Success | Other statuses                  |
-| ----------------------------------------------------------------------- | ------ | ---------------------------- | ------- | ------------------------------- |
-| `/medicines/children/{childId}/schedules/{medicineId}/effect-inclusion` | PUT    | `SetMedicineEffectInclusion` | `204`   | `400`, `403` (the child), `404` |
+| Route                                                                   | Method | Slice                        | Success | Other statuses                                   |
+| ----------------------------------------------------------------------- | ------ | ---------------------------- | ------- | ------------------------------------------------ |
+| `/medicines/children/{childId}/schedules/{medicineId}/effect-inclusion` | PUT    | `SetMedicineEffectInclusion` | `204`   | `400` (malformed body), `403` (the child), `404` |
 
 ## Frontend
 
@@ -191,32 +199,41 @@ A mockup of the effects page with the new toggles (demo data, not a screenshot o
 
 - `core/medicines.service.ts`: `setEffectInclusion(childId, medicineId, included)`, a plain `PUT`
   (not `postIdempotent`; it's idempotent by nature).
-- A new `effects/effect-inclusion/` component inside the "By dose period" card: one switch per
-  medicine found in the period notes' regimens (distinct by `medicineId`, newest name, stopped ones
-  tagged), `print:hidden`, `role="switch"` buttons like the existing toggles in `warning-exceptions`. On
-  change it calls the service, then `periodNotes.reload()`. It hides itself when the regimens hold
-  fewer than two medicines.
+- A new `effects/effect-inclusion/` component, projected into the "By dose period" card: one
+  `app-toggle` per medicine found in the period notes' regimens (`regimenMedicines()` in
+  `core/medicine-effects.ts`: distinct by `medicineId`, newest name, sorted by name), in a labelled
+  `role="group"` rather than a section with a heading, since the periods are the card's sections.
+  `print:hidden`. On change it calls the service, then the page runs `periodNotes.reload()`. It
+  hides itself only when no note names a medicine, so a lone left-out medicine can still be switched
+  back on. Stopped medicines aren't tagged: the regimen doesn't carry the schedule's state.
 - `EffectPeriods` adds the "Not included: Vitamin D, Melatonin." line (it prints, so the paper
   copy says what was left out). In the visit summary there is nothing to list, since the server
   already removed them.
 - i18n in `translations/{en,da}/medicine.ts`: the list heading, the "also applies to visit
-  summaries" hint, the "Not included" line, the stopped tag and a save error.
-- Screenshots: `guardian-medicine-effects` shows the toggles; `demo-family.ts` marks Vitamin D as
-  excluded so the "Not included" line is visible.
+  summaries" hint, the switch's accessible name, the "Not included" line and a save error; in
+  `visit-summaries.ts`, `excludedOne` / `excludedMany` for the count line.
+- Screenshots: `demo-family.ts` creates Vitamin D before the 10 mg weeks are rated and leaves it out,
+  so `guardian-medicine-effects` shows the switches and the "Not included" line, and the visit
+  summary pages show the count line.
 
 ## Testing
 
 - **Integration** (a `SetMedicineEffectInclusion/` folder, mirroring `StopMedicineSchedule/`):
-  `204` and the event; same value, no event; stopped schedule allowed; another child's medicine
-  `404`; revoked `GuardianLink` `404`; the child `403`; snapshot reflects the flag.
+  `204` and the flag on the schedule; same value, no event; stopped schedule allowed; another
+  child's medicine or an unknown id `404`; a stranger `404`; the child `403`. The snapshot test
+  covers the new event.
 - `ListMedicineEffectNotes` returns the live flag on regimen entries, including for a note written
   before the flag changed.
 - `MedicineVisitSummarySource`: excluded schedule absent from `Schedules`, `Doses` and note
   regimens, both on the guardian's `GetVisitSummary` and the anonymous shared route.
-- `EventShapeTests` golden file; snapshot tests; export contains the field.
+- `VisitSummaryReportTests`: the count, including a stopped medicine tied to the period only by a
+  note's regimen.
+- `EventShapeTests` golden file. The export picks the field up through `MedicineScheduleResponse`.
 - **Frontend**: `groupByDosePeriod` merges periods that differ only by an excluded medicine and
-  treats an all-excluded day as baseline; `EffectInclusion` spec (toggle, reload, error, hidden
-  with one medicine); `EffectPeriods` "Not included" line; `overviewWeeks` no dose-change marker.
+  treats an all-excluded day as baseline; `regimenMedicines`; `EffectInclusion` spec (list, save,
+  error, disabled while saving, hidden without medicines); `EffectPeriods` "Not included" line; the
+  page reloads the summary after a switch; the report's one/many count line. The week overview needs
+  no change: its dose-change markers come from the already-filtered section.
 - **e2e**: switch a medicine off on the effects page and see two periods become one.
 
 ## Failure and edge-case behavior
@@ -243,24 +260,22 @@ A mockup of the effects page with the new toggles (demo data, not a screenshot o
 
 ## Decisions made
 
-| Question                | Decision                                                                        |
-| ----------------------- | ------------------------------------------------------------------------------- |
-| Where the setting lives | `MedicineSchedule.IsExcludedFromEffects`, one choice for every page and summary |
-| Stored notes            | Unchanged; filtered when read, so it's reversible                               |
-| Who filters             | Frontend on the guardian's page; server for the visit summary (minimization)    |
-| Who may change it       | `Manage`, guardians only, active and stopped schedules                          |
-| What it hides           | Summaries only; the day list and note form keep the full record                 |
+| Question                | Decision                                                                                  |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| Where the setting lives | `MedicineSchedule.IsExcludedFromEffects`, one choice for every page and summary           |
+| Stored notes            | Unchanged; filtered when read, so it's reversible                                         |
+| Who filters             | Frontend on the guardian's page; server for the visit summary (minimization)              |
+| Who may change it       | `Manage`, guardians only, active and stopped schedules                                    |
+| What it hides           | Summaries only; the day list and note form keep the full record                           |
+| Does the doctor see it  | A count without names (`ExcludedMedicineCount`), so they know to ask (decided 2026-10-21) |
+| Where the switch lives  | Only on the effects page, where its effect is visible (decided 2026-10-21)                |
 
 ## Remaining open questions
 
-- **Should the shared visit summary say that medicines were left out?** The server removes them,
-  so the doctor can't tell. Melatonin, for one, matters to a sleep discussion. Lean: a neutral line
-  without names ("The guardian left 2 medicines out of this summary") so the doctor can ask;
-  additive either way.
 - **A per-summary override.** If families ask for different medicines per doctor, add an
   `ExcludedMedicines` set to `VisitSummary` that defaults to the schedule flags. Additive.
-- **Where else to offer the toggle.** Lean: only on the effects page, where its effect is visible.
-  A copy in the manage-medicines edit form is additive.
+- **A copy of the switch in the manage-medicines edit form.** Left out for now (see the decisions);
+  additive if guardians look for it there.
 
 ## Diagram
 

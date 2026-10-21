@@ -745,8 +745,9 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     // Medicine ------------------------------------------------------------------------------
     // Effect notes record the regimen active when a day is first rated, so the order matters:
     // baseline days before any schedule, three weeks on 10 mg, then the dosage goes up to 15 mg
-    // for the last week -- giving the effects page three dose periods. The other medicines are
-    // created afterwards so they don't split those periods.
+    // for the last week -- giving the effects page three dose periods. Vitamin D is on the regimen
+    // of the last two weeks but left out of the summary, so it doesn't split them
+    // (docs/backend/analysis/medicine-effect-inclusion.md); melatonin is created afterwards.
     const logEffectNote = (back: number, body: object) =>
       api.put(`/medicines/children/${emil.id}/effect-notes/${inDays(-back)}`, body).catch(warn);
     for (const back of [34, 33, 32, 31, 30]) {
@@ -767,6 +768,21 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       startDate: inDays(-27),
       endDate: null,
     });
+    // A second morning medicine at the same time, so the feelings trend shows two doses grouped.
+    const vitaminD = await api.post<Named>(`/medicines/children/${emil.id}/schedules`, {
+      name: 'Vitamin D',
+      dosage: '1 tablet',
+      icon: '☀️',
+      color: '#f59e0b',
+      times: ['07:30:00'],
+      startDate: inDays(-13),
+      endDate: null,
+    });
+    await api
+      .put(`/medicines/children/${emil.id}/schedules/${vitaminD.id}/effect-inclusion`, {
+        included: false,
+      })
+      .catch(warn);
     for (let back = 27; back >= 8; back--) {
       if (back % 7 === 3 || back % 7 === 4) {
         continue; // a few unrated days, as in real life
@@ -806,16 +822,6 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       color: '#6366f1',
       times: ['19:00:00'],
       startDate: mondayIso,
-      endDate: null,
-    });
-    // A second morning medicine at the same time, so the feelings trend shows two doses grouped.
-    const vitaminD = await api.post<Named>(`/medicines/children/${emil.id}/schedules`, {
-      name: 'Vitamin D',
-      dosage: '1 tablet',
-      icon: '☀️',
-      color: '#f59e0b',
-      times: ['07:30:00'],
-      startDate: inDays(-13),
       endDate: null,
     });
     // The morning doses for the past week, today included.

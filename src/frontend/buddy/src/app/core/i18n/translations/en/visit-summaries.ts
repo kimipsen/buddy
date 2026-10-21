@@ -111,6 +111,8 @@ export const visitSummaries = {
       takenOf: '{taken} of {due}',
       stopped: 'Stopped',
       empty: 'No medicine in this period.',
+      excludedOne: 'The guardian left 1 medicine out of this summary.',
+      excludedMany: 'The guardian left {count} medicines out of this summary.',
     },
     sleep: {
       title: 'Sleep',
