@@ -383,6 +383,14 @@ to the release if you deploy the published images, and rerun `./deploy.sh`.
 Events don't roll back (step 8); Flexible Server's point-in-time restore is
 the way back across a release that adds event types.
 
+## 10. Moving to your own server
+
+To move the data from Azure to the docker-compose stack on a server of your
+own, run [`migrate-from-azure.sh`](migrate-from-azure.sh) on that server
+(`task deploy:migrate-from-azure`). It copies the app and Keycloak databases
+and points the realm's clients at the new domains. See
+[README.md step 10](README.md#10-moving-from-azure).
+
 ## Notes
 
 - **Redeploying after a code change**: just rerun `./deploy.sh`. It rebuilds

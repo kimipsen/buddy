@@ -320,6 +320,18 @@ tasks:
       - ./preflight.sh
       - ./deploy-pull.sh "{{.VERSION}}"
 
+  deploy:migrate-from-azure:
+    desc: 'Copy the Azure deployment''s data (app + keycloak databases) into the production stack on this machine - on the new server only. Usage: task deploy:migrate-from-azure (-- --move to leave Azure stopped; -- --help for all options)'
+    dir: deploy
+    interactive: true
+    preconditions:
+      - sh: test -f .env
+        msg: "deploy/.env not found — copy deploy/.env.example to deploy/.env and fill in real values first."
+      - sh: test -f azure/.env
+        msg: "deploy/azure/.env not found — copy the deploy/azure/.env you deploy Azure with to this machine."
+    cmds:
+      - ./migrate-from-azure.sh {{.CLI_ARGS}}
+
   deploy:azure:
     desc: Deploy backend + frontend + Keycloak + Postgres to Azure Container Apps (deploy/azure/deploy.sh)
     dir: deploy/azure

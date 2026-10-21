@@ -360,6 +360,67 @@ run `task deploy:pull` (the published images) or `task deploy` (a build on
 the VM; the way for a fork without published images). Events don't roll back (step 8), so a release that adds
 event types is a one-way step unless you restore the backup.
 
+## 10. Moving from Azure
+
+To move a family's data from the Azure Container Apps deployment
+([README-azure.md](README-azure.md)) onto this stack, use
+[`migrate-from-azure.sh`](migrate-from-azure.sh). It copies both databases:
+the app database (events, snapshots, erasure ledger) and Keycloak's (realm,
+clients, users and their passwords), so nobody has to register again.
+
+1. Set this server up as in steps 1 to 4, and deploy **the release Azure
+   runs** (`curl https://<azure api>/version`), e.g.
+   `git checkout v1.5.3 && task deploy:pull`. Skip step 5: the realm comes
+   from Azure.
+2. Copy the `deploy/azure/.env` you deploy Azure with to the same path here,
+   and install the Azure CLI (`az login`), `jq` and `curl`.
+3. Rehearse with a copy that leaves Azure running afterwards:
+
+   ```bash
+   task deploy:migrate-from-azure
+   ```
+
+4. When DNS for `API_DOMAIN`/`AUTH_DOMAIN`/`APP_DOMAIN` is ready to switch,
+   run it again with `--move` (`task deploy:migrate-from-azure -- --move`),
+   point DNS at this server and check it as in step 6.
+
+Each run:
+
+- runs `preflight.sh`, shows what it'll do and asks you to type `MIGRATE`
+  (`--yes` skips the question);
+- adds a firewall rule for this machine's public IP to the Azure Postgres
+  server and removes it again when it exits;
+- deactivates the Azure `api` and `keycloak` revisions while it dumps, so no
+  write is lost or half copied (`--no-freeze` keeps Azure running). Without
+  `--move` it reactivates them right after the dump, a few minutes later;
+  with `--move` they stay stopped. If the script fails, it reactivates them
+  either way;
+- dumps this stack's databases first if they already hold data, then
+  **replaces** them with the Azure dumps (`pg_restore --no-owner
+--no-privileges`, as in step 7);
+- replaces the Azure hostnames with the new domains in the buddy realm's
+  clients (redirect URIs, web origins, post-logout URIs) through `kcadm.sh`;
+- starts the stack and waits for it to be healthy.
+
+All dumps go to `~/buddy-backups/azure-migration-<timestamp>/`
+(`--dump-dir` to change). They hold personal data: delete them after 30 days
+at the latest, as with the backups in step 7.
+
+After the move:
+
+- The Keycloak admin console signs in with Azure's `KEYCLOAK_ADMIN_PASSWORD`,
+  since the master realm came over too. `KEYCLOAK_ADMIN_PASSWORD` in this
+  `.env` is only used for a first boot on an empty database.
+- `KEYCLOAK_ADMIN_CLI_SECRET` in this `.env` must be the `buddy-admin-cli`
+  secret from Azure. The script warns when it isn't.
+- The API's own mail settings don't come with the data. If Azure sends mail
+  through Brevo, add the `Mail__*` settings `deploy/azure/deploy.sh` sets to
+  this `.env` and restart `api`. Keycloak's mail settings are part of the
+  realm and do come over.
+- When you're sure, delete the Azure resources with
+  `az group delete --name <RESOURCE_GROUP>`. That also deletes Azure's
+  point-in-time backups.
+
 ## Notes
 
 - Every base image is pinned by tag and digest: the .NET SDK/runtime in
