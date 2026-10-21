@@ -177,7 +177,8 @@ All backend tests are in `src/backend/buddy.IntegrationTests/` (no separate unit
 - Cover the authorization matrix (guardian / child / unrelated user) and each `Result` arm the endpoint maps.
 - Event shape: new/changed events get a test in `EventShapeTests/<Domain>EventShapeTests.cs` against `EventShapeTests/GoldenFiles/<Domain>/*.json` with fixed IDs and instants. Every registered event type has one; `Meta/EventGoldenFileCoverageTests.cs` fails on a type in any feature's `EventTypes` without a `<Type>.json`/`<Type>_<Variant>.json` (and on stale golden files). `EventShapeTestSupport` registers the union of the stores' converters (StronglyTypedId, ValueTuple) - keep it in sync when a store adds one.
 - Snapshot: `SnapshotTests/<Agg>SnapshotTests.cs` (section 5).
-- Run: `task test:backend` or `dotnet test src/backend/backend.slnx` (needs Docker). Mutation: `task test:mutation:backend`.
+- Run: `task test:backend` or `dotnet test src/backend/backend.slnx` (needs Docker).
+- Mutation testing: when you add or change a feature or its tests, run the `mutation-fix-backend` skill scoped to the changed source files once the tests pass, and kill the relevant survivors. Never run an unscoped `task test:mutation:backend`; it takes hours.
 
 ## 9. Config and secrets
 

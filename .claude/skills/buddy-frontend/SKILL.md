@@ -50,6 +50,7 @@ App root: `src/frontend/buddy`. All paths below are relative to it unless they s
 8. **Docs**: tick/add the item in the root `README.md` `## Features` list (and in `TODO.md` if it's listed there), and update `docs/frontend/README.md` (routes, responsibilities, shared services) when routes or services change. Keep open items on top (see "Task checklists" in `CLAUDE.md`): in `TODO.md`, a new task goes at the top of `## Open` and a ticked one moves to the bottom of `## Done`; in each README Features group, unchecked items come first, a new one at the top, and a ticked one moves to the end of its group.
 9. **Screenshots**: a new route goes in `screenshots/pages.ts`, with demo data seeded in `screenshots/demo-family.ts`. Then run `task docs:screenshots` and look at the PNG (see the `doc-screenshots` skill). `src/app/screenshot-coverage.spec.ts` fails for a route without one. For a visible change to an existing page, re-run the screenshots too.
 10. Run the commands below.
+11. **Mutation test** the new or changed source files with the `mutation-fix` skill (see Hardening specs).
 
 ## Commands (from `src/frontend/buddy`)
 
@@ -69,4 +70,4 @@ ESLint is `angular-eslint` with a flat config in `eslint.config.js` (typescript-
 
 ## Hardening specs
 
-After the specs pass, use the `mutation-fix` skill (`.claude/skills/mutation-fix/SKILL.md`) to run Stryker on the changed files and kill surviving mutants. Stryker disables (`// Stryker disable next-line <Mutator>: <reason>`) are only for genuinely equivalent mutants.
+Whenever you create or change a component, service or spec, run the `mutation-fix` skill (`.claude/skills/mutation-fix/SKILL.md`) after the specs pass, with the new or changed source files as its explicit file list (not the next batch), and kill the relevant surviving mutants. Stryker disables (`// Stryker disable next-line <Mutator>: <reason>`) are only for genuinely equivalent mutants.

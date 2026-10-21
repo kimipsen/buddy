@@ -131,6 +131,7 @@ task test:backend                                                               
 - [ ] `[CoversEndpoint]` present, and tests cover success plus every failure status
 - [ ] `.http` entry added (domains that have a `.http` file); flow doc, status-code table and glossary updated
 - [ ] `dotnet build` is clean, and the EventShapeTests, the slice tests, `EndpointCoverageTests` and the SnapshotTests pass
+- [ ] Mutation-tested: run the **`mutation-fix-backend`** skill scoped to the new or changed slice files (e.g. `Features/<Domain>/<UseCase>/**/*.cs`, plus any changed aggregate/event/snapshot files) and kill the relevant survivors
 - [ ] Run the **`backend-aware-review`** skill on the diff and fix its findings. Don't commit unless the user asks.
 
 ## Templates (`templates/`)

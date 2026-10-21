@@ -108,6 +108,9 @@ doc's "Failure and edge-case behavior" table: each row is a test case (an idempo
 task test:backend
 ```
 
+Then load `mutation-fix-backend` and run it scoped to the new backend source files (the new
+slices, aggregate, events and snapshot), killing the relevant survivors.
+
 Keep it green before starting the frontend. The frontend depends on the real response shapes, so
 take the TypeScript types from the endpoint DTOs, not from the doc.
 
@@ -126,6 +129,9 @@ Load `buddy-frontend`, then `i18n`.
 task test:frontend
 cd src/frontend/buddy && npx tsc --noEmit -p tsconfig.app.json
 ```
+
+Then load `mutation-fix` and run it with the new frontend source files (services and components)
+as its explicit file list, killing the relevant survivors.
 
 Optionally load `run-buddy` to look at the screens in the real app.
 
