@@ -8,6 +8,9 @@ public interface IMealEventStore
 
     Task<Meal?> FindSnapshotAsync(MealId id, CancellationToken cancellationToken);
 
+    // Many meals' snapshots in one query; ids without a snapshot are left out.
+    Task<IReadOnlyList<Meal>> FindSnapshotsAsync(IReadOnlyCollection<MealId> ids, CancellationToken cancellationToken);
+
     Task<IReadOnlyCollection<MealEvent>> CreateAsync(MealId id, IReadOnlyCollection<MealEvent> events, CancellationToken cancellationToken);
 
     Task AppendAsync(MealId id, IReadOnlyCollection<MealEvent> events, CancellationToken cancellationToken);

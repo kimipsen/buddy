@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { GroupDetail, GroupSummary, GroupsService } from '../../../core/groups.service';
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
+import { MealieConnectionView, MealieService } from '../../../core/mealie.service';
 import { Meal, MealplansService } from '../../../core/mealplans.service';
 import { PER_ITEM_REQUEST_CONCURRENCY } from '../../../core/map-with-concurrency';
 import { GuardianMealplan } from './mealplan';
@@ -42,9 +43,14 @@ describe('GuardianMealplan', () => {
     guardians?: Partial<GuardiansService>;
     groups?: Partial<GroupsService>;
     mealplans?: Partial<MealplansService>;
+    mealie?: Partial<MealieService>;
   }
 
   async function setup(stubs: Stubs = {}) {
+    const mealieStub: Partial<MealieService> = {
+      getConnection: vi.fn(async (): Promise<MealieConnectionView> => ({ kind: 0 })),
+      ...stubs.mealie,
+    };
     const guardiansStub: Partial<GuardiansService> = {
       listMyChildren: vi.fn(async () => [child]),
       ...stubs.guardians,
@@ -74,12 +80,19 @@ describe('GuardianMealplan', () => {
         { provide: GuardiansService, useValue: guardiansStub },
         { provide: GroupsService, useValue: groupsStub },
         { provide: MealplansService, useValue: mealplansStub },
+        { provide: MealieService, useValue: mealieStub },
       ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(GuardianMealplan);
 
-    return { fixture, guardians: guardiansStub, groups: groupsStub, mealplans: mealplansStub };
+    return {
+      fixture,
+      guardians: guardiansStub,
+      groups: groupsStub,
+      mealplans: mealplansStub,
+      mealie: mealieStub,
+    };
   }
 
   // load() chains guardians.listMyChildren, then a Promise.all of listMyGroups/getSharedGroup,
@@ -602,5 +615,84 @@ describe('GuardianMealplan', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('a[href="/guardian/mealplan/import"]')).toBeTruthy();
     expect(compiled.querySelector('a[href="/guardian/mealplan/ai-assistant"]')).toBeNull();
+  });
+
+  describe('Mealie', () => {
+    const connected: MealieConnectionView = {
+      kind: 1,
+      baseUrl: 'https://mealie.holm.example',
+      householdName: 'Holm',
+      mealieUserName: 'buddy-sync',
+      mealieVersion: 'v3.29.0',
+      tokenLast4: 'b7f2',
+      connectedBy: 'guardian-1',
+      connectedAt: '2026-10-19T10:00:00Z',
+    };
+
+    it('shows no Mealie control while the family isn’t connected', async () => {
+      const { fixture, mealie } = await setup();
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(mealie.getConnection).toHaveBeenCalledWith('child-1');
+      expect(
+        compiled.querySelector('a[href="/guardian/mealplan/import?source=mealie"]'),
+      ).toBeNull();
+      expect(compiled.querySelector('app-mealie-shopping')).toBeNull();
+    });
+
+    it('offers the Mealie import and shopping once connected', async () => {
+      const { fixture } = await setup({ mealie: { getConnection: vi.fn(async () => connected) } });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(
+        compiled
+          .querySelector('a[href="/guardian/mealplan/import?source=mealie"]')
+          ?.textContent?.trim(),
+      ).toBe('Import from Mealie');
+      expect(compiled.querySelector('app-mealie-shopping')).not.toBeNull();
+      expect(findButtonByText(compiled, 'Add from Mealie')).toBeDefined();
+    });
+
+    it('hides the Mealie controls when the connection can’t be read', async () => {
+      const { fixture } = await setup({
+        mealie: { getConnection: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(
+        compiled.querySelector('a[href="/guardian/mealplan/import?source=mealie"]'),
+      ).toBeNull();
+      expect(compiled.textContent).not.toContain('Couldn’t load');
+    });
+
+    it('asks nothing of Mealie while the installation has it turned off', async () => {
+      disableFeatures('mealplanMealie');
+      const { fixture, mealie } = await setup({
+        mealie: { getConnection: vi.fn(async () => connected) },
+      });
+      await settle(fixture);
+
+      expect(mealie.getConnection).not.toHaveBeenCalled();
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector(
+          'a[href="/guardian/mealplan/import?source=mealie"]',
+        ),
+      ).toBeNull();
+    });
+
+    it('offers no Mealie import while imports are turned off', async () => {
+      disableFeatures('mealplanImport');
+      const { fixture } = await setup({ mealie: { getConnection: vi.fn(async () => connected) } });
+      await settle(fixture);
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector(
+          'a[href="/guardian/mealplan/import?source=mealie"]',
+        ),
+      ).toBeNull();
+    });
   });
 });

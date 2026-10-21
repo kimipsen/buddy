@@ -140,3 +140,110 @@ Content-Type: application/json
 }
 
 ###
+
+# --- Mealie (docs/backend/analysis/mealie-integration.md) ---
+# Locally: `task dev:mealie`, then Mealie:AllowHttp and Mealie:AllowPrivateNetworks in
+# appsettings.Development.json, and a token from a non-admin Mealie user.
+
+# The family's connection: { "kind": 0 } when not connected; the token itself is never returned
+GET {{buddy_HostAddress}}/mealplans/children/{{childId}}/mealie
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Connect (or reconnect with a rotated token). Checked live; every failure is a 400 on the field to fix
+PUT {{buddy_HostAddress}}/mealplans/children/{{childId}}/mealie
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "baseUrl": "http://localhost:9925",
+  "apiToken": "{{mealieToken}}"
+}
+
+###
+
+POST {{buddy_HostAddress}}/mealplans/children/{{childId}}/mealie/test-connection
+Authorization: Bearer {{guardianToken}}
+
+###
+
+DELETE {{buddy_HostAddress}}/mealplans/children/{{childId}}/mealie
+Authorization: Bearer {{guardianToken}}
+
+###
+
+GET {{buddy_HostAddress}}/mealplans/children/{{childId}}/mealie/recipes?search=lasagne&page=1
+Authorization: Bearer {{guardianToken}}
+
+###
+
+GET {{buddy_HostAddress}}/mealplans/children/{{childId}}/mealie/recipes/{{recipeId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+GET {{buddy_HostAddress}}/mealplans/children/{{childId}}/mealie/recipes/{{recipeId}}/image
+Authorization: Bearer {{guardianToken}}
+
+###
+
+PUT {{buddy_HostAddress}}/mealplans/children/{{childId}}/meals/{{mealId}}/recipe
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "recipeId": "{{recipeId}}"
+}
+
+###
+
+DELETE {{buddy_HostAddress}}/mealplans/children/{{childId}}/meals/{{mealId}}/recipe
+Authorization: Bearer {{guardianToken}}
+
+###
+
+POST {{buddy_HostAddress}}/mealplans/children/{{childId}}/meals/from-recipe
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+Idempotency-Key: {{$guid}}
+
+{
+  "recipeId": "{{recipeId}}",
+  "icon": "🍝",
+  "color": "#ef4444"
+}
+
+###
+
+# Mealie's plan for a range (at most 92 days) as an import review; commit it with
+# POST .../imports, "format": "mealie", passing each group's recipe as entries[].mealieRecipe
+POST {{buddy_HostAddress}}/mealplans/children/{{childId}}/imports/mealie/preview
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "from": "2026-10-19",
+  "to": "2026-10-25"
+}
+
+###
+
+GET {{buddy_HostAddress}}/mealplans/children/{{childId}}/mealie/shopping-lists
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# The linked recipes planned in the range (at most 31 days) go to the list in one call
+POST {{buddy_HostAddress}}/mealplans/children/{{childId}}/mealie/shopping-lists/{{listId}}/recipes
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+Idempotency-Key: {{$guid}}
+
+{
+  "from": "2026-10-19",
+  "to": "2026-10-25",
+  "slots": ["Dinner"]
+}
+
+###

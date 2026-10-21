@@ -127,6 +127,69 @@ public static class MealFamilyResolution
         return best?.Id;
     }
 
+    // A MealieConnection is resolved like an AiProviderCredential, but within the requested child's
+    // family only: the most recently connected stream wins (a disconnected one ranks below every
+    // connected one), ties and the never-connected order fall back to the newer id. Unlike the AI
+    // rule, a guardian's unlinked children don't count even when that guardian connected the
+    // stream: a Mealie token is a whole Mealie user, so a guardian who left a family must not keep
+    // using -- or, by reconnecting, overwrite -- that family's Mealie. See
+    // docs/backend/analysis/mealie-integration.md, Question 2.
+    public static async Task<MealieConnectionId?> ResolveFamilyMealieConnectionIdAsync(
+        UserId childId,
+        IGuardianLinkEventStore guardians,
+        IMealieConnectionEventStore connections,
+        CancellationToken cancellationToken)
+    {
+        var family = await ResolveFamilyAsync(childId, guardians, cancellationToken);
+
+        (MealieConnectionId Id, DateTimeOffset? ConnectedAt)? best = null;
+        var seen = new HashSet<MealieConnectionId>();
+
+        foreach (var member in family)
+        {
+            if (await connections.FindIdForChildAsync(member, cancellationToken) is not { } id || !seen.Add(id))
+            {
+                continue;
+            }
+
+            var events = await connections.ReadAsync(id, cancellationToken);
+            var candidate = (id, LastConnectedAt(events));
+
+            if (best is null || IsPreferredConnection(candidate, best.Value))
+            {
+                best = candidate;
+            }
+        }
+
+        return best?.Id;
+    }
+
+    private static DateTimeOffset? LastConnectedAt(IEnumerable<MealieConnectionEvent> events)
+    {
+        DateTimeOffset? connectedAt = null;
+
+        foreach (var @event in events)
+        {
+            connectedAt = @event switch
+            {
+                MealieConnected connected => connected.OccurredAt,
+                MealieDisconnected => null,
+                MealieConnectionInitialized => connectedAt,
+            };
+        }
+
+        return connectedAt;
+    }
+
+    private static bool IsPreferredConnection((MealieConnectionId Id, DateTimeOffset? ConnectedAt) candidate, (MealieConnectionId Id, DateTimeOffset? ConnectedAt) current) =>
+        (candidate.ConnectedAt, current.ConnectedAt) switch
+        {
+            ({ } a, { } b) when a != b => a > b,
+            ({ }, null) => true,
+            (null, { }) => false,
+            _ => candidate.Id.Value.CompareTo(current.Id.Value) > 0,
+        };
+
     // OccurredAt of the ActiveProviderChanged that set the current active provider, or null when
     // the credential has no active provider right now (never set, or cleared by removing the
     // active provider's key).

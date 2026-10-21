@@ -1,6 +1,15 @@
 # Mealie integration
 
-Status: Proposed (not yet implemented)
+Status: Implemented. `Features/Mealplans/Mealie/` ships the `MealieConnection` aggregate
+(`MealieConnectionInitialized`, `MealieConnected`, `MealieDisconnected`), the `MealLinkedToRecipe` /
+`MealRecipeUnlinked` events on `Meal`, `IMealieClient` behind `MealieOutboundPolicy`, and 13 slices
+(`GetMealieConnection`, `ConnectMealie`, `DisconnectMealie`, `TestMealieConnection`,
+`SearchMealieRecipes`, `GetMealieRecipe`, `GetMealieRecipeImage`, `LinkMealToRecipe`,
+`UnlinkMealRecipe`, `CreateMealFromRecipe`, `PreviewMealieImport`, `ListMealieShoppingLists`,
+`AddMealPlanToMealieShoppingList`), plus `CommitMealPlanImport` accepting `format: "mealie"`. The
+frontend has the Mealie card on `/guardian/admin`, recipe links and the recipe panel in the meal
+library, "Add to shopping list" in the week plan and a Mealie source on `/guardian/mealplan/import`.
+Family routes only; the phase 2 mirror is not built.
 
 ## Context
 
@@ -118,40 +127,49 @@ shape as `AiProviderCredential`: created by the first connect, indexed under the
 child, and resolved for the family by `MealFamilyResolution` ("most recently connected wins").
 The token is stored encrypted with Data Protection under its own purpose string.**
 
+Unlike an AI key, a connection is only resolved within the requested child's current family: a
+guardian's unlinked children don't count, even when that guardian made the connection. A Mealie
+token is a whole Mealie user, so a guardian who leaves a family must not keep using its Mealie, or
+overwrite it by reconnecting (found in review; `MealieFamilyAndErasureTests`).
+
 ```text
 MealieConnection(
     MealieConnectionId Id,                 // UUIDv7, like AiCredentialId
-    UserId ChildId,                        // index anchor only (MealieConnectionIndexDocument)
-    MealieConnectionState State)           // Connected(...) | Disconnected
+    MealieConnectionDetails? Current)      // null while disconnected (never connected, or since)
 
-Connected(
-    Uri BaseUrl,                           // normalized: https, no path/query/fragment
+MealieConnectionDetails(
+    string BaseUrl,                        // normalized: scheme + host (+ port), no path
     StoredApiKey Token,                    // reused record: CipherText + Last4 + AddedBy + AddedAt
-    MealieHousehold Household,             // (Guid HouseholdId, string HouseholdName, Guid GroupId)
+    MealieHousehold Household,             // (HouseholdId, HouseholdName, GroupId, GroupSlug)
     string MealieUserName,                 // shown in settings: "connected as buddy-sync"
     string MealieVersion,                  // from GET /api/app/about at connect time
+    UserId ConnectedBy,
     DateTimeOffset ConnectedAt)
 ```
 
-`State` is a union (`[JsonPolymorphic]` on `kind`), not a set of nullable fields, as in
-[eliminate-nulls.md, Phase 5](eliminate-nulls.md#phase-5-unions-instead-of-correlated-nullable-fields).
+`Current` is one nullable record, a domain "absent" value like `AiProviderCredential.ActiveProvider`
+([eliminate-nulls.md, What stays nullable](eliminate-nulls.md#what-stays-nullable)); there are no
+correlated nullable fields for a union to replace.
 
 ### Events
 
 ```text
-MealieConnected(MealieConnectionId Id, UserId ChildId, Uri BaseUrl, StoredApiKey Token,
+MealieConnectionInitialized(MealieConnectionId Id, UserId ChildId, DateTimeOffset OccurredAt)
+    // starts the stream with the family's first connect; ChildId seeds the index document
+    // (the AiCredentialsInitialized pattern)
+MealieConnected(MealieConnectionId Id, string BaseUrl, StoredApiKey Token,
     MealieHousehold Household, string MealieUserName, string MealieVersion,
     UserId ConnectedBy, DateTimeOffset OccurredAt)
-    // first connect starts the stream; reconnecting (new URL or rotated token) appends another
-    // MealieConnected -- a full overwrite, like ProviderApiKeySet
+    // reconnecting (new URL or rotated token) appends another MealieConnected -- a full
+    // overwrite, like ProviderApiKeySet
 MealieDisconnected(MealieConnectionId Id, UserId DisconnectedBy, DateTimeOffset OccurredAt)
     // idempotent: disconnecting a disconnected family is Success with no event
 ```
 
 `MealieConnected` is only appended after a **live check**. `ConnectMealie` calls
-`GET /api/app/about` (version), `GET /api/users/self` (user name, refusing admin users; see
-Question 7) and `GET /api/households/self` (household), and fails with a validation problem if any
-of these fails. A connection in Buddy is therefore a connection that worked at least once.
+`GET /api/app/about` (version) and `GET /api/users/self` (user name, household and group, refusing
+admin users; see Question 7), and fails with a validation problem on the field to fix if either
+fails. A connection in Buddy is therefore a connection that worked at least once.
 
 Rationale:
 
@@ -164,9 +182,9 @@ Rationale:
   of a stored key goes through"
   ([`IApiKeyCipher.cs`](../../../src/backend/buddy/Features/Mealplans/AiAssistant/IApiKeyCipher.cs)).
   Mealie gets its own purpose (`buddy.Mealplans.Mealie.Token.v1`), so a leaked AI ciphertext
-  can't be unprotected as a Mealie token or the other way round. `IApiKeyCipher` moves from
-  `AiAssistant/` to `Features/Mealplans/` and takes the purpose as a constructor argument: 2
-  registrations and 3 handlers change.
+  can't be unprotected as a Mealie token or the other way round. As built, that's a separate
+  `IMealieTokenCipher : IApiKeyCipher` service (`DataProtectionMealieTokenCipher`), so
+  `StoredApiKey.Create` takes it and the AI handlers don't change.
 - **One household per family.** Mealie scopes meal plans and shopping lists to the token user's
   household, so the token decides the household. Picking among several isn't a choice Buddy has.
 
@@ -193,6 +211,10 @@ The guard, in `MealieOutboundPolicy`:
   Checking at connect time, not when the URL is saved, defeats DNS rebinding, where a name
   resolves to a public address when the URL is saved and to an internal one later.
 - **No redirects** (`AllowAutoRedirect = false`). A `3xx` is reported as an error.
+- **No proxy** (`UseProxy = false`). Through an `HTTPS_PROXY`, `ConnectCallback` would only see
+  the proxy's address while the proxy reached any host.
+- **IPv6 forms that embed IPv4** (`::a.b.c.d`, NAT64 `64:ff9b::/96`, 6to4 `2002::/16`) are judged
+  by the embedded IPv4 address.
 - **Limits:** a 10 s timeout and a 2 MB `MaxResponseContentBufferSize`, so a hostile "Mealie"
   can't stall a request thread or fill memory.
 - **Errors** are mapped to fixed codes (Question 8). The upstream body is never echoed back, so the
@@ -367,8 +389,9 @@ shopping list of its own.**
 ## Question 7: who can do what
 
 **Decision: every Mealie route is guardian `Manage` on the family, exactly like the AI assistant's
-credential routes (`MealplanAuthorization.CheckManage`). Anything else collapses to `NotFound`.
-Children can't call any Mealie route. v1 has family routes only, no `ForGroup` siblings.**
+credential routes (`MealplanAuthorization.CheckManage`): the family's child gets `403`, anyone
+else `NotFound`. Children can't use any Mealie route. v1 has family routes only, no `ForGroup`
+siblings.**
 
 - The token acts as a full Mealie user with no scopes, so who can **use** the connection matters as
   much as who sees the token. Guardians with `Manage` can already rewrite the whole plan, so letting
@@ -396,45 +419,49 @@ mealieUserName, mealieVersion, tokenLast4, connectedAt, connectedBy }`, the same
 
 ## Question 8: the client, errors and tests
 
-**Decision: a small hand-written typed client, `IMealieClient`, covering the 9 endpoints Buddy uses,
-with DTOs generated once from a pinned spec snapshot and checked into the repo. Buddy supports a
-minimum Mealie version (`3.20`), checked at connect time. Upstream failures map to three new error
-codes.**
+**Decision: a small hand-written typed client, `IMealieClient`, covering the 8 calls Buddy makes,
+with wire DTOs holding only the fields Buddy reads (checked against the v3.20 and v3.29 specs).
+Buddy supports a minimum Mealie version (`3.20`), checked at connect time. Upstream failures map to
+three new error codes.**
 
 ```csharp
 public interface IMealieClient
 {
-    Task<Result<MealieAbout>> GetAboutAsync(MealieEndpoint endpoint, CancellationToken ct);
-    Task<Result<MealieUser>> GetSelfAsync(MealieEndpoint endpoint, CancellationToken ct);
-    Task<Result<MealieHousehold>> GetHouseholdAsync(MealieEndpoint endpoint, CancellationToken ct);
-    Task<Result<MealiePage<MealieRecipeSummary>>> SearchRecipesAsync(MealieEndpoint endpoint, string search, int page, CancellationToken ct);
-    Task<Result<MealieRecipe>> GetRecipeAsync(MealieEndpoint endpoint, string slugOrId, CancellationToken ct);
-    Task<Result<MealieImage>> GetRecipeImageAsync(MealieEndpoint endpoint, Guid recipeId, CancellationToken ct);
-    Task<Result<IReadOnlyList<MealiePlanEntry>>> ListMealPlanAsync(MealieEndpoint endpoint, DateOnly from, DateOnly to, CancellationToken ct);
-    Task<Result<IReadOnlyList<MealieShoppingList>>> ListShoppingListsAsync(MealieEndpoint endpoint, CancellationToken ct);
-    Task<Result<Unit>> AddRecipesToShoppingListAsync(MealieEndpoint endpoint, Guid listId, IReadOnlyList<MealieRecipeQuantity> recipes, CancellationToken ct);
+    Task<MealieResponse<MealieAboutDto>> GetAboutAsync(MealieEndpoint endpoint, CancellationToken ct);
+    Task<MealieResponse<MealieUserDto>> GetSelfAsync(MealieEndpoint endpoint, CancellationToken ct);
+    Task<MealieResponse<MealiePageDto<MealieRecipeSummaryDto>>> SearchRecipesAsync(MealieEndpoint endpoint, string search, int page, int perPage, CancellationToken ct);
+    Task<MealieResponse<MealieRecipeDto>> GetRecipeAsync(MealieEndpoint endpoint, Guid recipeId, CancellationToken ct);
+    Task<MealieResponse<MealieImage>> GetRecipeImageAsync(MealieEndpoint endpoint, Guid recipeId, CancellationToken ct);
+    Task<MealieResponse<IReadOnlyList<MealiePlanEntryDto>>> ListMealPlanAsync(MealieEndpoint endpoint, DateOnly from, DateOnly to, CancellationToken ct);
+    Task<MealieResponse<IReadOnlyList<MealieShoppingListDto>>> ListShoppingListsAsync(MealieEndpoint endpoint, CancellationToken ct);
+    Task<MealieResponse<Unit>> AddRecipesToShoppingListAsync(MealieEndpoint endpoint, Guid listId, IReadOnlyList<MealieShoppingListRecipeDto> recipes, CancellationToken ct);
 }
 
+// MealieResponse<T> = Ok(T) | Failed(MealieFailure(Kind: Unreachable | TokenRejected | NotFound | Error, Message))
 // built by the handler from the decrypted connection; never logged
-public sealed record MealieEndpoint(Uri BaseUrl, string Token);
+public sealed record MealieEndpoint(string BaseUrl, string Token);
 ```
 
+`GET /api/users/self` already carries the household and group, so there is no separate household
+call. Mealie's `GET /api/recipes/{slug}` also takes the recipe id, which the client uses.
+
 - **Hand-written, not `MealieSharp`.** That package is 15 minor versions behind and little used,
-  and Mealie breaks things in minor releases. Nine endpoints are about 300 lines, and the provider
+  and Mealie breaks things in minor releases. Eight calls are about 300 lines, and the provider
   adapters set the house style (raw `HttpClient`, wire DTOs nullable,
   [eliminate-nulls.md](eliminate-nulls.md#what-stays-nullable)). Generating a full Kiota client was
   considered and rejected, because it drags in hundreds of unused types.
 - **Version.** `ConnectMealie` stores `MealieVersion`. If the instance is older than the minimum,
-  connecting fails with `mealie_version_unsupported` and a message naming the required version. A
-  newer version is allowed. Buddy reads JSON tolerantly (unknown fields ignored), and the contract
-  test below catches renames.
-- **Registration.** `AddHttpClient<IMealieClient, MealieClient>("mealie")` with the
-  `MealieOutboundPolicy` handler, plus `AlwaysUseServiceLocationFor<IMealieClient>()` in
-  `Program.cs` (the Wolverine typed-client rule).
-- **Feature flag.** `Features:Mealplans:Mealie`, default **off** until it has been used for real,
-  following `MealplanImport` and `MealplanAiAssistant` in
-  [`FeatureOptions.cs`](../../../src/backend/buddy/Common/FeatureFlags/FeatureOptions.cs). A
-  `featureGuard` hides the frontend.
+  connecting fails with a validation problem on `baseUrl` naming the required version. A newer
+  version, or a build that names none (`nightly`), is allowed. Buddy reads JSON tolerantly (unknown
+  fields ignored), and the contract test below catches renames.
+- **Registration.** `AddHttpClient<IMealieClient, MealieClient>("mealie")` with a
+  `SocketsHttpHandler` whose `ConnectCallback` is `MealieOutboundPolicy.ConnectAsync`, plus
+  `AlwaysUseServiceLocationFor<IMealieClient>()` in `Program.cs` (the Wolverine typed-client rule).
+- **Feature flag.** `Features:MealplanMealie`, a sub-flag of `Mealplans` like `MealplanImport` and
+  `MealplanAiAssistant` in
+  [`FeatureOptions.cs`](../../../src/backend/buddy/Common/FeatureFlags/FeatureOptions.cs). It
+  defaults to **on**, as every flag there does: each family opts in by connecting, and nothing
+  Mealie-related shows before that (Question 3). The import preview also needs `MealplanImport`.
 - **Rate limit.** A new `mealie` policy (per user, 60/min) on the routes that call Mealie. It
   protects the family's server from a stuck client, not Buddy itself
   ([rate-limiting.md](rate-limiting.md)).
@@ -449,6 +476,7 @@ Errors ([http-status-codes.md](../http-status-codes.md)):
 | Mealie answers `401`/`403` (token revoked, password changed) | `502 mealie_token_rejected`; the UI offers "Reconnect"                           |
 | Mealie answers `404` for a linked recipe                     | `404` on the recipe route; the meal shows "recipe no longer in Mealie"           |
 | Any other non-2xx, or a body Buddy can't parse               | `502 mealie_error`                                                               |
+| Shopping list deleted in Mealie (Mealie answers `500`)       | `502 mealie_error` "That shopping list no longer exists in Mealie"               |
 
 Mealie being down isn't one of Buddy's dependencies being down, so this deliberately doesn't use
 the `503 dependency_unavailable` + `Retry-After: 5` mapping. Retrying in 5 seconds won't fix a
@@ -457,24 +485,26 @@ revoked token or a home server that's off. Each of these codes is part of the Op
 
 Tests:
 
-- **Alba integration tests** replace `IMealieClient` with an in-memory `FakeMealieClient` (canned
-  household, recipes, plan, lists, and a switch for each failure). They cover every slice and
-  every row of the error table, the same status-per-case style as the AI assistant tests in
-  `buddy.IntegrationTests/Features/Mealplans/AiAssistant/`.
-- **`MealieOutboundPolicy` unit tests:** each blocked address range, IPv6, a hostname resolving to
-  a private address, a redirect, an oversized body.
-- **One contract test** that runs the real client against `ghcr.io/mealie-recipes/mealie:v3.29.0`
-  in Testcontainers. It creates a user and token, a recipe, a plan entry and a list, then exercises
-  all 9 calls. It's tagged `Category=Contract` and runs nightly, not on every `task test:backend`
-  (pulling and starting the image is slow). Bumping the pinned tag is how a new Mealie version gets verified.
-- **Golden files** for the 4 new events.
+- **Alba integration tests** run on a second shared host (`MealieTestHost`) whose `IMealieClient`
+  is `FakeMealieClient`: one fake server per test, under its own base URL, with recipes, plan,
+  lists and a switch for each failure. They cover every slice and every row of the error table,
+  the same status-per-case style as the AI assistant tests.
+- **`MealieOutboundPolicyTests`:** each blocked address range (IPv4, IPv6, mapped), the URL
+  normalization, the self-hosted switches, and the real client refusing a loopback address.
+- **`MealieContractTests`** run the real client against `ghcr.io/mealie-recipes/mealie:v3.29.0` in
+  Testcontainers: they create a non-admin user and token, a recipe, plan entries and a list, then
+  exercise all 8 calls and the live check. Opt-in (`task test:contract:mealie`, which sets
+  `MEALIE_CONTRACT_TESTS=1`; `MEALIE_IMAGE` picks another version), because pulling and starting the
+  image is slow. They found the one behaviour the fake had wrong: Mealie answers an unknown shopping
+  list with a `500`, not a `404`.
+- **Golden files** for the 5 new events.
 
 ## Command slices (`Features/Mealplans/Mealie/`, same shape as `AiAssistant/`)
 
 | Slice                             | Tier   | Notes                                                                                                                                                         |
 | --------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GetMealieConnection`             | Manage | Masked view, or `{ connected: false }`. Makes no Mealie call                                                                                                  |
-| `ConnectMealie`                   | Manage | Body `{ baseUrl, apiToken }`. Normalizes the URL, checks the policy, makes the 3 live calls, rejects admin users and old versions. Emits `MealieConnected`    |
+| `GetMealieConnection`             | Manage | Masked view `{ kind: 1, ... }`, or `{ kind: 0 }`. Makes no Mealie call                                                                                        |
+| `ConnectMealie`                   | Manage | Body `{ baseUrl, apiToken }`. Normalizes the URL, checks the policy, makes the 2 live calls, rejects admin users and old versions. Emits `MealieConnected`    |
 | `DisconnectMealie`                | Manage | Emits `MealieDisconnected`. Idempotent                                                                                                                        |
 | `TestMealieConnection`            | Manage | Re-runs the live calls with the stored token. Returns `Succeeded \| Failed(code, message)`, like `TestProviderConnectionResult`                               |
 | `SearchMealieRecipes`             | Manage | `?search=&page=`, 20 per page. Returns `id, slug, name, totalTime, hasImage`, plus `linkedMealId` when a library meal already links it                        |
@@ -482,9 +512,9 @@ Tests:
 | `GetMealieRecipeImage`            | Manage | Proxies `min-original.webp` (`image/webp` only, max 2 MB, `Cache-Control: private, max-age=3600`)                                                             |
 | `LinkMealToRecipe` (+ `Unlink`)   | Manage | Body `{ recipeId }`. Fetches the recipe to fill `Slug`/`Name` (so a typo'd id is a `404`, not a dead link). Emits `MealLinkedToRecipe` / `MealRecipeUnlinked` |
 | `CreateMealFromRecipe`            | Manage | Body `{ recipeId, icon, color }`. One transaction: `[MealCreated, MealLinkedToRecipe]`, name and description taken from the recipe. `Idempotency-Key`         |
-| `PreviewMealieImport`             | Manage | Body `{ from, to }` (at most 92 days). Returns the existing `MealPlanImportPreview` shape with `format: "mealie"`. Writes nothing                             |
-| `CommitMealPlanImport` (existing) | Manage | Accepts `format: "mealie"` and the new optional `entries[].mealieRecipeId`                                                                                    |
-| `ListMealieShoppingLists`         | Manage | `id, name, itemCount`                                                                                                                                         |
+| `PreviewMealieImport`             | Manage | Body `{ from, to }` (at most 92 days). Returns `{ preview, recipes }`: the existing `MealPlanImportPreview` with `format: "mealie"`, plus each group's recipe |
+| `CommitMealPlanImport` (existing) | Manage | Accepts `format: "mealie"` and the new optional `entries[].mealieRecipe` (`{ recipeId, slug, name }`, new meals only)                                         |
+| `ListMealieShoppingLists`         | Manage | `id, name`                                                                                                                                                    |
 | `AddMealPlanToMealieShoppingList` | Manage | Body `{ from, to, slots }` (at most 31 days). One bulk Mealie call. `Idempotency-Key`. Returns added and skipped                                              |
 
 ## Routes
@@ -505,7 +535,8 @@ GET    /mealplans/children/{childId}/mealie/shopping-lists                   Lis
 POST   /mealplans/children/{childId}/mealie/shopping-lists/{listId}/recipes  AddMealPlanToMealieShoppingList (Idempotency-Key)
 ```
 
-All of them are behind `Features:Mealplans:Mealie`. All but the three that make no Mealie call
+All of them are behind `Features:MealplanMealie` (the preview also behind `MealplanImport`). All
+but the three that make no Mealie call
 (`GetMealieConnection`, `DisconnectMealie`, `UnlinkMealRecipe`) are on the `mealie` rate-limit
 policy.
 
@@ -525,17 +556,20 @@ data, not a screenshot of built code):
   with the same structure: connected/not connected, URL and token inputs (token as a password
   field, shown as `••••ab12` afterwards), "Test connection", "Disconnect". A short help text covers
   the dedicated non-admin user and how a home server can be reached.
-- **Meals** (`manage-meals`): a "Mealie" chip on linked meals. A "Link recipe" action opens a recipe
-  search dialog, `mealie-recipe-picker`. An "Add from Mealie" button next to "Add meal" opens the
-  same picker in create mode.
-- **Recipe panel** (`mealie-recipe-panel`): a side panel opened from a linked meal in the library
-  or a plan cell. It shows the photo (from the image proxy), total time, yield, ingredients and
-  steps, plus "Open in Mealie" (a new tab on the family's Mealie).
-- **Week plan:** an "Add to shopping list" button in the week header, with a list picker and the
-  slots of the shown week. Its result toast names the meals that had no recipe.
-- **Import page** (`mealplan/import`): a third source tab, "From Mealie", with a date range in place
-  of the textarea. The review step is unchanged. The meal planner's header gets an "Import from
-  Mealie" shortcut that opens the tab with next week preselected.
+- **Meals** (`manage-meals`): a "Mealie" chip on linked meals. "Link recipe" opens the recipe
+  search, `mealie-recipe-picker`, inline below the meal list (not a dialog). An "Add from Mealie"
+  button next to "Add meal" opens the same picker in create mode.
+- **Recipe panel** (`mealie-recipe-panel`): opened inline from "View recipe" on a linked meal. It
+  shows the photo (fetched as a blob from the image proxy, since the route needs the bearer
+  token), total time, yield, ingredients and steps, plus "Open in Mealie" (a new tab on the
+  family's Mealie), "Change recipe" and "Unlink". Plan cells don't open it in v1.
+- **Week plan:** an "Add to shopping list" button in the week header (`mealie-shopping`), with a
+  list picker (the last list used is remembered per browser) for every slot of the shown week. Its
+  result names the meals that had no recipe.
+- **Import page** (`mealplan/import`): a source choice "Text or file" / "Mealie", shown only while
+  connected, with a date range (default next Monday to Sunday) in place of the textarea. The
+  review step is unchanged. The meal planner's header gets an "Import from Mealie" link
+  (`?source=mealie`) that opens it on the Mealie source.
 - **Services and i18n:** `core/mealie.service.ts` (new, using `postIdempotent` for the two
   create-style POSTs), types from the regenerated `buddy-api.ts`, and strings in
   `translations/{en,da}/mealie.ts`. Mealie's slot names already have Danish translations in Mealie
@@ -570,30 +604,30 @@ The shape is recorded so v1 doesn't block it:
 
 ## Failure and edge-case behavior
 
-| Case                                                          | Behavior                                                                                                                                     |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Base URL points at a private or loopback address              | `400` on connect (production default), with a message on how to expose Mealie. Allowed when `Mealie:AllowPrivateNetworks` is on              |
-| Hostname resolves to a public address, later to a private one | Blocked at connect time by `ConnectCallback`: `502 mealie_unreachable`                                                                       |
-| Token belongs to a Mealie admin                               | `400` on `apiToken`: "Use a Mealie user without admin rights"                                                                                |
-| Mealie older than the minimum version                         | `400 mealie_version_unsupported`, naming the required version                                                                                |
-| Token revoked in Mealie, or the Mealie user changed password  | Next call: `502 mealie_token_rejected`. The connection stays stored, and the card shows "Reconnect"                                          |
-| Mealie server off                                             | `502 mealie_unreachable`. Buddy's own plan, child views and AI are unaffected                                                                |
-| Reconnect to the same household with a new token              | Another `MealieConnected`, full overwrite. Links keep working                                                                                |
-| Reconnect to a different household or group                   | Allowed. Links to recipes the new group doesn't have show "recipe no longer in Mealie" until relinked                                        |
-| Two guardians connect different Mealie servers                | Most recently connected wins (the `AiProviderCredential` rule). The card shows who connected it and when                                     |
-| Linked recipe deleted in Mealie                               | Recipe route `404`. The meal keeps its stored `Name` with a "no longer in Mealie" hint, and unlinking is one click                           |
-| Recipe renamed in Mealie                                      | The link works (by id). The stored `Name` is refreshed when the guardian next opens the recipe and it differs (another `MealLinkedToRecipe`) |
-| Link an archived meal                                         | Allowed, like editing its details. It changes nothing in the plan                                                                            |
-| Same recipe linked to two meals                               | Allowed ("Lasagne" and "Lasagne (freezer portion)"). Import step 1 picks the most recently linked active meal                                |
-| Import range with nothing in Mealie                           | Preview with zero lines and a warning `mealie_range_empty`                                                                                   |
-| Mealie `side`/`drink`/`dessert` entries                       | Merged into the same day's dinner notes, or skipped with a warning                                                                           |
-| Import re-run for the same week                               | Occupied slots skipped, so a no-op for days already imported                                                                                 |
-| Shopping: range has unlinked or eating-out meals              | Skipped and listed in the response. `200` even when nothing was added                                                                        |
-| Shopping: double click                                        | `Idempotency-Key` replay. Mealie is called once                                                                                              |
-| Shopping: list deleted in Mealie meanwhile                    | `502 mealie_error` with "list not found". The picker reloads                                                                                 |
-| Guardian's `GuardianLink` revoked                             | Every route drops to `NotFound` immediately, as with all mealplan routes                                                                     |
-| Child calls any Mealie route                                  | `NotFound`, as with the AI credential routes                                                                                                 |
-| Feature flag off                                              | Routes not mapped (`404`), frontend entries hidden. Stored connections and links stay                                                        |
+| Case                                                          | Behavior                                                                                                                               |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Base URL points at a private or loopback address              | `400` on connect (production default), with a message on how to expose Mealie. Allowed when `Mealie:AllowPrivateNetworks` is on        |
+| Hostname resolves to a public address, later to a private one | Blocked at connect time by `ConnectCallback`: `502 mealie_unreachable`                                                                 |
+| Token belongs to a Mealie admin                               | `400` on `apiToken`: "Use a Mealie user without admin rights"                                                                          |
+| Mealie older than the minimum version                         | `400` validation problem on `baseUrl`, naming the required version                                                                     |
+| Token revoked in Mealie, or the Mealie user changed password  | Next call: `502 mealie_token_rejected`. The connection stays stored, and the card shows "Reconnect"                                    |
+| Mealie server off                                             | `502 mealie_unreachable`. Buddy's own plan, child views and AI are unaffected                                                          |
+| Reconnect to the same household with a new token              | Another `MealieConnected`, full overwrite. Links keep working                                                                          |
+| Reconnect to a different household or group                   | Allowed. Links to recipes the new group doesn't have show "recipe no longer in Mealie" until relinked                                  |
+| Two guardians connect different Mealie servers                | Most recently connected wins (the `AiProviderCredential` rule). The card shows who connected it and when                               |
+| Linked recipe deleted in Mealie                               | Recipe route `404`. The meal keeps its stored `Name` with a "no longer in Mealie" hint, and unlinking is one click                     |
+| Recipe renamed in Mealie                                      | The link works (by id); the panel shows Mealie's current name. The stored `Name` is refreshed by linking again (a GET writes no event) |
+| Link an archived meal                                         | `404`, the same rule as editing its details (`UpdateMealDetails`)                                                                      |
+| Same recipe linked to two meals                               | Allowed ("Lasagne" and "Lasagne (freezer portion)"). Import step 1 picks the most recently linked active meal                          |
+| Import range with nothing in Mealie                           | Preview with zero lines and a warning `mealie_range_empty`                                                                             |
+| Mealie `side`/`drink`/`dessert` entries                       | Merged into the same day's dinner notes, or skipped with a warning                                                                     |
+| Import re-run for the same week                               | Occupied slots skipped, so a no-op for days already imported                                                                           |
+| Shopping: range has unlinked or eating-out meals              | Skipped and listed in the response. `200` even when nothing was added                                                                  |
+| Shopping: double click                                        | `Idempotency-Key` replay. Mealie is called once                                                                                        |
+| Shopping: list deleted in Mealie meanwhile                    | `502 mealie_error` with "list not found". The picker reloads                                                                           |
+| Guardian's `GuardianLink` revoked                             | Every route drops to `NotFound` immediately, as with all mealplan routes                                                               |
+| Child calls any Mealie route                                  | `403`, as with the AI credential routes (`CheckManage` on the child's own tier)                                                        |
+| Feature flag off                                              | Routes not mapped (`404`), frontend entries hidden. Stored connections and links stay                                                  |
 
 ## Estimate
 
@@ -624,9 +658,9 @@ Phase 2 (mirror) adds about 3-5 developer days, or 2-3 agent hours plus 1 hour o
 | Shopping                   | One bulk Mealie call, no Buddy event, `Idempotency-Key`; unlinked and eating-out meals skipped and reported                                          |
 | Access                     | Guardian `Manage` only. Children get nothing new. Family routes only in v1                                                                           |
 | Admin tokens               | Rejected at connect                                                                                                                                  |
-| Client                     | Hand-written `IMealieClient` (9 calls), minimum Mealie 3.20, nightly contract test against a pinned image                                            |
-| Errors                     | `409 mealie_not_connected`, `502 mealie_unreachable` / `mealie_token_rejected` / `mealie_error`, `400 mealie_version_unsupported`                    |
-| Rollout                    | `Features:Mealplans:Mealie`, default off                                                                                                             |
+| Client                     | Hand-written `IMealieClient` (8 calls), minimum Mealie 3.20 (checked against its spec), opt-in contract test against a pinned image                  |
+| Errors                     | `409 mealie_not_connected`, `502 mealie_unreachable` / `mealie_token_rejected` / `mealie_error`; connect failures are `400` on the field to fix      |
+| Rollout                    | `Features:MealplanMealie`, default on like every flag; per family it's opt-in by connecting                                                          |
 | Unreachable Mealie         | Mealie is an option, not a requirement: Buddy works fully without it, Mealie controls only show while connected, no relay agent (decided 2026-10-19) |
 | Recipe photo for children  | Not in v1; a later follow-up, opt-in per meal (decided 2026-10-19)                                                                                   |
 | Minimum Mealie version     | 3.20, confirmed against the v3.20 spec before building (decided 2026-10-19)                                                                          |
@@ -635,8 +669,8 @@ Phase 2 (mirror) adds about 3-5 developer days, or 2-3 agent hours plus 1 hour o
 
 ## Remaining open questions
 
-None for v1. Before building, confirm that the 9 calls in Question 8 match the v3.20 spec; if one
-doesn't, raise the minimum to the first release where they all do. Follow-ups, each additive:
+None for v1 (the 8 calls were confirmed against the v3.20 spec before building). Follow-ups, each
+additive:
 
 - **Recipe photo for children.** A child-tier image route (`Rate`/`View` on the family, image
   only, never the token or ingredients) and a per-meal choice between the photo and the meal's
@@ -658,13 +692,13 @@ flowchart TB
         direction TB
         Auth["MealplanAuthorization\nManage = active GuardianLink\nelse NotFound"]
         subgraph Aggregates["Event-sourced aggregates (mealplans schema)"]
-            Conn["MealieConnection (new)\nConnected(BaseUrl, StoredApiKey, Household) | Disconnected"]
+            Conn["MealieConnection (new)\nCurrent: (BaseUrl, StoredApiKey, Household) or null"]
             Meal["Meal\n+ MealieRecipeRef? Recipe"]
             Plan["MealPlan\n(unchanged)"]
         end
         Slices["Mealie slices\nConnect / Test / Search / GetRecipe / Link\nPreviewMealieImport / AddToShoppingList"]
         Import["Import pipeline (existing)\nParsedImport -> review -> CommitMealPlanImport\nMealPlanEntriesImported"]
-        Client["IMealieClient (9 calls)"]
+        Client["IMealieClient (8 calls)"]
         Policy["MealieOutboundPolicy\nhttps, public IPs at connect time,\nno redirects, 10 s, 2 MB"]
         Cipher["IApiKeyCipher\npurpose buddy.Mealplans.Mealie.Token.v1"]
     end

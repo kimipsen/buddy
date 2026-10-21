@@ -24,6 +24,19 @@ public sealed class MartenMealEventStore(IMealplansStore store) : IMealEventStor
         return snapshot?.Meal;
     }
 
+    public async Task<IReadOnlyList<Meal>> FindSnapshotsAsync(IReadOnlyCollection<MealId> ids, CancellationToken cancellationToken)
+    {
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        await using var session = store.QuerySession();
+        var snapshots = await session.LoadManyAsync<MealSnapshot>(cancellationToken, ids.Select(id => id.Value));
+
+        return [.. snapshots.Select(s => s.Meal)];
+    }
+
     public async Task<IReadOnlyCollection<MealEvent>> CreateAsync(MealId id, IReadOnlyCollection<MealEvent> events, CancellationToken cancellationToken)
     {
         var childId = events.FirstOrDefault() switch

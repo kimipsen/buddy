@@ -26,6 +26,7 @@ function meal(overrides: Partial<Meal> = {}): Meal {
     createdBy: 'me',
     lastModifiedBy: 'me',
     eatingOut: 'None',
+    recipe: null,
     ...overrides,
   };
 }

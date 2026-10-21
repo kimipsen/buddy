@@ -1,5 +1,11 @@
 import { type APIRequestContext, request } from '@playwright/test';
 
+import {
+  MEALIE_URL,
+  ensureMealieFamily,
+  ensureRecipe,
+  ensureShoppingList,
+} from '../e2e/support/mealie-client';
 import type { DemoFamily } from './pages';
 
 // Seeds the "Holm" demo family that the documentation screenshots show: one guardian (Sara) with
@@ -741,6 +747,39 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       apiKey: 'sk-ant-demo-screenshots-not-a-real-key',
     });
     await api.put(`/mealplans/children/${emil.id}/ai/data-sharing-acknowledgement`);
+
+    // Mealie (docs/backend/analysis/mealie-integration.md): the family's own Mealie, connected,
+    // with two library meals linked to its recipes, so the admin card, the meal library's chips
+    // and the planner's shopping button show. Best effort: without a running Mealie (MEALIE_URL,
+    // `task dev:mealie`) those pages show their not-connected state.
+    try {
+      const mealie = await ensureMealieFamily('Holm', 'holm.buddy');
+      const recipes = {
+        'Spaghetti bolognese': await ensureRecipe(mealie, 'Spaghetti bolognese', [
+          '500 g minced beef',
+          '1 onion',
+          '2 cans chopped tomatoes',
+          '400 g spaghetti',
+        ]),
+        'Chicken tacos': await ensureRecipe(mealie, 'Chicken tacos', [
+          '8 small tortillas',
+          '400 g chicken breast',
+          '1 avocado',
+        ]),
+      };
+      await ensureShoppingList(mealie, 'Weekly shop');
+      await api.put(`/mealplans/children/${emil.id}/mealie`, {
+        baseUrl: MEALIE_URL,
+        apiToken: mealie.apiToken,
+      });
+      for (const [meal, recipe] of Object.entries(recipes)) {
+        await api.put(`/mealplans/children/${emil.id}/meals/${meals[meal].id}/recipe`, {
+          recipeId: recipe.id,
+        });
+      }
+    } catch (error: unknown) {
+      warn(error);
+    }
 
     // Medicine ------------------------------------------------------------------------------
     // Effect notes record the regimen active when a day is first rated, so the order matters:

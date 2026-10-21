@@ -17,6 +17,7 @@ public sealed class MealplansPersonalDataEraser(
     IMealEventStore meals,
     IAiCredentialEventStore credentials,
     IAiSessionEventStore sessions,
+    IMealieConnectionEventStore mealieConnections,
     IGuardianLinkEventStore guardians,
     TimeProvider time) : IPersonalDataEraser
 {
@@ -31,6 +32,14 @@ public sealed class MealplansPersonalDataEraser(
         options.Events.AddMaskingRuleForProtectedInformation<AiUserMessageSent>(e => e with { Text = Erased.Text });
         options.Events.AddMaskingRuleForProtectedInformation<AiAssistantMessageRecorded>(e => e with { Text = Erased.Text });
         options.Events.AddMaskingRuleForProtectedInformation<AiToolInvocationRecorded>(e => e with { ArgumentsJson = "{}", ResultJson = "{}" });
+        // The family's server address and Mealie user name can identify them; the token goes too.
+        options.Events.AddMaskingRuleForProtectedInformation<MealieConnected>(e => e with
+        {
+            BaseUrl = Erased.Text,
+            Token = e.Token with { CipherText = "", Last4 = "" },
+            MealieUserName = Erased.Text,
+            Household = e.Household with { HouseholdName = Erased.Text }
+        });
     }
 
     public async Task EraseGuardianAsync(ErasureSubject guardian, CancellationToken cancellationToken)
@@ -51,6 +60,26 @@ public sealed class MealplansPersonalDataEraser(
         foreach (var credentialId in credentialIds)
         {
             await RemoveKeysAddedByAsync(credentialId, guardian.UserId, cancellationToken);
+        }
+
+        // Through each child's whole family: a connection is indexed under the child it was first
+        // made for, which needn't be one of this guardian's own children (a sibling under a
+        // co-guardian), while the guardian may still have reconnected it.
+        var connectionIds = new HashSet<MealieConnectionId>();
+        foreach (var child in children)
+        {
+            foreach (var member in await MealFamilyResolution.ResolveFamilyAsync(child, guardians, cancellationToken))
+            {
+                if (await mealieConnections.FindIdForChildAsync(member, cancellationToken) is { } connectionId)
+                {
+                    connectionIds.Add(connectionId);
+                }
+            }
+        }
+
+        foreach (var connectionId in connectionIds)
+        {
+            await DisconnectMealieConnectedByAsync(connectionId, guardian.UserId, cancellationToken);
         }
 
         foreach (var sessionId in await ListSessionIdsAsync(children, cancellationToken))
@@ -112,6 +141,26 @@ public sealed class MealplansPersonalDataEraser(
             e => e.Data is ProviderApiKeySet set && set.Key.AddedBy == guardianId);
     }
 
+    // A connection the erased guardian made is disconnected (their token stops being used), and every
+    // connect of theirs is masked in the history. One made by another guardian stays.
+    private async Task DisconnectMealieConnectedByAsync(MealieConnectionId connectionId, UserId guardianId, CancellationToken cancellationToken)
+    {
+        if (await mealieConnections.FindSnapshotAsync(connectionId, cancellationToken) is not { } connection)
+        {
+            return;
+        }
+
+        if (connection.Current?.ConnectedBy == guardianId)
+        {
+            await mealieConnections.AppendAsync(connectionId, [new MealieDisconnected(connectionId, guardianId, time.GetUtcNow())], cancellationToken);
+        }
+
+        await store.MaskStreamAsync<MealieConnectionSnapshot>(
+            connectionId.Value,
+            cancellationToken,
+            e => e.Data is MealieConnected connected && connected.ConnectedBy == guardianId);
+    }
+
     private async Task DeleteAnchoredAsync(UserId childId, CancellationToken cancellationToken)
     {
         var anchor = childId.Value;
@@ -120,9 +169,11 @@ public sealed class MealplansPersonalDataEraser(
         IReadOnlyList<AiCredentialIndexDocument> credentialDocs;
         IReadOnlyList<AiSessionIndexDocument> sessionDocs;
         IReadOnlyList<GroupSharedMealPlanDocument> sharedDocs;
+        IReadOnlyList<MealieConnectionIndexDocument> connectionDocs;
 
         await using (var session = store.QuerySession())
         {
+            connectionDocs = await session.Query<MealieConnectionIndexDocument>().Where(d => d.ChildId == anchor).ToListAsync(cancellationToken);
             mealDocs = await session.Query<MealIndexDocument>().Where(d => d.ChildId == anchor).ToListAsync(cancellationToken);
             planDocs = await session.Query<MealPlanIndexDocument>().Where(d => d.ChildId == anchor).ToListAsync(cancellationToken);
             credentialDocs = await session.Query<AiCredentialIndexDocument>().Where(d => d.ChildId == anchor).ToListAsync(cancellationToken);
@@ -157,6 +208,11 @@ public sealed class MealplansPersonalDataEraser(
         {
             await store.DeleteStreamAsync<MealplanAiSessionSnapshot>(doc.Id, cancellationToken, s => s.Delete(doc));
         }
+
+        foreach (var doc in connectionDocs)
+        {
+            await store.DeleteStreamAsync<MealieConnectionSnapshot>(doc.Id, cancellationToken, s => s.Delete(doc));
+        }
     }
 
     private async Task PassAnchoredToAsync(UserId childId, UserId heir, CancellationToken cancellationToken)
@@ -181,6 +237,11 @@ public sealed class MealplansPersonalDataEraser(
         }
 
         foreach (var doc in await session.Query<AiSessionIndexDocument>().Where(d => d.ChildId == anchor).ToListAsync(cancellationToken))
+        {
+            session.Store(doc with { ChildId = heir.Value });
+        }
+
+        foreach (var doc in await session.Query<MealieConnectionIndexDocument>().Where(d => d.ChildId == anchor).ToListAsync(cancellationToken))
         {
             session.Store(doc with { ChildId = heir.Value });
         }

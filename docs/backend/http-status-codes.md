@@ -281,6 +281,13 @@ dependency couldn't be reached, the same handler answers `503` with code
 providers). An error status from a dependency, such as Keycloak answering `403`,
 is a `500`: retrying won't help.
 
+Implemented for `502`: the Mealie routes answer a failing family Mealie with
+`502` and `mealie_unreachable`, `mealie_token_rejected` or `mealie_error` (and a
+`409 mealie_not_connected` before a family connects). The family's own server
+isn't one of Buddy's dependencies, so it doesn't get the `503` + `Retry-After`
+mapping: retrying won't fix a revoked token or a home server that's off. See
+[mealie-integration.md](analysis/mealie-integration.md#question-8-the-client-errors-and-tests).
+
 ## Decision Checklist
 
 When selecting a status code, ask in order:

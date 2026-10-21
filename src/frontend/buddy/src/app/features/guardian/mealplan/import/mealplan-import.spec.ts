@@ -1,9 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
+import { MealieConnectionView, MealieService } from '../../../../core/mealie.service';
 import {
   MealPlanImportPreview,
   MealPlanImportPreviewGroup,
@@ -13,6 +14,7 @@ import {
   MealplansService,
 } from '../../../../core/mealplans.service';
 import { MealplanImport } from './mealplan-import';
+import { disableFeatures } from '../../../../../testing/features-fixture';
 
 describe('MealplanImport', () => {
   const child: ChildSummary = {
@@ -114,8 +116,17 @@ describe('MealplanImport', () => {
   };
 
   async function setup(
-    stubs: { guardians?: Partial<GuardiansService>; mealplans?: Partial<MealplansService> } = {},
+    stubs: {
+      guardians?: Partial<GuardiansService>;
+      mealplans?: Partial<MealplansService>;
+      mealie?: Partial<MealieService>;
+      source?: string;
+    } = {},
   ) {
+    const mealieStub: Partial<MealieService> = {
+      getConnection: vi.fn(async (): Promise<MealieConnectionView> => ({ kind: 0 })),
+      ...stubs.mealie,
+    };
     const guardiansStub: Partial<GuardiansService> = {
       listMyChildren: vi.fn(async () => [child]),
       ...stubs.guardians,
@@ -134,11 +145,20 @@ describe('MealplanImport', () => {
         provideRouter([]),
         { provide: GuardiansService, useValue: guardiansStub },
         { provide: MealplansService, useValue: mealplansStub },
+        { provide: MealieService, useValue: mealieStub },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: convertToParamMap(stubs.source ? { source: stubs.source } : {}),
+            },
+          },
+        },
       ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(MealplanImport);
-    return { fixture, mealplans: mealplansStub };
+    return { fixture, mealplans: mealplansStub, mealie: mealieStub };
   }
 
   async function settle(fixture: {
@@ -362,5 +382,256 @@ describe('MealplanImport', () => {
       'import-0',
     );
     expect(mealplans.listImports).toHaveBeenCalledTimes(2);
+  });
+
+  describe('from Mealie', () => {
+    const connected: MealieConnectionView = {
+      kind: 1,
+      baseUrl: 'https://mealie.holm.example',
+      householdName: 'Holm',
+      mealieUserName: 'buddy-sync',
+      mealieVersion: 'v3.29.0',
+      tokenLast4: 'b7f2',
+      connectedBy: 'guardian-1',
+      connectedAt: '2026-10-19T10:00:00Z',
+    };
+    const lasagneRecipe = { recipeId: 'recipe-1', slug: 'lasagne', name: 'Lasagne al forno' };
+    const tacosRecipe = { recipeId: 'recipe-2', slug: 'tacos', name: 'Chicken tacos' };
+
+    // "Tacos" is new and came from a recipe, "Lasagne" matches an existing meal (its recipe isn't
+    // sent), "Toast" is new without a recipe.
+    const mealiePreview: MealPlanImportPreview = {
+      format: 'mealie',
+      lines: [
+        line({ lineNumber: 1, date: '2026-10-26', key: 'lasagne', mealName: 'Lasagne' }),
+        line({
+          lineNumber: 2,
+          date: '2026-10-27',
+          key: 'chicken tacos',
+          mealName: 'Chicken tacos',
+          notes: '+ side: Salad',
+        }),
+        line({ lineNumber: 3, date: '2026-10-28', key: 'toast', mealName: 'Toast' }),
+      ],
+      groups: [
+        group({
+          key: 'lasagne',
+          name: 'Lasagne',
+          defaultAction: 'Existing',
+          matchedMealId: 'meal-lasagne',
+          matchedMealName: 'Lasagne',
+        }),
+        group({ key: 'chicken tacos', name: 'Chicken tacos' }),
+        group({ key: 'toast', name: 'Toast' }),
+      ],
+      warnings: [{ lineNumber: 2, code: 'mealie_entry_merged', message: '' }],
+      emptyDays: 0,
+    };
+
+    async function mealieSetup(source?: string, previewImport?: MealieService['previewImport']) {
+      const setupResult = await setup({
+        source,
+        mealie: {
+          getConnection: vi.fn(async () => connected),
+          previewImport:
+            previewImport ??
+            vi.fn(async () => ({
+              preview: mealiePreview,
+              recipes: [
+                { key: 'lasagne', recipe: lasagneRecipe },
+                { key: 'chicken tacos', recipe: tacosRecipe },
+              ],
+            })),
+        },
+      });
+      await settle(setupResult.fixture);
+      return { ...setupResult, compiled: setupResult.fixture.nativeElement as HTMLElement };
+    }
+
+    it('offers no source choice while the family isn’t connected, even when asked for Mealie', async () => {
+      const { fixture } = await setup({ source: 'mealie' });
+      await settle(fixture);
+      const compiled: HTMLElement = fixture.nativeElement;
+
+      expect(compiled.querySelector('[role="radiogroup"]')).toBeNull();
+      expect(compiled.querySelector('textarea')).not.toBeNull();
+    });
+
+    it('starts on the text source unless the link asks for Mealie', async () => {
+      const { compiled } = await mealieSetup();
+
+      expect(compiled.querySelector('[role="radiogroup"]')?.textContent).toContain('Mealie');
+      expect(compiled.querySelector('textarea')).not.toBeNull();
+      expect(compiled.querySelector('#mealieImportFrom')).toBeNull();
+    });
+
+    it('defaults to next week, Monday to Sunday', async () => {
+      const { compiled } = await mealieSetup('mealie');
+
+      const from = compiled.querySelector<HTMLInputElement>('#mealieImportFrom')!.value;
+      const to = compiled.querySelector<HTMLInputElement>('#mealieImportTo')!.value;
+      const fromDate = new Date(`${from}T00:00:00`);
+      const toDate = new Date(`${to}T00:00:00`);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      expect(fromDate.getDay()).toBe(1);
+      expect(fromDate > today).toBe(true);
+      expect((fromDate.getTime() - today.getTime()) / 86_400_000).toBeLessThanOrEqual(7);
+      expect(Math.round((toDate.getTime() - fromDate.getTime()) / 86_400_000)).toBe(6);
+      expect(compiled.querySelector('textarea')).toBeNull();
+    });
+
+    it('switches between the sources', async () => {
+      const { fixture, compiled } = await mealieSetup('mealie');
+
+      const textOption = Array.from(
+        compiled.querySelectorAll<HTMLButtonElement>('[role="radio"]'),
+      ).find((b) => b.textContent?.trim() === 'Text or file')!;
+      textOption.click();
+      await settle(fixture);
+
+      expect(compiled.querySelector('textarea')).not.toBeNull();
+      expect(compiled.querySelector('#mealieImportFrom')).toBeNull();
+    });
+
+    it('previews the range and commits new meals linked to their Mealie recipe', async () => {
+      const { fixture, compiled, mealie, mealplans } = await mealieSetup('mealie');
+      type(compiled.querySelector<HTMLInputElement>('#mealieImportFrom')!, '2026-10-26');
+      type(compiled.querySelector<HTMLInputElement>('#mealieImportTo')!, '2026-11-01');
+      await settle(fixture);
+
+      button(compiled, 'Preview Mealie plan').click();
+      await settle(fixture);
+
+      expect(mealie.previewImport).toHaveBeenCalledWith('child-1', '2026-10-26', '2026-11-01');
+      expect(compiled.textContent).toContain(
+        'Entry 2: a side dish, drink or dessert was added to that day’s dinner notes.',
+      );
+
+      button(compiled, 'Import 3 days').click();
+      await settle(fixture);
+
+      expect(mealplans.commitImport).toHaveBeenCalledWith(
+        { kind: 'family', childId: 'child-1' },
+        {
+          format: 'mealie',
+          archiveSingleUse: true,
+          entries: [
+            { date: '2026-10-26', slot: 'Dinner', mealId: 'meal-lasagne', notes: '' },
+            {
+              date: '2026-10-27',
+              slot: 'Dinner',
+              newMealName: 'Chicken tacos',
+              notes: '+ side: Salad',
+              mealieRecipe: tacosRecipe,
+            },
+            { date: '2026-10-28', slot: 'Dinner', newMealName: 'Toast', notes: '' },
+          ],
+        },
+      );
+    });
+
+    it('forgets the Mealie recipes when a text preview follows', async () => {
+      const { fixture, compiled, mealplans } = await mealieSetup('mealie');
+      button(compiled, 'Preview Mealie plan').click();
+      await settle(fixture);
+      button(compiled, 'Change dates').click();
+      await settle(fixture);
+
+      Array.from(compiled.querySelectorAll<HTMLButtonElement>('[role="radio"]'))
+        .find((b) => b.textContent?.trim() === 'Text or file')!
+        .click();
+      await settle(fixture);
+      type(compiled.querySelector('textarea')!, 'Madplan 2024\nU2\nSø: Lasagne');
+      await settle(fixture);
+      button(compiled, 'Preview import').click();
+      await settle(fixture);
+      button(compiled, 'Import 4 days').click();
+      await settle(fixture);
+
+      const sent = vi.mocked(mealplans.commitImport!).mock.calls[0][1];
+      expect(sent.entries.some((entry) => 'mealieRecipe' in entry)).toBe(false);
+    });
+
+    it('names every Mealie warning', async () => {
+      const preview = {
+        ...mealiePreview,
+        warnings: [
+          { lineNumber: 4, code: 'mealie_entry_skipped', message: '' },
+          { lineNumber: 5, code: 'duplicate_slot', message: '' },
+          { lineNumber: 0, code: 'mealie_range_empty', message: '' },
+        ],
+      };
+      const { fixture, compiled } = await mealieSetup(
+        'mealie',
+        vi.fn(async () => ({ preview, recipes: [] })),
+      );
+
+      button(compiled, 'Preview Mealie plan').click();
+      await settle(fixture);
+      compiled.querySelector('details')!.open = true;
+
+      expect(compiled.textContent).toContain('Entry 4: skipped (no recipe or title');
+      expect(compiled.textContent).toContain('Entry 5: a second meal in the same slot');
+      expect(compiled.textContent).toContain('Mealie has no meal plan entries in this range.');
+    });
+
+    it('offers no Mealie source while the installation has Mealie turned off', async () => {
+      disableFeatures('mealplanMealie');
+      const getConnection = vi.fn(async () => connected);
+      const { fixture } = await setup({ source: 'mealie', mealie: { getConnection } });
+      await settle(fixture);
+
+      expect(getConnection).not.toHaveBeenCalled();
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[role="radiogroup"]'),
+      ).toBeNull();
+    });
+
+    it('shows the backend’s reason for a rejected range, and clears it on the next attempt and on switching source', async () => {
+      const previewImport = vi
+        .fn()
+        .mockRejectedValueOnce(
+          new HttpErrorResponse({
+            status: 400,
+            error: { details: { to: ['A Mealie import covers at most 92 days.'] } },
+          }),
+        )
+        .mockRejectedValueOnce(new HttpErrorResponse({ status: 500 }));
+      const { fixture, compiled } = await mealieSetup('mealie', previewImport);
+
+      button(compiled, 'Preview Mealie plan').click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Couldn’t read Mealie’s meal plan.');
+      expect(compiled.textContent).toContain('A Mealie import covers at most 92 days.');
+
+      button(compiled, 'Preview Mealie plan').click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Couldn’t read Mealie’s meal plan.');
+      expect(compiled.textContent).not.toContain('at most 92 days');
+
+      Array.from(compiled.querySelectorAll<HTMLButtonElement>('[role="radio"]'))
+        .find((b) => b.textContent?.trim() === 'Text or file')!
+        .click();
+      await settle(fixture);
+      expect(compiled.textContent).not.toContain('Couldn’t read Mealie’s meal plan.');
+    });
+
+    it('shows why Mealie’s plan couldn’t be read', async () => {
+      const error = new HttpErrorResponse({
+        status: 502,
+        error: { code: 'mealie_token_rejected' },
+      });
+      const { fixture, compiled } = await mealieSetup(
+        'mealie',
+        vi.fn(async () => Promise.reject(error)),
+      );
+
+      button(compiled, 'Preview Mealie plan').click();
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain('Your Mealie rejected Buddy’s API token.');
+    });
   });
 });

@@ -8,6 +8,7 @@ import { DownloadMyData } from './download-my-data/download-my-data';
 import { ManageCalendars } from './manage-calendars/manage-calendars';
 import { ManageChildren } from './manage-children/manage-children';
 import { ManageGroups } from './manage-groups/manage-groups';
+import { MealieSettings } from './mealie-settings/mealie-settings';
 import { MyProfile } from './my-profile/my-profile';
 import { Page } from '../../../shared/page/page';
 
@@ -20,6 +21,7 @@ import { Page } from '../../../shared/page/page';
     ManageCalendars,
     ManageGroups,
     AiProviderSettingsComponent,
+    MealieSettings,
     DownloadMyData,
     DeleteAccount,
     Page,

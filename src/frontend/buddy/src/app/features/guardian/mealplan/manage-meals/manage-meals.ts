@@ -12,7 +12,10 @@ import {
   MealplanScope,
   MealplansService,
 } from '../../../../core/mealplans.service';
+import { mealieErrorKey } from '../../../../core/mealie.service';
 import { createAction } from '../../../../shared/action-state/action-state';
+import { MealieRecipePanel } from '../mealie/recipe-panel/mealie-recipe-panel';
+import { MealieRecipePicker } from '../mealie/recipe-picker/mealie-recipe-picker';
 import { ColorSwatchPicker } from '../../../../shared/color-swatch-picker/color-swatch-picker';
 import { Card } from '../../../../shared/card/card';
 import {
@@ -26,6 +29,12 @@ import {
 } from '../../../../shared/segmented-control/segmented-control';
 
 const DEFAULT_COLOR = '#10b981';
+const DEFAULT_ICON = '🍽️';
+
+type MealiePanel =
+  | { kind: 'view'; mealId: string; mealName: string; recipeId: string }
+  | { kind: 'link'; mealId: string; mealName: string }
+  | { kind: 'create' };
 const PAGE_SIZE = 5;
 const MANAGE: MealplanAccessTier = 'Manage';
 const EATING_OUT_KINDS: MealEatingOut[] = ['None', 'FriendsAndFamily', 'Restaurant'];
@@ -40,6 +49,8 @@ const EATING_OUT_KINDS: MealEatingOut[] = ['None', 'FriendsAndFamily', 'Restaura
     Card,
     EatingOutBadge,
     SegmentedControl,
+    MealieRecipePanel,
+    MealieRecipePicker,
   ],
   templateUrl: './manage-meals.html',
 })
@@ -69,6 +80,8 @@ export class ManageMeals {
     loader: ({ params: scope }) => {
       this.archiving.reset();
       this.updating.reset();
+      this.mealiePanel.set(null);
+      this.linking.reset();
       return this.mealplans.listMeals(scope);
     },
   });
@@ -133,6 +146,16 @@ export class ManageMeals {
   );
   protected readonly creating = createAction();
   protected readonly archiving = createAction<string>();
+
+  // The family's child to call the Mealie routes with, set only while the family scope is shown
+  // and the family is connected (docs/backend/analysis/mealie-integration.md): no Mealie control
+  // shows otherwise.
+  readonly mealieChildId = input<string | null>(null);
+
+  // Below the meal list: one linked meal's recipe, the recipe picker for linking one meal, or the
+  // picker for "Add from Mealie".
+  protected readonly mealiePanel = signal<MealiePanel | null>(null);
+  protected readonly linking = createAction();
   protected readonly updating = createAction<string>();
 
   protected previousPage(): void {
@@ -196,6 +219,105 @@ export class ManageMeals {
     if (this.updating.state().status === 'error') {
       select.value = meal.eatingOut;
     }
+  }
+
+  protected isMealiePanelFor(mealId: string): boolean {
+    const panel = this.mealiePanel();
+    return panel !== null && panel.kind !== 'create' && panel.mealId === mealId;
+  }
+
+  // "View recipe" on a linked meal, "Link recipe" on one without; a second click closes it.
+  protected toggleMealiePanel(meal: Meal): void {
+    this.linking.reset();
+
+    if (this.isMealiePanelFor(meal.id)) {
+      this.mealiePanel.set(null);
+      return;
+    }
+
+    this.mealiePanel.set(
+      meal.recipe
+        ? { kind: 'view', mealId: meal.id, mealName: meal.name, recipeId: meal.recipe.recipeId }
+        : { kind: 'link', mealId: meal.id, mealName: meal.name },
+    );
+  }
+
+  protected startLink(mealId: string, mealName: string): void {
+    this.linking.reset();
+    this.mealiePanel.set({ kind: 'link', mealId, mealName });
+  }
+
+  protected startCreateFromRecipe(): void {
+    this.linking.reset();
+    this.mealiePanel.set(this.mealiePanel()?.kind === 'create' ? null : { kind: 'create' });
+  }
+
+  protected closeMealiePanel(): void {
+    this.mealiePanel.set(null);
+  }
+
+  protected async linkRecipe(mealId: string, recipeId: string): Promise<void> {
+    const childId = this.mealieChildId();
+
+    if (!childId) {
+      return;
+    }
+
+    await this.linking.run(
+      true,
+      async () => {
+        const meal = await this.mealplans.linkMealToRecipe(childId, mealId, recipeId);
+        this.mealiePanel.set({
+          kind: 'view',
+          mealId,
+          mealName: meal.name,
+          recipeId,
+        });
+      },
+      (error) => mealieErrorKey(error, 'mealie.recipes.linkError'),
+    );
+  }
+
+  protected async unlinkRecipe(mealId: string): Promise<void> {
+    const childId = this.mealieChildId();
+
+    if (!childId) {
+      return;
+    }
+
+    await this.linking.run(
+      true,
+      async () => {
+        await this.mealplans.unlinkMealRecipe(childId, mealId);
+        this.mealiePanel.set(null);
+      },
+      'mealie.recipes.panel.unlinkError',
+    );
+  }
+
+  protected async createFromRecipe(recipeId: string): Promise<void> {
+    const childId = this.mealieChildId();
+
+    if (!childId) {
+      return;
+    }
+
+    await this.linking.run(
+      true,
+      async () => {
+        const meal = await this.mealplans.createMealFromRecipe(
+          childId,
+          recipeId,
+          DEFAULT_ICON,
+          DEFAULT_COLOR,
+        );
+        this.mealiePanel.set(null);
+        // The library is sorted by name, so open the page the new meal landed on.
+        const index = this.meals().findIndex((m) => m.id === meal.id);
+        this.currentPage.set(Math.max(0, Math.floor(index / PAGE_SIZE)));
+      },
+      (error) => mealieErrorKey(error, 'mealie.recipes.createError'),
+    );
   }
 
   protected async archiveMeal(mealId: string): Promise<void> {

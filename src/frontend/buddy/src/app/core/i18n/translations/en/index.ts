@@ -11,6 +11,7 @@ import { homework } from './homework';
 import { houseRules } from './house-rules';
 import { invite } from './invite';
 import { login } from './login';
+import { mealie } from './mealie';
 import { mealplan } from './mealplan';
 import { onboarding } from './onboarding';
 import { medicine } from './medicine';
@@ -41,6 +42,7 @@ export const en = {
   houseRules,
   invite,
   login,
+  mealie,
   mealplan,
   onboarding,
   medicine,

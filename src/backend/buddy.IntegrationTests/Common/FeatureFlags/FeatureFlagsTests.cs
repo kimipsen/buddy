@@ -53,7 +53,8 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
         fixture.SharedHostAsync($"{nameof(FeatureFlagsTests)}.MealplanExtrasOff", new Dictionary<string, string?>
         {
             ["Features:MealplanAiAssistant"] = "false",
-            ["Features:MealplanImport"] = "false"
+            ["Features:MealplanImport"] = "false",
+            ["Features:MealplanMealie"] = "false"
         });
 
     [Fact]
@@ -62,7 +63,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
     {
         var flags = await GetFeaturesAsync(fixture.Host);
 
-        Assert.Equal(new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true), flags);
+        Assert.Equal(new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true), flags);
     }
 
     [Fact]
@@ -70,9 +71,9 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
     {
         var flags = await GetFeaturesAsync(await AllOffAsync());
 
-        Assert.Equal(new InstallationFeatures(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false), flags);
+        Assert.Equal(new InstallationFeatures(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false), flags);
         Assert.Equal(
-            new InstallationFeatures(true, false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true),
+            new InstallationFeatures(true, false, false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true),
             await GetFeaturesAsync(await MealplanExtrasOffAsync()));
     }
 

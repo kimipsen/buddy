@@ -7,7 +7,9 @@ public union MealEvent(
     MealCreated,
     MealDetailsUpdated,
     MealArchived,
-    MealRated
+    MealRated,
+    MealLinkedToRecipe,
+    MealRecipeUnlinked
 )
 {
     public static MealEvent FromPayload(object payload) => payload switch
@@ -16,6 +18,8 @@ public union MealEvent(
         MealDetailsUpdated e => e,
         MealArchived e => e,
         MealRated e => e,
+        MealLinkedToRecipe e => e,
+        MealRecipeUnlinked e => e,
         _ => throw new ArgumentException($"Unknown meal event payload: {payload.GetType().Name}", nameof(payload)),
     };
 
@@ -25,6 +29,8 @@ public union MealEvent(
         MealDetailsUpdated => nameof(MealDetailsUpdated),
         MealArchived => nameof(MealArchived),
         MealRated => nameof(MealRated),
+        MealLinkedToRecipe => nameof(MealLinkedToRecipe),
+        MealRecipeUnlinked => nameof(MealRecipeUnlinked),
     };
 }
 
@@ -55,3 +61,10 @@ public sealed record MealArchived(MealId Id, UserId ModifiedBy, DateTimeOffset O
 // opinion simply appends another MealRated with the new Rating. The rating replaced isn't
 // carried: it is already in the stream, and nothing reads it.
 public sealed record MealRated(MealId Id, UserId ChildId, MealRating Rating, DateTimeOffset OccurredAt);
+
+// Points the meal at a recipe in the family's Mealie (docs/backend/analysis/mealie-integration.md,
+// Question 4). Its own event rather than part of MealDetails: the link is made from the recipe
+// picker, not the meal form. Relinking is another MealLinkedToRecipe, a full overwrite.
+public sealed record MealLinkedToRecipe(MealId Id, MealieRecipeRef Recipe, UserId LinkedBy, DateTimeOffset OccurredAt);
+
+public sealed record MealRecipeUnlinked(MealId Id, UserId UnlinkedBy, DateTimeOffset OccurredAt);

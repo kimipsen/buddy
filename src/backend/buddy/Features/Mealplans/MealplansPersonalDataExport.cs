@@ -16,7 +16,8 @@ public sealed class MealplansPersonalDataExporter(
     IMealEventStore meals,
     IMealPlanEventStore mealPlans,
     IAiCredentialEventStore credentials,
-    IAiSessionEventStore sessions) : IPersonalDataExporter
+    IAiSessionEventStore sessions,
+    IMealieConnectionEventStore mealieConnections) : IPersonalDataExporter
 {
     public Type Store => typeof(IMealplansStore);
 
@@ -34,9 +35,15 @@ public sealed class MealplansPersonalDataExporter(
         var mealIds = new HashSet<MealId>();
         var planIds = new HashSet<MealPlanId>();
         var credentialIds = new HashSet<AiCredentialId>();
+        var connectionIds = new HashSet<MealieConnectionId>();
 
         foreach (var member in family)
         {
+            if (await mealieConnections.FindIdForChildAsync(member, cancellationToken) is { } connectionId)
+            {
+                connectionIds.Add(connectionId);
+            }
+
             mealIds.UnionWith(await meals.ListIdsForChildAsync(member, cancellationToken));
 
             if (await mealPlans.FindIdForChildAsync(member, cancellationToken) is { } planId)
@@ -85,11 +92,20 @@ public sealed class MealplansPersonalDataExporter(
             }
         }
 
+        // The masked view: address, household and the token's last four characters, never the token.
+        List<MealieConnectionView> exportedConnections = [];
+
+        foreach (var connectionId in connectionIds)
+        {
+            exportedConnections.Add(MealieConnectionView.From(await mealieConnections.FindSnapshotAsync(connectionId, cancellationToken)));
+        }
+
         return new MealplansExport(
             [.. exportedMeals.OrderBy(m => m.Name, StringComparer.Ordinal)],
             exportedPlans,
             exportedKeys,
-            await ExportSessionsAsync(family, cancellationToken));
+            await ExportSessionsAsync(family, cancellationToken),
+            exportedConnections);
     }
 
     private async Task<IReadOnlyList<ExportedAiSession>> ExportSessionsAsync(HashSet<UserId> family, CancellationToken cancellationToken)
@@ -126,7 +142,8 @@ public sealed record MealplansExport(
     IReadOnlyList<MealResponse> Meals,
     IReadOnlyList<ExportedMealPlan> MealPlans,
     IReadOnlyList<AiProviderSettings> AiProviderKeys,
-    IReadOnlyList<ExportedAiSession> AiSessions);
+    IReadOnlyList<ExportedAiSession> AiSessions,
+    IReadOnlyList<MealieConnectionView> MealieConnections);
 
 public sealed record ExportedMealPlan(
     Guid Id,

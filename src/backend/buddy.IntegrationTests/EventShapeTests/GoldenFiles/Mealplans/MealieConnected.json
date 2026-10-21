@@ -1,0 +1,20 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000080",
+  "BaseUrl": "https://mealie.example.com",
+  "Token": {
+    "CipherText": "CfDJ8-ciphertext",
+    "Last4": "b7f2",
+    "AddedBy": "00000000-0000-0000-0000-000000000001",
+    "AddedAt": "2025-01-01T12:00:00+00:00"
+  },
+  "Household": {
+    "HouseholdId": "00000000-0000-0000-0000-000000000082",
+    "HouseholdName": "Holm",
+    "GroupId": "00000000-0000-0000-0000-000000000083",
+    "GroupSlug": "holm"
+  },
+  "MealieUserName": "buddy-sync",
+  "MealieVersion": "v3.29.0",
+  "ConnectedBy": "00000000-0000-0000-0000-000000000001",
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

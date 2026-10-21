@@ -105,6 +105,7 @@ describe('ChildHome', () => {
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       eatingOut: 'None',
+      recipe: null,
     };
   }
 
@@ -338,6 +339,7 @@ describe('ChildHome', () => {
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       eatingOut: 'None' as const,
+      recipe: null,
     }));
 
     const { fixture } = await setup({
@@ -373,6 +375,7 @@ describe('ChildHome', () => {
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       eatingOut: 'None' as const,
+      recipe: null,
     }));
 
     const { fixture } = await setup({

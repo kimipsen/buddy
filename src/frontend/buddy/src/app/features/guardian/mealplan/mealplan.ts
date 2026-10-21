@@ -15,6 +15,7 @@ import {
   MealplanScope,
   MealplansService,
 } from '../../../core/mealplans.service';
+import { MealieService, isMealieConnected } from '../../../core/mealie.service';
 import { createAction } from '../../../shared/action-state/action-state';
 import { AssignMealplan } from './assign-mealplan/assign-mealplan';
 import { MealplanIcal } from './mealplan-ical/mealplan-ical';
@@ -70,6 +71,7 @@ export class GuardianMealplan {
   private readonly guardians = inject(GuardiansService);
   private readonly groupsService = inject(GroupsService);
   private readonly mealplans = inject(MealplansService);
+  private readonly mealie = inject(MealieService);
 
   // The first child's family scope, or null when the guardian has no children.
   protected readonly children = resource({ loader: () => this.loadFamilyScope() });
@@ -88,6 +90,23 @@ export class GuardianMealplan {
   );
   // The family scope until the guardian picks a group scope.
   protected readonly selectedScope = linkedSignal<MealplanScope | null>(() => this.familyScope());
+
+  // The family's Mealie connection, when this installation offers Mealie. A failed load just
+  // hides the Mealie controls: the plan itself never depends on Mealie.
+  protected readonly mealieConnection = resource({
+    params: () =>
+      this.features.enabled('mealplanMealie') ? (this.familyScope() ?? undefined) : undefined,
+    loader: ({ params: familyScope }) => this.mealie.getConnection(familyScope.childId),
+  });
+  protected readonly mealieConnected = computed(
+    () => this.mealieConnection.hasValue() && isMealieConnected(this.mealieConnection.value()),
+  );
+  // What ManageMeals and AssignMealplan call Mealie with: the family's child while the family
+  // scope is shown and Mealie is connected, else null (the Mealie routes are family-only).
+  protected readonly mealieChildId = computed((): string | null => {
+    const scope = this.selectedScope();
+    return this.mealieConnected() && scope?.kind === 'family' ? scope.childId : null;
+  });
 
   // Sharing controls -- family scope only, since only a guardian can decide to share/unshare.
   protected readonly shareTargetGroupId = signal('');

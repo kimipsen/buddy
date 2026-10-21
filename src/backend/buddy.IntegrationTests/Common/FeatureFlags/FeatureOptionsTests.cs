@@ -22,15 +22,16 @@ public sealed class FeatureOptionsTests
         using var provider = services.BuildServiceProvider();
 
         Assert.Equal(
-            new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true),
+            new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true),
             provider.GetRequiredService<IOptions<FeatureOptions>>().Value.Effective());
     }
 
     [Fact]
     public void Only_sub_flags_left_on_under_a_disabled_parent_are_reported_as_overridden()
     {
-        Assert.Equal(["MealplanAiAssistant", "MealplanImport"], new FeatureOptions { Mealplans = false }.SubFlagsOverriddenByParent());
-        Assert.Equal(["MealplanImport"], new FeatureOptions { Mealplans = false, MealplanAiAssistant = false }.SubFlagsOverriddenByParent());
+        Assert.Equal(["MealplanAiAssistant", "MealplanImport", "MealplanMealie"], new FeatureOptions { Mealplans = false }.SubFlagsOverriddenByParent());
+        Assert.Equal(["MealplanImport", "MealplanMealie"], new FeatureOptions { Mealplans = false, MealplanAiAssistant = false }.SubFlagsOverriddenByParent());
+        Assert.Equal(["MealplanAiAssistant", "MealplanImport"], new FeatureOptions { Mealplans = false, MealplanMealie = false }.SubFlagsOverriddenByParent());
         Assert.Empty(new FeatureOptions { MealplanAiAssistant = false }.SubFlagsOverriddenByParent());
         Assert.Equal(["VisitSummaries"], new FeatureOptions { SleepDiary = false, Medicines = false, Feelings = false }.SubFlagsOverriddenByParent());
         Assert.Empty(new FeatureOptions { SleepDiary = false, Medicines = false }.SubFlagsOverriddenByParent());

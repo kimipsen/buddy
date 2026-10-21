@@ -72,8 +72,9 @@ jobs:
                 - 5432:5432
           EOF
 
-      - name: Start db, Keycloak and Mailpit
-        run: docker compose -f .devcontainer/docker-compose.yml -f .devcontainer/docker-compose.ci.yml up -d --wait db keycloak mailpit
+      # mealie: the family's Mealie for mealie-integration.spec.ts (published on localhost:9926).
+      - name: Start db, Keycloak, Mailpit and Mealie
+        run: docker compose -f .devcontainer/docker-compose.yml -f .devcontainer/docker-compose.ci.yml up -d --wait db keycloak mailpit mealie
 
       - name: Install frontend dependencies
         working-directory: src/frontend/buddy

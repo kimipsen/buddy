@@ -12,6 +12,7 @@ import {
   MealSlot,
   MealplansService,
 } from '../../../../core/mealplans.service';
+import { MealieService } from '../../../../core/mealie.service';
 import { AssignMealplan } from './assign-mealplan';
 
 describe('AssignMealplan', () => {
@@ -51,6 +52,7 @@ describe('AssignMealplan', () => {
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       eatingOut: 'None',
+      recipe: null,
       ...overrides,
     };
   }
@@ -80,6 +82,7 @@ describe('AssignMealplan', () => {
     meals?: Meal[];
     mealplans?: Partial<MealplansService>;
     guardians?: Partial<GuardiansService>;
+    mealieChildId?: string | null;
   }
 
   async function setup(stubs: Stubs = {}) {
@@ -111,11 +114,13 @@ describe('AssignMealplan', () => {
       providers: [
         { provide: MealplansService, useValue: mealplansStub },
         { provide: GuardiansService, useValue: guardiansStub },
+        { provide: MealieService, useValue: { listShoppingLists: vi.fn(async () => []) } },
       ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(AssignMealplan);
     fixture.componentRef.setInput('scope', stubs.scope ?? familyScope);
+    fixture.componentRef.setInput('mealieChildId', stubs.mealieChildId ?? null);
 
     return { fixture, mealplans: mealplansStub, guardians: guardiansStub };
   }
@@ -941,6 +946,48 @@ describe('AssignMealplan', () => {
       await internals(fixture).onMealDrop(dragEvent(source, target));
 
       expect(mealplans.assignMealToSlot).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Mealie shopping', () => {
+    it('is absent without a connected family', async () => {
+      const { fixture } = await setup();
+      fixture.detectChanges();
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('app-mealie-shopping'),
+      ).toBeNull();
+    });
+
+    it('sends the shown week, today plus six days, and follows the week navigation', async () => {
+      const { fixture } = await setup({ mealieChildId: 'child-1' });
+      fixture.detectChanges();
+      const shopping = () =>
+        fixture.debugElement.query((el) => el.name === 'app-mealie-shopping')!
+          .componentInstance as {
+          childId: () => string;
+          from: () => string;
+          to: () => string;
+        };
+      const today = todayIsoDate();
+      const inSixDays = (anchor: string) => {
+        const [y, m, d] = anchor.split('-').map(Number);
+        return toIsoDate(new Date(y, m - 1, d + 6));
+      };
+
+      expect(shopping().childId()).toBe('child-1');
+      expect(shopping().from()).toBe(today);
+      expect(shopping().to()).toBe(inSixDays(today));
+
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'))
+        .find((b) => b.textContent?.trim().startsWith('Next week'))!
+        .click();
+      fixture.detectChanges();
+
+      const [y, m, d] = today.split('-').map(Number);
+      const nextWeek = toIsoDate(new Date(y, m - 1, d + 7));
+      expect(shopping().from()).toBe(nextWeek);
+      expect(shopping().to()).toBe(inSixDays(nextWeek));
     });
   });
 });

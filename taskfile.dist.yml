@@ -46,6 +46,20 @@ tasks:
     cmds:
       - dotnet test backend.slnx
 
+  test:contract:mealie:
+    desc: Run the Mealie contract tests against a real Mealie container (MEALIE_IMAGE=ghcr.io/mealie-recipes/mealie:v3.20.0 for the minimum version)
+    dir: src/backend
+    env:
+      MEALIE_CONTRACT_TESTS: "1"
+    cmds:
+      - dotnet test backend.slnx --filter FullyQualifiedName~MealieContractTests
+
+  dev:mealie:
+    desc: Start a Mealie for development, e2e and doc screenshots on http://localhost:9925 (until the devcontainer's own mealie service is up)
+    cmds:
+      - docker start buddy-mealie 2>/dev/null || docker run -d --name buddy-mealie -p 9925:9000 -e ALLOW_SIGNUP=false ghcr.io/mealie-recipes/mealie:v3.29.0
+      - until curl -sf http://localhost:9925/api/app/about >/dev/null; do sleep 2; done
+
   test:frontend:
     desc: Run frontend tests
     dir: src/frontend/buddy

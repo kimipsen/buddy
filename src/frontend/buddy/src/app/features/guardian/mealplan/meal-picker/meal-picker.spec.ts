@@ -17,6 +17,7 @@ describe('MealPicker', () => {
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       eatingOut: 'None',
+      recipe: null,
       ...overrides,
     };
   }

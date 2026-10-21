@@ -32,9 +32,13 @@ public sealed class RateLimitingOptions
     // (docs/backend/analysis/doctor-visit-summary.md, Question 5).
     public FixedWindowLimits VisitSummaryShare { get; set; } = new() { PermitLimit = 30, Window = TimeSpan.FromMinutes(10) };
 
+    // Per user, on the endpoints that call the family's Mealie: protects their server from a stuck
+    // client (docs/backend/analysis/mealie-integration.md, Question 8).
+    public FixedWindowLimits Mealie { get; set; } = new() { PermitLimit = 60, Window = TimeSpan.FromMinutes(1) };
+
     public bool IsValid() =>
         Authenticated.IsValid() && Anonymous.IsValid() && IcalFeed.IsValid() && AiAssistant.IsValid() && OutboundEmail.IsValid()
-        && PersonalDataExport.IsValid() && VisitSummaryShare.IsValid();
+        && PersonalDataExport.IsValid() && VisitSummaryShare.IsValid() && Mealie.IsValid();
 }
 
 public sealed class TokenBucketLimits

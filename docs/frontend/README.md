@@ -103,14 +103,19 @@ The guardian routes currently include:
 - `/guardian/onboarding` — the guided first-login setup: group, children, optional invitations,
   shared calendar, a first routine, a meal plan, summary
   ([design](analysis/guardian-onboarding.md))
-- `/guardian/mealplan` — meal library and meal-plan assignment
+- `/guardian/mealplan` — meal library and meal-plan assignment; once the family has connected
+  Mealie (the Mealie card on `/guardian/admin`), linked meals show their recipe inline
+  (`mealie-recipe-panel`), meals can be linked or added from a Mealie recipe
+  (`mealie-recipe-picker`), the week plan can go to a Mealie shopping list (`mealie-shopping`), and
+  the header links to the Mealie import
 - `/guardian/mealplan/ai-assistant` — chat-based AI assistant for drafting
   meal-plan assignments; before the family's first session it shows what is
   shared with the provider (`AiDataSharingNotice`, also on the settings page)
   and asks a guardian to acknowledge it; the start form's meal filter (rated
   only, served in the last 30/60/90 days) is remembered per device
 - `/guardian/mealplan/import` — import older meal plans from a pasted note or
-  CSV: preview, per-meal review, import and undo
+  CSV: preview, per-meal review, import and undo; for a connected family also from Mealie's meal
+  plan for a date range (`?source=mealie` opens it there), creating new meals already linked
 - `/guardian/medicine` — medicine schedule management
 - `/guardian/medicine/effects` — rate a day's medicine effects and side effects, review 14 days at a
   time, and a printable summary grouped by dose period (`core/medicine-effects.ts`), with switches to
@@ -239,7 +244,13 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
   `core/child-timer-storage.ts`; the timer itself is the pure `core/visual-timer.ts`, drawn by
   `shared/visual-timer`
 - `MealplansService` calls meal-library, meal-plan, rating, group-sharing, iCal
-  subscription-token and import (preview, commit, list, undo) endpoints
+  subscription-token and import (preview, commit, list, undo) endpoints, and the Mealie recipe
+  links on library meals (link, unlink, create from a recipe), keeping the shared meal list in step
+- `MealieService` calls the family's Mealie connection endpoints (get, connect, disconnect, test),
+  recipe search, details and photo (a blob, since the route needs the bearer token), the Mealie
+  import preview and the shopping lists (`postIdempotent` for adding a week, since Mealie adds
+  quantities on every call); `mealieErrorKey` maps its `409`/`502` codes to messages. See
+  [mealie-integration.md](../backend/analysis/mealie-integration.md)
 - `MedicinesService` manages medicine schedules, dose status, effect notes, which medicines the effect summaries leave out, and group sharing
 - `OnboardingService` reads and version-checks the guided setup's progress
   (`/users/me/onboarding`), decides whether a guardian enters the guide (`onboardingEntryGuard`

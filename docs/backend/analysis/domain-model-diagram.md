@@ -73,6 +73,7 @@ classDiagram
         +string Name
         +bool IsArchived
         +Ratings Ratings
+        +MealieRecipeRef? Recipe
     }
 
     class MedicineSchedule {

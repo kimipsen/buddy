@@ -19,7 +19,9 @@ public sealed record Meal(
     bool IsArchived,
     ImmutableDictionary<UserId, MealRating> Ratings,
     UserId LastModifiedBy,
-    MealEatingOut EatingOut = MealEatingOut.None)
+    MealEatingOut EatingOut = MealEatingOut.None,
+    // The linked Mealie recipe, if any. Defaulted so snapshots stored before the field existed load.
+    MealieRecipeRef? Recipe = null)
 {
     public static Meal? Rehydrate(IEnumerable<MealEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
@@ -66,6 +68,8 @@ public sealed record Meal(
             Ratings = meal.Ratings.SetItem(rated.ChildId, rated.Rating),
             LastModifiedBy = rated.ChildId
         },
+        MealLinkedToRecipe linked => meal with { Recipe = linked.Recipe, LastModifiedBy = linked.LinkedBy },
+        MealRecipeUnlinked unlinked => meal with { Recipe = null, LastModifiedBy = unlinked.UnlinkedBy },
         MealCreated => throw EventReplay.AlreadyStarted(nameof(Meal), @event.EventType)
     };
 }

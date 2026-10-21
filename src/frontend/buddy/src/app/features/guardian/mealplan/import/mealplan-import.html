@@ -273,7 +273,12 @@
             class="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 dark:hover:bg-slate-800"
             (click)="backToText()"
           >
-            {{ 'mealplan.import.review.backButton' | translate }}
+            {{
+              (current.format === 'mealie'
+                ? 'mealie.import.backButton'
+                : 'mealplan.import.review.backButton'
+              ) | translate
+            }}
           </button>
           <button
             type="button"
@@ -301,114 +306,175 @@
   } @else {
     <div class="space-y-6">
       <app-card>
-        <p class="text-sm text-slate-600 dark:text-slate-300">
-          {{ 'mealplan.import.input.intro' | translate }}
-        </p>
-
-        <label
-          for="importText"
-          class="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-200"
-          >{{ 'mealplan.import.input.textLabel' | translate }}</label
-        >
-        <textarea
-          id="importText"
-          rows="12"
-          class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-          [placeholder]="'mealplan.import.input.textPlaceholder' | translate"
-          [ngModel]="text()"
-          (ngModelChange)="text.set($event)"
-        ></textarea>
-
-        <div class="mt-4 flex flex-wrap items-end gap-4">
-          <div>
-            <label
-              for="importFile"
-              class="block text-sm font-medium text-slate-700 dark:text-slate-200"
-              >{{ 'mealplan.import.input.fileLabel' | translate }}</label
-            >
-            <input
-              id="importFile"
-              type="file"
-              accept=".txt,.csv,text/plain,text/csv"
-              class="mt-1 block text-sm text-slate-600 dark:text-slate-300"
-              (change)="readFile($event)"
+        @if (mealieConnected()) {
+          <div class="mb-4 flex flex-wrap items-center gap-3">
+            <span class="text-sm font-medium">{{ 'mealie.import.sourceLabel' | translate }}</span>
+            <app-segmented-control
+              [options]="sourceOptions()"
+              [selected]="source()"
+              [ariaLabel]="'mealie.import.sourceLabel' | translate"
+              (selectedChange)="selectSource($event)"
             />
           </div>
-          <div>
-            <label
-              for="importFormat"
-              class="block text-sm font-medium text-slate-700 dark:text-slate-200"
-              >{{ 'mealplan.import.input.formatLabel' | translate }}</label
-            >
-            <select
-              id="importFormat"
-              class="mt-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-              [ngModel]="format()"
-              (ngModelChange)="format.set($event)"
-            >
-              <option value="auto">{{ 'mealplan.import.input.formats.auto' | translate }}</option>
-              <option value="weekly-note">
-                {{ 'mealplan.import.input.formats.weeklyNote' | translate }}
-              </option>
-              <option value="csv">{{ 'mealplan.import.input.formats.csv' | translate }}</option>
-            </select>
-          </div>
-          <div>
-            <label
-              for="importWeekStart"
-              class="block text-sm font-medium text-slate-700 dark:text-slate-200"
-              >{{ 'mealplan.import.input.weekStartLabel' | translate }}</label
-            >
-            <select
-              id="importWeekStart"
-              class="mt-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-              [ngModel]="weekStart()"
-              (ngModelChange)="weekStart.set($event)"
-            >
-              <option [ngValue]="'Sunday'">
-                {{ 'mealplan.import.input.weekStart.sunday' | translate }}
-              </option>
-              <option [ngValue]="'Monday'">
-                {{ 'mealplan.import.input.weekStart.monday' | translate }}
-              </option>
-            </select>
-          </div>
-          <div>
-            <label
-              for="importSlot"
-              class="block text-sm font-medium text-slate-700 dark:text-slate-200"
-              >{{ 'mealplan.import.input.slotLabel' | translate }}</label
-            >
-            <select
-              id="importSlot"
-              class="mt-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-              [ngModel]="slot()"
-              (ngModelChange)="slot.set($event)"
-            >
-              @for (option of allSlots; track option) {
-                <option [ngValue]="option">{{ slotLabelKeys[option] | translate }}</option>
-              }
-            </select>
-          </div>
-        </div>
+        }
 
-        <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
-          {{ 'mealplan.import.input.formatHelp' | translate }}
-        </p>
+        @if (source() === 'mealie') {
+          <p class="text-sm text-slate-600 dark:text-slate-300">
+            {{ 'mealie.import.rangeHint' | translate }}
+          </p>
+          <div class="mt-4 flex flex-wrap items-end gap-4">
+            <div>
+              <label
+                for="mealieImportFrom"
+                class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                >{{ 'mealie.import.fromLabel' | translate }}</label
+              >
+              <input
+                id="mealieImportFrom"
+                type="date"
+                class="mt-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                [ngModel]="mealieFrom()"
+                (ngModelChange)="mealieFrom.set($event)"
+              />
+            </div>
+            <div>
+              <label
+                for="mealieImportTo"
+                class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                >{{ 'mealie.import.toLabel' | translate }}</label
+              >
+              <input
+                id="mealieImportTo"
+                type="date"
+                class="mt-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                [ngModel]="mealieTo()"
+                (ngModelChange)="mealieTo.set($event)"
+              />
+            </div>
+          </div>
+          <button
+            type="button"
+            class="mt-4 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
+            [disabled]="previewing.busy() || !mealieFrom() || !mealieTo()"
+            (click)="runMealiePreview()"
+          >
+            {{
+              (previewing.busy()
+                ? 'mealplan.import.input.previewing'
+                : 'mealie.import.previewButton'
+              ) | translate
+            }}
+          </button>
+        } @else {
+          <p class="text-sm text-slate-600 dark:text-slate-300">
+            {{ 'mealplan.import.input.intro' | translate }}
+          </p>
 
-        <button
-          type="button"
-          class="mt-4 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
-          [disabled]="previewing.busy() || !text().trim()"
-          (click)="runPreview()"
-        >
-          {{
-            (previewing.busy()
-              ? 'mealplan.import.input.previewing'
-              : 'mealplan.import.input.previewButton'
-            ) | translate
-          }}
-        </button>
+          <label
+            for="importText"
+            class="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-200"
+            >{{ 'mealplan.import.input.textLabel' | translate }}</label
+          >
+          <textarea
+            id="importText"
+            rows="12"
+            class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+            [placeholder]="'mealplan.import.input.textPlaceholder' | translate"
+            [ngModel]="text()"
+            (ngModelChange)="text.set($event)"
+          ></textarea>
+
+          <div class="mt-4 flex flex-wrap items-end gap-4">
+            <div>
+              <label
+                for="importFile"
+                class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                >{{ 'mealplan.import.input.fileLabel' | translate }}</label
+              >
+              <input
+                id="importFile"
+                type="file"
+                accept=".txt,.csv,text/plain,text/csv"
+                class="mt-1 block text-sm text-slate-600 dark:text-slate-300"
+                (change)="readFile($event)"
+              />
+            </div>
+            <div>
+              <label
+                for="importFormat"
+                class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                >{{ 'mealplan.import.input.formatLabel' | translate }}</label
+              >
+              <select
+                id="importFormat"
+                class="mt-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                [ngModel]="format()"
+                (ngModelChange)="format.set($event)"
+              >
+                <option value="auto">{{ 'mealplan.import.input.formats.auto' | translate }}</option>
+                <option value="weekly-note">
+                  {{ 'mealplan.import.input.formats.weeklyNote' | translate }}
+                </option>
+                <option value="csv">{{ 'mealplan.import.input.formats.csv' | translate }}</option>
+              </select>
+            </div>
+            <div>
+              <label
+                for="importWeekStart"
+                class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                >{{ 'mealplan.import.input.weekStartLabel' | translate }}</label
+              >
+              <select
+                id="importWeekStart"
+                class="mt-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                [ngModel]="weekStart()"
+                (ngModelChange)="weekStart.set($event)"
+              >
+                <option [ngValue]="'Sunday'">
+                  {{ 'mealplan.import.input.weekStart.sunday' | translate }}
+                </option>
+                <option [ngValue]="'Monday'">
+                  {{ 'mealplan.import.input.weekStart.monday' | translate }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label
+                for="importSlot"
+                class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+                >{{ 'mealplan.import.input.slotLabel' | translate }}</label
+              >
+              <select
+                id="importSlot"
+                class="mt-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                [ngModel]="slot()"
+                (ngModelChange)="slot.set($event)"
+              >
+                @for (option of allSlots; track option) {
+                  <option [ngValue]="option">{{ slotLabelKeys[option] | translate }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+            {{ 'mealplan.import.input.formatHelp' | translate }}
+          </p>
+
+          <button
+            type="button"
+            class="mt-4 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
+            [disabled]="previewing.busy() || !text().trim()"
+            (click)="runPreview()"
+          >
+            {{
+              (previewing.busy()
+                ? 'mealplan.import.input.previewing'
+                : 'mealplan.import.input.previewButton'
+              ) | translate
+            }}
+          </button>
+        }
 
         @if (previewing.state(); as state) {
           @if (state.status === 'error') {

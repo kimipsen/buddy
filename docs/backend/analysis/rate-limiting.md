@@ -156,6 +156,15 @@ could get their key throttled by the provider. A chat turn takes several seconds
 is never reached by a person typing. `ApplyAiSessionDraft` and `DiscardAiSession` don't call the
 provider and stay on the global limit only.
 
+### `mealie`: per user, on the endpoints that call the family's Mealie
+
+Added with [mealie-integration.md](mealie-integration.md): every route that reaches the family's
+own Mealie server (connect, test, recipe search and details, the image proxy, link, create from
+recipe, the import preview, the shopping lists and the add-to-list call). Partition
+`mealie:<sub>`, fixed window of 60 requests per minute (`RateLimiting:Mealie`). It protects a home
+server from a stuck client more than Buddy itself. `GetMealieConnection`, `DisconnectMealie` and
+`UnlinkMealRecipe` make no Mealie call and stay on the global limit only.
+
 ### `outbound-email`: per user, on the endpoints that send email
 
 `InviteGuardian`, `InviteToGroup`, `ResendCurrentUserEmailVerification` and `UpdateCurrentEmail`.

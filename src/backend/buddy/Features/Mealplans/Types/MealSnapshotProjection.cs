@@ -28,4 +28,10 @@ public sealed class MealSnapshotProjection : SingleStreamProjection<MealSnapshot
 
     public MealSnapshot Apply(MealSnapshot current, MealRated rated) =>
         current with { Meal = Meal.Advance(current.Meal, MealEvent.FromPayload(rated)) };
+
+    public MealSnapshot Apply(MealSnapshot current, MealLinkedToRecipe linked) =>
+        current with { Meal = Meal.Advance(current.Meal, MealEvent.FromPayload(linked)) };
+
+    public MealSnapshot Apply(MealSnapshot current, MealRecipeUnlinked unlinked) =>
+        current with { Meal = Meal.Advance(current.Meal, MealEvent.FromPayload(unlinked)) };
 }

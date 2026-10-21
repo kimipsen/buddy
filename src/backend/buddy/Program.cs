@@ -56,6 +56,9 @@ builder.Host.UseWolverine(opts =>
     // (AnthropicChatClient), which Wolverine's constructor-codegen can't inline either.
     opts.CodeGeneration.AlwaysUseServiceLocationFor<IAiProviderRegistry>();
 
+    // IMealieClient is a typed HttpClient too (AddHttpClient<IMealieClient, MealieClient>()).
+    opts.CodeGeneration.AlwaysUseServiceLocationFor<IMealieClient>();
+
     // UserErasure (DeleteCurrentUser) also depends on IKeycloakAdminClient -- same reasoning.
     opts.CodeGeneration.AlwaysUseServiceLocationFor<UserErasure>();
 

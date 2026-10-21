@@ -80,7 +80,8 @@ public static class CommitMealPlanImportEndpoint
     }
 }
 
-public sealed record CommitMealPlanImportEntryRequest(DateOnly Date, MealSlot Slot, Guid? MealId = null, string? NewMealName = null, string? Notes = null);
+public sealed record CommitMealPlanImportEntryRequest(
+    DateOnly Date, MealSlot Slot, Guid? MealId = null, string? NewMealName = null, string? Notes = null, MealieRecipeRef? MealieRecipe = null);
 
 public sealed record CommitMealPlanImportRequest(string Format, IReadOnlyList<CommitMealPlanImportEntryRequest> Entries, bool ArchiveSingleUse = true)
 {
@@ -91,6 +92,7 @@ public sealed record CommitMealPlanImportRequest(string Format, IReadOnlyList<Co
             e.Slot,
             e.MealId is { } id ? new MealId(id) : null,
             FreeText.Normalize(e.NewMealName),
-            FreeText.Normalize(e.Notes)))
+            FreeText.Normalize(e.Notes),
+            e.MealieRecipe))
     ];
 }

@@ -15,6 +15,10 @@ public sealed class FeatureOptions
     public bool MealplanAiAssistant { get; set; } = true;
     public bool MealplanImport { get; set; } = true;
 
+    // On by default like every flag: each family opts in by connecting its own Mealie, and nothing
+    // Mealie-related shows until it does (docs/backend/analysis/mealie-integration.md).
+    public bool MealplanMealie { get; set; } = true;
+
     public bool Medicines { get; set; } = true;
     public bool SleepDiary { get; set; } = true;
     public bool HouseRules { get; set; } = true;
@@ -44,6 +48,7 @@ public sealed class FeatureOptions
         Mealplans,
         MealplanAiAssistant && Mealplans,
         MealplanImport && Mealplans,
+        MealplanMealie && Mealplans,
         Medicines,
         SleepDiary,
         HouseRules,
@@ -74,6 +79,11 @@ public sealed class FeatureOptions
             overridden.Add(nameof(MealplanImport));
         }
 
+        if (!Mealplans && MealplanMealie)
+        {
+            overridden.Add(nameof(MealplanMealie));
+        }
+
         if (VisitSummaries && !(SleepDiary || Medicines || Feelings))
         {
             overridden.Add(nameof(VisitSummaries));
@@ -88,6 +98,7 @@ public sealed record InstallationFeatures(
     bool Mealplans,
     bool MealplanAiAssistant,
     bool MealplanImport,
+    bool MealplanMealie,
     bool Medicines,
     bool SleepDiary,
     bool HouseRules,

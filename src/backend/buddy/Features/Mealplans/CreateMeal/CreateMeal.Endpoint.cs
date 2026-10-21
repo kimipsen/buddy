@@ -64,7 +64,9 @@ public sealed record MealResponse(
     IReadOnlyList<MealRatingResponse> Ratings,
     Guid CreatedBy,
     Guid LastModifiedBy,
-    MealEatingOut EatingOut)
+    MealEatingOut EatingOut,
+    // The linked Mealie recipe (docs/backend/analysis/mealie-integration.md), or null.
+    MealieRecipeRef? Recipe)
 {
     public static MealResponse FromMeal(Meal meal) => new(
         meal.Id,
@@ -76,5 +78,6 @@ public sealed record MealResponse(
         [.. meal.Ratings.Select(pair => new MealRatingResponse(pair.Key.Value, pair.Value.Stars, pair.Value.Comment, pair.Value.RatedAt))],
         meal.CreatedBy.Value,
         meal.LastModifiedBy.Value,
-        meal.EatingOut);
+        meal.EatingOut,
+        meal.Recipe);
 }

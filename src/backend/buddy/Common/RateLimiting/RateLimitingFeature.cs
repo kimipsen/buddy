@@ -27,6 +27,7 @@ public static class RateLimitingFeature
     public const string OutboundEmailPolicy = "outbound-email";
     public const string PersonalDataExportPolicy = "personal-data-export";
     public const string VisitSummarySharePolicy = "visit-summary-share";
+    public const string MealiePolicy = "mealie";
 
     public static IServiceCollection AddRateLimitingFeature(this IServiceCollection services)
     {
@@ -71,6 +72,10 @@ public static class RateLimitingFeature
                 // a wrong token can't drain anyone else's.
                 options.AddPolicy(VisitSummarySharePolicy, context =>
                     RateLimitPartition.GetFixedWindowLimiter(VisitSummaryShareKey(context), _ => limits.VisitSummaryShare.ToOptions()));
+
+                // Every call reaches the family's own Mealie server.
+                options.AddPolicy(MealiePolicy, context =>
+                    RateLimitPartition.GetFixedWindowLimiter($"mealie:{CallerKey(context)}", _ => limits.Mealie.ToOptions()));
             });
 
         return services;

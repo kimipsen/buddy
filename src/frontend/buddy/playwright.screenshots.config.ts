@@ -72,6 +72,9 @@ export default defineConfig({
       env: {
         RateLimiting__Authenticated__TokenLimit: '5000',
         RateLimiting__Authenticated__TokensPerPeriod: '500',
+        // The demo family's Mealie (screenshots/demo-family.ts) is local and plain http.
+        Mealie__AllowHttp: 'true',
+        Mealie__AllowPrivateNetworks: 'true',
       },
     },
   ],

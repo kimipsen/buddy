@@ -1,9 +1,18 @@
 import { Component, computed, inject, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
+import { toIsoDate } from '../../../../core/date-utils';
+import { FeaturesService } from '../../../../core/features.service';
 import { GuardiansService } from '../../../../core/guardians.service';
+import {
+  MealieConnectionView,
+  MealieRecipeRef,
+  MealieService,
+  isMealieConnected,
+  mealieErrorKey,
+} from '../../../../core/mealie.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import {
@@ -19,6 +28,10 @@ import {
   MealplansService,
 } from '../../../../core/mealplans.service';
 import { createAction } from '../../../../shared/action-state/action-state';
+import {
+  SegmentedControl,
+  SegmentedControlOption,
+} from '../../../../shared/segmented-control/segmented-control';
 import { Toggle } from '../../../../shared/toggle/toggle';
 import { Card } from '../../../../shared/card/card';
 import { Page } from '../../../../shared/page/page';
@@ -46,7 +59,21 @@ const WARNING_KEYS: Record<string, string> = {
   day_inferred_from_position: 'mealplan.import.review.warnings.dayInferredFromPosition',
   duplicate_day: 'mealplan.import.review.warnings.duplicateDay',
   unrecognized_line: 'mealplan.import.review.warnings.unrecognizedLine',
+  mealie_entry_merged: 'mealie.import.warnings.merged',
+  mealie_entry_skipped: 'mealie.import.warnings.skipped',
+  duplicate_slot: 'mealie.import.warnings.duplicateSlot',
+  mealie_range_empty: 'mealie.import.warnings.rangeEmpty',
 };
+
+export type ImportSource = 'text' | 'mealie';
+
+// Next week, Monday to Sunday: what a weekly "import from Mealie" usually wants.
+function nextWeek(today: Date): { from: string; to: string } {
+  const daysToMonday = (8 - today.getDay()) % 7 || 7;
+  const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + daysToMonday);
+  const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+  return { from: toIsoDate(monday), to: toIsoDate(sunday) };
+}
 
 // What the guardian decided for one group of same-named lines.
 export type ImportDecision =
@@ -103,12 +130,15 @@ function validationDetail(error: unknown): string {
 
 @Component({
   selector: 'app-mealplan-import',
-  imports: [RouterLink, FormsModule, TranslatePipe, Toggle, Card, Page],
+  imports: [RouterLink, FormsModule, TranslatePipe, Toggle, SegmentedControl, Card, Page],
   templateUrl: './mealplan-import.html',
 })
 export class MealplanImport {
   private readonly guardians = inject(GuardiansService);
   private readonly mealplans = inject(MealplansService);
+  private readonly mealie = inject(MealieService);
+  private readonly features = inject(FeaturesService);
+  private readonly route = inject(ActivatedRoute);
   private readonly translation = inject(TranslationService);
 
   protected readonly kindLabelKeys = KIND_LABEL_KEYS;
@@ -140,6 +170,38 @@ export class MealplanImport {
 
   protected readonly reverting = createAction<string>();
   protected readonly confirmingRevertId = signal<string | null>(null);
+
+  // Mealie as a source (docs/backend/analysis/mealie-integration.md, Question 5): offered only when
+  // the family is connected; ?source=mealie (the meal planner's shortcut) preselects it.
+  protected readonly mealieConnection = resource({
+    params: () =>
+      this.features.enabled('mealplanMealie') && this.scope.hasValue()
+        ? (this.scope.value() ?? undefined)
+        : undefined,
+    loader: ({ params: scope }) =>
+      scope.kind === 'family'
+        ? this.mealie.getConnection(scope.childId)
+        : Promise.resolve<MealieConnectionView>({ kind: 0 }),
+  });
+  protected readonly mealieConnected = computed(
+    () => this.mealieConnection.hasValue() && isMealieConnected(this.mealieConnection.value()),
+  );
+  private readonly requestedSource = signal<ImportSource>(
+    this.route.snapshot.queryParamMap.get('source') === 'mealie' ? 'mealie' : 'text',
+  );
+  protected readonly source = computed((): ImportSource =>
+    this.mealieConnected() ? this.requestedSource() : 'text',
+  );
+  protected readonly sourceOptions = computed((): SegmentedControlOption<ImportSource>[] => [
+    { value: 'text', label: this.translation.translate('mealie.import.sourceText') },
+    { value: 'mealie', label: this.translation.translate('mealie.import.sourceMealie') },
+  ]);
+  private readonly defaultRange = nextWeek(new Date());
+  protected readonly mealieFrom = signal(this.defaultRange.from);
+  protected readonly mealieTo = signal(this.defaultRange.to);
+  // Per review group: the Mealie recipe its lines came from, sent with each new meal so it is
+  // created already linked. Empty for a text import.
+  private readonly mealieRecipes = signal<Record<string, MealieRecipeRef>>({});
 
   private readonly groupsByKey = computed(
     () => new Map((this.preview()?.groups ?? []).map((g) => [g.key, g])),
@@ -173,7 +235,12 @@ export class MealplanImport {
 
       // A name cleared in the review falls back to the parsed one rather than failing the commit.
       const newMealName = decision.name.trim() || line.mealName;
-      return [{ date: line.date, slot: line.slot, newMealName, notes: line.notes }];
+      const mealieRecipe = this.mealieRecipes()[line.key];
+      return [
+        mealieRecipe
+          ? { date: line.date, slot: line.slot, newMealName, notes: line.notes, mealieRecipe }
+          : { date: line.date, slot: line.slot, newMealName, notes: line.notes },
+      ];
     });
   });
 
@@ -269,17 +336,59 @@ export class MealplanImport {
           weekStart: this.weekStart(),
           slot: this.slot(),
         });
-        this.preview.set(preview);
-        this.decisions.set({});
-        this.search.set('');
-        this.visibleCount.set(PAGE_SIZE);
-        this.result.set(null);
+        this.showPreview(preview, {});
       },
       (error) => {
         this.previewDetail.set(validationDetail(error));
         return 'mealplan.import.input.previewError';
       },
     );
+  }
+
+  protected selectSource(source: ImportSource): void {
+    this.requestedSource.set(source);
+    this.previewing.reset();
+    // Stryker disable next-line StringLiteral: the detail only shows inside a preview error, which the reset above just cleared
+    this.previewDetail.set('');
+  }
+
+  protected async runMealiePreview(): Promise<void> {
+    const scope = this.currentScope();
+    const from = this.mealieFrom();
+    const to = this.mealieTo();
+
+    if (scope?.kind !== 'family' || !from || !to) {
+      return;
+    }
+
+    // Stryker disable next-line StringLiteral: the detail only shows inside a preview error, and a new error sets it again
+    this.previewDetail.set('');
+    await this.previewing.run(
+      true,
+      async () => {
+        const result = await this.mealie.previewImport(scope.childId, from, to);
+        this.showPreview(
+          result.preview,
+          Object.fromEntries(result.recipes.map((entry) => [entry.key, entry.recipe])),
+        );
+      },
+      (error) => {
+        this.previewDetail.set(validationDetail(error));
+        return mealieErrorKey(error, 'mealie.import.previewError');
+      },
+    );
+  }
+
+  private showPreview(
+    preview: MealPlanImportPreview,
+    recipes: Record<string, MealieRecipeRef>,
+  ): void {
+    this.preview.set(preview);
+    this.mealieRecipes.set(recipes);
+    this.decisions.set({});
+    this.search.set('');
+    this.visibleCount.set(PAGE_SIZE);
+    this.result.set(null);
   }
 
   protected backToText(): void {

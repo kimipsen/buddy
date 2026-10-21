@@ -23,9 +23,6 @@ in real time.
 
 ### Guardian
 
-- [ ] Mealie integration: connect the family's self-hosted Mealie, link meals to recipes, import
-      Mealie's meal plan and send the week's recipes to a Mealie shopping list (proposed, not yet
-      implemented — see [Mealie integration](docs/backend/analysis/mealie-integration.md))
 - [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
       child for something new such as the dentist or a trip (proposed, not yet implemented — see
       [Social stories](docs/backend/analysis/social-stories.md))
@@ -86,6 +83,9 @@ in real time.
 - [x] Leave medicines out of the effect summary: switch off medicines such as vitamin D in the
       dose-period summary; the doctor visit summary drops them and says how many were left out (see
       [Leaving medicines out of the effect summary](docs/backend/analysis/medicine-effect-inclusion.md))
+- [x] Mealie integration: connect the family's self-hosted Mealie, link meals to recipes, import
+      Mealie's meal plan and send the week's recipes to a Mealie shopping list (see
+      [Mealie integration](docs/backend/analysis/mealie-integration.md))
 
 ### Child
 

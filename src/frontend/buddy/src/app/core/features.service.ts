@@ -13,6 +13,7 @@ const ALL_ON: InstallationFeatures = {
   mealplans: true,
   mealplanAiAssistant: true,
   mealplanImport: true,
+  mealplanMealie: true,
   medicines: true,
   sleepDiary: true,
   houseRules: true,

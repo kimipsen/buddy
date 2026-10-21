@@ -12,6 +12,8 @@ using JasperFx.Events.Projections;
 
 using Marten;
 
+using Microsoft.Extensions.Options;
+
 using Npgsql;
 
 using Weasel.Core;
@@ -28,6 +30,8 @@ public static class MealplansFeature
         typeof(MealDetailsUpdated),
         typeof(MealArchived),
         typeof(MealRated),
+        typeof(MealLinkedToRecipe),
+        typeof(MealRecipeUnlinked),
         typeof(MealPlanCreated),
         typeof(MealAssignedToSlot),
         typeof(MealSlotCleared),
@@ -52,7 +56,10 @@ public static class MealplansFeature
         typeof(AiAssistantMessageRecorded),
         typeof(AiSessionApplied),
         typeof(AiSessionDiscarded),
-        typeof(AiSessionExpired)
+        typeof(AiSessionExpired),
+        typeof(MealieConnectionInitialized),
+        typeof(MealieConnected),
+        typeof(MealieDisconnected)
     ];
 
     // Depends on IGuardianLinkEventStore for authorization, so AddGuardiansFeature must run first
@@ -113,6 +120,9 @@ public static class MealplansFeature
             options.Projections.Register(new MealplanAiSessionSnapshotProjection(), ProjectionLifecycle.Inline);
             options.Schema.For<MealplanAiSessionSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
+            options.Projections.Register(new MealieConnectionSnapshotProjection(), ProjectionLifecycle.Inline);
+            options.Schema.For<MealieConnectionSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
+
             return options;
         });
 
@@ -140,6 +150,34 @@ public static class MealplansFeature
         services.AddHttpClient<OpenAiChatClient>(client => client.BaseAddress = new Uri("https://api.openai.com/"));
         services.AddHttpClient<GeminiChatClient>(client => client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"));
         services.AddTransient<IAiProviderRegistry, AiProviderRegistry>();
+
+        // Mealie (docs/backend/analysis/mealie-integration.md). The family's server is a URL a
+        // user typed in, so its HttpClient connects only to addresses MealieOutboundPolicy allows,
+        // follows no redirects and caps time and size. The base address is per family, per call.
+        services.AddSingleton<IMealieConnectionEventStore, MartenMealieConnectionEventStore>();
+        services.AddSingleton<IMealieTokenCipher, DataProtectionMealieTokenCipher>();
+        services.AddValidatedOptions<MealieOptions>(MealieOptions.SectionName);
+        services.AddMemoryCache();
+        services.AddHttpClient<IMealieClient, MealieClient>(MealieClient.HttpClientName, (serviceProvider, client) =>
+            {
+                var mealie = serviceProvider.GetRequiredService<IOptions<MealieOptions>>().Value;
+                client.Timeout = TimeSpan.FromSeconds(mealie.TimeoutSeconds);
+                client.MaxResponseContentBufferSize = mealie.MaxResponseBytes;
+            })
+            .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
+            {
+                var allowPrivateNetworks = serviceProvider.GetRequiredService<IOptions<MealieOptions>>().Value.AllowPrivateNetworks;
+
+                return new SocketsHttpHandler
+                {
+                    AllowAutoRedirect = false,
+                    UseCookies = false,
+                    // Through a proxy, ConnectCallback would only ever see the proxy's address and
+                    // the proxy would reach any host for us -- the guard would check nothing.
+                    UseProxy = false,
+                    ConnectCallback = (context, cancellationToken) => MealieOutboundPolicy.ConnectAsync(context, allowPrivateNetworks, cancellationToken)
+                };
+            });
 
         return services;
     }
@@ -213,6 +251,30 @@ public static class MealplansFeature
             mealplans.MapSendAiSessionMessage();
             mealplans.MapApplyAiSessionDraft();
             mealplans.MapDiscardAiSession();
+        }
+
+        // Mealie: connect a family's self-hosted Mealie, link meals to recipes, import its plan,
+        // fill its shopping lists -- see docs/backend/analysis/mealie-integration.md.
+        if (features.MealplanMealie)
+        {
+            mealplans.MapGetMealieConnection();
+            mealplans.MapConnectMealie();
+            mealplans.MapDisconnectMealie();
+            mealplans.MapTestMealieConnection();
+            mealplans.MapSearchMealieRecipes();
+            mealplans.MapGetMealieRecipe();
+            mealplans.MapGetMealieRecipeImage();
+            mealplans.MapLinkMealToRecipe();
+            mealplans.MapUnlinkMealRecipe();
+            mealplans.MapCreateMealFromRecipe();
+            mealplans.MapListMealieShoppingLists();
+            mealplans.MapAddMealPlanToMealieShoppingList();
+        }
+
+        // The Mealie import preview is an import route too, so it needs both flags.
+        if (features.MealplanMealie && features.MealplanImport)
+        {
+            mealplans.MapPreviewMealieImport();
         }
 
         return endpoints;

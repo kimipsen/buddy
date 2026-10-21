@@ -25,6 +25,7 @@ import {
 } from '../../../../core/mealplans.service';
 import { ActionState, createAction } from '../../../../shared/action-state/action-state';
 import { MealPicker } from '../meal-picker/meal-picker';
+import { MealieShopping } from '../mealie/shopping/mealie-shopping';
 import { Card } from '../../../../shared/card/card';
 import { Icon } from '../../../../shared/icon/icon';
 
@@ -85,6 +86,7 @@ function buildDays(anchorIsoDate: string, locale: string): PlannerDay[] {
   imports: [
     Icon,
     MealPicker,
+    MealieShopping,
     NgTemplateOutlet,
     TranslatePipe,
     CdkDrag,
@@ -102,6 +104,14 @@ export class AssignMealplan implements OnInit {
   private readonly translation = inject(TranslationService);
 
   readonly scope = input.required<MealplanScope>();
+
+  // Set only while the family scope is shown and the family's Mealie is connected: then the week
+  // can be sent to a Mealie shopping list (docs/backend/analysis/mealie-integration.md).
+  readonly mealieChildId = input<string | null>(null);
+  protected readonly weekRange = computed(() => {
+    const [first, last] = firstAndLast(this.days());
+    return { from: first.date, to: last.date };
+  });
 
   // A group scope with a View (not Manage) tier is read-only -- the backend rejects every write
   // with 403 regardless, but the UI disables those controls rather than letting the user hit them.

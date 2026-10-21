@@ -8,6 +8,7 @@ import {
   MealplanScope,
   MealplansService,
 } from '../../../../core/mealplans.service';
+import { MealieService } from '../../../../core/mealie.service';
 import { ManageMeals } from './manage-meals';
 
 describe('ManageMeals', () => {
@@ -37,6 +38,7 @@ describe('ManageMeals', () => {
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       eatingOut: 'None',
+      recipe: null,
       ...overrides,
     };
   }
@@ -44,6 +46,8 @@ describe('ManageMeals', () => {
   interface SetupOptions {
     initialMeals?: Meal[];
     mealplans?: Partial<MealplansService>;
+    mealie?: Partial<MealieService>;
+    mealieChildId?: string | null;
   }
 
   // Mirrors MealplansService's real signal-mutation semantics (listMeals replaces, createMeal
@@ -71,15 +75,54 @@ describe('ManageMeals', () => {
       ...options.mealplans,
     };
 
+    // The recipe picker and panel are real children; they read Mealie through this stub.
+    const mealieStub: Partial<MealieService> = {
+      searchRecipes: vi.fn(async () => ({
+        items: [
+          {
+            id: 'recipe-1',
+            slug: 'lasagne',
+            name: 'Lasagne al forno',
+            description: '',
+            totalTime: '',
+            hasImage: false,
+            linkedMealId: null,
+          },
+        ],
+        page: 1,
+        totalPages: 1,
+        total: 1,
+      })),
+      getRecipe: vi.fn(async () => ({
+        id: 'recipe-1',
+        slug: 'lasagne',
+        name: 'Lasagne al forno',
+        description: '',
+        totalTime: '',
+        recipeYield: '',
+        hasImage: false,
+        ingredients: ['500 g minced beef'],
+        steps: [],
+        originalUrl: '',
+        mealieUrl: 'https://mealie.example/g/holm/r/lasagne',
+        linkedMealId: 'meal-1',
+      })),
+      ...options.mealie,
+    };
+
     await TestBed.configureTestingModule({
       imports: [ManageMeals],
-      providers: [{ provide: MealplansService, useValue: mealplansStub }],
+      providers: [
+        { provide: MealplansService, useValue: mealplansStub },
+        { provide: MealieService, useValue: mealieStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ManageMeals);
     fixture.componentRef.setInput('scope', scope);
+    fixture.componentRef.setInput('mealieChildId', options.mealieChildId ?? null);
 
-    return { fixture, mealplans: mealplansStub, mealsState };
+    return { fixture, mealplans: mealplansStub, mealie: mealieStub, mealsState };
   }
 
   // The stubbed MealplansService methods return plain (unregistered) Promises, so zoneless
@@ -586,6 +629,381 @@ describe('ManageMeals', () => {
       await settle(fixture);
 
       expect((fixture.nativeElement as HTMLElement).querySelector('select')).toBeNull();
+    });
+  });
+
+  describe('Mealie recipes', () => {
+    const recipe = { recipeId: 'recipe-1', slug: 'lasagne', name: 'Lasagne al forno' };
+
+    async function settleLong(fixture: { detectChanges: () => void }) {
+      for (let i = 0; i < 6; i++) {
+        await settle(fixture);
+      }
+    }
+
+    it('shows no Mealie control without a connected family', async () => {
+      const { fixture } = await setup(familyScope, { initialMeals: [meal({ recipe })] });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(compiled.textContent).not.toContain('Mealie');
+      expect(findButtonByText(compiled, 'View recipe')).toBeUndefined();
+      expect(findButtonByText(compiled, 'Add from Mealie')).toBeUndefined();
+    });
+
+    it('marks linked meals and offers view or link per meal', async () => {
+      const { fixture } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: [
+          meal({ id: 'meal-1', name: 'Lasagne', recipe }),
+          meal({ id: 'meal-2', name: 'Soup' }),
+        ],
+      });
+      await settle(fixture);
+      const rows = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('li'));
+
+      expect(rows[0].textContent).toContain('Mealie');
+      expect(findButtonByText(rows[0], 'View recipe')).toBeDefined();
+      expect(rows[1].textContent).not.toContain('Mealie');
+      expect(findButtonByText(rows[1], 'Link recipe')).toBeDefined();
+    });
+
+    it('opens the recipe panel for a linked meal, and unlinks from it', async () => {
+      const unlinkMealRecipe = vi.fn(async () => undefined);
+      const { fixture, mealie } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: [meal({ id: 'meal-1', name: 'Lasagne', recipe })],
+        mealplans: { unlinkMealRecipe },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      const view = findButtonByText(compiled, 'View recipe')!;
+
+      view.click();
+      await settleLong(fixture);
+
+      expect(view.getAttribute('aria-expanded')).toBe('true');
+      expect(mealie.getRecipe).toHaveBeenCalledWith('child-1', 'recipe-1');
+      expect(compiled.textContent).toContain('Linked to the meal “Lasagne”');
+
+      findButtonByText(compiled, 'Unlink')!.click();
+      await settleLong(fixture);
+
+      expect(unlinkMealRecipe).toHaveBeenCalledWith('child-1', 'meal-1');
+      expect(compiled.querySelector('app-mealie-recipe-panel')).toBeNull();
+    });
+
+    it('closes the panel on a second click', async () => {
+      const { fixture } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: [meal({ id: 'meal-1', name: 'Lasagne', recipe })],
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, 'View recipe')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'View recipe')!.click();
+      await settle(fixture);
+
+      expect(compiled.querySelector('app-mealie-recipe-panel')).toBeNull();
+    });
+
+    it('links a meal to the chosen recipe and shows it', async () => {
+      const linkMealToRecipe = vi.fn(async () => meal({ id: 'meal-2', name: 'Soup', recipe }));
+      const { fixture } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: [meal({ id: 'meal-2', name: 'Soup' })],
+        mealplans: { linkMealToRecipe },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, 'Link recipe')!.click();
+      await settleLong(fixture);
+      expect(compiled.textContent).toContain('Link “Soup” to a Mealie recipe');
+
+      findButtonByText(compiled, 'Choose')!.click();
+      await settleLong(fixture);
+
+      expect(linkMealToRecipe).toHaveBeenCalledWith('child-1', 'meal-2', 'recipe-1');
+      expect(compiled.querySelector('app-mealie-recipe-picker')).toBeNull();
+      expect(compiled.querySelector('app-mealie-recipe-panel')).not.toBeNull();
+    });
+
+    it('shows why a link failed', async () => {
+      const linkMealToRecipe = vi.fn(async () => Promise.reject(new Error('boom')));
+      const { fixture } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: [meal({ id: 'meal-2', name: 'Soup' })],
+        mealplans: { linkMealToRecipe },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, 'Link recipe')!.click();
+      await settleLong(fixture);
+      findButtonByText(compiled, 'Choose')!.click();
+      await settleLong(fixture);
+
+      expect(compiled.textContent).toContain('Couldn’t link the recipe.');
+    });
+
+    it('adds a meal from a Mealie recipe with the default icon and colour', async () => {
+      const createMealFromRecipe = vi.fn(async () =>
+        meal({ id: 'meal-9', name: 'Lasagne al forno', recipe }),
+      );
+      const { fixture } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        mealplans: { createMealFromRecipe },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      const add = findButtonByText(compiled, 'Add from Mealie')!;
+
+      add.click();
+      await settleLong(fixture);
+      expect(add.getAttribute('aria-expanded')).toBe('true');
+      expect(compiled.textContent).toContain('Add a meal from a Mealie recipe');
+
+      findButtonByText(compiled, 'Choose')!.click();
+      await settleLong(fixture);
+
+      expect(createMealFromRecipe).toHaveBeenCalledWith('child-1', 'recipe-1', '🍽️', '#10b981');
+      expect(compiled.querySelector('app-mealie-recipe-picker')).toBeNull();
+    });
+
+    it('opens the page the new meal from Mealie lands on, sorted by name', async () => {
+      const names = ['Apple', 'Bread', 'Carrots', 'Dumplings', 'Eggs', 'Fish', 'Gravy'];
+      const { fixture, mealsState } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: names.map((name, i) => meal({ id: `meal-${i}`, name })),
+        mealplans: {
+          createMealFromRecipe: vi.fn(async () => {
+            const created = meal({ id: 'meal-new', name: 'Banana bread', recipe });
+            // The real service keeps the library sorted by name.
+            mealsState.update((current) =>
+              [...current, created].sort((a, b) => a.name.localeCompare(b.name)),
+            );
+            return created;
+          }),
+        },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Next')!.click();
+      await settle(fixture);
+
+      findButtonByText(compiled, 'Add from Mealie')!.click();
+      await settleLong(fixture);
+      findButtonByText(compiled, 'Choose')!.click();
+      await settleLong(fixture);
+
+      expect(compiled.textContent).toContain('Page 1 of 2');
+      expect(compiled.textContent).toContain('Banana bread');
+    });
+
+    it('moves on to a later page when the new meal from Mealie sorts there', async () => {
+      const names = ['Apple', 'Bread', 'Carrots', 'Dumplings', 'Eggs', 'Fish', 'Gravy'];
+      const { fixture, mealsState } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: names.map((name, i) => meal({ id: `meal-${i}`, name })),
+        mealplans: {
+          createMealFromRecipe: vi.fn(async () => {
+            const created = meal({ id: 'meal-new', name: 'Zucchini fritters', recipe });
+            mealsState.update((current) =>
+              [...current, created].sort((a, b) => a.name.localeCompare(b.name)),
+            );
+            return created;
+          }),
+        },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain('Page 1 of 2');
+
+      findButtonByText(compiled, 'Add from Mealie')!.click();
+      await settleLong(fixture);
+      findButtonByText(compiled, 'Choose')!.click();
+      await settleLong(fixture);
+
+      expect(compiled.textContent).toContain('Page 2 of 2');
+      expect(compiled.textContent).toContain('Zucchini fritters');
+    });
+
+    it('closes the Mealie panel when the scope changes', async () => {
+      const { fixture } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: [meal({ id: 'meal-1', name: 'Lasagne', recipe })],
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'View recipe')!.click();
+      await settle(fixture);
+      expect(compiled.querySelector('app-mealie-recipe-panel')).not.toBeNull();
+
+      fixture.componentRef.setInput('scope', groupManageScope);
+      await settleLong(fixture);
+
+      expect(compiled.querySelector('app-mealie-recipe-panel')).toBeNull();
+    });
+
+    it('drops a link error when the scope changes', async () => {
+      const { fixture } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: [meal({ id: 'meal-2', name: 'Soup' })],
+        mealplans: { linkMealToRecipe: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Link recipe')!.click();
+      await settleLong(fixture);
+      findButtonByText(compiled, 'Choose')!.click();
+      await settleLong(fixture);
+      expect(compiled.textContent).toContain('Couldn’t link the recipe.');
+
+      fixture.componentRef.setInput('scope', groupManageScope);
+      await settleLong(fixture);
+
+      expect(compiled.textContent).not.toContain('Couldn’t link the recipe.');
+    });
+
+    it('marks only the meal whose panel is open as expanded', async () => {
+      const { fixture } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: [
+          meal({ id: 'meal-1', name: 'Lasagne', recipe }),
+          meal({ id: 'meal-2', name: 'Soup' }),
+        ],
+      });
+      await settle(fixture);
+      const rows = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('li'));
+      const view = findButtonByText(rows[0], 'View recipe')!;
+      const link = findButtonByText(rows[1], 'Link recipe')!;
+
+      view.click();
+      await settle(fixture);
+
+      expect(view.getAttribute('aria-expanded')).toBe('true');
+      expect(link.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('switches from the recipe panel to the picker with "Change recipe", and closes the picker', async () => {
+      const { fixture } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: [meal({ id: 'meal-1', name: 'Lasagne', recipe })],
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'View recipe')!.click();
+      await settleLong(fixture);
+
+      findButtonByText(compiled, 'Change recipe')!.click();
+      await settleLong(fixture);
+
+      expect(compiled.querySelector('app-mealie-recipe-panel')).toBeNull();
+      expect(compiled.textContent).toContain('Link “Lasagne” to a Mealie recipe');
+
+      findButtonByText(compiled, 'Close')!.click();
+      await settle(fixture);
+      expect(compiled.querySelector('app-mealie-recipe-picker')).toBeNull();
+    });
+
+    it('shows why unlinking failed', async () => {
+      const { fixture } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: [meal({ id: 'meal-1', name: 'Lasagne', recipe })],
+        mealplans: { unlinkMealRecipe: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'View recipe')!.click();
+      await settleLong(fixture);
+
+      findButtonByText(compiled, 'Unlink')!.click();
+      await settleLong(fixture);
+
+      expect(compiled.textContent).toContain('Couldn’t unlink the recipe.');
+      expect(compiled.querySelector('app-mealie-recipe-panel')).not.toBeNull();
+    });
+
+    it('shows why adding from Mealie failed, and drops the error once another Mealie action starts', async () => {
+      const { fixture } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: [meal({ id: 'meal-1', name: 'Soup' })],
+        mealplans: { createMealFromRecipe: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, 'Add from Mealie')!.click();
+      await settleLong(fixture);
+      findButtonByText(compiled, 'Choose')!.click();
+      await settleLong(fixture);
+      expect(compiled.textContent).toContain('Couldn’t add the meal.');
+
+      findButtonByText(compiled, 'Link recipe')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).not.toContain('Couldn’t add the meal.');
+    });
+
+    it('drops a link error when "Add from Mealie" or "Change recipe" starts over', async () => {
+      const linkMealToRecipe = vi.fn(async () => Promise.reject(new Error('boom')));
+      const { fixture } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: [
+          meal({ id: 'meal-1', name: 'Lasagne', recipe }),
+          meal({ id: 'meal-2', name: 'Soup' }),
+        ],
+        mealplans: { linkMealToRecipe },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      const failLink = async () => {
+        findButtonByText(compiled, 'Choose')!.click();
+        await settleLong(fixture);
+        expect(compiled.textContent).toContain('Couldn’t link the recipe.');
+      };
+
+      findButtonByText(compiled, 'Link recipe')!.click();
+      await settleLong(fixture);
+      await failLink();
+      findButtonByText(compiled, 'Add from Mealie')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).not.toContain('Couldn’t link the recipe.');
+    });
+
+    it('drops an unlink error when "Change recipe" starts over', async () => {
+      const { fixture } = await setup(familyScope, {
+        mealieChildId: 'child-1',
+        initialMeals: [meal({ id: 'meal-1', name: 'Lasagne', recipe })],
+        mealplans: { unlinkMealRecipe: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'View recipe')!.click();
+      await settleLong(fixture);
+      findButtonByText(compiled, 'Unlink')!.click();
+      await settleLong(fixture);
+      expect(compiled.textContent).toContain('Couldn’t unlink the recipe.');
+
+      findButtonByText(compiled, 'Change recipe')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Couldn’t unlink the recipe.');
+    });
+
+    it('toggles the create picker closed on a second click', async () => {
+      const { fixture } = await setup(familyScope, { mealieChildId: 'child-1' });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, 'Add from Mealie')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Add from Mealie')!.click();
+      await settle(fixture);
+
+      expect(compiled.querySelector('app-mealie-recipe-picker')).toBeNull();
     });
   });
 });

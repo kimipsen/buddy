@@ -109,14 +109,29 @@ public static class CommitMealPlanImportHandler
                 Key: g.Key,
                 Id: MealId.New(),
                 Name: g.First().NewMealName.Trim(),
-                Archive: archiveSingleUse && g.Count() < SingleUseThreshold && g.Max(e => e.Date) < recentCutoff))
+                Archive: archiveSingleUse && g.Count() < SingleUseThreshold && g.Max(e => e.Date) < recentCutoff,
+                // A Mealie import links the new meal to the recipe it came from, in the same stream.
+                Recipe: g.Select(e => e.MealieRecipe).FirstOrDefault(r => r is not null)))
             .ToList();
         var newMealIdsByKey = newMeals.ToDictionary(m => m.Key, m => m.Id);
 
         var mealEvents = newMeals
-            .Select(m => (IReadOnlyCollection<MealEvent>)(m.Archive
-                ? [new MealCreated(m.Id, childId, importedBy, m.Name, "", DefaultIcon, DefaultColor, now), new MealArchived(m.Id, importedBy, now)]
-                : [new MealCreated(m.Id, childId, importedBy, m.Name, "", DefaultIcon, DefaultColor, now)]))
+            .Select(m =>
+            {
+                List<MealEvent> events = [new MealCreated(m.Id, childId, importedBy, m.Name, "", DefaultIcon, DefaultColor, now)];
+
+                if (m.Recipe is not null)
+                {
+                    events.Add(new MealLinkedToRecipe(m.Id, m.Recipe, importedBy, now));
+                }
+
+                if (m.Archive)
+                {
+                    events.Add(new MealArchived(m.Id, importedBy, now));
+                }
+
+                return (IReadOnlyCollection<MealEvent>)events;
+            })
             .ToList();
 
         var importedEntries = toImport
@@ -131,7 +146,7 @@ public static class CommitMealPlanImportHandler
         var importId = MealPlanImportId.New();
         var planId = mealPlanId ?? MealPlanId.New();
         var imported = new MealPlanEntriesImported(
-            planId, importId, MealPlanImportFormats.Find(format)?.Id ?? format, importedEntries, [.. newMeals.Select(m => m.Id)], importedBy, now);
+            planId, importId, MealPlanImportFormats.Find(format)?.Id ?? MealieImportSource.FormatId, importedEntries, [.. newMeals.Select(m => m.Id)], importedBy, now);
 
         IReadOnlyCollection<MealPlanEvent> planEvents = mealPlanId is null
             ? [new MealPlanCreated(planId, childId, now), imported]

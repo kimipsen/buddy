@@ -37,6 +37,10 @@ const ciBackendEnv = {
 const e2eBackendEnv = {
   RateLimiting__Anonymous__TokenLimit: '1000',
   RateLimiting__Anonymous__TokensPerPeriod: '100',
+  // The test Mealie (e2e/support/mealie-client.ts) is on the private network over plain http,
+  // which the production outbound policy refuses (docs/backend/analysis/mealie-integration.md).
+  Mealie__AllowHttp: 'true',
+  Mealie__AllowPrivateNetworks: 'true',
 };
 
 export default defineConfig({

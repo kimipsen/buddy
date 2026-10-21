@@ -59,7 +59,7 @@ variables). Notable sections:
   e.g. `RateLimiting__IcalFeed__TokenLimit`. See
   [rate-limiting.md](../../../docs/backend/analysis/rate-limiting.md).
 - `Features` — which optional features this installation offers (`Mealplans`,
-  `MealplanAiAssistant`, `MealplanImport`, `Medicines`, `SleepDiary`, `Pickups`,
+  `MealplanAiAssistant`, `MealplanImport`, `MealplanMealie`, `Medicines`, `SleepDiary`, `Pickups`,
   `Babysitters`, `WorkLocations`, `Printing`, `Progress`, `TaskLibrary`,
   `Help`), all `true` by default. A disabled feature's endpoints aren't mapped,
   and `GET /features` tells the frontend what to hide. An unknown name or a

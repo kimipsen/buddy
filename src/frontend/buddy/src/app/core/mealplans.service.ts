@@ -129,9 +129,54 @@ export class MealplansService {
     const meal = await firstValueFrom(
       this.http.patch<Meal>(`${this.base(scope)}/meals/${mealId}/details`, request),
     );
+    this.replaceMeal(meal);
+    return meal;
+  }
+
+  private replaceMeal(meal: Meal): void {
     this.mealsState.update((current) =>
       current.map((existing) => (existing.id === meal.id ? meal : existing)),
     );
+  }
+
+  // Mealie recipe links (docs/backend/analysis/mealie-integration.md) are family-only, like the
+  // rest of the Mealie routes; they live here because they change a library meal.
+  async linkMealToRecipe(childId: string, mealId: string, recipeId: string): Promise<Meal> {
+    const meal = await firstValueFrom(
+      this.http.put<Meal>(
+        `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/meals/${mealId}/recipe`,
+        { recipeId },
+      ),
+    );
+    this.replaceMeal(meal);
+    return meal;
+  }
+
+  async unlinkMealRecipe(childId: string, mealId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete<void>(
+        `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/meals/${mealId}/recipe`,
+      ),
+    );
+    this.mealsState.update((current) =>
+      current.map((meal) => (meal.id === mealId ? { ...meal, recipe: null } : meal)),
+    );
+  }
+
+  async createMealFromRecipe(
+    childId: string,
+    recipeId: string,
+    icon: string,
+    color: string,
+  ): Promise<Meal> {
+    const meal = await firstValueFrom(
+      postIdempotent<Meal>(
+        this.http,
+        `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/meals/from-recipe`,
+        { recipeId, icon, color },
+      ),
+    );
+    this.mealsState.update((current) => [...current, meal]);
     return meal;
   }
 

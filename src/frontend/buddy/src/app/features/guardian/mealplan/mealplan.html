@@ -11,6 +11,15 @@
       </h2>
     </div>
     <div class="flex flex-wrap gap-2">
+      @if (mealieConnected() && features.enabled('mealplanImport')) {
+        <a
+          routerLink="/guardian/mealplan/import"
+          [queryParams]="{ source: 'mealie' }"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-orange-300 dark:border-orange-500/40 px-4 py-2 text-sm font-semibold text-orange-800 dark:text-orange-300 transition hover:bg-orange-50 dark:hover:bg-orange-500/10"
+        >
+          {{ 'mealie.import.entryButton' | translate }}
+        </a>
+      }
       @if (features.enabled('mealplanImport')) {
         <a
           routerLink="/guardian/mealplan/import"
@@ -142,8 +151,8 @@
 
     @if (selectedScope(); as scope) {
       <div class="space-y-6">
-        <app-manage-meals class="block" [scope]="scope" />
-        <app-assign-mealplan class="block" [scope]="scope" />
+        <app-manage-meals class="block" [scope]="scope" [mealieChildId]="mealieChildId()" />
+        <app-assign-mealplan class="block" [scope]="scope" [mealieChildId]="mealieChildId()" />
       </div>
     }
   }

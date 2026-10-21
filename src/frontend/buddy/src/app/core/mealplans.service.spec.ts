@@ -65,6 +65,7 @@ describe('MealplansService', () => {
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       eatingOut: 'None',
+      recipe: null,
       ...overrides,
     };
   }
@@ -302,6 +303,62 @@ describe('MealplansService', () => {
 
       // Re-sorted by name: the renamed "Fluffy Pancakes" still sorts before "Soup".
       expect(service.meals()).toEqual([updated, other]);
+    });
+  });
+
+  describe('Mealie recipe links', () => {
+    const recipe = { recipeId: 'recipe-1', slug: 'lasagne', name: 'Lasagne al forno' };
+
+    async function loadMeals(...meals: Meal[]): Promise<void> {
+      const listPromise = service.listMeals(familyScope);
+      httpMock.expectOne(`${familyBase()}/meals`).flush(meals);
+      await listPromise;
+    }
+
+    it('PUTs the recipe id and replaces the linked meal in state', async () => {
+      const other = meal({ id: 'meal-2', name: 'Soup' });
+      await loadMeals(meal({ id: 'meal-1' }), other);
+      const linked = meal({ id: 'meal-1', recipe });
+
+      const promise = service.linkMealToRecipe('child-1', 'meal-1', 'recipe-1');
+
+      const req = httpMock.expectOne(`${familyBase()}/meals/meal-1/recipe`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({ recipeId: 'recipe-1' });
+      req.flush(linked);
+
+      await expect(promise).resolves.toEqual(linked);
+      expect(service.meals()).toEqual([linked, other]);
+    });
+
+    it('DELETEs the link and clears the recipe in state', async () => {
+      const other = meal({ id: 'meal-2', name: 'Soup', recipe });
+      await loadMeals(meal({ id: 'meal-1', recipe }), other);
+
+      const promise = service.unlinkMealRecipe('child-1', 'meal-1');
+
+      const req = httpMock.expectOne(`${familyBase()}/meals/meal-1/recipe`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+      await promise;
+
+      expect(service.meals()).toEqual([meal({ id: 'meal-1', recipe: null }), other]);
+    });
+
+    it('POSTs a create-from-recipe with an idempotency key and appends the meal', async () => {
+      await loadMeals(meal({ id: 'meal-1' }));
+      const created = meal({ id: 'meal-new', name: 'Lasagne al forno', recipe });
+
+      const promise = service.createMealFromRecipe('child-1', 'recipe-1', '🍝', '#ef4444');
+
+      const req = httpMock.expectOne(`${familyBase()}/meals/from-recipe`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ recipeId: 'recipe-1', icon: '🍝', color: '#ef4444' });
+      expect(req.request.headers.has('Idempotency-Key')).toBe(true);
+      req.flush(created);
+
+      await expect(promise).resolves.toEqual(created);
+      expect(service.meals()).toEqual([created, meal({ id: 'meal-1' })]);
     });
   });
 

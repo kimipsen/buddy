@@ -1,0 +1,260 @@
+<app-card>
+  <h3 class="mb-1 flex items-center gap-2 text-lg font-semibold tracking-normal">
+    {{ 'mealie.settings.title' | translate }}
+    @if (connection.hasValue()) {
+      @let loadedForBadge = connection.value();
+      @if (loadedForBadge.hasChildren && isConnected(loadedForBadge.view)) {
+        <span
+          class="rounded-full bg-emerald-100 dark:bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
+        >
+          {{ 'mealie.settings.connectedBadge' | translate }}
+        </span>
+      }
+    }
+  </h3>
+  <p class="mb-5 text-sm text-slate-500 dark:text-slate-400">
+    {{ 'mealie.settings.description' | translate }}
+  </p>
+
+  @if (connection.isLoading()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'mealie.settings.loading' | translate }}
+    </p>
+  } @else if (connection.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400">
+      {{ 'mealie.settings.loadError' | translate }}
+    </p>
+  } @else if (connection.hasValue()) {
+    @let loaded = connection.value();
+
+    @if (!loaded.hasChildren) {
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'mealie.settings.noChildren' | translate }}
+      </p>
+    } @else {
+      @let view = loaded.view;
+
+      @if (isConnected(view)) {
+        <dl class="grid grid-cols-[minmax(0,10rem)_1fr] gap-x-4 gap-y-1.5 text-sm">
+          <dt class="text-slate-500 dark:text-slate-400">
+            {{ 'mealie.settings.serverLabel' | translate }}
+          </dt>
+          <dd class="break-all font-medium" data-testid="mealie-server">{{ view.baseUrl }}</dd>
+          <dt class="text-slate-500 dark:text-slate-400">
+            {{ 'mealie.settings.householdLabel' | translate }}
+          </dt>
+          <dd>
+            {{
+              'mealie.settings.connectedAs'
+                | translate: { household: view.householdName, user: view.mealieUserName }
+            }}
+          </dd>
+          <dt class="text-slate-500 dark:text-slate-400">
+            {{ 'mealie.settings.tokenLabel' | translate }}
+          </dt>
+          <dd class="font-mono text-xs">••••{{ view.tokenLast4 }}</dd>
+          <dt class="text-slate-500 dark:text-slate-400">
+            {{ 'mealie.settings.versionLabel' | translate }}
+          </dt>
+          <dd>{{ view.mealieVersion }}</dd>
+        </dl>
+
+        @if (testResult(); as result) {
+          @if (result.kind === 0) {
+            <p
+              class="mt-4 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-300"
+              role="status"
+            >
+              {{
+                'mealie.settings.testSucceeded'
+                  | translate: { recipes: result.recipeCount, lists: result.shoppingListCount }
+              }}
+            </p>
+          } @else if (result.kind === 1) {
+            <p class="mt-4 text-sm text-red-600 dark:text-red-400" role="status">
+              {{ 'mealie.settings.testFailed' | translate: { message: result.message } }}
+            </p>
+          } @else {
+            <p class="mt-4 text-sm text-red-600 dark:text-red-400" role="status">
+              {{ 'mealie.settings.testUnreachable' | translate }}
+            </p>
+          }
+        }
+
+        @if (confirmingDisconnect()) {
+          <div class="mt-4 flex flex-wrap items-center gap-2">
+            <span class="text-sm text-slate-600 dark:text-slate-300">{{
+              'mealie.settings.disconnectPrompt' | translate
+            }}</span>
+            <button
+              type="button"
+              class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+              [disabled]="disconnecting.busy()"
+              (click)="disconnect(loaded.childId)"
+            >
+              {{ 'mealie.settings.disconnectConfirm' | translate }}
+            </button>
+            <button
+              type="button"
+              class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
+              [disabled]="disconnecting.busy()"
+              (click)="cancelDisconnect()"
+            >
+              {{ 'mealie.settings.cancelButton' | translate }}
+            </button>
+          </div>
+        } @else {
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+              [disabled]="testing()"
+              (click)="test(loaded.childId)"
+            >
+              {{
+                (testing() ? 'mealie.settings.testing' : 'mealie.settings.testButton') | translate
+              }}
+            </button>
+            @if (!editing()) {
+              <button
+                type="button"
+                class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 dark:hover:bg-slate-800"
+                (click)="startEdit(view)"
+              >
+                {{ 'mealie.settings.replaceButton' | translate }}
+              </button>
+            }
+            <button
+              type="button"
+              class="rounded-lg border border-red-200 dark:border-red-500/40 px-3 py-1.5 text-sm font-semibold text-red-600 dark:text-red-400 transition hover:bg-red-50 dark:hover:bg-red-500/10"
+              (click)="requestDisconnect()"
+            >
+              {{ 'mealie.settings.disconnectButton' | translate }}
+            </button>
+          </div>
+        }
+
+        @if (disconnecting.state(); as state) {
+          @if (state.status === 'error') {
+            <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+              {{ state.message | translate }}
+            </p>
+          }
+        }
+      }
+
+      @if (!isConnected(view) || editing()) {
+        <form
+          class="mt-5 border-t border-dashed border-slate-200 dark:border-slate-700 pt-4 first:mt-0 first:border-t-0 first:pt-0"
+          (ngSubmit)="connect(loaded.childId)"
+        >
+          <h4 class="mb-3 text-sm font-semibold">
+            {{
+              (isConnected(view)
+                ? 'mealie.settings.form.reconnectTitle'
+                : 'mealie.settings.form.title'
+              ) | translate
+            }}
+          </h4>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label
+                for="mealieBaseUrl"
+                class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400"
+              >
+                {{ 'mealie.settings.form.baseUrlLabel' | translate }}
+              </label>
+              <input
+                id="mealieBaseUrl"
+                name="mealieBaseUrl"
+                type="url"
+                autocomplete="url"
+                class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                [placeholder]="'mealie.settings.form.baseUrlPlaceholder' | translate"
+                [ngModel]="baseUrl()"
+                (ngModelChange)="baseUrl.set($event)"
+                [attr.aria-invalid]="errors()['baseUrl'] ? true : null"
+                [attr.aria-describedby]="errors()['baseUrl'] ? 'mealieBaseUrlError' : null"
+              />
+              @if (errors()['baseUrl']; as message) {
+                <p id="mealieBaseUrlError" class="mt-1 text-xs text-red-600 dark:text-red-400">
+                  {{ message }}
+                </p>
+              }
+            </div>
+            <div>
+              <label
+                for="mealieApiToken"
+                class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400"
+              >
+                {{ 'mealie.settings.form.apiTokenLabel' | translate }}
+              </label>
+              <input
+                id="mealieApiToken"
+                name="mealieApiToken"
+                type="password"
+                autocomplete="off"
+                class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                [placeholder]="'mealie.settings.form.apiTokenPlaceholder' | translate"
+                [ngModel]="apiToken()"
+                (ngModelChange)="apiToken.set($event)"
+                [attr.aria-invalid]="errors()['apiToken'] ? true : null"
+                [attr.aria-describedby]="errors()['apiToken'] ? 'mealieApiTokenError' : null"
+              />
+              @if (errors()['apiToken']; as message) {
+                <p id="mealieApiTokenError" class="mt-1 text-xs text-red-600 dark:text-red-400">
+                  {{ message }}
+                </p>
+              }
+            </div>
+          </div>
+
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="submit"
+              class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
+              [disabled]="connecting.busy() || !baseUrl().trim() || !apiToken().trim()"
+            >
+              {{
+                (connecting.busy()
+                  ? 'mealie.settings.form.connecting'
+                  : 'mealie.settings.form.connectButton'
+                ) | translate
+              }}
+            </button>
+            @if (isConnected(view)) {
+              <button
+                type="button"
+                class="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 dark:hover:bg-slate-800"
+                (click)="cancelEdit()"
+              >
+                {{ 'mealie.settings.cancelButton' | translate }}
+              </button>
+            }
+          </div>
+
+          @if (connecting.state(); as state) {
+            @if (state.status === 'error' && !errors()['baseUrl'] && !errors()['apiToken']) {
+              <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+                {{ state.message | translate }}
+              </p>
+            }
+          }
+        </form>
+
+        <div
+          class="mt-5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-4 py-3"
+        >
+          <h4 class="mb-1.5 text-sm font-semibold">
+            {{ 'mealie.settings.help.title' | translate }}
+          </h4>
+          <ul class="list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300">
+            <li>{{ 'mealie.settings.help.user' | translate }}</li>
+            <li>{{ 'mealie.settings.help.reach' | translate }}</li>
+            <li>{{ 'mealie.settings.help.data' | translate }}</li>
+          </ul>
+        </div>
+      }
+    }
+  }
+</app-card>

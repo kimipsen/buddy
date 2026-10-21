@@ -7,8 +7,8 @@ namespace buddy.Features.Mealplans;
 
 // One reviewed row: either an existing meal (MealId) or a meal to create (NewMealName). Rows with
 // the same normalized NewMealName share one new meal, so a merge in the review is just "send the
-// same name".
-public sealed record MealPlanImportEntry(DateOnly Date, MealSlot Slot, MealId? MealId, string NewMealName, string Notes);
+// same name". MealieRecipe (a Mealie import only) links the new meal to the recipe it came from.
+public sealed record MealPlanImportEntry(DateOnly Date, MealSlot Slot, MealId? MealId, string NewMealName, string Notes, MealieRecipeRef? MealieRecipe = null);
 
 public sealed record CommitMealPlanImport(UserId UserId, UserId ChildId, string Format, IReadOnlyList<MealPlanImportEntry> Entries, bool ArchiveSingleUse)
 {

@@ -38,4 +38,18 @@ internal static partial class MealplansLog
 
     [LoggerMessage(EventId = 6011, Level = LogLevel.Information, Message = "AI data sharing for child {ChildId}'s family acknowledged by {UserId}")]
     public static partial void AiDataSharingAcknowledged(this ILogger logger, Guid childId, Guid userId);
+
+    // Mealie (docs/backend/analysis/mealie-integration.md): never the address, the token or a body.
+    [LoggerMessage(EventId = 6012, Level = LogLevel.Information, Message = "Mealie connected for child {ChildId}'s family by {UserId}")]
+    public static partial void MealieConnected(this ILogger logger, Guid childId, Guid userId);
+
+    [LoggerMessage(EventId = 6013, Level = LogLevel.Information, Message = "Mealie disconnected for child {ChildId}'s family by {UserId}")]
+    public static partial void MealieDisconnected(this ILogger logger, Guid childId, Guid userId);
+
+    // Information: the usual cause is a wrong address or token, which the guardian is fixing.
+    [LoggerMessage(EventId = 6014, Level = LogLevel.Information, Message = "Mealie connect for child {ChildId}'s family by {UserId} rejected: {Kind}")]
+    public static partial void MealieConnectRejected(this ILogger logger, Guid childId, Guid userId, MealieFailureKind kind);
+
+    [LoggerMessage(EventId = 6015, Level = LogLevel.Warning, Message = "Mealie call {Operation} for child {ChildId}'s family failed: {Kind}")]
+    public static partial void MealieCallFailed(this ILogger logger, string operation, Guid childId, MealieFailureKind kind);
 }
