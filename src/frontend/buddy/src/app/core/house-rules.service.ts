@@ -112,6 +112,7 @@ export class HouseRulesService {
 
   // childId only when a guardian acknowledges on a child's behalf; a child leaves it out.
   acknowledge(scope: RuleScope, ruleId: string, revision: number, childId?: string): Promise<void> {
+    // Stryker disable next-line ConditionalExpression: JSON drops an undefined childId, so the request body is the same either way.
     const body = childId === undefined ? { revision } : { revision, childId };
     return firstValueFrom(
       this.http.put<void>(`${this.rules(scope)}/${ruleId}/acknowledgement`, body),

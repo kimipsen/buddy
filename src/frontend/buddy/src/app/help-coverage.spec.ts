@@ -71,6 +71,13 @@ describe('in-app help coverage', () => {
     expect([...named, ...related].filter((id) => !ids.has(id))).toEqual([]);
   });
 
+  it('links every topic to at least one other topic', () => {
+    for (const topic of HELP_TOPICS) {
+      expect(topic.related?.length, topic.id).toBeGreaterThan(0);
+      expect(topic.related, topic.id).not.toContain(topic.id);
+    }
+  });
+
   it('has a topic id and section ids that are unique', () => {
     const ids = HELP_TOPICS.map((topic) => topic.id);
     expect(new Set(ids).size).toBe(ids.length);

@@ -9,6 +9,7 @@ import {
   boardForChild,
   hasBoard,
   isBoardChanged,
+  isConcurrencyConflict,
   isStale,
   isThenTimeUp,
   thenDeadlineMs,
@@ -194,6 +195,30 @@ describe('first-then', () => {
     });
   });
 
+  describe('isConcurrencyConflict', () => {
+    it('recognises the central concurrency conflict only', () => {
+      expect(
+        isConcurrencyConflict(
+          new HttpErrorResponse({ status: 409, error: { code: 'concurrency_conflict' } }),
+        ),
+      ).toBe(true);
+      expect(
+        isConcurrencyConflict(
+          new HttpErrorResponse({ status: 409, error: { code: 'first_then_board_changed' } }),
+        ),
+      ).toBe(false);
+      expect(isConcurrencyConflict(new HttpErrorResponse({ status: 409, error: null }))).toBe(
+        false,
+      );
+      expect(
+        isConcurrencyConflict(
+          new HttpErrorResponse({ status: 400, error: { code: 'concurrency_conflict' } }),
+        ),
+      ).toBe(false);
+      expect(isConcurrencyConflict(new Error('offline'))).toBe(false);
+    });
+  });
+
   describe('todaysTaskCards', () => {
     it('offers the child’s open tasks with their effective icon', () => {
       const cards = todaysTaskCards(
@@ -241,6 +266,22 @@ describe('first-then', () => {
       expect(todaysTaskCards([step('a', true), step('b', true)], 'child-1')).toEqual([]);
     });
 
+    it('leaves out a routine for someone else', () => {
+      const siblingStep = occurrence({
+        itemId: 'routine-2',
+        assignedTo: 'child-2',
+        title: 'Step a',
+        parentTitle: 'Bedtime',
+        parentIcon: '🛏️',
+        subtaskId: 'a',
+        startsAt: '2026-10-14T18:00:00Z',
+        endsAt: '2026-10-14T18:05:00Z',
+        dueAt: null,
+      });
+
+      expect(todaysTaskCards([siblingStep], 'child-1')).toEqual([]);
+    });
+
     it('is distinct by title, ignoring case', () => {
       const cards = todaysTaskCards(
         [occurrence(), occurrence({ itemId: 'item-2', title: 'MATHS P. 12' })],
@@ -252,8 +293,18 @@ describe('first-then', () => {
   });
 
   it('ships seven starters on each side and the lengths the form offers', () => {
-    expect(STARTER_FIRSTS).toHaveLength(7);
-    expect(STARTER_THENS).toHaveLength(7);
+    expect(STARTER_FIRSTS.map((card) => card.titleKey)).toEqual(
+      ['homework', 'tidyRoom', 'shower', 'brushTeeth', 'getDressed', 'shoesOn', 'eatDinner'].map(
+        (key) => `firstThen.starters.first.${key}`,
+      ),
+    );
+    expect(STARTER_THENS.map((card) => card.titleKey)).toEqual(
+      ['ipad', 'tv', 'playOutside', 'lego', 'snack', 'readTogether', 'game'].map(
+        (key) => `firstThen.starters.then.${key}`,
+      ),
+    );
+    expect(STARTER_THENS.find((card) => card.titleKey.endsWith('playOutside'))?.icon).toBe('⚽');
+    expect(STARTER_THENS.find((card) => card.titleKey.endsWith('game'))?.icon).toBe('🎮');
     expect(THEN_LENGTHS).toEqual([null, 5, 10, 15, 20, 30, 45, 60]);
   });
 });

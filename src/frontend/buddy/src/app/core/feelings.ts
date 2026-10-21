@@ -173,6 +173,7 @@ export function promptState(
     return { open: null };
   }
 
+  // Stryker disable next-line MethodExpression: prompt times are "HH:mm", so comparing the full "HH:mm:ss" check-in time orders the same as its first five characters.
   const answered = checkIns.some((checkIn) => checkIn.time.slice(0, 5) >= current);
 
   return { open: answered ? null : current };

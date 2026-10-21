@@ -271,6 +271,7 @@ export class ChildCalendar {
   // Meal rows have no itemId to track by -- date+slot is their natural stable identity (see
   // MealPlanEntry, keyed the same way in child-mealplan.ts).
   protected rowTrackKey(entry: ChildAgendaRow): string {
+    // Stryker disable next-line StringLiteral: a track key only decides DOM reuse; @for renders the same rows with duplicate keys.
     return isMealRow(entry) ? `meal:${entry.meal.date}:${entry.meal.slot}` : `item:${entry.itemId}`;
   }
 

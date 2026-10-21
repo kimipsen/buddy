@@ -22,6 +22,7 @@ describe('promptState', () => {
 
   it('opens a prompt at its time, whatever order the times come in', () => {
     expect(promptState(['15:00', '07:30'], [], toMinutes('07:30'))).toEqual({ open: '07:30' });
+    expect(promptState(['15:00', '07:30'], [], toMinutes('16:00'))).toEqual({ open: '15:00' });
   });
 
   it('closes a prompt once the child checks in at or after it', () => {
@@ -66,6 +67,12 @@ describe('the zone and tag catalog', () => {
     expect(Object.values(FEELING_WORDS).flat()).toHaveLength(18);
     expect(SITUATION_TAGS).toHaveLength(8);
     expect(Object.keys(TAG_LABEL_KEYS)).toHaveLength(26);
+  });
+
+  it('labels each tag with its own translation key', () => {
+    for (const [tag, key] of Object.entries(TAG_LABEL_KEYS)) {
+      expect(key).toBe(`feelings.tags.${tag.toLowerCase()}`);
+    }
   });
 
   it.each([

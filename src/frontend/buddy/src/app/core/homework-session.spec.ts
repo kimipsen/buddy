@@ -119,7 +119,11 @@ describe('homework session', () => {
     expect(isFinished(s)).toBe(true);
     expect(s.startedAtMs).toBeNull();
     expect(currentStep(s)).toBeNull();
-    expect(homeworkTimerState(s, T0)).toMatchObject({ phase: 'done', remainingMs: 0 });
+    expect(homeworkTimerState(s, T0)).toMatchObject({
+      phase: 'done',
+      remainingMs: 0,
+      childStarted: false,
+    });
     expect(next(s, T0).currentIndex).toBe(s.steps.length);
   });
 
@@ -142,6 +146,37 @@ describe('homework session', () => {
 
     s = finishPart(s, T0);
     expect(isFinished(s)).toBe(true);
+  });
+
+  it('drops the break after the previous part when the last part is done early', () => {
+    const reversed = createSession([parts[1], parts[0]], CHUNKS, '2026-10-14');
+    // reading 1/1, break, maths 1/2, break, maths 2/2
+    let s = next(next(start(reversed, T0), T0), T0);
+    expect(currentStep(s)).toMatchObject({ partId: 'maths', index: 1 });
+
+    s = finishPart(s, T0);
+    expect(s.steps).toEqual([
+      { kind: 'focus', partId: 'reading', index: 1, of: 1, minutes: 10 },
+      { kind: 'break', minutes: 2 },
+      { kind: 'focus', partId: 'maths', index: 1, of: 1, minutes: 10 },
+    ]);
+    expect(isFinished(s)).toBe(true);
+  });
+
+  it('keeps another part that sits between the chunks of the finished part', () => {
+    const s: HomeworkSession = {
+      ...session(),
+      steps: [
+        { kind: 'focus', partId: 'maths', index: 1, of: 2, minutes: 10 },
+        { kind: 'focus', partId: 'reading', index: 1, of: 1, minutes: 10 },
+        { kind: 'focus', partId: 'maths', index: 2, of: 2, minutes: 10 },
+      ],
+    };
+
+    expect(finishPart(s, T0).steps).toEqual([
+      { kind: 'focus', partId: 'maths', index: 1, of: 1, minutes: 10 },
+      { kind: 'focus', partId: 'reading', index: 1, of: 1, minutes: 10 },
+    ]);
   });
 
   it('adds one more chunk of the focus length, started at once with no break', () => {

@@ -21,7 +21,18 @@ describe('homework storage', () => {
   it('reads back the session it wrote for the same day', () => {
     writeHomeworkSession({ ...session, startedAtMs: 123 });
 
+    expect(JSON.parse(localStorage.getItem(KEY) ?? 'null')).toEqual({
+      ...session,
+      startedAtMs: 123,
+    });
     expect(readHomeworkSession('2026-10-14')).toEqual({ ...session, startedAtMs: 123 });
+  });
+
+  it('reads back a finished session', () => {
+    const finished = { ...session, currentIndex: session.steps.length };
+    writeHomeworkSession(finished);
+
+    expect(readHomeworkSession('2026-10-14')).toEqual(finished);
   });
 
   it('throws away a session from another day', () => {
@@ -44,7 +55,26 @@ describe('homework storage', () => {
       JSON.stringify({ ...session, parts: 'maths' }),
       JSON.stringify({ ...session, parts: [null] }),
       JSON.stringify({ ...session, parts: [{ id: 'maths', estimateMinutes: 20 }] }),
+      JSON.stringify({
+        ...session,
+        parts: [{ id: 'maths', title: 'Maths', estimateMinutes: '20' }],
+      }),
+      JSON.stringify({ ...session, parts: [...session.parts, null] }),
       JSON.stringify({ ...session, steps: [{ kind: 'focus', partId: 'maths', minutes: 10 }] }),
+      JSON.stringify({ ...session, steps: [{ kind: 'break', minutes: '2' }] }),
+      JSON.stringify({
+        ...session,
+        steps: [{ kind: 'nap', partId: 'maths', index: 1, of: 1, minutes: 10 }],
+      }),
+      JSON.stringify({
+        ...session,
+        steps: [{ kind: 'focus', partId: 'maths', of: 1, minutes: 10 }],
+      }),
+      JSON.stringify({
+        ...session,
+        steps: [{ kind: 'focus', partId: 'maths', index: 1, minutes: 10 }],
+      }),
+      JSON.stringify({ ...session, steps: [...session.steps, { kind: 'nap', minutes: 3 }] }),
       JSON.stringify({
         ...session,
         steps: [{ kind: 'focus', partId: 'history', index: 1, of: 1, minutes: 10 }],

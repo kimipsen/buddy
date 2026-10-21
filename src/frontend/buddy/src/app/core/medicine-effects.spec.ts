@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { groupByDosePeriod, medianTime } from './medicine-effects';
+import {
+  COMMON_SIDE_EFFECTS,
+  SIDE_EFFECTS,
+  groupByDosePeriod,
+  medianTime,
+} from './medicine-effects';
 import type { MedicineEffectNote } from './medicines.service';
 
 function note(
@@ -143,5 +148,21 @@ describe('medianTime', () => {
   it('takes the middle of an odd count and the mean of the middle two of an even count', () => {
     expect(medianTime(['16:00', '09:05', '14:30'])).toBe('14:30');
     expect(medianTime(['14:00', '15:01'])).toBe('14:31');
+  });
+
+  it('pads hours and minutes to two digits', () => {
+    expect(medianTime(['08:05'])).toBe('08:05');
+  });
+});
+
+describe('COMMON_SIDE_EFFECTS', () => {
+  it('lists the commonest stimulant side effects, all known side effects', () => {
+    expect(COMMON_SIDE_EFFECTS).toEqual([
+      'ReducedAppetite',
+      'TroubleFallingAsleep',
+      'Irritability',
+      'ReboundWhenWearingOff',
+    ]);
+    expect(COMMON_SIDE_EFFECTS.every((kind) => SIDE_EFFECTS.includes(kind))).toBe(true);
   });
 });
