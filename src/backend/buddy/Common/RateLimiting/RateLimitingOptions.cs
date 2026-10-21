@@ -36,9 +36,13 @@ public sealed class RateLimitingOptions
     // client (docs/backend/analysis/mealie-integration.md, Question 8).
     public FixedWindowLimits Mealie { get; set; } = new() { PermitLimit = 60, Window = TimeSpan.FromMinutes(1) };
 
+    // Per user, on the recipe photo proxy: its own budget, so a page of photos can't use up the
+    // window the searches, links and imports share. The browser caches each photo for an hour.
+    public FixedWindowLimits MealieImages { get; set; } = new() { PermitLimit = 120, Window = TimeSpan.FromMinutes(1) };
+
     public bool IsValid() =>
         Authenticated.IsValid() && Anonymous.IsValid() && IcalFeed.IsValid() && AiAssistant.IsValid() && OutboundEmail.IsValid()
-        && PersonalDataExport.IsValid() && VisitSummaryShare.IsValid() && Mealie.IsValid();
+        && PersonalDataExport.IsValid() && VisitSummaryShare.IsValid() && Mealie.IsValid() && MealieImages.IsValid();
 }
 
 public sealed class TokenBucketLimits

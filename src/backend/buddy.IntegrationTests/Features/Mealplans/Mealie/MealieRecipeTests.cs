@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 using Alba;
 
 using buddy.Features.Mealplans;
@@ -33,6 +35,29 @@ public sealed class MealieRecipeTests(BuddyApiFixture fixture)
         Assert.True(item.GetProperty("hasImage").GetBoolean());
         Assert.Equal(meal.Id, item.GetProperty("linkedMealId").GetGuid());
         Assert.Equal("lasagne", family.Server.Searches[^1]);
+    }
+
+    [Fact]
+    public async Task A_recipe_whose_only_linked_meal_is_archived_shows_as_not_linked()
+    {
+        // The archived meal is gone from the library, so the guardian should add the recipe again
+        // rather than be told it's already there.
+        var family = await MealieTestHost.CreateFamilyAsync(fixture);
+        var lasagne = family.Server.AddRecipe("Lasagne al forno");
+        var archived = await MealplanTestHelpers.CreateMealAsync(fixture, family.Token, family.ChildId, new CreateMealOptions("Lasagne"));
+        await family.PutAsync($"meals/{archived!.Id}/recipe", new { RecipeId = lasagne.Id });
+        await family.DeleteAsync($"meals/{archived.Id}");
+
+        var found = await family.GetAsync("mealie/recipes?search=lasagne");
+        var details = await family.GetAsync($"mealie/recipes/{lasagne.Id}");
+
+        Assert.Equal(JsonValueKind.Null, Assert.Single(found.GetProperty("items").EnumerateArray()).GetProperty("linkedMealId").ValueKind);
+        Assert.Equal(JsonValueKind.Null, details.GetProperty("linkedMealId").ValueKind);
+
+        // A new active meal for the same recipe is the linked one again.
+        var again = await family.PostAsync("meals/from-recipe", new { RecipeId = lasagne.Id, Icon = "🍝", Color = "#10b981" });
+        var relinked = Assert.Single((await family.GetAsync("mealie/recipes?search=lasagne")).GetProperty("items").EnumerateArray());
+        Assert.Equal(again.GetProperty("id").GetGuid(), relinked.GetProperty("linkedMealId").GetGuid());
     }
 
     [Fact]

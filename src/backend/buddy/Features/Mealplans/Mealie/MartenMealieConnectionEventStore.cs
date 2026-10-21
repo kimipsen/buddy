@@ -62,14 +62,16 @@ public sealed class MartenMealieConnectionEventStore(IMealplansStore store) : IM
         await session.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<MealieConnectionId?> FindIdForChildAsync(UserId childId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<MealieConnectionId>> ListIdsForChildAsync(UserId childId, CancellationToken cancellationToken)
     {
         await using var session = store.QuerySession();
 
-        var doc = await session.Query<MealieConnectionIndexDocument>()
+        var ids = await session.Query<MealieConnectionIndexDocument>()
             .Where(d => d.ChildId == childId.Value)
-            .FirstOrDefaultAsync(cancellationToken);
+            .OrderBy(d => d.Id)
+            .Select(d => d.Id)
+            .ToListAsync(cancellationToken);
 
-        return doc is null ? null : new MealieConnectionId(doc.Id);
+        return [.. ids.Select(id => new MealieConnectionId(id))];
     }
 }

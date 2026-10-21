@@ -1,6 +1,6 @@
 import { Language } from '../language';
 import type { da } from './da';
-import { en } from './en';
+import type { en } from './en';
 
 // Every dotted key path of a dictionary, e.g. 'dashboard.doses.title'.
 type KeyPaths<T> = {
@@ -22,15 +22,29 @@ export type TranslationKeyParity = ExpectTrue<KeyParity>;
 
 export type Dictionary = typeof en;
 
-export { en };
-
-// English is bundled (the default, and the fallback while another language loads). Every other
-// language is a lazy chunk; `import type` above keeps da out of the initial bundle while the
-// parity check still compares it key by key.
-const LAZY_DICTIONARIES: Record<Exclude<Language, 'en'>, () => Promise<Dictionary>> = {
+// Every language is a lazy chunk, English too: it was over a quarter of the initial bundle. The app
+// initializer awaits the browser language's dictionary (TranslationService.ready), so the first
+// screen still renders translated. `import type` above keeps both out of the initial bundle while
+// the parity check still compares them key by key.
+const DICTIONARIES: Record<Language, () => Promise<Dictionary>> = {
+  en: () => import('./en').then((m) => m.en),
   da: () => import('./da').then((m) => m.da),
 };
 
+// Dictionaries available without a fetch. None in the app; the unit test setup preloads English so
+// specs render English text synchronously.
+const preloaded: Partial<Record<Language, Dictionary>> = {};
+
+export function preloadDictionary(language: Language, dictionary: Dictionary): void {
+  preloaded[language] = dictionary;
+}
+
+export function preloadedDictionaries(): Partial<Record<Language, Dictionary>> {
+  return { ...preloaded };
+}
+
 export function loadDictionary(language: Language): Promise<Dictionary> {
-  return language === 'en' ? Promise.resolve(en) : LAZY_DICTIONARIES[language]();
+  const ready = preloaded[language];
+
+  return ready ? Promise.resolve(ready) : DICTIONARIES[language]();
 }

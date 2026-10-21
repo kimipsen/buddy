@@ -12,7 +12,7 @@
 // playwright.screenshots.config.ts), but an API that is already running is reused as is. Stop it
 // first, or set Mealie:AllowHttp and Mealie:AllowPrivateNetworks in appsettings.Development.json.
 export const MEALIE_URL =
-  process.env['MEALIE_URL'] ?? (process.env['CI'] ? 'http://localhost:9926' : 'http://mealie:9000');
+  process.env['MEALIE_URL'] ?? (process.env['CI'] ? 'http://localhost:9925' : 'http://mealie:9000');
 
 const ADMIN_EMAIL = 'changeme@example.com';
 const ADMIN_PASSWORD = 'MyPassword';

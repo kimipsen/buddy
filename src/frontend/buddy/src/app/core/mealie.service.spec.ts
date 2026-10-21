@@ -1,7 +1,7 @@
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   MealieConnectionView,
@@ -54,6 +54,100 @@ describe('MealieService', () => {
     req.flush(connected);
 
     await expect(promise).resolves.toEqual(connected);
+  });
+
+  describe('connection cache', () => {
+    const notConnected: MealieConnectionView = { kind: 0 };
+    const FIVE_MINUTES = 5 * 60 * 1000;
+    let now = 1_000_000;
+
+    beforeEach(() => {
+      now = 1_000_000;
+      vi.spyOn(Date, 'now').mockImplementation(() => now);
+    });
+
+    afterEach(() => vi.restoreAllMocks());
+
+    async function load(childId = 'child-1', view: MealieConnectionView = connected) {
+      const promise = service.getConnection(childId);
+      httpMock.expectOne(`${apiBaseUrl}/mealplans/children/${childId}/mealie`).flush(view);
+      return promise;
+    }
+
+    it('reuses a connection loaded in the last five minutes, per child', async () => {
+      await load();
+      now += FIVE_MINUTES - 1;
+
+      await expect(service.getConnection('child-1')).resolves.toEqual(connected);
+      httpMock.expectNone(`${base}/mealie`);
+      await load('child-2', notConnected);
+    });
+
+    it('asks again once five minutes have passed', async () => {
+      await load();
+      now += FIVE_MINUTES;
+
+      await expect(load('child-1', notConnected)).resolves.toEqual(notConnected);
+    });
+
+    it('shares one request between two pages asking at once', async () => {
+      const first = service.getConnection('child-1');
+      const second = service.getConnection('child-1');
+
+      httpMock.expectOne(`${base}/mealie`).flush(connected);
+
+      await expect(first).resolves.toEqual(connected);
+      await expect(second).resolves.toEqual(connected);
+    });
+
+    it('asks again after a failed load', async () => {
+      const failed = service.getConnection('child-1');
+      httpMock.expectOne(`${base}/mealie`).flush(null, { status: 500, statusText: 'Error' });
+      await expect(failed).rejects.toBeInstanceOf(HttpErrorResponse);
+
+      await expect(load()).resolves.toEqual(connected);
+    });
+
+    it('keeps a newer load when an older one fails later', async () => {
+      const old = service.getConnection('child-1');
+      const oldRequest = httpMock.expectOne(`${base}/mealie`);
+      now += FIVE_MINUTES;
+      const newer = service.getConnection('child-1');
+      httpMock.expectOne(`${base}/mealie`).flush(connected);
+      await newer;
+
+      oldRequest.flush(null, { status: 500, statusText: 'Error' });
+      await expect(old).rejects.toBeInstanceOf(HttpErrorResponse);
+
+      await expect(service.getConnection('child-1')).resolves.toEqual(connected);
+      httpMock.expectNone(`${base}/mealie`);
+    });
+
+    it('forgets every child’s connection after a connect or a disconnect, even a failed one', async () => {
+      for (const change of [
+        () => {
+          const promise = service.connect('child-1', 'https://m.example', 'token');
+          httpMock.expectOne({ method: 'PUT', url: `${base}/mealie` }).flush(connected);
+          return promise;
+        },
+        () => {
+          const promise = service.disconnect('child-1');
+          httpMock
+            .expectOne({ method: 'DELETE', url: `${base}/mealie` })
+            .flush(null, { status: 500, statusText: 'Error' });
+          return promise.catch(() => undefined);
+        },
+      ]) {
+        now += FIVE_MINUTES;
+        await load('child-1', notConnected);
+        await load('child-2', notConnected);
+
+        await change();
+
+        await load('child-1');
+        await load('child-2');
+      }
+    });
   });
 
   it('PUTs the address and token to connect', async () => {

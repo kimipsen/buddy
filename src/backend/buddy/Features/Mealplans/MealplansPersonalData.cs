@@ -70,10 +70,7 @@ public sealed class MealplansPersonalDataEraser(
         {
             foreach (var member in await MealFamilyResolution.ResolveFamilyAsync(child, guardians, cancellationToken))
             {
-                if (await mealieConnections.FindIdForChildAsync(member, cancellationToken) is { } connectionId)
-                {
-                    connectionIds.Add(connectionId);
-                }
+                connectionIds.UnionWith(await mealieConnections.ListIdsForChildAsync(member, cancellationToken));
             }
         }
 

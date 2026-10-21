@@ -25,8 +25,7 @@ public sealed class MealieConnectionSnapshotTests(BuddyApiFixture fixture)
         await family.ConnectAsync();
 
         var connections = family.Host.Services.GetRequiredService<IMealieConnectionEventStore>();
-        var id = await connections.FindIdForChildAsync(new UserId(family.ChildId), CancellationToken.None);
-        Assert.NotNull(id);
+        var id = Assert.Single(await connections.ListIdsForChildAsync(new UserId(family.ChildId), CancellationToken.None));
 
         var events = await connections.ReadAsync(id, CancellationToken.None);
         var replayed = MealieConnection.Rehydrate(events);

@@ -41,7 +41,7 @@ public static class GetMealieRecipeImageEndpoint
                 MealieOutcome<MealieImage>.NotFound or MealieOutcome<MealieImage>.Validation => TypedResults.NotFound(),
             };
         })
-        .RequireRateLimiting(RateLimitingFeature.MealiePolicy)
+        .RequireRateLimiting(RateLimitingFeature.MealieImagesPolicy)
         .ProducesMealieErrors()
         .WithName("GetMealieRecipeImage");
 

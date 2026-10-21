@@ -79,11 +79,84 @@ public sealed class MealieFamilyAndErasureTests(BuddyApiFixture fixture)
         Assert.Equal(Erased.Text, connects[1].BaseUrl);
     }
 
+    [Fact]
+    public async Task Reconnecting_disconnects_a_second_connection_the_family_ended_up_with()
+    {
+        // Two first connects at the same moment leave the family with two streams; whichever
+        // the family doesn't use must not stay connected behind it.
+        var family = await MealieTestHost.CreateFamilyAsync(fixture);
+        var orphan = await AddConnectedStreamAsync(family, DateTimeOffset.UtcNow.AddMinutes(-5));
+
+        await family.ConnectAsync();
+
+        var kept = Assert.Single(await ConnectedStreamsAsync(family.ChildId));
+        Assert.NotEqual(orphan, kept);
+    }
+
+    [Fact]
+    public async Task Disconnecting_disconnects_every_connection_the_family_has()
+    {
+        var family = await MealieTestHost.CreateFamilyAsync(fixture);
+        await AddConnectedStreamAsync(family, DateTimeOffset.UtcNow.AddMinutes(5));
+        Assert.Equal(2, (await ConnectedStreamsAsync(family.ChildId)).Count);
+
+        await family.DeleteAsync("mealie");
+
+        Assert.Empty(await ConnectedStreamsAsync(family.ChildId));
+        Assert.Equal(0, (await family.GetAsync("mealie")).GetProperty("kind").GetInt32());
+    }
+
+    [Fact]
+    public async Task Two_first_connects_at_the_same_moment_leave_one_connection()
+    {
+        var family = await MealieTestHost.CreateFamilyAsync(fixture, connect: false);
+
+        await Task.WhenAll(family.ConnectAsync(), family.ConnectAsync());
+
+        Assert.Single(await ConnectedStreamsAsync(family.ChildId));
+        Assert.Equal(1, (await family.GetAsync("mealie")).GetProperty("kind").GetInt32());
+    }
+
+    // A second connection stream indexed under the family's child, as a racing first connect
+    // leaves it: connected at the given instant.
+    private async Task<MealieConnectionId> AddConnectedStreamAsync(MealieFamily family, DateTimeOffset connectedAt)
+    {
+        var services = fixture.Host.Services;
+        var connections = services.GetRequiredService<IMealieConnectionEventStore>();
+        var cipher = services.GetRequiredService<IMealieTokenCipher>();
+        var guardian = new UserId(family.GuardianId);
+        var id = MealieConnectionId.New();
+        var household = new MealieHousehold(family.Server.HouseholdId, "Holm", family.Server.GroupId, "holm");
+
+        await connections.CreateAsync(id,
+        [
+            new MealieConnectionInitialized(id, new UserId(family.ChildId), connectedAt),
+            new MealieConnected(id, family.Server.BaseUrl, StoredApiKey.Create(MealieTestHost.Token, cipher, guardian, connectedAt), household, "buddy", "v3.29.0", guardian, connectedAt),
+        ], CancellationToken.None);
+
+        return id;
+    }
+
+    private async Task<IReadOnlyList<MealieConnectionId>> ConnectedStreamsAsync(Guid childId)
+    {
+        var connections = fixture.Host.Services.GetRequiredService<IMealieConnectionEventStore>();
+        var connected = new List<MealieConnectionId>();
+
+        foreach (var id in await connections.ListIdsForChildAsync(new UserId(childId), CancellationToken.None))
+        {
+            if (MealieConnection.Rehydrate(await connections.ReadAsync(id, CancellationToken.None))?.Current is not null)
+            {
+                connected.Add(id);
+            }
+        }
+
+        return connected;
+    }
+
     private async Task<IReadOnlyCollection<MealieConnectionEvent>> ReadConnectionEventsAsync(Guid childId)
     {
         var connections = fixture.Host.Services.GetRequiredService<IMealieConnectionEventStore>();
-        var id = await connections.FindIdForChildAsync(new UserId(childId), CancellationToken.None);
-        Assert.NotNull(id);
+        var id = Assert.Single(await connections.ListIdsForChildAsync(new UserId(childId), CancellationToken.None));
 
         return await connections.ReadAsync(id, CancellationToken.None);
     }

@@ -140,28 +140,40 @@ public static class MealFamilyResolution
         IMealieConnectionEventStore connections,
         CancellationToken cancellationToken)
     {
-        var family = await ResolveFamilyAsync(childId, guardians, cancellationToken);
+        var family = await ListFamilyMealieConnectionsAsync(childId, guardians, connections, cancellationToken);
 
-        (MealieConnectionId Id, DateTimeOffset? ConnectedAt)? best = null;
+        return family.Count == 0 ? null : family[0].Id;
+    }
+
+    // Every MealieConnection stream of the child's family, the one the family uses first. A family
+    // normally has one, but two first connects at the same moment, or two families merging through
+    // a new guardian link, leave it with more (MealieFamilyConnections keeps only the first one
+    // connected).
+    public static async Task<IReadOnlyList<FamilyMealieConnection>> ListFamilyMealieConnectionsAsync(
+        UserId childId,
+        IGuardianLinkEventStore guardians,
+        IMealieConnectionEventStore connections,
+        CancellationToken cancellationToken)
+    {
+        var family = await ResolveFamilyAsync(childId, guardians, cancellationToken);
+        var found = new List<FamilyMealieConnection>();
         var seen = new HashSet<MealieConnectionId>();
 
         foreach (var member in family)
         {
-            if (await connections.FindIdForChildAsync(member, cancellationToken) is not { } id || !seen.Add(id))
+            foreach (var id in await connections.ListIdsForChildAsync(member, cancellationToken))
             {
-                continue;
-            }
-
-            var events = await connections.ReadAsync(id, cancellationToken);
-            var candidate = (id, LastConnectedAt(events));
-
-            if (best is null || IsPreferredConnection(candidate, best.Value))
-            {
-                best = candidate;
+                if (seen.Add(id))
+                {
+                    var events = await connections.ReadAsync(id, cancellationToken);
+                    found.Add(new FamilyMealieConnection(id, events, LastConnectedAt(events)));
+                }
             }
         }
 
-        return best?.Id;
+        found.Sort((a, b) => IsPreferredConnection((a.Id, a.ConnectedAt), (b.Id, b.ConnectedAt)) ? -1 : 1);
+
+        return found;
     }
 
     private static DateTimeOffset? LastConnectedAt(IEnumerable<MealieConnectionEvent> events)

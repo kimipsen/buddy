@@ -117,7 +117,8 @@ services:
 
   # A family's self-hosted Mealie, for the Mealie integration's e2e journey and doc screenshots
   # (docs/backend/analysis/mealie-integration.md). Pinned to the version the contract tests use.
-  # Reached as http://mealie:9000 from the app container (MEALIE_URL); the first-run admin is
+  # Reached as http://mealie:9000 from the app container (MEALIE_URL) and published on 9925, the
+  # same port `task dev:mealie` uses for its nested-Docker Mealie; the first-run admin is
   # changeme@example.com / MyPassword, and the screenshot script seeds its own non-admin user.
   mealie:
     image: ghcr.io/mealie-recipes/mealie:v3.29.0
@@ -125,7 +126,7 @@ services:
     environment:
       ALLOW_SIGNUP: "false"
     ports:
-      - 9926:9000
+      - 9925:9000
     volumes:
       - mealie-data:/app/data
     healthcheck:

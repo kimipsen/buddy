@@ -1,20 +1,22 @@
 import { Injectable, computed, signal } from '@angular/core';
 
 import { Language, detectBrowserLanguage, isSupportedLanguage } from './language';
-import { Dictionary, en, loadDictionary } from './translations';
+import { Dictionary, loadDictionary, preloadedDictionaries } from './translations';
 import { TranslationValue } from './translation.types';
 
 @Injectable({ providedIn: 'root' })
 export class TranslationService {
-  // English ships with the app; any other language is a lazy chunk, fetched the first time it's
-  // needed (it was most of the initial bundle when every dictionary was bundled up front).
-  private readonly loaded = signal<Partial<Record<Language, Dictionary>>>({ en });
+  // Every language is a lazy chunk, fetched the first time it's needed (translations/index.ts).
+  private readonly loaded = signal<Partial<Record<Language, Dictionary>>>(preloadedDictionaries());
   // The language in effect, set only once its dictionary has loaded, so the UI never shows a key
-  // or mixes languages. Until then the previous language (English at first) stays on screen.
+  // or mixes languages. Until then the previous language stays on screen; before the first one
+  // has loaded nothing is on screen, because the app initializer awaits ready().
   private readonly languageState = signal<Language>('en');
   readonly language = this.languageState.asReadonly();
 
-  private readonly dictionary = computed(() => this.loaded()[this.languageState()] ?? en);
+  private readonly dictionary = computed(
+    (): Record<string, TranslationValue> => this.loaded()[this.languageState()] ?? {},
+  );
 
   // The last language asked for: a slower load for an earlier request must not win.
   private requested: Language = 'en';

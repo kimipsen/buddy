@@ -63,8 +63,9 @@ public static class SearchMealieRecipesHandler
         return new MealieOutcome<MealieRecipePage>.Success(new MealieRecipePage(items, page.Page, page.TotalPages, page.Total));
     }
 
-    // Recipe id -> the family meal linked to it. When several meals link one recipe, an active one
-    // wins over an archived one.
+    // Recipe id -> the family's active meal linked to it. An archived meal doesn't count: it's gone
+    // from the library, so "Already linked" would point at a meal the guardian can't find, and
+    // adding the recipe as a new meal is what they need.
     internal static async Task<Dictionary<Guid, MealId>> LinkedMealsByRecipeAsync(
         UserId childId, IMealEventStore meals, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {
@@ -73,8 +74,8 @@ public static class SearchMealieRecipesHandler
         var family = await meals.FindSnapshotsAsync(mealIds, cancellationToken);
 
         return family
-            .Where(m => m.Recipe is not null)
-            .OrderBy(m => m.IsArchived)
+            .Where(m => m.Recipe is not null && !m.IsArchived)
+            .OrderBy(m => m.Id.Value)
             .GroupBy(m => m.Recipe!.RecipeId)
             .ToDictionary(g => g.Key, g => g.First().Id);
     }

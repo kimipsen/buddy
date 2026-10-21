@@ -12,7 +12,9 @@ public interface IMealieConnectionEventStore
 
     Task AppendAsync(MealieConnectionId id, IReadOnlyCollection<MealieConnectionEvent> events, CancellationToken cancellationToken);
 
-    // The connection indexed under this one child, if any. A family's connection is resolved across
-    // all its children by MealFamilyResolution.ResolveFamilyMealieConnectionIdAsync.
-    Task<MealieConnectionId?> FindIdForChildAsync(UserId childId, CancellationToken cancellationToken);
+    // The connections indexed under this one child, oldest id first: usually none or one, more after
+    // two first connects at the same moment or an erasure that passed a sibling's index on. A
+    // family's connection is resolved across all its children by
+    // MealFamilyResolution.ResolveFamilyMealieConnectionIdAsync.
+    Task<IReadOnlyList<MealieConnectionId>> ListIdsForChildAsync(UserId childId, CancellationToken cancellationToken);
 }

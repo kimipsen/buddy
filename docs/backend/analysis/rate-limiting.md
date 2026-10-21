@@ -159,11 +159,20 @@ provider and stay on the global limit only.
 ### `mealie`: per user, on the endpoints that call the family's Mealie
 
 Added with [mealie-integration.md](mealie-integration.md): every route that reaches the family's
-own Mealie server (connect, test, recipe search and details, the image proxy, link, create from
-recipe, the import preview, the shopping lists and the add-to-list call). Partition
+own Mealie server (connect, test, recipe search and details, link, create from recipe, the import
+preview, the shopping lists and the add-to-list call), except the photo proxy, which has its own
+policy below. Partition
 `mealie:<sub>`, fixed window of 60 requests per minute (`RateLimiting:Mealie`). It protects a home
 server from a stuck client more than Buddy itself. `GetMealieConnection`, `DisconnectMealie` and
 `UnlinkMealRecipe` make no Mealie call and stay on the global limit only.
+
+### `mealie-images`: per user, on the recipe photo proxy
+
+`GetMealieRecipeImage` has its own partition, `mealie-images:<sub>`, fixed window of 120 requests
+per minute (`RateLimiting:MealieImages`), instead of the `mealie` one: a page showing several
+recipe photos must not use up the window the searches, links and imports share, and a burst of
+searches must not hide the photos. The browser caches each photo for an hour
+(`Cache-Control: private, max-age=3600`). `MealieRateLimitTests` checks the two budgets apart.
 
 ### `outbound-email`: per user, on the endpoints that send email
 

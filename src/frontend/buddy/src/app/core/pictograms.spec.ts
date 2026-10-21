@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { en } from './i18n/translations';
+import { en } from './i18n/translations/en';
 import {
   PICTOGRAMS,
   iconText,

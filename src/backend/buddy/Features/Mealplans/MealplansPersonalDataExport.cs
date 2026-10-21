@@ -39,10 +39,7 @@ public sealed class MealplansPersonalDataExporter(
 
         foreach (var member in family)
         {
-            if (await mealieConnections.FindIdForChildAsync(member, cancellationToken) is { } connectionId)
-            {
-                connectionIds.Add(connectionId);
-            }
+            connectionIds.UnionWith(await mealieConnections.ListIdsForChildAsync(member, cancellationToken));
 
             mealIds.UnionWith(await meals.ListIdsForChildAsync(member, cancellationToken));
 

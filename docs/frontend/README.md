@@ -322,10 +322,12 @@ instead of silently falling back to the raw key at runtime. CI additionally runs
 `.claude/skills/i18n/check-parity.mjs` (`.github/workflows/frontend-tests.yml`), which also fails
 on `{placeholder}` mismatches between the two languages and warns about identical en/da text.
 
-Only English ships in the initial bundle (the default, and the fallback). Danish is a lazy chunk
-that `loadDictionary` fetches the first time it's needed; `TranslationService.setLanguage` switches
-only once it has loaded, so the screen never mixes languages. The app initializer awaits the
-browser language's dictionary, so a Danish browser's first screen is already Danish. The public
+No dictionary ships in the initial bundle: English and Danish are lazy chunks that
+`loadDictionary` fetches the first time each is needed (English alone was over a quarter of the
+initial bundle). `TranslationService.setLanguage` switches only once the dictionary has loaded, so
+the screen never mixes languages, and the app initializer awaits the browser language's
+dictionary, so the first screen is already translated, in Danish for a Danish browser. Unit specs
+get English preloaded by `src/test-setup.ts`. The public
 pages opened from emails and share links (invites, email verification, the shared sleep diary)
 are lazy chunks too; only the login page is in the initial bundle.
 

@@ -28,6 +28,7 @@ public static class RateLimitingFeature
     public const string PersonalDataExportPolicy = "personal-data-export";
     public const string VisitSummarySharePolicy = "visit-summary-share";
     public const string MealiePolicy = "mealie";
+    public const string MealieImagesPolicy = "mealie-images";
 
     public static IServiceCollection AddRateLimitingFeature(this IServiceCollection services)
     {
@@ -76,6 +77,10 @@ public static class RateLimitingFeature
                 // Every call reaches the family's own Mealie server.
                 options.AddPolicy(MealiePolicy, context =>
                     RateLimitPartition.GetFixedWindowLimiter($"mealie:{CallerKey(context)}", _ => limits.Mealie.ToOptions()));
+
+                // The recipe photo proxy, apart from the other Mealie calls.
+                options.AddPolicy(MealieImagesPolicy, context =>
+                    RateLimitPartition.GetFixedWindowLimiter($"mealie-images:{CallerKey(context)}", _ => limits.MealieImages.ToOptions()));
             });
 
         return services;

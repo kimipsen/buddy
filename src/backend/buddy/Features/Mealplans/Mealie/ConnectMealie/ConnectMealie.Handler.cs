@@ -83,6 +83,7 @@ public static class ConnectMealieHandler
         }
 
         logger.MealieConnected(command.ChildId.Value, userId.Value);
+        await MealieFamilyConnections.DisconnectAllButPreferredAsync(command.ChildId, userId, guardians, connections, logger, now, cancellationToken);
 
         return new Result<MealieConnectionView>.Success(MealieConnectionView.From(connection));
     }

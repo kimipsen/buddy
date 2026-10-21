@@ -132,6 +132,14 @@ guardian's unlinked children don't count, even when that guardian made the conne
 token is a whole Mealie user, so a guardian who leaves a family must not keep using its Mealie, or
 overwrite it by reconnecting (found in review; `MealieFamilyAndErasureTests`).
 
+One family, one Mealie, but nothing can enforce one stream per family: there's no family document
+for a constraint to guard. Two first connects at the same moment each start a stream, and two
+families can merge through a new guardian link. So `MealieFamilyConnections` makes the extra
+streams harmless: every connect disconnects the family's other connected streams (two racing
+connects see the same order and keep the same one), and a disconnect disconnects them all, so the
+family never falls back to a stream it didn't choose. The index lookup returns every stream
+indexed under a child (`ListIdsForChildAsync`), for resolution, erasure and the export alike.
+
 ```text
 MealieConnection(
     MealieConnectionId Id,                 // UUIDv7, like AiCredentialId
@@ -464,7 +472,9 @@ call. Mealie's `GET /api/recipes/{slug}` also takes the recipe id, which the cli
   Mealie-related shows before that (Question 3). The import preview also needs `MealplanImport`.
 - **Rate limit.** A new `mealie` policy (per user, 60/min) on the routes that call Mealie. It
   protects the family's server from a stuck client, not Buddy itself
-  ([rate-limiting.md](rate-limiting.md)).
+  ([rate-limiting.md](rate-limiting.md)). The photo proxy has a budget of its own
+  (`mealie-images`, 120/min), so a page of photos can't use up the window searches and imports
+  share.
 
 Errors ([http-status-codes.md](../http-status-codes.md)):
 
@@ -507,7 +517,7 @@ Tests:
 | `ConnectMealie`                   | Manage | Body `{ baseUrl, apiToken }`. Normalizes the URL, checks the policy, makes the 2 live calls, rejects admin users and old versions. Emits `MealieConnected`    |
 | `DisconnectMealie`                | Manage | Emits `MealieDisconnected`. Idempotent                                                                                                                        |
 | `TestMealieConnection`            | Manage | Re-runs the live calls with the stored token. Returns `Succeeded \| Failed(code, message)`, like `TestProviderConnectionResult`                               |
-| `SearchMealieRecipes`             | Manage | `?search=&page=`, 20 per page. Returns `id, slug, name, totalTime, hasImage`, plus `linkedMealId` when a library meal already links it                        |
+| `SearchMealieRecipes`             | Manage | `?search=&page=`, 20 per page. Returns `id, slug, name, totalTime, hasImage`, plus `linkedMealId` when an active library meal links it                        |
 | `GetMealieRecipe`                 | Manage | Ingredients (`display`), steps, yield, total time, `orgURL`, and the Mealie web URL for "Open in Mealie". Cached 10 min                                       |
 | `GetMealieRecipeImage`            | Manage | Proxies `min-original.webp` (`image/webp` only, max 2 MB, `Cache-Control: private, max-age=3600`)                                                             |
 | `LinkMealToRecipe` (+ `Unlink`)   | Manage | Body `{ recipeId }`. Fetches the recipe to fill `Slug`/`Name` (so a typo'd id is a `404`, not a dead link). Emits `MealLinkedToRecipe` / `MealRecipeUnlinked` |
@@ -615,9 +625,12 @@ The shape is recorded so v1 doesn't block it:
 | Reconnect to the same household with a new token              | Another `MealieConnected`, full overwrite. Links keep working                                                                          |
 | Reconnect to a different household or group                   | Allowed. Links to recipes the new group doesn't have show "recipe no longer in Mealie" until relinked                                  |
 | Two guardians connect different Mealie servers                | Most recently connected wins (the `AiProviderCredential` rule). The card shows who connected it and when                               |
+| Two first connects at the same moment                         | Two streams; each connect then disconnects the one the family doesn't use, so exactly one stays connected                              |
+| Disconnect with more than one stream in the family            | Every connected stream is disconnected                                                                                                 |
 | Linked recipe deleted in Mealie                               | Recipe route `404`. The meal keeps its stored `Name` with a "no longer in Mealie" hint, and unlinking is one click                     |
 | Recipe renamed in Mealie                                      | The link works (by id); the panel shows Mealie's current name. The stored `Name` is refreshed by linking again (a GET writes no event) |
 | Link an archived meal                                         | `404`, the same rule as editing its details (`UpdateMealDetails`)                                                                      |
+| Recipe linked only to an archived meal                        | Search and details show no `linkedMealId`, so the picker offers to add it again rather than pointing at a meal the library hides       |
 | Same recipe linked to two meals                               | Allowed ("Lasagne" and "Lasagne (freezer portion)"). Import step 1 picks the most recently linked active meal                          |
 | Import range with nothing in Mealie                           | Preview with zero lines and a warning `mealie_range_empty`                                                                             |
 | Mealie `side`/`drink`/`dessert` entries                       | Merged into the same day's dinner notes, or skipped with a warning                                                                     |

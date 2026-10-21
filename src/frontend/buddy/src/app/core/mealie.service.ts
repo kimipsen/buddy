@@ -22,6 +22,10 @@ export type MealieImportPreview = Schemas['MealieImportPreview'];
 
 export const MEALIE_CONNECTED = 1;
 
+// How long a loaded connection is reused. The planner and the import page both ask for it, and a
+// guardian moves between them; a co-guardian's change shows within this time or on a reload.
+export const MEALIE_CONNECTION_CACHE_MS = 5 * 60 * 1000;
+
 // The error codes the Mealie routes answer with besides validation: 409 when the family isn't
 // connected, 502 when the family's Mealie fails.
 export const MEALIE_ERROR_KEYS: Record<string, string> = {
@@ -52,22 +56,54 @@ export class MealieService {
   private readonly http = inject(HttpClient);
   private readonly runtimeConfig = inject(RuntimeConfigService);
 
+  // Per child: the pending or loaded connection and when it was asked for. A connect or disconnect
+  // clears all of it, since every child of the family shares the one connection.
+  private readonly connections = new Map<
+    string,
+    { loadedAt: number; view: Promise<MealieConnectionView> }
+  >();
+
   private base(childId: string): string {
     return `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}`;
   }
 
   getConnection(childId: string): Promise<MealieConnectionView> {
-    return firstValueFrom(this.http.get<MealieConnectionView>(`${this.base(childId)}/mealie`));
-  }
+    const cached = this.connections.get(childId);
 
-  connect(childId: string, baseUrl: string, apiToken: string): Promise<MealieConnectionView> {
-    return firstValueFrom(
-      this.http.put<MealieConnectionView>(`${this.base(childId)}/mealie`, { baseUrl, apiToken }),
+    if (cached && Date.now() - cached.loadedAt < MEALIE_CONNECTION_CACHE_MS) {
+      return cached.view;
+    }
+
+    const view = firstValueFrom(
+      this.http.get<MealieConnectionView>(`${this.base(childId)}/mealie`),
     );
+    this.connections.set(childId, { loadedAt: Date.now(), view });
+    // A failed load is asked for again next time, not remembered.
+    view.catch(() => {
+      if (this.connections.get(childId)?.view === view) {
+        this.connections.delete(childId);
+      }
+    });
+
+    return view;
   }
 
-  disconnect(childId: string): Promise<void> {
-    return firstValueFrom(this.http.delete<void>(`${this.base(childId)}/mealie`));
+  async connect(childId: string, baseUrl: string, apiToken: string): Promise<MealieConnectionView> {
+    try {
+      return await firstValueFrom(
+        this.http.put<MealieConnectionView>(`${this.base(childId)}/mealie`, { baseUrl, apiToken }),
+      );
+    } finally {
+      this.connections.clear();
+    }
+  }
+
+  async disconnect(childId: string): Promise<void> {
+    try {
+      await firstValueFrom(this.http.delete<void>(`${this.base(childId)}/mealie`));
+    } finally {
+      this.connections.clear();
+    }
   }
 
   testConnection(childId: string): Promise<TestMealieConnectionResult> {

@@ -56,6 +56,7 @@ public sealed class MealieClient(HttpClient httpClient) : IMealieClient
 
         using (response)
         {
+            // Stryker disable once String : any fallback that isn't an image type is refused the same way below
             var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
 
             // Only ever pass an image through; anything else is reported, not proxied.
@@ -137,6 +138,7 @@ public sealed class MealieClient(HttpClient httpClient) : IMealieClient
 
         using (response)
         {
+            // Stryker disable once String : ReadAsync reports every JsonException with its own message, never this one
             return await ReadAsync(async () =>
                 await response.Content.ReadFromJsonAsync<T>(SerializerOptions, cancellationToken)
                 ?? throw new JsonException("Mealie returned an empty body."));
