@@ -568,7 +568,8 @@ data, not a screenshot of built code):
   the dedicated non-admin user and how a home server can be reached.
 - **Meals** (`manage-meals`): a "Mealie" chip on linked meals. "Link recipe" opens the recipe
   search, `mealie-recipe-picker`, inline below the meal list (not a dialog). An "Add from Mealie"
-  button next to "Add meal" opens the same picker in create mode.
+  button next to "Add meal" opens the same picker in create mode. The slot picker in the week
+  plan (`meal-picker`) shows the same chip on linked meals while Mealie is connected.
 - **Recipe panel** (`mealie-recipe-panel`): opened inline from "View recipe" on a linked meal. It
   shows the photo (fetched as a blob from the image proxy, since the route needs the bearer
   token), total time, yield, ingredients and steps, plus "Open in Mealie" (a new tab on the
