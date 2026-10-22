@@ -26,7 +26,9 @@ describe('MealPicker', () => {
   const tacos = meal({ id: 'meal-2', name: 'Tacos', icon: '🌮' });
   const soup = meal({ id: 'meal-3', name: 'Tomato Soup', icon: '🍅' });
 
-  async function setup(options: { meals?: Meal[]; mealId?: string; disabled?: boolean } = {}) {
+  async function setup(
+    options: { meals?: Meal[]; mealId?: string; disabled?: boolean; showRecipes?: boolean } = {},
+  ) {
     await TestBed.configureTestingModule({ imports: [MealPicker] }).compileComponents();
 
     const fixture = TestBed.createComponent(MealPicker);
@@ -36,6 +38,7 @@ describe('MealPicker', () => {
     fixture.componentRef.setInput('meals', options.meals ?? [pancakes, tacos, soup]);
     fixture.componentRef.setInput('mealId', options.mealId ?? '');
     fixture.componentRef.setInput('disabled', options.disabled ?? false);
+    fixture.componentRef.setInput('showRecipes', options.showRecipes ?? false);
     fixture.detectChanges();
 
     return { fixture, compiled: fixture.nativeElement as HTMLElement, onMealIdChange };
@@ -451,6 +454,33 @@ describe('MealPicker', () => {
 
       expect(compiled.textContent).toContain('Eating out');
       expect(textInput(compiled).classList).toContain('border-dashed');
+    });
+  });
+
+  describe('Mealie recipes', () => {
+    const lasagne = meal({
+      id: 'meal-4',
+      name: 'Lasagne',
+      recipe: { recipeId: 'recipe-1', slug: 'lasagne', name: 'Grandma’s lasagne' },
+    });
+
+    it('marks meals linked to a Mealie recipe with a chip', async () => {
+      const { fixture, compiled } = await setup({ meals: [pancakes, lasagne], showRecipes: true });
+
+      openDropdown(fixture);
+
+      const chip = findMealOption(compiled, 'Lasagne').querySelector('span[title]');
+      expect(chip?.textContent?.trim()).toBe('Mealie');
+      expect(chip?.getAttribute('title')).toBe('Grandma’s lasagne');
+      expect(findMealOption(compiled, 'Pancakes').textContent).not.toContain('Mealie');
+    });
+
+    it('leaves the chip out while Mealie is not connected', async () => {
+      const { fixture, compiled } = await setup({ meals: [lasagne] });
+
+      openDropdown(fixture);
+
+      expect(findMealOption(compiled, 'Lasagne').textContent).not.toContain('Mealie');
     });
   });
 });

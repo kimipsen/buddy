@@ -95,5 +95,13 @@
   >
     <app-icon class="text-base leading-none" [value]="meal.icon" />
     {{ meal.name }}
+    @if (showRecipes() && meal.recipe) {
+      <span
+        class="ml-auto shrink-0 rounded-full border border-orange-300 dark:border-orange-500/40 bg-orange-100 dark:bg-orange-500/10 px-2 py-0.5 text-xs font-semibold text-orange-800 dark:text-orange-300"
+        [title]="meal.recipe.name"
+      >
+        {{ 'mealie.recipes.chip' | translate }}
+      </span>
+    }
   </button>
 </ng-template>

@@ -32,6 +32,9 @@ export class MealPicker {
   // The slot holds an eating-out meal: the input is styled and labelled so the guardian sees at a
   // glance that the family is out (docs/backend/analysis/eating-out-meals.md).
   readonly eatingOut = input(false);
+  // Mealie is connected: meals linked to a recipe carry the same "Mealie" chip as in the meal list,
+  // so they stand apart from Buddy-only meals.
+  readonly showRecipes = input(false);
 
   readonly mealIdChange = output<string>();
 

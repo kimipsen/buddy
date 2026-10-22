@@ -183,6 +183,7 @@
     [meals]="meals()"
     [mealId]="mealIdFor(day.date, slot)"
     [eatingOut]="isEatingOut(day.date, slot)"
+    [showRecipes]="!!mealieChildId()"
     [disabled]="readOnly() || isPastDay(day.date) || saving.isBusy(saveId(day.date, slot))"
     (mealIdChange)="onSlotChange(day.date, slot, $event)"
   />
