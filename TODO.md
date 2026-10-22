@@ -6,6 +6,21 @@
 
 ## Open
 
+### iCal feed of my pickups and drop-offs (2026-10-22)
+
+Give each guardian a private iCal subscription link with the pickup and drop-off slots they are
+assigned to, across all their children, so the slots show up in their own calendar app. Follow the
+[Meal plan iCal feed](docs/backend/analysis/mealplan-ical-feed.md) pattern (token create, list,
+revoke and the public `GET .../ical/{token}` feed).
+
+- [ ] **Analysis.** Write `docs/backend/analysis/pickup-ical-feed.md`: a per-guardian token (not
+      per child), which assignments are included (only the ones to the current guardian), event
+      title/location, recurrence vs. expanded occurrences, VALARM, and revocation.
+- [ ] **Backend.** Token create/list/revoke slices and the feed endpoint in `Features/Pickups`,
+      built on `PickupScheduleExpansion`, with integration tests.
+- [ ] **Frontend.** Subscription link (copy, revoke) for the guardian, with en + da strings, and
+      updated screenshots.
+
 ### Installation instructions in the README (2026-10-22)
 
 The root README only explains how to run Buddy in the development container. Add instructions on
