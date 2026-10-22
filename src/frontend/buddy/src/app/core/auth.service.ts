@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { computed, inject, Injectable, signal } from '@angular/core';
 
+import { readGroups } from './keycloak-groups';
 import { generateCodeChallenge, generateCodeVerifier } from './pkce';
 import { RuntimeConfigService } from './runtime-config.service';
 import {
@@ -23,6 +24,8 @@ export class AuthService {
   private readonly sessionExpiredState = signal(false);
 
   readonly isAuthenticated = computed(() => this.tokens() !== null);
+  /** The Keycloak groups in the current access token (see keycloak-groups.ts). */
+  readonly groups = computed(() => readGroups(this.tokens()?.accessToken));
   /**
    * True once a session that existed has ended on its own (Keycloak rejected the refresh, or the
    * API rejected the token), as opposed to never having signed in. The interceptor and guards use
@@ -83,7 +86,11 @@ export class AuthService {
     this.document.location.href = loginUrl.toString();
   }
 
-  logout(): void {
+  /**
+   * Ends the session in Keycloak too and comes back to /login, with `queryParams` for the login
+   * page (e.g. why the user was signed out).
+   */
+  logout(queryParams: Record<string, string> = {}): void {
     const idToken = this.tokens()?.idToken ?? null;
 
     this.tokens.set(null);
@@ -93,9 +100,10 @@ export class AuthService {
     const logoutUrl = new URL(
       `${keycloak.authority}/realms/${keycloak.realm}/protocol/openid-connect/logout`,
     );
+    const query = new URLSearchParams(queryParams).toString();
     logoutUrl.searchParams.set(
       'post_logout_redirect_uri',
-      `${this.document.location.origin}/login`,
+      `${this.document.location.origin}/login${query ? `?${query}` : ''}`,
     );
 
     if (idToken) {

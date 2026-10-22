@@ -7,7 +7,7 @@ import { takePendingGuardianInviteToken } from './pending-guardian-invite-token'
 import { takePendingInviteToken } from './pending-invite-token';
 import { takePendingReturnUrl } from './pending-return-url';
 import { takePendingVerifyEmailToken } from './pending-verify-email-token';
-import { SESSION_EXPIRED_QUERY_PARAMS } from './session-expired';
+import { NO_ACCESS_QUERY_PARAMS, SESSION_EXPIRED_QUERY_PARAMS } from './session-expired';
 import { UsersService } from './users.service';
 
 // Completes login and sends the user to the UI tree matching their role -- always redirects,
@@ -31,6 +31,16 @@ export const roleRedirectGuard: CanActivateFn = async () => {
     return auth.sessionExpired()
       ? router.createUrlTree(['/login'], { queryParams: SESSION_EXPIRED_QUERY_PARAMS })
       : router.createUrlTree(['/login']);
+  }
+
+  const role = account.role();
+
+  // Signed in to Keycloak, but in neither Buddy group: the API would refuse every call
+  // (403 not_a_buddy_member). Ending the Keycloak session too, rather than just going to /login,
+  // keeps the login button from silently signing the same account straight back in.
+  if (role === null) {
+    auth.logout(NO_ACCESS_QUERY_PARAMS);
+    return false;
   }
 
   try {
@@ -70,7 +80,6 @@ export const roleRedirectGuard: CanActivateFn = async () => {
     return router.createUrlTree(['/verify-email', pendingVerifyEmailToken]);
   }
 
-  const role = await account.resolveRole();
   const home = role === 'child' ? '/child' : '/guardian';
 
   // Back to the page an expired session interrupted (see pending-return-url.ts), but only inside

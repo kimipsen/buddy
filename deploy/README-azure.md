@@ -138,6 +138,15 @@ automatically:
    sign-in until they enter one. `buddy-realm.json` ships it optional, but
    a realm created by hand, or before that change, needs the box unticked
    once.
+   Buddy only lets in accounts in the `buddy-guardian` or `buddy-child` group
+   (the API answers `403 not_a_buddy_member` otherwise). A realm created by
+   hand, or before that change, needs: both groups (**Groups > Create
+   group**); a **Group Membership** mapper on `buddy-frontend` (**Clients >
+   buddy-frontend > Client scopes > buddy-frontend-dedicated > Configure a new
+   mapper**, token claim name `groups`, **Full group path** off, added to the
+   access and ID tokens); and every existing guardian in `buddy-guardian` and
+   every existing child in `buddy-child` (**Users > user > Groups**). New
+   children are put in `buddy-child` by the API.
 4. Generate a new secret for `buddy-admin-cli` (Clients > buddy-admin-cli >
    Credentials), then update the running API app with it. The commands below
    use `$RESOURCE_GROUP` etc. from `.env` — load them into your shell first

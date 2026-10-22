@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
@@ -61,7 +62,7 @@ describe('GuardianOnboarding', () => {
         provideRouter([]),
         {
           provide: AccountService,
-          useValue: { resolveRole: vi.fn(async () => options.role ?? 'guardian') },
+          useValue: { role: signal(options.role ?? 'guardian') },
         },
         { provide: OnboardingService, useValue: onboardingStub },
         // The step components inject these; every call the page itself makes is stubbed above.

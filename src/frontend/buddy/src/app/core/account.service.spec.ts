@@ -1,98 +1,42 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { AccountService } from './account.service';
-import { GuardianSummary, GuardiansService } from './guardians.service';
+import { AuthService } from './auth.service';
 
 describe('AccountService', () => {
-  let listMyGuardians: ReturnType<typeof vi.fn<() => Promise<GuardianSummary[]>>>;
-
-  const guardian: GuardianSummary = {
-    id: 'guardian-1',
-    name: { givenName: 'Gina', familyName: 'G' },
-    callingName: '',
-    guardianLinkId: 'link-1',
-    kind: 'Parent',
-  };
-
-  function setup(): AccountService {
-    listMyGuardians = vi.fn();
+  function setup(groups: string[]) {
+    const tokenGroups = signal(groups);
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: GuardiansService, useValue: { listMyGuardians } as Partial<GuardiansService> },
+        { provide: AuthService, useValue: { groups: tokenGroups } as Partial<AuthService> },
       ],
     });
 
-    return TestBed.inject(AccountService);
+    return { service: TestBed.inject(AccountService), tokenGroups };
   }
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  it.each([
+    { groups: ['buddy-guardian'], role: 'guardian' },
+    { groups: ['buddy-child'], role: 'child' },
+    { groups: ['buddy-child', 'buddy-guardian'], role: 'guardian' },
+    { groups: ['other', 'buddy-child'], role: 'child' },
+    { groups: [], role: null },
+    { groups: ['other'], role: null },
+  ])('is $role for an account in $groups', ({ groups, role }) => {
+    const { service } = setup(groups);
+
+    expect(service.role()).toBe(role);
   });
 
-  it('starts with a null role', () => {
-    const service = setup();
-    expect(service.role()).toBeNull();
-  });
-
-  it('resolves to "guardian" when the caller has no guardians of their own, and sets the role signal', async () => {
-    const service = setup();
-    listMyGuardians.mockResolvedValue([]);
-
-    const role = await service.resolveRole();
-
-    expect(role).toBe('guardian');
-    expect(service.role()).toBe('guardian');
-    expect(listMyGuardians).toHaveBeenCalledTimes(1);
-  });
-
-  it('resolves to "child" when the caller has at least one guardian', async () => {
-    const service = setup();
-    listMyGuardians.mockResolvedValue([guardian]);
-
-    const role = await service.resolveRole();
-
-    expect(role).toBe('child');
+  it('follows the groups of a refreshed token', () => {
+    const { service, tokenGroups } = setup(['buddy-child']);
     expect(service.role()).toBe('child');
-  });
 
-  it('deduplicates concurrent resolutions into a single underlying request', async () => {
-    const service = setup();
-    listMyGuardians.mockResolvedValue([]);
+    tokenGroups.set([]);
 
-    const [first, second] = await Promise.all([service.resolveRole(), service.resolveRole()]);
-
-    expect(first).toBe('guardian');
-    expect(second).toBe('guardian');
-    expect(listMyGuardians).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not re-fetch once the role has already been resolved', async () => {
-    const service = setup();
-    listMyGuardians.mockResolvedValue([]);
-
-    await service.resolveRole();
-    const role = await service.resolveRole();
-
-    expect(role).toBe('guardian');
-    expect(listMyGuardians).toHaveBeenCalledTimes(1);
-  });
-
-  it('propagates a failed lookup, leaves the role signal null, and allows a subsequent retry', async () => {
-    const service = setup();
-    listMyGuardians.mockRejectedValueOnce(new Error('boom'));
-
-    await expect(service.resolveRole()).rejects.toThrow('boom');
     expect(service.role()).toBeNull();
-    expect(listMyGuardians).toHaveBeenCalledTimes(1);
-
-    // The failed pending resolution is cleared, so a follow-up call retries rather than reusing
-    // the rejected promise.
-    listMyGuardians.mockResolvedValueOnce([]);
-    const role = await service.resolveRole();
-
-    expect(role).toBe('guardian');
-    expect(listMyGuardians).toHaveBeenCalledTimes(2);
   });
 });

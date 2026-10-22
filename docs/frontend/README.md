@@ -47,9 +47,18 @@ Authentication is centered on the services in [src/frontend/buddy/src/app/core](
 - `RuntimeConfigService` loads config from `/config/runtime-config.json` (Keycloak and API URLs,
   plus the optional `version` and `repositoryUrl` shown in the profile menu)
 - `authGuard` blocks unauthenticated access
-- `roleRedirectGuard` sends users to the correct route after the account role is resolved
+- `guardianGroupGuard` and `childGroupGuard` (`group.guard.ts`) run `authGuard` and also require
+  the `buddy-guardian` group for `/guardian` and the `buddy-child` group for `/child`; anyone else
+  goes to the root
+- `roleRedirectGuard` sends users to the correct route after the account role is resolved, and
+  signs out an account in neither group to `/login?reason=no-access`
 
-The actual role is derived from guardian relationships, not from a stored role flag. See [src/frontend/buddy/src/app/core/account.service.ts](../../src/frontend/buddy/src/app/core/account.service.ts).
+The role is the account's Keycloak group, read from the access token's `groups` claim
+(`buddy-guardian` wins for an account in both). See
+[src/frontend/buddy/src/app/core/account.service.ts](../../src/frontend/buddy/src/app/core/account.service.ts)
+and [keycloak-groups.ts](../../src/frontend/buddy/src/app/core/keycloak-groups.ts). The API
+enforces membership of either group too (`403 not_a_buddy_member`), but not which one: a page in
+the wrong tree is hidden by the frontend, not by the API.
 
 ## Feature layout
 

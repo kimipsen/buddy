@@ -1,14 +1,17 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
 
 import { AuthService } from './auth.service';
 import { storePendingReturnUrl } from './pending-return-url';
 import { SESSION_EXPIRED_QUERY_PARAMS } from './session-expired';
 import { UsersService } from './users.service';
 
-// Used as both canActivate and canActivateChild on the guardian and child trees, so it runs on
-// every navigation inside them, not just on first entry.
-export const authGuard: CanActivateFn = async (_route, state) => {
+// Run by groupGuard, which is both canActivate and canActivateChild on the guardian and child
+// trees, so it runs on every navigation inside them, not just on first entry.
+export const authGuard = async (
+  _route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot,
+): Promise<true | UrlTree> => {
   const auth = inject(AuthService);
   const users = inject(UsersService);
   const router = inject(Router);

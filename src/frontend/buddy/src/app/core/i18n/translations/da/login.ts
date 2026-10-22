@@ -6,6 +6,8 @@ export const login = {
   footerNote: 'Beskyttet af jeres Keycloak-realm.',
   cardTitle: 'Velkommen tilbage',
   sessionExpired: 'Din session er udløbet. Log ind igen for at fortsætte.',
+  noAccess:
+    'Denne konto har endnu ikke fået adgang til Buddy. Bed den, der står for Buddy i din familie, om at give den adgang.',
   cardSubtitle: 'Fortsæt med din virksomhedskonto for at få adgang til dit dashboard.',
   signInButton: 'Log ind med Keycloak',
   redirectNote:

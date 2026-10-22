@@ -34,6 +34,7 @@ describe('roleRedirectGuard', () => {
       completeLoginRedirect: vi.fn(async () => {}),
       getAccessToken: vi.fn(async () => 'access-token'),
       sessionExpired: signal(false).asReadonly(),
+      logout: vi.fn(),
       ...stubs.auth,
     };
     const usersStub: Partial<UsersService> = {
@@ -41,7 +42,7 @@ describe('roleRedirectGuard', () => {
       ...stubs.users,
     };
     const accountStub: Partial<AccountService> = {
-      resolveRole: vi.fn(async () => 'guardian' as AccountRole),
+      role: signal<AccountRole | null>('guardian'),
       ...stubs.account,
     };
 
@@ -84,25 +85,23 @@ describe('roleRedirectGuard', () => {
   });
 
   it('redirects to /login when the user never signed in', async () => {
-    const { router, accountStub } = setup({
+    const { router } = setup({
       auth: { getAccessToken: vi.fn(async () => null) },
     });
 
     const result = await runGuard();
 
     expect(router.serializeUrl(result as UrlTree)).toBe('/login');
-    expect(accountStub.resolveRole).not.toHaveBeenCalled();
   });
 
   it('redirects an expired session to /login with the reason', async () => {
-    const { router, accountStub } = setup({
+    const { router } = setup({
       auth: { getAccessToken: vi.fn(async () => null), sessionExpired: signal(true).asReadonly() },
     });
 
     const result = await runGuard();
 
     expect(router.serializeUrl(result as UrlTree)).toBe('/login?reason=session-expired');
-    expect(accountStub.resolveRole).not.toHaveBeenCalled();
   });
 
   it('provisions the backend user once authenticated, before redirecting', async () => {
@@ -119,7 +118,7 @@ describe('roleRedirectGuard', () => {
     };
     const { router } = setup({
       users: usersStub,
-      account: { resolveRole: vi.fn(async () => 'guardian' as AccountRole) },
+      account: { role: signal<AccountRole | null>('guardian') },
     });
 
     const result = await runGuard();
@@ -129,7 +128,7 @@ describe('roleRedirectGuard', () => {
 
   it('redirects a guardian to /guardian', async () => {
     const { router } = setup({
-      account: { resolveRole: vi.fn(async () => 'guardian' as AccountRole) },
+      account: { role: signal<AccountRole | null>('guardian') },
     });
 
     const result = await runGuard();
@@ -137,9 +136,46 @@ describe('roleRedirectGuard', () => {
     expect(router.serializeUrl(result as UrlTree)).toBe('/guardian');
   });
 
+  describe('an account in neither Buddy group', () => {
+    it('is signed out of Keycloak back to /login with the no-access reason', async () => {
+      const { authStub } = setup({ account: { role: signal<AccountRole | null>(null) } });
+
+      const result = await runGuard();
+
+      expect(result).toBe(false);
+      expect(authStub.logout).toHaveBeenCalledExactlyOnceWith({ reason: 'no-access' });
+    });
+
+    it('is not provisioned as a Buddy user', async () => {
+      const { usersStub } = setup({ account: { role: signal<AccountRole | null>(null) } });
+
+      await runGuard();
+
+      expect(usersStub.ensureCurrentUser).not.toHaveBeenCalled();
+    });
+
+    it('is signed out even with a pending invite', async () => {
+      storePendingInviteToken('invite-token-1');
+      const { authStub } = setup({ account: { role: signal<AccountRole | null>(null) } });
+
+      const result = await runGuard();
+
+      expect(result).toBe(false);
+      expect(authStub.logout).toHaveBeenCalledOnce();
+    });
+  });
+
+  it('does not sign out an account in a Buddy group', async () => {
+    const { authStub } = setup();
+
+    await runGuard();
+
+    expect(authStub.logout).not.toHaveBeenCalled();
+  });
+
   it('redirects a child to /child', async () => {
     const { router } = setup({
-      account: { resolveRole: vi.fn(async () => 'child' as AccountRole) },
+      account: { role: signal<AccountRole | null>('child') },
     });
 
     const result = await runGuard();
@@ -147,35 +183,32 @@ describe('roleRedirectGuard', () => {
     expect(router.serializeUrl(result as UrlTree)).toBe('/child');
   });
 
-  it('redirects to the pending group-invite route and consumes the token, without resolving a role', async () => {
+  it('redirects to the pending group-invite route and consumes the token', async () => {
     storePendingInviteToken('invite-token-1');
-    const { router, accountStub } = setup();
+    const { router } = setup();
 
     const result = await runGuard();
 
     expect(router.serializeUrl(result as UrlTree)).toBe('/invite/invite-token-1');
-    expect(accountStub.resolveRole).not.toHaveBeenCalled();
     expect(sessionStorage.getItem('buddy_pending_invite_token')).toBeNull();
   });
 
   it('redirects to the pending guardian-invite route when there is no group-invite token', async () => {
     storePendingGuardianInviteToken('guardian-invite-token-1');
-    const { router, accountStub } = setup();
+    const { router } = setup();
 
     const result = await runGuard();
 
     expect(router.serializeUrl(result as UrlTree)).toBe('/guardian-invite/guardian-invite-token-1');
-    expect(accountStub.resolveRole).not.toHaveBeenCalled();
   });
 
   it('redirects to the pending verify-email route when there is no invite token of any kind', async () => {
     storePendingVerifyEmailToken('verify-token-1');
-    const { router, accountStub } = setup();
+    const { router } = setup();
 
     const result = await runGuard();
 
     expect(router.serializeUrl(result as UrlTree)).toBe('/verify-email/verify-token-1');
-    expect(accountStub.resolveRole).not.toHaveBeenCalled();
   });
 
   it('prefers the group-invite token over a guardian-invite token when both are pending', async () => {
@@ -212,7 +245,7 @@ describe('roleRedirectGuard', () => {
     it('returns a child to a page in the child tree', async () => {
       storePendingReturnUrl('/child/calendar');
       const { router } = setup({
-        account: { resolveRole: vi.fn(async () => 'child' as AccountRole) },
+        account: { role: signal<AccountRole | null>('child') },
       });
 
       const result = await runGuard();
@@ -232,7 +265,7 @@ describe('roleRedirectGuard', () => {
     it("ignores a page outside the signed-in user's role tree", async () => {
       storePendingReturnUrl('/guardian/calendar');
       const { router } = setup({
-        account: { resolveRole: vi.fn(async () => 'child' as AccountRole) },
+        account: { role: signal<AccountRole | null>('child') },
       });
 
       const result = await runGuard();

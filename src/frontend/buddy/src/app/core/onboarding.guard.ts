@@ -15,7 +15,7 @@ export const onboardingEntryGuard: CanActivateFn = async () => {
   const router = inject(Router);
 
   try {
-    if ((await account.resolveRole()) !== 'guardian') {
+    if (account.role() !== 'guardian') {
       return true;
     }
 

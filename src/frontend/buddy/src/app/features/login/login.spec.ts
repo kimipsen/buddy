@@ -57,6 +57,29 @@ describe('Login', () => {
     expect(notice?.textContent).toContain('Your session expired. Sign in again to continue.');
   });
 
+  it('explains that the account has no access when sent here for that reason', async () => {
+    const { fixture } = await setup({ reason: 'no-access' });
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('[role="alert"]')?.textContent).toContain(
+      'This account has not been given access to Buddy yet.',
+    );
+    expect(compiled.querySelector('[role="status"]')).toBeNull();
+  });
+
+  it('shows no access notice on a plain visit or for another reason', async () => {
+    for (const queryParams of [{}, { reason: 'session-expired' }] as Record<string, string>[]) {
+      TestBed.resetTestingModule();
+      const { fixture } = await setup(queryParams);
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector('[role="alert"]')).toBeNull();
+      expect(compiled.textContent).not.toContain('has not been given access');
+    }
+  });
+
   it('shows no session notice on a plain visit or for another reason', async () => {
     for (const queryParams of [{}, { reason: 'something-else' }] as Record<string, string>[]) {
       TestBed.resetTestingModule();

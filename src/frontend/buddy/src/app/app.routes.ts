@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
-import { authGuard } from './core/auth.guard';
 import { featureGuard } from './core/feature.guard';
+import { childGroupGuard, guardianGroupGuard } from './core/group.guard';
 import { roleRedirectGuard } from './core/role.guard';
 import { Login } from './features/login/login';
 
@@ -59,17 +59,17 @@ export const routes: Routes = [
   },
   {
     path: 'guardian',
-    // canActivateChild too, so the session is checked on every navigation inside the tree, not
-    // only when it's first entered (see auth.guard.ts).
-    canActivate: [authGuard],
-    canActivateChild: [authGuard],
+    // canActivateChild too, so the session and the Keycloak group are checked on every navigation
+    // inside the tree, not only when it's first entered (see auth.guard.ts and group.guard.ts).
+    canActivate: [guardianGroupGuard],
+    canActivateChild: [guardianGroupGuard],
     loadChildren: () =>
       import('./features/guardian/guardian.routes').then((m) => m.GUARDIAN_ROUTES),
   },
   {
     path: 'child',
-    canActivate: [authGuard],
-    canActivateChild: [authGuard],
+    canActivate: [childGroupGuard],
+    canActivateChild: [childGroupGuard],
     loadChildren: () => import('./features/child/child.routes').then((m) => m.CHILD_ROUTES),
   },
   {

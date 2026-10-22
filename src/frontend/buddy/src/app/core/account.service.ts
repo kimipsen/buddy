@@ -1,37 +1,24 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 
-import { GuardiansService } from './guardians.service';
+import { AuthService } from './auth.service';
+import { CHILD_GROUP, GUARDIAN_GROUP } from './keycloak-groups';
 
 export type AccountRole = 'guardian' | 'child';
 
-// Derives the account's role from the guardian-link domain model rather than a stored flag: a
-// user with at least one active guardian is a child account, since guardians never themselves
-// have a guardian in this single-realm model (see docs/backend/analysis/child-accounts-and-guardian-roles.md).
+// The account's role is its Keycloak group (keycloak-groups.ts), read from the access token:
+// buddy-guardian opens the guardian tree, buddy-child the child tree, and an account in both is a
+// guardian. Null for an account in neither, which can't use Buddy at all.
 @Injectable({ providedIn: 'root' })
 export class AccountService {
-  private readonly guardians = inject(GuardiansService);
-  private readonly _role = signal<AccountRole | null>(null);
-  private pendingResolution: Promise<AccountRole> | null = null;
+  private readonly auth = inject(AuthService);
 
-  readonly role = this._role.asReadonly();
+  readonly role = computed<AccountRole | null>(() => {
+    const groups = this.auth.groups();
 
-  // The settled promise is kept after a successful lookup, so it doubles as the memoized result --
-  // later calls reuse it instead of re-fetching. Only a failure clears it, allowing a retry.
-  async resolveRole(): Promise<AccountRole> {
-    this.pendingResolution ??= this.loadRole().catch((error: unknown) => {
-      this.pendingResolution = null;
-      throw error;
-    });
+    if (groups.includes(GUARDIAN_GROUP)) {
+      return 'guardian';
+    }
 
-    return this.pendingResolution;
-  }
-
-  private async loadRole(): Promise<AccountRole> {
-    const myGuardians = await this.guardians.listMyGuardians();
-    const role: AccountRole = myGuardians.length > 0 ? 'child' : 'guardian';
-
-    this._role.set(role);
-
-    return role;
-  }
+    return groups.includes(CHILD_GROUP) ? 'child' : null;
+  });
 }

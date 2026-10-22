@@ -123,7 +123,7 @@ export class GuardianOnboarding implements OnInit {
     this.loadError.set(null);
 
     try {
-      if ((await this.account.resolveRole()) !== 'guardian') {
+      if (this.account.role() !== 'guardian') {
         await this.router.navigate(['/child']);
         return;
       }

@@ -10,8 +10,8 @@ import {
 import { describe, expect, it, vi } from 'vitest';
 
 import { routes } from './app.routes';
-import { authGuard } from './core/auth.guard';
 import { FeaturesService } from './core/features.service';
+import { childGroupGuard, guardianGroupGuard } from './core/group.guard';
 import { roleRedirectGuard } from './core/role.guard';
 import { CHILD_ROUTES } from './features/child/child.routes';
 import { GUARDIAN_ROUTES } from './features/guardian/guardian.routes';
@@ -79,13 +79,13 @@ describe('app routes', () => {
   });
 
   it.each([
-    ['guardian', GUARDIAN_ROUTES],
-    ['child', CHILD_ROUTES],
-  ])('lazy-loads the %s tree behind authGuard', async (path, children) => {
+    ['guardian', GUARDIAN_ROUTES, guardianGroupGuard],
+    ['child', CHILD_ROUTES, childGroupGuard],
+  ])('lazy-loads the %s tree behind its group guard', async (path, children, guard) => {
     const r = route(path);
 
-    expect(r.canActivate).toEqual([authGuard]);
-    expect(r.canActivateChild).toEqual([authGuard]);
+    expect(r.canActivate).toEqual([guard]);
+    expect(r.canActivateChild).toEqual([guard]);
     await expect((r.loadChildren as () => Promise<unknown>)()).resolves.toBe(children);
   });
 

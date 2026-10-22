@@ -129,6 +129,10 @@ Typical Buddy use:
 - viewer attempting contributor-only operation
 - contributor attempting owner-only operation
 
+- an authenticated caller in neither the `buddy-guardian` nor the `buddy-child` Keycloak group
+  (`not_a_buddy_member`): `BuddyMemberMiddleware` returns this before provisioning, on every
+  authorized endpoint including `GET /users/me`, so such an account never becomes a Buddy user.
+  The token's `groups` claim comes from the `groups` mapper on the `buddy-frontend` client.
 - an authenticated caller with no Buddy user yet (`user_not_provisioned`): the Keycloak token is
   valid but its subject never called `GET /users/me`, which creates the user.
   `ProvisionedUserMiddleware` returns this once, before any handler runs, on every authorized
@@ -379,9 +383,9 @@ regenerates it. How it's built: [openapi-client-contract.md](analysis/openapi-cl
 
 What the contract lists for every operation, besides the endpoint's own results:
 
-- `401` and `403 user_not_provisioned` on every endpoint that requires authorization (`GET /users/me`
-  only gets the `401`). Anonymous endpoints (iCal feeds, invite previews, shared sleep diaries,
-  `/version`, the OpenAPI documents) have neither.
+- `401`, `403 not_a_buddy_member` and `403 user_not_provisioned` on every endpoint that requires
+  authorization (`GET /users/me` gets no `user_not_provisioned`). Anonymous endpoints (iCal feeds, invite previews, shared sleep diaries,
+  `/version`, the OpenAPI documents) have none of these.
 - `403` with no body wherever the endpoint can return `TypedResults.Forbid()`.
 - `400 validation_error` wherever there is a body or query to bind.
 - `400 invalid_idempotency_key` and `409 idempotency_key_*` on authenticated `POST`s.

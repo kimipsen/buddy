@@ -21,6 +21,7 @@
       { "name": "buddy-child" }
     ]
   },
+  "groups": [{ "name": "buddy-guardian" }, { "name": "buddy-child" }],
   "clients": [
     {
       "clientId": "buddy-api",
@@ -43,6 +44,19 @@
             "id.token.claim": "false",
             "access.token.claim": "true"
           }
+        },
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "groups",
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
         }
       ]
     }
@@ -55,6 +69,7 @@
       "email": "alice@buddy.test",
       "firstName": "Alice",
       "lastName": "Anderson",
+      "groups": ["/buddy-guardian"],
       "credentials": [{ "type": "password", "value": "alice-test-pw", "temporary": false }]
     },
     {
@@ -64,6 +79,7 @@
       "email": "bob@buddy.test",
       "firstName": "Bob",
       "lastName": "Brown",
+      "groups": ["/buddy-guardian"],
       "credentials": [{ "type": "password", "value": "bob-test-pw", "temporary": false }]
     },
     {
@@ -73,6 +89,7 @@
       "email": "carol@buddy.test",
       "firstName": "Carol",
       "lastName": "Clarke",
+      "groups": ["/buddy-guardian"],
       "credentials": [{ "type": "password", "value": "carol-test-pw", "temporary": false }]
     }
   ]

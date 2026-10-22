@@ -153,6 +153,8 @@ async function createGuardianIdentity(): Promise<void> {
       enabled: true,
       firstName: 'Sara',
       lastName: 'Holm',
+      // Without it Buddy turns the account away (the buddy-guardian Keycloak group).
+      groups: ['/buddy-guardian'],
       credentials: [{ type: 'password', value: DEMO_PASSWORD, temporary: false }],
     }),
   });

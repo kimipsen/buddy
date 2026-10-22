@@ -192,6 +192,9 @@ app.UseAuthentication();
 // idempotency or a handler, and never reserves an Idempotency-Key.
 app.UseRateLimiter();
 app.UseAuthorization();
+// Before provisioning, so an account outside the buddy-guardian/buddy-child groups never becomes a
+// Buddy user.
+app.UseBuddyMembers();
 // Before the idempotency middleware, so an unprovisioned caller never reserves a key.
 app.UseProvisionedUsers();
 // Outside UseIdempotencyKeys: a request that lost a concurrency race gets 409 and its

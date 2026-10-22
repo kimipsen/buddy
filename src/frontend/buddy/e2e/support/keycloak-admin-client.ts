@@ -60,11 +60,14 @@ async function getMasterAdminToken(authority: string): Promise<string> {
   return body.access_token;
 }
 
-// Creates the disposable user and returns its credentials. A no-guardian-links, no-special-role
-// account resolves to the 'guardian' role in this app (see account.service.ts's resolveRole --
-// role is derived from having guardian links, not a stored flag), which is exactly what's needed to
-// reach /guardian/admin's delete-account section.
-export async function createDisposableGuardian(prefix = 'e2edelete'): Promise<DisposableGuardian> {
+// Creates the disposable user and returns its credentials. It's in the buddy-guardian Keycloak
+// group, which makes it a guardian in this app (see account.service.ts) and is exactly what's
+// needed to reach /guardian/admin's delete-account section. Pass other `groups` (e.g. []) for an
+// account outside it.
+export async function createDisposableGuardian(
+  prefix = 'e2edelete',
+  groups: string[] = ['buddy-guardian'],
+): Promise<DisposableGuardian> {
   const { keycloak } = readRuntimeConfig();
   const suffix = `${Date.now().toString(36)}${randomBytes(4).toString('hex')}`;
   const username = `${prefix}${suffix}`.toLowerCase();
@@ -86,6 +89,7 @@ export async function createDisposableGuardian(prefix = 'e2edelete'): Promise<Di
       enabled: true,
       firstName: DISPOSABLE_GUARDIAN_GIVEN_NAME,
       lastName: 'Disposable',
+      groups: groups.map((group) => `/${group}`),
       credentials: [{ type: 'password', value: password, temporary: false }],
     }),
   });

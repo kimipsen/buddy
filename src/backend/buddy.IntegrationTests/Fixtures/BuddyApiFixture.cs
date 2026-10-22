@@ -275,7 +275,9 @@ public sealed class BuddyApiFixture : IAsyncLifetime
     // that mutates a user's own profile, or needs many distinct identities at once (an
     // authorization matrix across owner/contributor/viewer), should mint its own user here
     // rather than compete over a fixed handful of shared accounts.
-    public async Task<TestUser> CreateUserAsync(string? givenName = null, string? familyName = null, bool emailVerified = true, CancellationToken cancellationToken = default)
+    // The user is in the buddy-guardian Keycloak group unless `groups` says otherwise; pass [] for an
+    // account BuddyMemberMiddleware turns away.
+    public async Task<TestUser> CreateUserAsync(string? givenName = null, string? familyName = null, bool emailVerified = true, string[]? groups = null, CancellationToken cancellationToken = default)
     {
         var suffix = Guid.NewGuid().ToString("N")[..12];
         var username = $"test-{suffix}";
@@ -298,6 +300,7 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             enabled = true,
             firstName = givenName ?? "Test",
             lastName = familyName ?? suffix,
+            groups = (groups ?? [KeycloakGroups.Guardian]).Select(group => $"/{group}").ToArray(),
             credentials = new[] { new { type = "password", value = password, temporary = false } }
         }, cancellationToken);
 
@@ -354,6 +357,25 @@ public sealed class BuddyApiFixture : IAsyncLifetime
 
         var roles = await client.GetFromJsonAsync<JsonElement[]>($"/admin/realms/{RealmName}/users/{userId}/role-mappings/realm", cancellationToken) ?? [];
         return [.. roles.Select(role => role.GetProperty("name").GetString()!)];
+    }
+
+    // The names of the Keycloak groups the user is in, read back from the Admin API.
+    public async Task<string[]> GetGroupNamesAsync(string username, CancellationToken cancellationToken = default)
+    {
+        var adminToken = await GetAdminTokenAsync(cancellationToken);
+
+        using var client = new HttpClient
+        {
+            BaseAddress = new Uri($"http://{_keycloak.Hostname}:{_keycloak.GetMappedPublicPort(8080)}")
+        };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        var users = await client.GetFromJsonAsync<JsonElement>($"/admin/realms/{RealmName}/users?username={Uri.EscapeDataString(username)}&exact=true", cancellationToken);
+        var userId = users.EnumerateArray().First().GetProperty("id").GetString()
+            ?? throw new InvalidOperationException($"Keycloak has no user named '{username}' in realm '{RealmName}'.");
+
+        var groups = await client.GetFromJsonAsync<JsonElement[]>($"/admin/realms/{RealmName}/users/{userId}/groups", cancellationToken) ?? [];
+        return [.. groups.Select(group => group.GetProperty("name").GetString()!)];
     }
 
     // Whether Keycloak still has an account with this username (account deletion removes it).

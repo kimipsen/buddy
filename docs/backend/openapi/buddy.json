@@ -110,6 +110,19 @@
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "not_a_buddy_member"
+            ]
+          },
           "304": {
             "$ref": "#/components/responses/NotModified"
           },
@@ -139,7 +152,7 @@
             "description": "No Content"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -148,6 +161,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -231,7 +245,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -240,6 +254,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -320,7 +335,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -329,6 +344,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -409,7 +425,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -418,6 +434,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -498,7 +515,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -507,6 +524,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -587,7 +605,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -596,6 +614,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -675,7 +694,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -684,6 +703,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -777,7 +797,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -786,6 +806,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -867,7 +888,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -876,6 +897,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -937,7 +959,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -946,6 +968,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -1014,7 +1037,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1023,6 +1046,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -1088,7 +1112,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1097,6 +1121,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -1204,7 +1229,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1213,6 +1238,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -1279,7 +1305,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1288,6 +1314,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -1371,7 +1398,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1380,6 +1407,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -1431,7 +1459,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1440,6 +1468,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -1515,7 +1544,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1524,6 +1553,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -1589,7 +1619,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1598,6 +1628,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -1705,7 +1736,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1714,6 +1745,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -1805,7 +1837,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1814,6 +1846,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -1905,7 +1938,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1914,6 +1947,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -2005,7 +2039,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2014,6 +2048,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -2133,7 +2168,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2142,6 +2177,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -2220,7 +2256,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2229,6 +2265,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -2289,7 +2326,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2298,6 +2335,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -2379,7 +2417,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2388,6 +2426,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -2459,7 +2498,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2468,6 +2507,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -2589,7 +2629,7 @@
             "description": "No Content"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060email_not_verified\u0060, \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060email_not_verified\u0060, \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2599,6 +2639,7 @@
             },
             "x-error-codes": [
               "email_not_verified",
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -2711,7 +2752,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2720,6 +2761,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -2802,7 +2844,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2811,6 +2853,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -2891,7 +2934,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2900,6 +2943,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -2946,7 +2990,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2955,6 +2999,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -3048,7 +3093,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3057,6 +3102,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -3125,7 +3171,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3134,6 +3180,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -3204,7 +3251,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3213,6 +3260,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -3297,7 +3345,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3306,6 +3354,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -3390,7 +3439,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3399,6 +3448,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -3483,7 +3533,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3492,6 +3542,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -3611,7 +3662,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3620,6 +3671,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -3698,7 +3750,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3707,6 +3759,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -3767,7 +3820,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3776,6 +3829,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -3910,7 +3964,7 @@
             "description": "No Content"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060email_not_verified\u0060, \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060email_not_verified\u0060, \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3920,6 +3974,7 @@
             },
             "x-error-codes": [
               "email_not_verified",
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -4041,7 +4096,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4050,6 +4105,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -4144,7 +4200,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4153,6 +4209,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -4234,7 +4291,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4243,6 +4300,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -4302,7 +4360,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4311,6 +4369,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -4413,7 +4472,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4422,6 +4481,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -4525,7 +4585,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4534,6 +4594,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -4602,7 +4663,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4611,6 +4672,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -4702,7 +4764,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4711,6 +4773,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -4802,7 +4865,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4811,6 +4874,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -4913,7 +4977,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4922,6 +4986,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -5045,7 +5110,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5054,6 +5119,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -5145,7 +5211,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5154,6 +5220,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -5282,7 +5349,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5291,6 +5358,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -5382,7 +5450,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5391,6 +5459,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -5481,7 +5550,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5490,6 +5559,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -5575,7 +5645,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5584,6 +5654,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -5664,7 +5735,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5673,6 +5744,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -5719,7 +5791,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5728,6 +5800,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -5819,7 +5892,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5828,6 +5901,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -5898,7 +5972,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5907,6 +5981,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -6000,7 +6075,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6009,6 +6084,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -6077,7 +6153,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6086,6 +6162,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -6188,7 +6265,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6197,6 +6274,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -6294,7 +6372,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6303,6 +6381,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -6392,7 +6471,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6401,6 +6480,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -6539,7 +6619,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6548,6 +6628,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -6628,7 +6709,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6637,6 +6718,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -6727,7 +6809,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6736,6 +6818,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -6836,7 +6919,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6845,6 +6928,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -6945,7 +7029,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6954,6 +7038,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -7054,7 +7139,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7063,6 +7148,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -7163,7 +7249,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7172,6 +7258,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -7281,7 +7368,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7290,6 +7377,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -7390,7 +7478,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7399,6 +7487,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -7469,7 +7558,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7478,6 +7567,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -7556,7 +7646,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7565,6 +7655,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -7672,7 +7763,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7681,6 +7772,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -7741,7 +7833,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7750,6 +7842,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -7928,7 +8021,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7937,6 +8030,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -8031,7 +8125,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8040,6 +8134,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -8130,7 +8225,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8139,6 +8234,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -8239,7 +8335,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8248,6 +8344,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -8318,7 +8415,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8327,6 +8424,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -8454,7 +8552,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8463,6 +8561,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -8568,7 +8667,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8577,6 +8676,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -8657,7 +8757,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8666,6 +8766,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -8779,7 +8880,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8788,6 +8889,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -8856,7 +8958,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8865,6 +8967,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -8986,7 +9089,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8995,6 +9098,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -9055,7 +9159,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9064,6 +9168,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -9132,7 +9237,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9141,6 +9246,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -9234,7 +9340,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9243,6 +9349,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -9344,7 +9451,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9353,6 +9460,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -9456,7 +9564,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9465,6 +9573,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -9564,7 +9673,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9573,6 +9682,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -9682,7 +9792,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9691,6 +9801,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -9770,7 +9881,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9779,6 +9890,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -9912,7 +10024,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9921,6 +10033,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -10038,7 +10151,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10047,6 +10160,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -10149,7 +10263,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10158,6 +10272,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -10252,7 +10367,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10261,6 +10376,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -10351,7 +10467,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10360,6 +10476,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -10430,7 +10547,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10439,6 +10556,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -10539,7 +10657,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10548,6 +10666,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -10656,7 +10775,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10665,6 +10784,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -10741,7 +10861,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10750,6 +10870,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -10888,7 +11009,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10897,6 +11018,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -10955,7 +11077,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10964,6 +11086,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -11055,7 +11178,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11064,6 +11187,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -11171,7 +11295,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11180,6 +11304,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -11240,7 +11365,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11249,6 +11374,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -11395,7 +11521,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11404,6 +11530,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -11472,7 +11599,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11481,6 +11608,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -11574,7 +11702,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11583,6 +11711,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -11700,7 +11829,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11709,6 +11838,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -11802,7 +11932,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11811,6 +11941,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -11887,7 +12018,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11896,6 +12027,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -12005,7 +12137,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12014,6 +12146,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -12101,7 +12234,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12110,6 +12243,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -12213,7 +12347,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12222,6 +12356,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -12292,7 +12427,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12301,6 +12436,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -12391,7 +12527,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12400,6 +12536,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -12492,7 +12629,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12501,6 +12638,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -12606,7 +12744,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12615,6 +12753,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -12709,7 +12848,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12718,6 +12857,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -12778,7 +12918,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12787,6 +12927,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -12889,7 +13030,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12898,6 +13039,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -13003,7 +13145,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13012,6 +13154,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -13106,7 +13249,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13115,6 +13258,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -13175,7 +13319,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13184,6 +13328,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -13274,7 +13419,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13283,6 +13428,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -13372,7 +13518,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13381,6 +13527,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -13455,7 +13602,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13464,6 +13611,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -13553,7 +13701,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13562,6 +13710,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -13672,7 +13821,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13681,6 +13830,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -13774,7 +13924,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13783,6 +13933,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -13854,7 +14005,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13863,6 +14014,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -13982,7 +14134,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13991,6 +14143,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -14097,7 +14250,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14106,6 +14259,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -14185,7 +14339,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14194,6 +14348,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -14275,7 +14430,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14284,6 +14439,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -14390,7 +14546,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14399,6 +14555,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -14478,7 +14635,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14487,6 +14644,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -14546,7 +14704,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14555,6 +14713,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -14664,7 +14823,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14673,6 +14832,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -14791,7 +14951,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14800,6 +14960,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -14930,7 +15091,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14939,6 +15100,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -15032,7 +15194,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15041,6 +15203,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -15160,7 +15323,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15169,6 +15332,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -15239,7 +15403,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15248,6 +15412,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -15367,7 +15532,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15376,6 +15541,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -15497,7 +15663,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15506,6 +15672,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -15639,7 +15806,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15648,6 +15815,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -15769,7 +15937,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15778,6 +15946,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -15861,7 +16030,7 @@
             }
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15870,6 +16039,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -15951,7 +16121,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15960,6 +16130,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -16054,7 +16225,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16063,6 +16234,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -16122,7 +16294,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16131,6 +16303,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -16227,7 +16400,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16236,6 +16409,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -16331,7 +16505,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16340,6 +16514,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -16416,7 +16591,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16425,6 +16600,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -16565,7 +16741,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16574,6 +16750,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -16654,7 +16831,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16663,6 +16840,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -16757,7 +16935,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16766,6 +16944,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -16825,7 +17004,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16834,6 +17013,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -16914,7 +17094,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16923,6 +17103,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -17006,7 +17187,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17015,6 +17196,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -17096,7 +17278,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17105,6 +17287,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -17198,7 +17381,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17207,6 +17390,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -17321,7 +17505,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17330,6 +17514,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -17410,7 +17595,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17419,6 +17604,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -17507,7 +17693,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17516,6 +17702,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -17596,7 +17783,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17605,6 +17792,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -17654,7 +17842,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17663,6 +17851,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -17754,7 +17943,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17763,6 +17952,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -17854,7 +18044,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17863,6 +18053,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -17954,7 +18145,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17963,6 +18154,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -18054,7 +18246,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18063,6 +18255,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -18154,7 +18347,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18163,6 +18356,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -18241,7 +18435,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18250,6 +18444,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -18330,7 +18525,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18339,6 +18534,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -18417,7 +18613,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18426,6 +18622,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -18517,7 +18714,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18526,6 +18723,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -18623,7 +18821,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18632,6 +18830,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -18728,7 +18927,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18737,6 +18936,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -18842,7 +19042,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18851,6 +19051,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -18955,7 +19156,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18964,6 +19165,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -19067,7 +19269,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19076,6 +19278,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -19144,7 +19347,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19153,6 +19356,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -19237,7 +19441,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19246,6 +19450,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -19367,7 +19572,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19376,6 +19581,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -19468,7 +19674,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19477,6 +19683,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -19571,7 +19778,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19580,6 +19787,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -19640,7 +19848,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19649,6 +19857,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -19838,7 +20047,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19847,6 +20056,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -19925,7 +20135,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19934,6 +20144,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -20002,7 +20213,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20011,6 +20222,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -20100,7 +20312,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20109,6 +20321,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -20231,7 +20444,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20240,6 +20453,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -20344,7 +20558,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20353,6 +20567,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -20408,7 +20623,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20417,6 +20632,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -20508,7 +20724,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20517,6 +20733,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -20608,7 +20825,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20617,6 +20834,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -20719,7 +20937,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20728,6 +20946,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -20822,7 +21041,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20831,6 +21050,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -20891,7 +21111,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20900,6 +21120,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -21098,7 +21319,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21107,6 +21328,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -21201,7 +21423,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21210,6 +21432,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -21299,7 +21522,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21308,6 +21531,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -21402,7 +21626,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21411,6 +21635,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -21498,7 +21723,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21507,6 +21732,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -21575,7 +21801,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21584,6 +21810,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -21684,7 +21911,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21693,6 +21920,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -21761,7 +21989,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21770,6 +21998,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -21861,7 +22090,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21870,6 +22099,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -21961,7 +22191,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21970,6 +22200,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -22057,7 +22288,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22066,6 +22297,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -22169,7 +22401,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22178,6 +22410,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -22272,7 +22505,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22281,6 +22514,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -22375,7 +22609,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22384,6 +22618,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -22483,7 +22718,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22492,6 +22727,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -22575,7 +22811,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22584,6 +22820,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -22691,7 +22928,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22700,6 +22937,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -22794,7 +23032,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22803,6 +23041,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -22883,7 +23122,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22892,6 +23131,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -22960,7 +23200,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22969,6 +23209,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -23046,7 +23287,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23055,6 +23296,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -23134,7 +23376,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23143,6 +23385,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -23257,7 +23500,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23266,6 +23509,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -23321,7 +23565,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23330,6 +23574,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -23414,7 +23659,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23423,6 +23668,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -23500,7 +23746,7 @@
             "description": "Not Found"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23509,6 +23755,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -23602,7 +23849,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23611,6 +23858,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -23717,7 +23965,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23726,6 +23974,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -23823,7 +24072,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23832,6 +24081,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -23938,7 +24188,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23947,6 +24197,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -24044,7 +24295,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24053,6 +24304,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -24159,7 +24411,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24168,6 +24420,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -24265,7 +24518,7 @@
             ]
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24274,6 +24527,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -24366,7 +24620,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24375,6 +24629,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -24469,7 +24724,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24478,6 +24733,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -24567,7 +24823,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24576,6 +24832,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -24664,7 +24921,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24673,6 +24930,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -24741,7 +24999,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24750,6 +25008,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -24861,7 +25120,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24870,6 +25129,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },
@@ -24952,7 +25212,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24961,6 +25221,7 @@
               }
             },
             "x-error-codes": [
+              "not_a_buddy_member",
               "user_not_provisioned"
             ]
           },

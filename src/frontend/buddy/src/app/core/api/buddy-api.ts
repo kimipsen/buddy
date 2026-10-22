@@ -5495,6 +5495,15 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
       /** @description Not Found */
       404: {
         headers: {
@@ -5524,7 +5533,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -5579,7 +5588,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -5641,7 +5650,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -5703,7 +5712,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -5765,7 +5774,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -5827,7 +5836,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -5886,7 +5895,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -5951,7 +5960,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6008,7 +6017,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6047,7 +6056,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6088,7 +6097,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6134,7 +6143,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6184,7 +6193,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6233,7 +6242,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6285,7 +6294,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6325,7 +6334,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6374,7 +6383,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6437,7 +6446,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6501,7 +6510,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6565,7 +6574,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6629,7 +6638,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6693,7 +6702,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6752,7 +6761,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6810,7 +6819,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6860,7 +6869,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6917,7 +6926,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -6958,7 +6967,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7043,7 +7052,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `email_not_verified`, `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `email_not_verified`, `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7100,7 +7109,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7149,7 +7158,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7201,7 +7210,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7241,7 +7250,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7304,7 +7313,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7354,7 +7363,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7404,7 +7413,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7466,7 +7475,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7528,7 +7537,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7590,7 +7599,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7649,7 +7658,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7707,7 +7716,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7757,7 +7766,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7858,7 +7867,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `email_not_verified`, `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `email_not_verified`, `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7917,7 +7926,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7975,7 +7984,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8024,7 +8033,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8088,7 +8097,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8155,7 +8164,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8205,7 +8214,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8270,7 +8279,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8334,7 +8343,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8398,7 +8407,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8465,7 +8474,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8532,7 +8541,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8596,7 +8605,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8664,7 +8673,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8728,7 +8737,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8785,7 +8794,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8834,7 +8843,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8886,7 +8895,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8926,7 +8935,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -8990,7 +8999,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9040,7 +9049,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9103,7 +9112,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9153,7 +9162,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9212,7 +9221,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9270,7 +9279,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9337,7 +9346,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9409,7 +9418,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9459,7 +9468,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9515,7 +9524,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9580,7 +9589,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9645,7 +9654,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9710,7 +9719,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9775,7 +9784,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9841,7 +9850,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9906,7 +9915,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -9956,7 +9965,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10015,7 +10024,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10069,7 +10078,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10119,7 +10128,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10219,7 +10228,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10277,7 +10286,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10342,7 +10351,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10407,7 +10416,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10457,7 +10466,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10528,7 +10537,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10587,7 +10596,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10650,7 +10659,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10715,7 +10724,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10765,7 +10774,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10836,7 +10845,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10877,7 +10886,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10927,7 +10936,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -10993,7 +11002,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11044,7 +11053,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11103,7 +11112,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11169,7 +11178,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11235,7 +11244,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11286,7 +11295,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11358,7 +11367,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11418,7 +11427,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11477,7 +11486,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11535,7 +11544,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11600,7 +11609,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11650,7 +11659,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11715,7 +11724,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11786,7 +11795,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11844,7 +11853,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11905,7 +11914,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -11967,7 +11976,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12026,7 +12035,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12080,7 +12089,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12130,7 +12139,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12221,7 +12230,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12271,7 +12280,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12337,7 +12346,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12399,7 +12408,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12457,7 +12466,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12518,7 +12527,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12577,7 +12586,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12635,7 +12644,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12700,7 +12709,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12750,7 +12759,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12809,7 +12818,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12867,7 +12876,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12926,7 +12935,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -12984,7 +12993,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13034,7 +13043,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13101,7 +13110,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13160,7 +13169,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13218,7 +13227,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13268,7 +13277,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13327,7 +13336,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13383,7 +13392,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13435,7 +13444,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13496,7 +13505,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13564,7 +13573,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13623,7 +13632,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13674,7 +13683,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13741,7 +13750,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13808,7 +13817,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13871,7 +13880,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13934,7 +13943,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -13993,7 +14002,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14048,7 +14057,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14097,7 +14106,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14160,7 +14169,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14231,7 +14240,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14309,7 +14318,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14365,7 +14374,7 @@ export interface operations {
     responses: {
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14439,7 +14448,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14498,7 +14507,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14565,7 +14574,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14642,7 +14651,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14719,7 +14728,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14795,7 +14804,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14861,7 +14870,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14910,7 +14919,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -14959,7 +14968,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15023,7 +15032,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15082,7 +15091,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15140,7 +15149,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15201,7 +15210,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15272,7 +15281,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15328,7 +15337,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15377,7 +15386,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15441,7 +15450,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15503,7 +15512,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15565,7 +15574,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15624,7 +15633,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15683,7 +15692,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15745,7 +15754,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15793,7 +15802,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15849,7 +15858,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15908,7 +15917,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -15948,7 +15957,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16012,7 +16021,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16076,7 +16085,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16140,7 +16149,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16204,7 +16213,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16268,7 +16277,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16325,7 +16334,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16368,7 +16377,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16423,7 +16432,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16487,7 +16496,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16552,7 +16561,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16615,7 +16624,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16679,7 +16688,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16743,7 +16752,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16808,7 +16817,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16858,7 +16867,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16920,7 +16929,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -16991,7 +17000,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17041,7 +17050,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17099,7 +17108,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17149,7 +17158,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17266,7 +17275,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17315,7 +17324,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17372,7 +17381,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17434,7 +17443,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17492,7 +17501,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17557,7 +17566,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17607,7 +17616,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17671,7 +17680,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17735,7 +17744,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17794,7 +17803,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17852,7 +17861,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -17902,7 +17911,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18013,7 +18022,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18071,7 +18080,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18130,7 +18139,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18188,7 +18197,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18253,7 +18262,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18303,7 +18312,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18368,7 +18377,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18418,7 +18427,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18482,7 +18491,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18546,7 +18555,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18610,7 +18619,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18674,7 +18683,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18737,7 +18746,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18800,7 +18809,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18859,7 +18868,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18918,7 +18927,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -18981,7 +18990,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19044,7 +19053,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19103,7 +19112,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19151,7 +19160,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19194,7 +19203,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19249,7 +19258,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19314,7 +19323,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19364,7 +19373,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19421,7 +19430,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19471,7 +19480,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19526,7 +19535,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19593,7 +19602,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19658,7 +19667,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19725,7 +19734,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19790,7 +19799,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19857,7 +19866,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19922,7 +19931,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -19981,7 +19990,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -20039,7 +20048,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -20099,7 +20108,7 @@ export interface operations {
       };
       304: components['responses']['NotModified'];
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -20155,7 +20164,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -20205,7 +20214,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -20273,7 +20282,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -20324,7 +20333,7 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Unauthorized'];
-      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
         headers: {
           [name: string]: unknown;

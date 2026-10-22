@@ -8,7 +8,8 @@ public interface IKeycloakAdminClient
     // GetOrCreateUserHandler's existing `?? ""` convention already represents "no email" on User) and
     // a one-time temporary password the guardian is shown once. Also assigns the "buddy-child" realm
     // role so child accounts are distinguishable in Keycloak itself, not just in this app's own
-    // GuardianLink aggregate. Returns the new user's `sub` -- Keycloak stays the only source of new
+    // GuardianLink aggregate, and puts the account in the "buddy-child" group, without which it
+    // couldn't use Buddy (BuddyMemberMiddleware). Returns the new user's `sub` -- Keycloak stays the only source of new
     // sub values, same invariant as the existing lazy-materialization flow.
     Task<KeycloakCreateUserResult> CreateChildUserAsync(
         string givenName,

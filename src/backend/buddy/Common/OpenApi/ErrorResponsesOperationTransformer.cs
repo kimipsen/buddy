@@ -55,10 +55,11 @@ public sealed class ErrorResponsesOperationTransformer : IOpenApiOperationTransf
             errors.Add(declared.StatusCode, [.. declared.Codes]);
         }
 
-        // UseAuthorization and ProvisionedUserMiddleware.
+        // UseAuthorization, BuddyMemberMiddleware and ProvisionedUserMiddleware.
         if (requiresAuthorization)
         {
             UseShared(operation, context, StatusCodes.Status401Unauthorized, SharedResponses.Unauthorized);
+            errors.Add(StatusCodes.Status403Forbidden, BuddyMemberMiddleware.ErrorCode);
 
             if (!metadata.OfType<AllowUnprovisionedUserMetadata>().Any())
             {

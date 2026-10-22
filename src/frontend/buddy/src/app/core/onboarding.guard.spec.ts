@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
   ActivatedRouteSnapshot,
@@ -14,7 +15,7 @@ import { OnboardingService } from './onboarding.service';
 
 describe('onboardingEntryGuard', () => {
   function setup(options: {
-    role?: () => Promise<AccountRole>;
+    role?: AccountRole | null;
     shouldEnterGuide?: () => Promise<boolean>;
   }) {
     const shouldEnterGuide = vi.fn(options.shouldEnterGuide ?? (async () => false));
@@ -24,7 +25,7 @@ describe('onboardingEntryGuard', () => {
         provideRouter([]),
         {
           provide: AccountService,
-          useValue: { resolveRole: vi.fn(options.role ?? (async () => 'guardian')) },
+          useValue: { role: signal(options.role === undefined ? 'guardian' : options.role) },
         },
         { provide: OnboardingService, useValue: { shouldEnterGuide } },
       ],
@@ -55,7 +56,7 @@ describe('onboardingEntryGuard', () => {
 
   it('never sends a child account into the guide', async () => {
     const { run, shouldEnterGuide } = setup({
-      role: async () => 'child',
+      role: 'child',
       shouldEnterGuide: async () => true,
     });
 
@@ -71,16 +72,5 @@ describe('onboardingEntryGuard', () => {
     });
 
     await expect(run()).resolves.toBe(true);
-  });
-
-  it('shows the home when the role lookup fails', async () => {
-    const { run, shouldEnterGuide } = setup({
-      role: async () => {
-        throw new Error('network');
-      },
-    });
-
-    await expect(run()).resolves.toBe(true);
-    expect(shouldEnterGuide).not.toHaveBeenCalled();
   });
 });

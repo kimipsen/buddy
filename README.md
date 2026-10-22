@@ -122,7 +122,9 @@ in real time.
 
 ### Platform
 
-- [x] Keycloak authentication, token lifecycle, and role-based routing
+- [x] Keycloak authentication, token lifecycle, and role-based routing by Keycloak group: only
+      `buddy-guardian` members see the guardian pages and only `buddy-child` members the child
+      board; an account in neither group can't use Buddy
 - [x] Group and guardian invitations and email-verification flows; an invitation can only be
       accepted by an account with a verified email address that matches the invited one
 - [x] English and Danish localization

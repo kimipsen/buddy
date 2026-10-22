@@ -112,6 +112,25 @@ describe('AuthService', () => {
       expect(service.isAuthenticated()).toBe(true);
     });
 
+    it("reads the Keycloak groups from the stored access token's payload", () => {
+      const payload = btoa(JSON.stringify({ groups: ['buddy-child'] }));
+      const tokens: TokenSet = {
+        accessToken: `header.${payload}.signature`,
+        refreshToken: 'r',
+        idToken: null,
+        expiresAt: Date.now() + 100_000,
+      };
+      const { service } = setup({ storedTokens: tokens });
+
+      expect(service.groups()).toEqual(['buddy-child']);
+    });
+
+    it('has no groups when signed out', () => {
+      const { service } = setup();
+
+      expect(service.groups()).toEqual([]);
+    });
+
     it('does not report an expired session at startup', () => {
       const { service } = setup();
 
@@ -306,6 +325,17 @@ describe('AuthService', () => {
       const url = new URL(documentStub.location.href);
       expect(url.searchParams.get('client_id')).toBe(keycloakConfig.clientId);
       expect(url.searchParams.get('id_token_hint')).toBeNull();
+    });
+
+    it('carries the given query params to the /login it returns to', () => {
+      const { service, documentStub } = setup();
+
+      service.logout({ reason: 'no-access' });
+
+      const url = new URL(documentStub.location.href);
+      expect(url.searchParams.get('post_logout_redirect_uri')).toBe(
+        'https://app.buddy.test/login?reason=no-access',
+      );
     });
 
     it('falls back to client_id when there was never a session to begin with', () => {

@@ -24,4 +24,7 @@ internal static partial class UsersLog
 
     [LoggerMessage(EventId = 1007, Level = LogLevel.Warning, Message = "User {UserId} verified their email address, but marking it verified in Keycloak failed")]
     public static partial void KeycloakEmailVerifiedSyncFailed(this ILogger logger, Exception exception, Guid userId);
+
+    [LoggerMessage(EventId = 1008, Level = LogLevel.Information, Message = "Rejected {Method} {Path}: the caller is in neither Buddy Keycloak group")]
+    public static partial void NonMemberCallerRejected(this ILogger logger, string method, string? path);
 }

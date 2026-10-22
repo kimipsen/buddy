@@ -47,6 +47,15 @@
             </p>
           }
 
+          @if (noAccess) {
+            <p
+              role="alert"
+              class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-900"
+            >
+              {{ 'login.noAccess' | translate }}
+            </p>
+          }
+
           <button
             type="button"
             class="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"

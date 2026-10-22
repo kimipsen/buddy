@@ -2,6 +2,7 @@ using Alba;
 
 using buddy.Common;
 using buddy.Features.Guardians;
+using buddy.Features.Users;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
@@ -30,6 +31,9 @@ public sealed class CreateChildTests(BuddyApiFixture fixture)
 
         var assignedRoles = await fixture.GetAssignedRealmRoleNamesAsync(child.Username);
         Assert.Contains("buddy-child", assignedRoles);
+
+        var groups = await fixture.GetGroupNamesAsync(child.Username);
+        Assert.Equal([KeycloakGroups.Child], groups);
     }
 
     [Fact]

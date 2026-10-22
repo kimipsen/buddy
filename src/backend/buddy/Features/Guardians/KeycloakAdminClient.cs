@@ -40,6 +40,9 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
                 firstName = givenName,
                 lastName = familyName,
                 requiredActions = RequiredActionsForNewChild,
+                // Without it the child couldn't use Buddy at all (BuddyMemberMiddleware). A group
+                // path, not a name; Keycloak fails the whole create (500, no user) if it's missing.
+                groups = new[] { $"/{KeycloakGroups.Child}" },
                 credentials = new[]
                 {
                     new { type = "password", value = temporaryPassword, temporary = true }
