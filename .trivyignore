@@ -12,3 +12,9 @@
 CVE-2026-78667 exp:2026-11-15
 CVE-2026-78669 exp:2026-11-15
 CVE-2026-97031 exp:2026-11-15
+
+# api (usr/bin/pebble) and web (usr/bin/caddy), same upstream images as above: Go standard library
+# crypto/x509 fix (Go 1.26.10 / 1.27.3), not yet in either upstream image. Pebble only supervises
+# the API process, and the web image's Caddy serves static files and doesn't verify client
+# certificate chains. Recheck when this expires.
+CVE-2026-111943 exp:2026-11-19
