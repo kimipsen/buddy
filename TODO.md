@@ -6,6 +6,15 @@
 
 ## Open
 
+### Installation instructions in the README (2026-10-22)
+
+The root README only explains how to run Buddy in the development container. Add instructions on
+how to install Buddy.
+
+- [ ] **Install section.** Add an installation section to `README.md` covering the prerequisites,
+      the published Docker images, the `.env` settings and the first Keycloak setup, and link the
+      [VM deploy guide](deploy/README.md) and the [Azure deploy guide](deploy/README-azure.md).
+
 ### SBOM generation (2026-10-20)
 
 Generate a software bill of materials for every build and upload it to GitHub next to the build
