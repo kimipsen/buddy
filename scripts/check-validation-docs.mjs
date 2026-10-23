@@ -24,6 +24,7 @@ const middlewareCodes = new Set([
   "idempotency_response_unavailable",
   "concurrency_conflict",
   "user_not_provisioned",
+  "not_a_buddy_member",
   "rate_limited",
   "internal_error",
   "dependency_unavailable",
