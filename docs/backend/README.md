@@ -49,6 +49,7 @@ model or permissions logic.
 - [GDPR: erasure, export and data minimization](analysis/gdpr-data-protection.md)
 - [Group-shared meal plans](analysis/group-owned-mealplans.md)
 - [Meal plan iCal feed](analysis/mealplan-ical-feed.md)
+- [Pickup iCal feed](analysis/pickup-ical-feed.md)
 - [Importing historical meal plans](analysis/mealplan-import.md)
 - [AI assistant meal filter](analysis/ai-assistant-meal-filter.md)
 - [Eating-out meals](analysis/eating-out-meals.md)
@@ -81,6 +82,7 @@ model or permissions logic.
 - [Leaving medicines out of the effect summary](analysis/medicine-effect-inclusion.md)
 - [Skipping single occurrences](analysis/skip-occurrences.md)
 - [Publishing Docker images on GitHub](analysis/publish-docker-images.md)
+- [SBOM generation for builds](analysis/sbom-generation.md)
 
 ## Current focus areas
 

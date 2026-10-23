@@ -11,11 +11,9 @@
 Give each guardian a private iCal subscription link with the pickup and drop-off slots they are
 assigned to, across all their children, so the slots show up in their own calendar app. Follow the
 [Meal plan iCal feed](docs/backend/analysis/mealplan-ical-feed.md) pattern (token create, list,
-revoke and the public `GET .../ical/{token}` feed).
+revoke and the public `GET .../ical/{token}` feed). Design in
+[Pickup iCal feed](docs/backend/analysis/pickup-ical-feed.md).
 
-- [ ] **Analysis.** Write `docs/backend/analysis/pickup-ical-feed.md`: a per-guardian token (not
-      per child), which assignments are included (only the ones to the current guardian), event
-      title/location, recurrence vs. expanded occurrences, VALARM, and revocation.
 - [ ] **Backend.** Token create/list/revoke slices and the feed endpoint in `Features/Pickups`,
       built on `PickupScheduleExpansion`, with integration tests.
 - [ ] **Frontend.** Subscription link (copy, revoke) for the guardian, with en + da strings, and
@@ -31,6 +29,8 @@ how to install Buddy.
       [VM deploy guide](deploy/README.md) and the [Azure deploy guide](deploy/README-azure.md).
 
 ### SBOM generation (2026-10-20)
+
+Plan in [SBOM generation for builds](docs/backend/analysis/sbom-generation.md).
 
 Generate a software bill of materials for every build and upload it to GitHub next to the build
 output.
@@ -903,3 +903,9 @@ periods and clutter the summary. Design in
       schedule and regimen responses, and filtering in `MedicineVisitSummarySource`.
 - [x] Frontend: switches in the "By dose period" card, `groupByDosePeriod` skipping excluded
       medicines, the "Not included" line, en+da strings, specs, e2e and screenshots (2026-10-21).
+
+### iCal feed of my pickups and drop-offs (2026-10-22)
+
+- [x] **Analysis.** Write `docs/backend/analysis/pickup-ical-feed.md`: a per-guardian token (not
+      per child), which assignments are included (only the ones to the current guardian), event
+      title/location, recurrence vs. expanded occurrences, VALARM, and revocation (2026-10-23).

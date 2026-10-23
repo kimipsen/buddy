@@ -23,6 +23,9 @@ in real time.
 
 ### Guardian
 
+- [ ] Private iCal subscription link with the pickups and drop-offs a guardian is assigned to,
+      across all their children (proposed, not yet implemented — see
+      [Pickup iCal feed](docs/backend/analysis/pickup-ical-feed.md))
 - [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
       child for something new such as the dentist or a trip (proposed, not yet implemented — see
       [Social stories](docs/backend/analysis/social-stories.md))
@@ -122,6 +125,9 @@ in real time.
 
 ### Platform
 
+- [ ] Software bills of materials (SBOMs) for the backend, frontend and every published image,
+      attested in GHCR and attached to each GitHub release (proposed, not yet implemented — see
+      [SBOM generation for builds](docs/backend/analysis/sbom-generation.md))
 - [x] Keycloak authentication, token lifecycle, and role-based routing by Keycloak group: only
       `buddy-guardian` members see the guardian pages and only `buddy-child` members the child
       board; an account in neither group can't use Buddy
