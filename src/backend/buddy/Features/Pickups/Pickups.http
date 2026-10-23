@@ -68,3 +68,28 @@ Authorization: Bearer {{guardianToken}}
 # List a child's pickup schedule in a date range (child or guardian)
 GET {{buddy_HostAddress}}/pickups/children/{{childId}}/schedule?from=2025-06-02&to=2025-06-06
 Authorization: Bearer {{childToken}}
+
+###
+
+# Create a subscription link for the caller's own pickup feed (guardian only). The token is shown
+# once; subscriptionPath is the feed URL path.
+POST {{buddy_HostAddress}}/pickups/me/ical-tokens
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# List the caller's subscription links (no secrets)
+GET {{buddy_HostAddress}}/pickups/me/ical-tokens
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Revoke a subscription link
+DELETE {{buddy_HostAddress}}/pickups/me/ical-tokens/{{icalTokenId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# The feed itself: anonymous, the token is the credential. Only the slots assigned to this
+# guardian, across all their children.
+GET {{buddy_HostAddress}}/pickups/feeds/{{guardianId}}/ical/{{icalToken}}

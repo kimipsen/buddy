@@ -230,7 +230,7 @@ Everything one child is asked to keep: their personal rules, then every househol
 
 ## Pickup & drop-off
 
-Who takes and fetches the child each day.
+Who takes and fetches the child each day, and a private calendar link with the slots the guardian does themself.
 
 ![Pickup & drop-off](guardian-pickup.png)
 

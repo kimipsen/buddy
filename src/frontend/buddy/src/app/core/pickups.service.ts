@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import type { Schemas } from './api/schemas';
+import { postIdempotent } from './http-idempotency';
 import { RuntimeConfigService } from './runtime-config.service';
 
 export type PickupSlot = Schemas['PickupSlot'];
@@ -30,6 +31,10 @@ export function babysitterName(assignee: PickupAssignee): string {
 export type PickupOccurrence = Schemas['PickupOccurrence'];
 
 export type AssignPickupRequest = Schemas['AssignPickupRequest'];
+
+export type PickupIcalTokenSummary = Schemas['PickupIcalTokenSummary'];
+
+export type IssuedPickupIcalToken = Schemas['PickupIcalTokenResponse'];
 
 @Injectable({ providedIn: 'root' })
 export class PickupsService {
@@ -73,5 +78,35 @@ export class PickupsService {
         },
       ),
     );
+  }
+
+  // The caller's own iCal feed of the slots assigned to them, across all their children -- /me
+  // routes, so no childId (docs/backend/analysis/pickup-ical-feed.md).
+  listIcalTokens(): Promise<PickupIcalTokenSummary[]> {
+    return firstValueFrom(
+      this.http.get<PickupIcalTokenSummary[]>(
+        `${this.runtimeConfig.apiBaseUrl}/pickups/me/ical-tokens`,
+      ),
+    );
+  }
+
+  createIcalToken(): Promise<IssuedPickupIcalToken> {
+    return firstValueFrom(
+      postIdempotent<IssuedPickupIcalToken>(
+        this.http,
+        `${this.runtimeConfig.apiBaseUrl}/pickups/me/ical-tokens`,
+        {},
+      ),
+    );
+  }
+
+  revokeIcalToken(tokenId: string): Promise<void> {
+    return firstValueFrom(
+      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/pickups/me/ical-tokens/${tokenId}`),
+    );
+  }
+
+  icalFeedUrl(subscriptionPath: string): string {
+    return `${this.runtimeConfig.apiBaseUrl}${subscriptionPath}`;
   }
 }

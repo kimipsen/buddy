@@ -16,6 +16,27 @@ export const pickup = {
     updateError: 'Unable to update this slot.',
     manageBabysittersLink: 'Manage babysitters',
   },
+  ical: {
+    title: 'My pickups in my calendar',
+    description:
+      'A private link that puts the drop-offs and pickups you are assigned to, for all your children, into your own calendar app.',
+    onlyYours:
+      'Only the slots assigned to you, not those of other guardians, siblings, babysitters or playdates.',
+    reminder:
+      'Slots with a time get a reminder 30 minutes before. Slots without a time show as all-day.',
+    loading: 'Loading subscription links…',
+    empty: 'No subscription links yet.',
+    issuedOn: 'Issued',
+    createButton: 'Create subscription link',
+    creating: 'Creating…',
+    createError: 'Unable to create a subscription link.',
+    revokeButton: 'Revoke',
+    revokeError: 'Unable to revoke that subscription link.',
+    loadError: 'Unable to load subscription links.',
+    newUrlHint: 'Copy this link into your calendar app now -- it will not be shown again.',
+    copyButton: 'Copy link',
+    copiedButton: 'Copied!',
+  },
   cell: {
     notPlanned: 'Not planned',
     clear: 'Clear',

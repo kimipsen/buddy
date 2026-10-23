@@ -118,6 +118,7 @@ message text.
 | 10001–10006 | `Features/Privacy/PrivacyLog.cs`               | Users erased, orphaned children erased, family data passed to a sibling, an erasure that stopped halfway, a failed sweep, a personal data export                                             |
 | 11001–11004 | `Features/Feelings/FeelingsLog.cs`             | Feelings share links created or revoked, every view of shared check-ins, and every read of a child's check-ins with the reader and the access path (guardian or the child themself)          |
 | 12001–12004 | `Features/VisitSummaries/VisitSummariesLog.cs` | Visit summary share links created or revoked, every view of a shared report, and every read of a report by a guardian                                                                        |
+| 13001–13002 | `Features/Pickups/PickupsLog.cs`               | Pickup iCal feed tokens issued or revoked                                                                                                                                                    |
 
 Existing framework-adjacent logs: unbindable requests (`RequestBindingFailureMiddleware`),
 concurrency conflicts (`ConcurrencyConflictMiddleware`), rate-limit rejections

@@ -1193,6 +1193,8 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         notes: weekday === 2 ? 'After football' : null,
       });
     }
+    // Sara's own calendar subscription to the slots she does, so the card shows an issued link.
+    await api.post('/pickups/me/ical-tokens', {});
 
     // Print template ------------------------------------------------------------------------
     const row = (fields: Record<string, unknown>) => ({

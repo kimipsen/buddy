@@ -264,7 +264,8 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
   {
     name: 'guardian-pickup',
     title: 'Pickup & drop-off',
-    description: 'Who takes and fetches the child each day.',
+    description:
+      'Who takes and fetches the child each day, and a private calendar link with the slots the guardian does themself.',
     as: 'guardian',
     route: '/guardian/pickup',
   },

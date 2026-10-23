@@ -23,7 +23,10 @@ public static class PickupsFeature
     [
         typeof(PickupScheduleCreated),
         typeof(PickupAssigned),
-        typeof(PickupCleared)
+        typeof(PickupCleared),
+        typeof(PickupFeedStarted),
+        typeof(PickupIcalTokenIssued),
+        typeof(PickupIcalTokenRevoked)
     ];
 
     // Depends on IGuardianLinkEventStore for authorization, so AddGuardiansFeature must run first
@@ -77,10 +80,16 @@ public static class PickupsFeature
             options.Projections.Register(new PickupScheduleSnapshotProjection(), ProjectionLifecycle.Inline);
             options.Schema.For<PickupScheduleSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
+            // The guardian's iCal feed tokens (docs/backend/analysis/pickup-ical-feed.md): a second
+            // stream type in the same store, snapshotted the same way.
+            options.Projections.Register(new PickupFeedSnapshotProjection(), ProjectionLifecycle.Inline);
+            options.Schema.For<PickupFeedSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
+
             return options;
         });
 
         services.AddSingleton<IPickupScheduleEventStore, MartenPickupScheduleEventStore>();
+        services.AddSingleton<IPickupFeedEventStore, MartenPickupFeedEventStore>();
 
         return services;
     }
@@ -96,6 +105,10 @@ public static class PickupsFeature
         pickups.MapAssignPickup();
         pickups.MapClearPickup();
         pickups.MapListPickupSchedule();
+        pickups.MapCreatePickupIcalToken();
+        pickups.MapListPickupIcalTokens();
+        pickups.MapRevokePickupIcalToken();
+        pickups.MapGetPickupIcalFeed();
 
         return endpoints;
     }

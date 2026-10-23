@@ -50,6 +50,10 @@ sequenceDiagram
 | `PUT`    | `/pickups/children/{childId}/assignments?date=...&slot=...` | Assigns or replaces one `DropOff` or `PickUp` slot and returns the resulting occurrence.             |
 | `DELETE` | `/pickups/children/{childId}/assignments?date=...&slot=...` | Clears one slot. Repeating the operation is an idempotent success with `204 No Content`.             |
 | `GET`    | `/pickups/children/{childId}/schedule?from=...&to=...`      | Returns assigned occurrences in an inclusive date range of at most 31 days, sorted by date and slot. |
+| `POST`   | `/pickups/me/ical-tokens`                                   | Issues an iCal subscription token for the caller's own feed. The plaintext token is returned once.   |
+| `GET`    | `/pickups/me/ical-tokens`                                   | Lists the caller's tokens (id and issue time, newest first), never the secret.                       |
+| `DELETE` | `/pickups/me/ical-tokens/{tokenId}`                         | Revokes a token. An unknown or already revoked token is an idempotent `204 No Content`.              |
+| `GET`    | `/pickups/feeds/{guardianId}/ical/{token}`                  | Anonymous `text/calendar` feed of the slots assigned to that guardian; `404` for a bad token.        |
 
 The list response is sparse: it contains no placeholder for an unassigned
 slot. Clients construct their week or day grid and treat a missing
@@ -121,6 +125,32 @@ Marten streams are addressed by `PickupScheduleId`, so an inline
 that index, rehydrate the stream, and expand only assignments inside the
 requested date range. Occurrences are recomputed from current aggregate state
 and are not persisted as a separate timeline.
+
+## Calendar feed of my pickups
+
+A guardian can subscribe their own calendar app to the slots assigned to them, across all their
+children ([Pickup iCal feed](../analysis/pickup-ical-feed.md)). The tokens live on a second,
+small aggregate in this store, `PickupFeed`, one stream per guardian whose id equals the
+guardian's `UserId` (no index document). Its events are `PickupFeedStarted` (appended with the
+first token), `PickupIcalTokenIssued` and `PickupIcalTokenRevoked`; only the hash of a token is
+stored (`ShareSecret`).
+
+The feed request checks the token in constant time, then lists the guardian's active guardian
+links, expands each child's schedule 14 days back and 60 days ahead with
+`PickupScheduleExpansion`, and keeps only `Guardian` assignments naming that guardian.
+`PickupIcalFeedWriter` writes one `VEVENT` per slot:
+
+- `SUMMARY` "Drop off Emil" / "Pick up Emil" in the guardian's language (Danish: "Aflever" /
+  "Hent"), `DESCRIPTION` the slot's notes;
+- a slot with a time starts at that time in the child's time zone, written as UTC, lasts 15
+  minutes and has a display alarm 30 minutes before; a slot without a time is an all-day event
+  with no alarm;
+- `UID` `{childId}-{date}-{slot}@buddy-pickup`, so a changed time moves the event and a
+  reassigned slot disappears.
+
+The management routes are `/me` routes: a child account gets `403`. Losing a guardian link
+removes that child's slots on the next poll. Erasing the guardian deletes the feed stream, so
+every link stops working.
 
 ## Authorization model
 

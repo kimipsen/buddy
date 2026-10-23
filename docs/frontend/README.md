@@ -82,7 +82,8 @@ Current responsibilities:
 - start a chat-based AI assistant session to draft meal-plan assignments over a
   date range, optionally limited to rated meals and/or meals served in the last 30/60/90 days,
   then apply or discard the resulting draft
-- manage pickup and drop-off assignments for linked children
+- manage pickup and drop-off assignments for linked children, and subscribe their own calendar
+  app to the slots assigned to them
 - keep a sleep diary per child (one row per night, diary-wide sleep hygiene notes) and share it
   with a doctor through a revocable, optionally expiring link
 - browse day, work-week, rolling-week, and month calendar views and create events/tasks across
@@ -129,7 +130,8 @@ The guardian routes currently include:
 - `/guardian/medicine/effects` — rate a day's medicine effects and side effects, review 14 days at a
   time, and a printable summary grouped by dose period (`core/medicine-effects.ts`), with switches to
   leave medicines such as vitamin D out of it
-- `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner
+- `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner, plus the
+  "My pickups in my calendar" iCal subscription card (`PickupIcal`)
 - `/guardian/sleep-diary` — log a night, review 14 nights at a time, hygiene notes and share links
 - `/guardian/feelings` — a child's feelings check-ins: the 14-day grid (`shared/feelings-trend`,
   with the night before's sleep and taken doses, each left out when its feature is off; doses at
@@ -264,7 +266,8 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
 - `OnboardingService` reads and version-checks the guided setup's progress
   (`/users/me/onboarding`), decides whether a guardian enters the guide (`onboardingEntryGuard`
   on the guardian home), and derives each step's completion from the existing domain services
-- `PickupsService` lists, assigns, and clears pickup/drop-off occurrences
+- `PickupsService` lists, assigns, and clears pickup/drop-off occurrences, and lists, creates
+  (`postIdempotent`) and revokes the caller's own pickup iCal tokens
 - `HouseRulesService` lists, adds (`postIdempotent`), edits, removes and reorders the rules of a child or group book, acknowledges a rule (for a guardian, on a named child's behalf), and loads everything one child is asked to keep
 - `TransitionWarningsService` reads and writes a child's transition warning settings and per-item
   exceptions; `ChildWarningFeed` loads the signed-in child's settings and, only when they are on,

@@ -16,6 +16,27 @@ export const pickup = {
     updateError: 'Kunne ikke opdatere denne tid.',
     manageBabysittersLink: 'Administrer babysittere',
   },
+  ical: {
+    title: 'Mine afhentninger i min kalender',
+    description:
+      'Et privat link, der lægger de afleveringer og afhentninger, du står for, for alle dine børn, ind i din egen kalenderapp.',
+    onlyYours:
+      'Kun de tider, du står for – ikke andre voksnes, søskendes, babysitteres eller legeaftalers.',
+    reminder:
+      'Tider med et klokkeslæt får en påmindelse 30 minutter før. Tider uden klokkeslæt vises som heldagsbegivenheder.',
+    loading: 'Indlæser abonnementslinks…',
+    empty: 'Ingen abonnementslinks endnu.',
+    issuedOn: 'Udstedt',
+    createButton: 'Opret abonnementslink',
+    creating: 'Opretter…',
+    createError: 'Kunne ikke oprette et abonnementslink.',
+    revokeButton: 'Tilbagekald',
+    revokeError: 'Kunne ikke tilbagekalde det abonnementslink.',
+    loadError: 'Kunne ikke indlæse abonnementslinks.',
+    newUrlHint: 'Kopiér dette link til din kalenderapp nu -- det vises ikke igen.',
+    copyButton: 'Kopiér link',
+    copiedButton: 'Kopieret!',
+  },
   cell: {
     notPlanned: 'Ikke planlagt',
     clear: 'Ryd',

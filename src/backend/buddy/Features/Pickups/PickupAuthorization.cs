@@ -61,6 +61,16 @@ public static class PickupAuthorization
         };
     }
 
+    // The pickup feed routes are /me routes on the caller's own PickupFeed, so there is no child to
+    // check -- only that the caller isn't a child account, the same rule as
+    // WorkLocationAuthorization.CheckManage. See docs/backend/analysis/pickup-ical-feed.md, Question 6.
+    public static async Task<PickupAccess> CheckOwnFeed(UserId callerId, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+    {
+        var linksAsChild = await guardians.ListForChildAsync(callerId, cancellationToken);
+
+        return linksAsChild.Count == 0 ? PickupAccess.Allowed : PickupAccess.Forbidden;
+    }
+
     private static async Task<PickupAccessTier> ResolveTier(UserId childId, UserId callerId, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {
         if (callerId == childId)

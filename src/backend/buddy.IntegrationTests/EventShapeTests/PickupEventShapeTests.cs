@@ -70,4 +70,22 @@ public sealed class PickupEventShapeTests
             FixedGuardianId,
             FixedInstant),
         "Pickups/PickupCleared.json");
+
+    private static readonly PickupFeedId FixedFeedId = PickupFeedId.ForGuardian(FixedGuardianId);
+    private static readonly IcalTokenId FixedTokenId = new(Guid.Parse("00000000-0000-0000-0000-000000000071"));
+
+    [Fact]
+    public void PickupFeedStarted() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new PickupFeedStarted(FixedFeedId, FixedGuardianId, FixedInstant),
+        "Pickups/PickupFeedStarted.json");
+
+    [Fact]
+    public void PickupIcalTokenIssued() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new PickupIcalTokenIssued(FixedFeedId, FixedTokenId, "ABCDEF0123456789", FixedInstant),
+        "Pickups/PickupIcalTokenIssued.json");
+
+    [Fact]
+    public void PickupIcalTokenRevoked() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new PickupIcalTokenRevoked(FixedFeedId, FixedTokenId, FixedInstant),
+        "Pickups/PickupIcalTokenRevoked.json");
 }

@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
   AssignPickupRequest,
+  IssuedPickupIcalToken,
+  PickupIcalTokenSummary,
   PickupOccurrence,
   PickupsService,
   babysitterName,
@@ -210,6 +212,58 @@ describe('PickupsService', () => {
       req.flush(null);
 
       await promise;
+    });
+  });
+
+  describe('iCal tokens', () => {
+    const tokensUrl = `${apiBaseUrl}/pickups/me/ical-tokens`;
+
+    it('GETs the caller’s own token list', async () => {
+      const tokens: PickupIcalTokenSummary[] = [
+        { tokenId: 'token-1', issuedAt: '2026-10-01T00:00:00Z' },
+      ];
+
+      const promise = service.listIcalTokens();
+
+      const req = httpMock.expectOne(tokensUrl);
+      expect(req.request.method).toBe('GET');
+      req.flush(tokens);
+
+      await expect(promise).resolves.toEqual(tokens);
+    });
+
+    it('POSTs an empty body with an idempotency key and resolves with the issued token', async () => {
+      const issued: IssuedPickupIcalToken = {
+        tokenId: 'token-1',
+        token: 'plaintext-secret',
+        subscriptionPath: '/pickups/feeds/guardian-1/ical/plaintext-secret',
+      };
+
+      const promise = service.createIcalToken();
+
+      const req = httpMock.expectOne(tokensUrl);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({});
+      expect(req.request.headers.get('Idempotency-Key')).toBeTruthy();
+      req.flush(issued);
+
+      await expect(promise).resolves.toEqual(issued);
+    });
+
+    it('DELETEs one token by id', async () => {
+      const promise = service.revokeIcalToken('token-1');
+
+      const req = httpMock.expectOne(`${tokensUrl}/token-1`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+
+      await expect(promise).resolves.toBeNull();
+    });
+
+    it('prefixes a subscription path with the API base URL, issuing no request', () => {
+      expect(service.icalFeedUrl('/pickups/feeds/guardian-1/ical/secret')).toBe(
+        `${apiBaseUrl}/pickups/feeds/guardian-1/ical/secret`,
+      );
     });
   });
 });

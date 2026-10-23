@@ -23,9 +23,6 @@ in real time.
 
 ### Guardian
 
-- [ ] Private iCal subscription link with the pickups and drop-offs a guardian is assigned to,
-      across all their children (proposed, not yet implemented — see
-      [Pickup iCal feed](docs/backend/analysis/pickup-ical-feed.md))
 - [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
       child for something new such as the dentist or a trip (proposed, not yet implemented — see
       [Social stories](docs/backend/analysis/social-stories.md))
@@ -89,6 +86,9 @@ in real time.
 - [x] Mealie integration: connect the family's self-hosted Mealie, link meals to recipes, import
       Mealie's meal plan and send the week's recipes to a Mealie shopping list (see
       [Mealie integration](docs/backend/analysis/mealie-integration.md))
+- [x] Private iCal subscription link with the pickups and drop-offs a guardian is assigned to,
+      across all their children, with a reminder before each timed slot (see
+      [Pickup iCal feed](docs/backend/analysis/pickup-ical-feed.md))
 
 ### Child
 

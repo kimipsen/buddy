@@ -103,6 +103,12 @@ classDiagram
         +SlotAssignments Assignments
     }
 
+    class PickupFeed {
+        +PickupFeedId Id
+        +UserId GuardianId
+        +IcalTokens Tokens
+    }
+
     class WorkLocationSchedule {
         +WorkLocationScheduleId Id
         +UserId GuardianId
@@ -226,6 +232,7 @@ classDiagram
     MedicineEffectLog --> User : childId
     MedicineEffectLog ..> MedicineSchedule : regimen
     PickupSchedule --> User : childId, assignments
+    PickupFeed --> User : guardianId
     WorkLocationSchedule --> User : guardianId
     BabysitterList --> User : guardianId
     PickupSchedule ..> BabysitterList : babysitter assignments

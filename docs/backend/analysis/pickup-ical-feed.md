@@ -1,6 +1,12 @@
 # Pickup iCal Feed
 
-Status: Proposed (not yet implemented)
+Status: Implemented. `PickupFeed` (one stream per guardian, `PickupFeedStarted`,
+`PickupIcalTokenIssued`, `PickupIcalTokenRevoked`), the slices `CreatePickupIcalToken`,
+`ListPickupIcalTokens`, `RevokePickupIcalToken` (`/pickups/me/ical-tokens`) and the anonymous
+`GetPickupIcalFeed` (`/pickups/feeds/{guardianId}/ical/{token}`), rendered by
+`PickupIcalFeedWriter`; the "My pickups in my calendar" card on `/guardian/pickup`. Two details
+differ from the proposal: revoking an unknown token is an idempotent `204`, and the personal data
+export is unchanged (see Question 6).
 
 ## Context
 
@@ -191,7 +197,8 @@ events.**
   be live at once (phone, work laptop), as with both existing feeds.
 - **List** returns `TokenId` and `IssuedAt`, never the hash.
 - **Revoke** appends `PickupIcalTokenRevoked`; the next feed request with that token gets `404`.
-  Revoking an unknown or already revoked token is `404`, matching `RevokeMealPlanIcalToken`.
+  Revoking an unknown or already revoked token is an idempotent `204`, matching
+  `RevokeMealPlanIcalToken` (this doc first said `404`; the meal-plan slice is a no-op).
 - **Access.** All three management routes act on the caller's own feed, so there is no id to check.
   A child account is `403`, the
   [`WorkLocationAuthorization.CheckManage`](../../../src/backend/buddy/Features/WorkLocations/WorkLocationAuthorization.cs)
@@ -204,8 +211,9 @@ events.**
   longer in `ListForGuardianAsync`, so its slots leave the feed.
 - **Account deletion.** `PickupsPersonalDataEraser.EraseGuardianAsync` (today a no-op) deletes the
   `PickupFeed` stream and snapshot, so the URL stops working.
-  `PickupsPersonalDataExporter` adds the guardian's tokens (id, issued date; no hash) to the export
-  ([gdpr-data-protection.md](gdpr-data-protection.md)).
+  The personal data export is unchanged: like the calendar and meal-plan exporters, it leaves
+  out subscription tokens ([gdpr-data-protection.md](gdpr-data-protection.md)). The proposal to
+  add them was dropped to keep the `pickups` section's shape.
 
 ## Command slices (`Features/Pickups/`, same shape as the meal-plan iCal slices)
 
@@ -213,7 +221,7 @@ events.**
 | ----------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `CreatePickupIcalToken` | Guardian (self) | Lazily starts the stream. Emits `PickupFeedStarted` (first time) + `PickupIcalTokenIssued`. Returns `TokenId`, `Token`, `SubscriptionPath` |
 | `ListPickupIcalTokens`  | Guardian (self) | `TokenId`, `IssuedAt`, sorted newest first. Empty list when there is no stream                                                             |
-| `RevokePickupIcalToken` | Guardian (self) | Emits `PickupIcalTokenRevoked`; `404` for an unknown token                                                                                 |
+| `RevokePickupIcalToken` | Guardian (self) | Emits `PickupIcalTokenRevoked`; `204` no-op for an unknown token                                                                           |
 | `GetPickupIcalFeed`     | Anonymous       | Token check, then active children → `PickupScheduleExpansion` per child → filter to the guardian → `PickupIcalFeedWriter`                  |
 
 New supporting types: `PickupFeed`, `PickupFeedId`, `PickupFeedEvent`, `IPickupFeedEventStore` +
@@ -262,7 +270,7 @@ Integration tests under `buddy.IntegrationTests/Features/Pickups/`, mirroring
 [`GetMealPlanIcalFeedTests.cs`](../../../src/backend/buddy.IntegrationTests/Features/Mealplans/GetMealPlanIcalFeed/GetMealPlanIcalFeedTests.cs)
 and the three meal-plan token test folders:
 
-- Create/list/revoke: `200` for a guardian, `403` for a child, revoke of an unknown token `404`,
+- Create/list/revoke: `200` for a guardian, `403` for a child, revoke of an unknown token `204`,
   a second create keeps the first token working.
 - Feed: valid token returns `text/calendar` with the guardian's slots for two children; a slot
   assigned to a co-guardian, a sibling, a babysitter, a playdate and `SelfEscort` is absent; revoked
@@ -288,7 +296,7 @@ and the three meal-plan token test folders:
 | A child is deleted (erased)                            | Their `PickupSchedule` is erased and their link revoked, so their slots leave the feed         |
 | Child changes time zone                                | Future and past events in the window shift to the new zone's wall-clock times on the next poll |
 | Guardian account deleted                               | Feed stream erased; every token `404`                                                          |
-| Revoke an already revoked token                        | `404`, as `RevokeMealPlanIcalToken`                                                            |
+| Revoke an already revoked token                        | `204` no-op, as `RevokeMealPlanIcalToken`                                                      |
 | Child account calls the management routes              | `403`                                                                                          |
 | Feed polled very often                                 | `IcalFeedPolicy` rate limit; ETag lets unchanged polls return `304`                            |
 

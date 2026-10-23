@@ -2148,6 +2148,54 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/pickups/me/ical-tokens': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ListPickupIcalTokens'];
+    put?: never;
+    post: operations['CreatePickupIcalToken'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/pickups/me/ical-tokens/{tokenId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete: operations['RevokePickupIcalToken'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/pickups/feeds/{feedId}/ical/{token}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['GetPickupIcalFeed'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/work-locations/me/locations': {
     parameters: {
       query?: never;
@@ -4452,6 +4500,18 @@ export interface components {
       | components['schemas']['SiblingAssigneeDto']
       | components['schemas']['PlaydateAssigneeDto']
       | components['schemas']['BabysitterAssigneeDto'];
+    PickupIcalTokenResponse: {
+      /** Format: uuid */
+      tokenId: string;
+      token: string;
+      subscriptionPath: string;
+    };
+    PickupIcalTokenSummary: {
+      /** Format: uuid */
+      tokenId: string;
+      /** Format: date-time */
+      issuedAt: string;
+    };
     PickupOccurrence: {
       /** Format: date */
       date: string;
@@ -15290,6 +15350,184 @@ export interface operations {
           'application/json': components['schemas']['ErrorEnvelope'];
         };
       };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ListPickupIcalTokens: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PickupIcalTokenSummary'][];
+        };
+      };
+      304: components['responses']['NotModified'];
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  CreatePickupIcalToken: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PickupIcalTokenResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  RevokePickupIcalToken: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        tokenId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  GetPickupIcalFeed: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path: {
+        feedId: string;
+        token: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'text/calendar': string;
+        };
+      };
+      304: components['responses']['NotModified'];
       /** @description Not Found */
       404: {
         headers: {

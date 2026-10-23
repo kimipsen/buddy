@@ -13,6 +13,10 @@ internal sealed record PickupOccurrenceDto(
     string Notes,
     Guid AssignedBy);
 
+internal sealed record PickupIcalTokenResponseDto(Guid TokenId, string Token, string SubscriptionPath);
+
+internal sealed record PickupIcalTokenSummaryDto(Guid TokenId, DateTimeOffset IssuedAt);
+
 // PickupAssigneeDto read flat: "kind" plus whichever case fields the response carries.
 internal sealed record PickupAssigneeTestDto(
     PickupAssigneeKind Kind,

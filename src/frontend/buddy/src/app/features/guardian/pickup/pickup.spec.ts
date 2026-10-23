@@ -7,7 +7,8 @@ import { PickupsService } from '../../../core/pickups.service';
 import { GuardianPickup } from './pickup';
 import { disableFeatures } from '../../../../testing/features-fixture';
 
-// GuardianPickup is a trivial shell: a back link plus <app-manage-pickups>, no logic of its own.
+// GuardianPickup is a trivial shell: a back link plus <app-manage-pickups> and <app-pickup-ical>,
+// no logic of its own.
 // This smoke test only confirms it renders that composition -- ManagePickups' own behavior is
 // covered by manage-pickups.spec.ts. Its child services still need stubs here, since mounting the
 // real ManagePickups otherwise instantiates the real (HttpClient-backed) services via DI.
@@ -18,6 +19,7 @@ describe('GuardianPickup', () => {
     };
     const pickupsStub: Partial<PickupsService> = {
       listSchedule: vi.fn(async () => []),
+      listIcalTokens: vi.fn(async () => []),
     };
 
     await TestBed.configureTestingModule({
@@ -34,7 +36,7 @@ describe('GuardianPickup', () => {
     return { fixture };
   }
 
-  it('renders the manage-pickups panel and a back link to the guardian home', async () => {
+  it('renders the manage-pickups panel, the calendar subscription card and a back link to the guardian home', async () => {
     const { fixture } = await setup();
     fixture.detectChanges();
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -42,6 +44,7 @@ describe('GuardianPickup', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('app-manage-pickups')).toBeTruthy();
+    expect(compiled.querySelector('app-pickup-ical')).toBeTruthy();
     expect(compiled.querySelector('a[href="/guardian"]')).toBeTruthy();
   });
 
