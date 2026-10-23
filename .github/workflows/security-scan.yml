@@ -36,7 +36,7 @@ permissions:
 jobs:
   nuget:
     name: NuGet packages
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -64,7 +64,7 @@ jobs:
 
   npm:
     name: npm packages (${{ matrix.name }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -93,7 +93,7 @@ jobs:
 
   image:
     name: Container image (${{ matrix.name }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Uploads the results to the repository's code scanning alerts.
     permissions:
       contents: read
