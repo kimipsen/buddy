@@ -208,6 +208,7 @@ export class OnboardingService {
 
     const today = todayIsoDate();
     const childMemberIds = new Set(
+      // Stryker disable next-line MethodExpression: only intersected with listMyChildren ids, and the API marks every member with a guardian link isChild, so those ids always pass this filter
       group.members.filter((member) => member.isChild).map((member) => member.userId),
     );
     const [me, myChildren, pendingInvites, calendars] = await Promise.all([
