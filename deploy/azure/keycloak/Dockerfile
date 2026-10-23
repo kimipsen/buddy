@@ -10,7 +10,7 @@
 # database vendor, health endpoints) only take effect if they're baked in here
 # by `kc.sh build`. The stock image is built for `dev-file` (embedded H2).
 
-FROM quay.io/keycloak/keycloak:26.8.1@sha256:79c623a22abacf3fe6c00a5fb30f5b7843d717b234033b80995891c06116d244
+FROM quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
 
 # Exposes /health, /health/started, /health/ready, /health/live on the management port (9000). Off by default; both deployments turn it on for their probes.
 ARG HEALTH_ENABLED=false
