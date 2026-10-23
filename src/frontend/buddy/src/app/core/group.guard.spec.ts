@@ -30,7 +30,7 @@ describe('groupGuard', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: '**', children: [] }]),
         { provide: AuthService, useValue: authStub },
         {
           provide: UsersService,
@@ -56,6 +56,15 @@ describe('groupGuard', () => {
 
   it('sends an account outside the group to the root, which picks its own tree', async () => {
     const { router } = setup({ groups: signal(['buddy-child']) });
+
+    const result = await runGuard('buddy-guardian');
+
+    expect(router.serializeUrl(result as UrlTree)).toBe('/');
+  });
+
+  it('sends an account outside the group to the root, not back to the page it came from', async () => {
+    const { router } = setup({ groups: signal(['buddy-child']) });
+    await router.navigateByUrl('/child/today');
 
     const result = await runGuard('buddy-guardian');
 

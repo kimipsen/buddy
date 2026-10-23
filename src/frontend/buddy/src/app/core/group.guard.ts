@@ -22,6 +22,7 @@ export function groupGuard(group: BuddyGroup): CanActivateFn {
       return authenticated;
     }
 
+    // Stryker disable next-line StringLiteral: without relativeTo, createUrlTree resolves against the root route, so [''] is '/' too
     return auth.groups().includes(group) ? true : router.createUrlTree(['/']);
   };
 }
