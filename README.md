@@ -263,9 +263,34 @@ deploy/      Production Docker Compose and Caddy deployment
 - [Babysitters](docs/backend/analysis/babysitters.md)
 - [Gamified progress](docs/backend/analysis/gamified-progress.md)
 
+## Installing Buddy
+
+To run Buddy for a family, install it on a server of your own (or on Azure Container Apps).
+Once it is running, the first guardian who signs in gets a guided setup in the app.
+
+- **What you need:** a Linux server (amd64 or arm64, 2 CPUs and 4 GB of memory or more) with
+  Docker, the compose plugin, `git` and [Task](https://taskfile.dev); a domain with DNS records for
+  `app.`, `api.` and `auth.`; and an SMTP account for invitation and verification emails.
+- **Published images:** every release is published to the GitHub Container Registry as
+  `ghcr.io/kimipsen/buddy-api`, `buddy-frontend` and `buddy-keycloak`, for amd64 and arm64.
+  Check out the release tag and run `task deploy:pull`. To build the images on the server instead
+  (for a fork), run `task deploy`.
+- **Settings:** copy `deploy/.env.example` to `deploy/.env` and fill in the server's hostname,
+  the three domains, the PostgreSQL and Keycloak admin passwords and the `Mail__*` settings.
+  Optional lines turn off features this family doesn't use (`Features__Medicines=false`).
+- **First Keycloak setup:** sign in at `https://auth.<your domain>` as the admin, import the
+  `buddy` realm and point its `buddy-frontend` client at your app's domain. Then put a new
+  `buddy-admin-cli` secret in `.env` and create the first guardian account in the
+  `buddy-guardian` group.
+
+The [installation guide](docs/installation.md) has the steps in full, plus every setting and
+command-line argument. The [VM deploy guide](deploy/README.md) covers one server in depth,
+including backups, upgrades and rollback, and the [Azure deploy guide](deploy/README-azure.md)
+covers Azure Container Apps.
+
 ## Getting started
 
-The supported local environment is the VS Code development container. It
+To work on Buddy's code, use the development environment below. The supported local environment is the VS Code development container. It
 provides .NET, Node, npm, Angular CLI, Docker, PostgreSQL tooling, and the
 service network expected by the checked-in development configuration.
 

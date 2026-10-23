@@ -19,15 +19,6 @@ revoke and the public `GET .../ical/{token}` feed). Design in
 - [ ] **Frontend.** Subscription link (copy, revoke) for the guardian, with en + da strings, and
       updated screenshots.
 
-### Installation instructions in the README (2026-10-22)
-
-The root README only explains how to run Buddy in the development container. Add instructions on
-how to install Buddy.
-
-- [ ] **Install section.** Add an installation section to `README.md` covering the prerequisites,
-      the published Docker images, the `.env` settings and the first Keycloak setup, and link the
-      [VM deploy guide](deploy/README.md) and the [Azure deploy guide](deploy/README-azure.md).
-
 ### Publishing Docker images (2026-10-19)
 
 Plan in [Publishing Docker images on GitHub](docs/backend/analysis/publish-docker-images.md).
@@ -913,3 +904,13 @@ output.
       check the run's `sbom` artifact, the eight assets on the release (and that the release is a
       pre-release), and
       `gh attestation verify oci://ghcr.io/kimipsen/buddy-frontend:<version> --repo kimipsen/buddy --predicate-type https://cyclonedx.org/bom`. Done on `v1.6.2-rc.1` (2026-10-23).
+
+### Installation instructions in the README (2026-10-22)
+
+The root README only explains how to run Buddy in the development container. Add instructions on
+how to install Buddy.
+
+- [x] **Install section.** Add an installation section to `README.md` covering the prerequisites,
+      the published Docker images, the `.env` settings and the first Keycloak setup, and link the
+      [VM deploy guide](deploy/README.md) and the [Azure deploy guide](deploy/README-azure.md). Done, with the full
+      [installation guide](docs/installation.md) (2026-10-23).
