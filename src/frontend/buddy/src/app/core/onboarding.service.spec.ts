@@ -327,6 +327,8 @@ describe('OnboardingService', () => {
 
       expect(result.children.map((c) => c.id)).toEqual(['c1']);
       expect(result.childrenOutsideGroup.map((c) => c.id)).toEqual(['c2']);
+      expect(result.group?.id).toBe('group-1');
+      expect(result.groupMissing).toBe(false);
     });
 
     it('counts other adults in the group, never the guardian themselves', async () => {
@@ -391,6 +393,31 @@ describe('OnboardingService', () => {
         addDaysIso(today, -30),
         addDaysIso(today, 180),
       );
+      expect(result.hasScheduledRoutine).toBe(true);
+    });
+
+    it('finds a routine scheduled on any one of several setup calendars', async () => {
+      const listOccurrences = vi.fn(async (calendarId: string) =>
+        calendarId === 'cal-2'
+          ? [
+              {
+                routine: { subtaskId: 's1', parentTitle: 'Morning', parentIcon: '🌅' },
+              } as CalendarItemOccurrence,
+            ]
+          : [],
+      );
+      const { service } = setup(
+        domain({
+          calendars: {
+            getCalendar: vi.fn(async (id: string) => calendar(id, 'group-1')),
+            listOccurrences,
+          },
+        }),
+      );
+
+      const result = await service.loadSetup(progress);
+
+      expect(listOccurrences).toHaveBeenCalledTimes(2);
       expect(result.hasScheduledRoutine).toBe(true);
     });
 
@@ -475,12 +502,32 @@ describe('onboarding step completion', () => {
     hasMealAssignment: true,
   };
 
+  it('starts with nothing set up, nothing missing and nothing scheduled', () => {
+    expect(EMPTY_SETUP).toEqual({
+      group: null,
+      groupMissing: false,
+      children: [],
+      childrenOutsideGroup: [],
+      otherAdults: [],
+      pendingInvites: [],
+      calendars: [],
+      templates: [],
+      hasScheduledRoutine: false,
+      hasMealAssignment: false,
+    });
+  });
+
   it('starts at the group step', () => {
     expect(firstIncompleteStep(NOT_STARTED, EMPTY_SETUP)).toBe('group');
   });
 
   it('lands on the summary once every step is done', () => {
     expect(firstIncompleteStep(active, complete)).toBe('summary');
+  });
+
+  it('counts the group step done once a group is chosen, before any child is in it', () => {
+    expect(isStepComplete('group', active, { ...complete, children: [] })).toBe(true);
+    expect(isStepComplete('group', active, { ...complete, group: null })).toBe(false);
   });
 
   it('needs a child in the group, but not every child the guardian has', () => {

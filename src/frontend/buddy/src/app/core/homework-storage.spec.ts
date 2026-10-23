@@ -60,6 +60,10 @@ describe('homework storage', () => {
         parts: [{ id: 'maths', title: 'Maths', estimateMinutes: '20' }],
       }),
       JSON.stringify({ ...session, parts: [...session.parts, null] }),
+      JSON.stringify({
+        ...session,
+        parts: [...session.parts, { id: 'history', title: 'History' }],
+      }),
       JSON.stringify({ ...session, steps: [{ kind: 'focus', partId: 'maths', minutes: 10 }] }),
       JSON.stringify({ ...session, steps: [{ kind: 'break', minutes: '2' }] }),
       JSON.stringify({

@@ -107,6 +107,7 @@ function pickupCandidates(pickups: readonly PickupOccurrence[], timeZone: string
       title: '',
       icon: PICKUP_ICONS[pickup.slot],
       slot: pickup.slot,
+      // Stryker disable next-line StringLiteral: the filter above already dropped pickups without a time
       startsAtMs: instantInTimeZone(pickup.date, pickup.time ?? '', timeZone),
       override: undefined,
     }));

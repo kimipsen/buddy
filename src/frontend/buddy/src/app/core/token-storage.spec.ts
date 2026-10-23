@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { clearStoredTokens, readStoredTokens, TokenSet, writeStoredTokens } from './token-storage';
+import {
+  clearStoredTokens,
+  isTokenSet,
+  readStoredTokens,
+  TokenSet,
+  writeStoredTokens,
+} from './token-storage';
 
 const STORAGE_KEY = 'buddy_keycloak_tokens';
 
@@ -66,6 +72,29 @@ describe('token-storage', () => {
       );
 
       expect(readStoredTokens(localStorage)).toBeNull();
+    });
+  });
+
+  describe('isTokenSet', () => {
+    it('accepts a complete token set', () => {
+      expect(isTokenSet(tokens)).toBe(true);
+    });
+
+    it('rejects null and non-objects without throwing', () => {
+      expect(isTokenSet(null)).toBe(false);
+      expect(isTokenSet('access-token-value')).toBe(false);
+      // A function carrying every field still isn't a stored JSON object.
+      expect(isTokenSet(Object.assign(() => undefined, tokens))).toBe(false);
+    });
+
+    it('rejects a token set whose id token or expiry has the wrong type', () => {
+      expect(isTokenSet({ ...tokens, idToken: 42 })).toBe(false);
+      expect(isTokenSet({ ...tokens, expiresAt: '1700000000000' })).toBe(false);
+    });
+
+    it('rejects a token set without an access token', () => {
+      expect(isTokenSet({ ...tokens, accessToken: undefined })).toBe(false);
+      expect(isTokenSet({ ...tokens, accessToken: 42 })).toBe(false);
     });
   });
 

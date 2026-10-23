@@ -24,6 +24,7 @@ describe('injectPrintPageStyle', () => {
     expect(styles).toHaveLength(1);
     expect(styles[0].textContent).toContain('@page { size: A3 landscape; margin: 8mm; }');
     expect(styles[0].textContent).toContain('color-scheme: light');
+    expect(styles[0].getAttribute('data-test-print')).toBe('');
 
     fixture.destroy();
     expect(document.head.querySelectorAll('style[data-test-print]')).toHaveLength(0);
@@ -53,5 +54,35 @@ describe('injectPrintPageStyle', () => {
     document.documentElement.classList.add('dark');
     window.dispatchEvent(new Event('beforeprint'));
     expect(document.documentElement.classList.contains('dark')).toBe(true);
+  });
+
+  it('leaves a light theme light when the page goes away without a print', () => {
+    const fixture = TestBed.createComponent(Host);
+
+    fixture.destroy();
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+  });
+
+  it('puts the dark theme back when the page goes away mid-print', () => {
+    document.documentElement.classList.add('dark');
+    const fixture = TestBed.createComponent(Host);
+
+    window.dispatchEvent(new Event('beforeprint'));
+    fixture.destroy();
+
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+  });
+
+  it('forgets the theme once a print is over', () => {
+    document.documentElement.classList.add('dark');
+    const fixture = TestBed.createComponent(Host);
+
+    window.dispatchEvent(new Event('beforeprint'));
+    window.dispatchEvent(new Event('afterprint'));
+    // The guardian switches to the light theme after printing.
+    document.documentElement.classList.remove('dark');
+    fixture.destroy();
+
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
   });
 });

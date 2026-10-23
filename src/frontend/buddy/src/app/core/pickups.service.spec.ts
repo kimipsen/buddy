@@ -3,7 +3,13 @@ import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { AssignPickupRequest, PickupOccurrence, PickupsService } from './pickups.service';
+import {
+  AssignPickupRequest,
+  PickupOccurrence,
+  PickupsService,
+  babysitterName,
+  playdateHostName,
+} from './pickups.service';
 import { RuntimeConfigService } from './runtime-config.service';
 
 describe('PickupsService', () => {
@@ -205,5 +211,22 @@ describe('PickupsService', () => {
 
       await promise;
     });
+  });
+});
+
+describe('pickup assignee names', () => {
+  it('reads the playdate host’s name, and nothing for any other kind', () => {
+    expect(playdateHostName({ kind: 3, hostName: 'Alex', location: 'Park', contactInfo: '' })).toBe(
+      'Alex',
+    );
+    expect(playdateHostName({ kind: 0, guardianId: 'guardian-1' })).toBe('');
+  });
+
+  it('reads the babysitter’s resolved name, and nothing for any other kind', () => {
+    expect(babysitterName({ kind: 4, babysitterId: 'b1', guardianId: 'g1', name: 'Maja' })).toBe(
+      'Maja',
+    );
+    expect(babysitterName({ kind: 4, babysitterId: 'b1', guardianId: 'g1', name: null })).toBe('');
+    expect(babysitterName({ kind: 1 })).toBe('');
   });
 });

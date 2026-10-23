@@ -43,6 +43,7 @@ export function injectPrintPageStyle(marker: string): PrintPageStyle {
   inject(DestroyRef).onDestroy(() => {
     style?.remove();
     view?.removeEventListener('beforeprint', beforePrint);
+    // Stryker disable next-line StringLiteral: the afterPrint() below clears wasDark, so a later afterprint is a no-op whether or not the listener is removed
     view?.removeEventListener('afterprint', afterPrint);
     afterPrint();
   });

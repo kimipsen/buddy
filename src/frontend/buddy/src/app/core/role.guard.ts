@@ -93,5 +93,6 @@ export const roleRedirectGuard: CanActivateFn = async () => {
 
 // '/guardian-invite/...' starts with '/guardian' too, so match whole path segments only.
 function isWithin(url: string, home: string): boolean {
+  // Stryker disable next-line ConditionalExpression: returnUrl === home falls through to createUrlTree([home]), the same URL
   return url === home || url.startsWith(`${home}/`) || url.startsWith(`${home}?`);
 }

@@ -181,4 +181,8 @@ describe('PrintTemplatesService', () => {
       showAssignee: false,
     });
   });
+
+  it('leaves an empty row unlabelled unless a label is given', () => {
+    expect(emptyRow(PRINT_ROW_KIND.blank).label).toBe('');
+  });
 });

@@ -682,6 +682,15 @@ describe('TaskLibraryService', () => {
       expect(service.templates()[0]?.eveningBeforeFrom).toBe('18:30');
     });
 
+    it('sends a time input that carries seconds as whole minutes', async () => {
+      const promise = service.setChecklistOptions('template-1', '18:30:45');
+      const req = httpMock.expectOne(`${base()}/template-1/checklist-options`);
+      expect(req.request.body).toEqual({ eveningBeforeFrom: '18:30:00' });
+      req.flush(checklistResponse({ checklist: { eveningBeforeFrom: '18:30:00' } }));
+
+      await promise;
+    });
+
     it('clears the evening-before time with null', async () => {
       const promise = service.setChecklistOptions('template-1', null);
       const req = httpMock.expectOne(`${base()}/template-1/checklist-options`);

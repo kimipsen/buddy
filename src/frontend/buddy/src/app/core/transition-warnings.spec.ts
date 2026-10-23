@@ -162,6 +162,18 @@ describe('computeTransitionWarnings', () => {
     expect(warnings('16:25', { occurrences: [allDay, done] })).toEqual([]);
   });
 
+  it('warns for an event whatever its completed flag, which only tasks use', () => {
+    const event = occurrence({
+      itemId: 'football',
+      title: 'Football',
+      isCompleted: true,
+      startsAt: iso('16:30'),
+    });
+    expect(warnings('16:25', { occurrences: [event] })).toMatchObject([
+      { kind: 'Event', title: 'Football' },
+    ]);
+  });
+
   it('warns before a plain task’s due time', () => {
     const task = occurrence({
       itemId: 'bag',
@@ -198,6 +210,26 @@ describe('computeTransitionWarnings', () => {
     expect(warnings('20:04', { occurrences: subtasks })).toEqual([]);
   });
 
+  it('never warns for a routine with an all-day step', () => {
+    const subtasks = [
+      ['trip', '20:30', true],
+      ['teeth', '20:00', false],
+    ].map(([subtaskId, from, isAllDay]) =>
+      occurrence({
+        itemId: 'day',
+        title: String(subtaskId),
+        kind: 'Task',
+        isAllDay: Boolean(isAllDay),
+        startsAt: iso(String(from)),
+        subtaskId: String(subtaskId),
+        parentTitle: 'Holiday',
+        parentIcon: '🏖️',
+      }),
+    );
+
+    expect(warnings('19:56', { occurrences: subtasks })).toEqual([]);
+  });
+
   it('warns before a packing list’s "leave by" time, until every item is packed', () => {
     const items = ['Boots', 'Water bottle'].map((title, index) =>
       occurrence({
@@ -230,9 +262,13 @@ describe('computeTransitionWarnings', () => {
         kind: 'PickUp',
         slot: 'PickUp',
         title: '',
+        icon: '👋',
         startsAtMs: at('15:00'),
       }),
     ]);
+    expect(
+      warnings('07:57', { occurrences: [], pickups: [pickup('08:00:00', 'DropOff')] }),
+    ).toEqual([expect.objectContaining({ kind: 'DropOff', slot: 'DropOff', icon: '🎒' })]);
   });
 
   it('skips a pickup with no time, and a slot whose kind is left out', () => {
@@ -277,6 +313,7 @@ describe('isInQuietHours', () => {
   it('wraps midnight when From is after To', () => {
     const night = { from: '21:00', to: '07:00' };
     expect(isInQuietHours(night, at('20:59'), ZONE)).toBe(false);
+    expect(isInQuietHours(night, at('21:00'), ZONE)).toBe(true);
     expect(isInQuietHours(night, at('23:30'), ZONE)).toBe(true);
     expect(isInQuietHours(night, at('06:59'), ZONE)).toBe(true);
     expect(isInQuietHours(night, at('07:00'), ZONE)).toBe(false);

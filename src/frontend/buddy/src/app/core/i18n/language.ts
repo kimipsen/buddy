@@ -23,6 +23,7 @@ export function detectBrowserLanguage(): Language {
   const candidates = languages?.length ? languages : [navigator.language];
 
   for (const candidate of candidates) {
+    // Stryker disable next-line StringLiteral: split() always returns at least one element, so the default never applies
     const [primarySubtag = ''] = candidate.toLowerCase().split('-');
 
     if (isSupportedLanguage(primarySubtag)) {
