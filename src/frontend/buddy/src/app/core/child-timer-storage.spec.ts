@@ -24,6 +24,15 @@ describe('child-timer-storage', () => {
     expect(readTimerAnchor('2026-10-12')).toEqual({ itemId: 'run-1', anchor: paused });
   });
 
+  it('reads a timer stored before a reload under its storage key', () => {
+    localStorage.setItem(
+      'buddy_child_timer',
+      JSON.stringify({ itemId: 'run-1', date: '2026-10-12', anchor }),
+    );
+
+    expect(readTimerAnchor('2026-10-12')).toEqual({ itemId: 'run-1', anchor });
+  });
+
   it('throws away an entry from another day', () => {
     writeTimerAnchor('run-1', '2026-10-11', anchor);
 
