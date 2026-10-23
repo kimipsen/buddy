@@ -426,7 +426,7 @@ fi
 # comma-separated list of Name=true|false pairs. The API rejects an unknown name at startup, so the
 # names are checked here too (case-insensitively, like the API's binding): a typo fails the deploy
 # rather than leaving a crash-looping revision. Keep the list in step with FeatureOptions.cs.
-KNOWN_FEATURES=" mealplans mealplanaiassistant mealplanimport medicines sleepdiary pickups babysitters worklocations printing progress tasklibrary help "
+KNOWN_FEATURES=" mealplans mealplanaiassistant mealplanimport mealplanmealie medicines sleepdiary houserules pickups babysitters worklocations printing progress tasklibrary transitionwarnings feelings firstthen visitsummaries homework help "
 if [[ -n "${FEATURES:-}" ]]; then
   IFS=',' read -ra FEATURE_FLAGS <<< "$FEATURES"
   for flag in "${FEATURE_FLAGS[@]}"; do
@@ -437,7 +437,7 @@ if [[ -n "${FEATURES:-}" ]]; then
     fi
     name="${flag%%=*}"
     if [[ "$KNOWN_FEATURES" != *" ${name,,} "* ]]; then
-      echo "FEATURES in .env: '$name' is not a feature. Names: Mealplans, MealplanAiAssistant, MealplanImport, Medicines, SleepDiary, Pickups, Babysitters, WorkLocations, Printing, Progress, TaskLibrary, Help." >&2
+      echo "FEATURES in .env: '$name' is not a feature. Names: Mealplans, MealplanAiAssistant, MealplanImport, MealplanMealie, Medicines, SleepDiary, HouseRules, Pickups, Babysitters, WorkLocations, Printing, Progress, TaskLibrary, TransitionWarnings, Feelings, FirstThen, VisitSummaries, Homework, Help." >&2
       exit 1
     fi
     API_ENV_VARS+=("Features__$flag")
