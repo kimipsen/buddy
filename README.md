@@ -174,6 +174,8 @@ deploy/      Production Docker Compose and Caddy deployment
   data; regenerate with `task docs:screenshots`.
 - [Testing](docs/testing.md) — commands for frontend, backend, and mutation
   test suites.
+- [Installation](docs/installation.md) — how to install your own Buddy, and every setting and
+  command-line argument it takes.
 - [Deployment](deploy/README.md) — production Docker Compose and Caddy setup.
 - [Privacy and GDPR](PRIVACY.md) — what Buddy does with children's data, and the checklist for
   anyone who runs it.

@@ -4,6 +4,7 @@ This folder contains the project-level documentation for Buddy.
 
 ## Start here
 
+- [Installing Buddy](installation.md) — run your own Buddy
 - [Screenshots](screenshots/README.md) — what every page looks like
 - [Architecture](architecture.md) — C4 context and container diagrams
 - [Backend overview](backend/README.md)
@@ -56,6 +57,8 @@ This folder contains the project-level documentation for Buddy.
 
 ## Deployment
 
+- [Installing Buddy](installation.md) — install paths, the first guardian account, and every
+  setting and command-line argument.
 - [Deploying to Oracle Cloud](../deploy/README.md) — production stack setup
   with Docker, Keycloak, PostgreSQL, and Caddy on an Always Free VM.
 

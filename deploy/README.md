@@ -1,5 +1,8 @@
 # Deploying to the Oracle Cloud free VM
 
+For an overview of the ways to install Buddy and a reference of every setting and argument, see
+[docs/installation.md](../docs/installation.md). This guide is the full walkthrough for one server.
+
 Scope: ASP.NET API + PostgreSQL + Keycloak + the Angular frontend, all on one
 Always Free VM behind Caddy. RabbitMQ/Redis/Mailpit are not part of this (see
 the devcontainer compose for those, if they become real dependencies later).
