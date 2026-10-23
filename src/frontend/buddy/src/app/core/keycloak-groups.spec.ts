@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { readGroups } from './keycloak-groups';
+import { CHILD_GROUP, GUARDIAN_GROUP, readGroups } from './keycloak-groups';
 
 // A JWT with the given payload, base64url-encoded like Keycloak's (no padding, - and _).
 function jwt(payload: unknown): string {
@@ -13,6 +13,13 @@ function jwt(payload: unknown): string {
   return `header.${base64url}.signature`;
 }
 
+describe('Buddy groups', () => {
+  it('match the Keycloak group names the backend checks', () => {
+    expect(GUARDIAN_GROUP).toBe('buddy-guardian');
+    expect(CHILD_GROUP).toBe('buddy-child');
+  });
+});
+
 describe('readGroups', () => {
   it('returns the groups claim', () => {
     expect(readGroups(jwt({ groups: ['buddy-guardian', 'buddy-child'] }))).toEqual([
@@ -23,7 +30,7 @@ describe('readGroups', () => {
 
   it('decodes a base64url payload with non-ASCII text', () => {
     // "ø?>" and the like produce '-' and '_' in base64url and need UTF-8 decoding.
-    expect(readGroups(jwt({ name: 'Søren ?>?>', groups: ['buddy-child'] }))).toEqual([
+    expect(readGroups(jwt({ name: 'Søren ?>?>?>', groups: ['buddy-child'] }))).toEqual([
       'buddy-child',
     ]);
   });
