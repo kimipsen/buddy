@@ -30,18 +30,12 @@ how to install Buddy.
 
 ### SBOM generation (2026-10-20)
 
-Plan in [SBOM generation for builds](docs/backend/analysis/sbom-generation.md).
+Built in [SBOM generation for builds](docs/backend/analysis/sbom-generation.md); not yet run.
 
-Generate a software bill of materials for every build and upload it to GitHub next to the build
-output.
-
-- [ ] **Docker images.** Generate an SBOM for each image in `publish-images.yml` (e.g. BuildKit's
-      `sbom: true` attestation or Syft) and attach it to the pushed image and the release.
-- [ ] **Backend.** Generate a CycloneDX SBOM of the .NET NuGet dependencies in the backend build
-      and upload it as a workflow artifact.
-- [ ] **Frontend.** Generate a CycloneDX SBOM of the npm dependencies in the frontend build and
-      upload it as a workflow artifact.
-- [ ] **Releases.** Attach the backend, frontend and image SBOMs to the GitHub release as assets.
+- [ ] **First release run.** Push the next tag (a pre-release such as `v1.6.2-rc.1` is enough) and
+      check the run's `sbom` artifact, the eight assets on the release (and that the release is a
+      pre-release), and
+      `gh attestation verify oci://ghcr.io/kimipsen/buddy-frontend:<version> --repo kimipsen/buddy --predicate-type https://cyclonedx.org/bom`.
 
 ### Publishing Docker images (2026-10-19)
 
@@ -909,3 +903,18 @@ periods and clutter the summary. Design in
 - [x] **Analysis.** Write `docs/backend/analysis/pickup-ical-feed.md`: a per-guardian token (not
       per child), which assignments are included (only the ones to the current guardian), event
       title/location, recurrence vs. expanded occurrences, VALARM, and revocation (2026-10-23).
+
+### SBOM generation (2026-10-20)
+
+Plan in [SBOM generation for builds](docs/backend/analysis/sbom-generation.md).
+
+Generate a software bill of materials for every build and upload it to GitHub next to the build
+output.
+
+- [x] **Docker images.** Generate an SBOM for each image in `publish-images.yml` (e.g. BuildKit's
+      `sbom: true` attestation or Syft) and attach it to the pushed image and the release.
+- [x] **Backend.** Generate a CycloneDX SBOM of the .NET NuGet dependencies in the backend build
+      and upload it as a workflow artifact.
+- [x] **Frontend.** Generate a CycloneDX SBOM of the npm dependencies in the frontend build and
+      upload it as a workflow artifact.
+- [x] **Releases.** Attach the backend, frontend and image SBOMs to the GitHub release as assets.

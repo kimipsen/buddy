@@ -5,6 +5,10 @@ name: Publish images
 # release (1.5.3, 1.5, 1, latest); a push to master publishes edge. Every run also tags the commit
 # as sha-<12 characters>, matching the image tags `task deploy` uses. Design and tag rules:
 # docs/backend/analysis/publish-docker-images.md.
+#
+# SBOMs: each image carries BuildKit's SPDX SBOM per architecture, the api and frontend images also
+# a signed CycloneDX SBOM of their NuGet and npm packages, and a release gets all of them as assets.
+# Design: docs/backend/analysis/sbom-generation.md.
 
 on:
   push:
@@ -179,9 +183,56 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  # CycloneDX SBOMs of the packages the api and frontend images are built from. The image SBOMs
+  # can't list the npm packages, because the frontend image only holds the bundled JavaScript.
+  sbom:
+    needs: version
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Same SDK as the devcontainer, pinned in global.json at the repo root.
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: src/frontend/buddy/.nvmrc
+
+      # Only buddy.csproj: the integration tests don't ship. Analyzers and other build-only packages
+      # stay in, with scope "excluded". The tool is pinned in dotnet-tools.json.
+      - name: Backend SBOM
+        working-directory: src/backend
+        run: |
+          dotnet tool restore
+          dotnet CycloneDX buddy/buddy.csproj --configuration Release \
+            --output-format Json --spec-version 1.6 \
+            --set-name buddy-api --set-version "$VERSION" \
+            --output ../../sbom --filename buddy-api.cdx.json
+
+      # Read from package-lock.json, so nothing is installed; the same lock file the image's
+      # `npm ci` uses. Dev dependencies (Angular CLI, Vitest, Playwright) are build tooling and
+      # aren't in the bundle. The name and version only label the SBOM; package.json isn't committed.
+      - name: Frontend SBOM
+        working-directory: src/frontend/buddy
+        run: |
+          npm pkg set name=buddy-frontend version="$VERSION"
+          npx --yes @cyclonedx/cyclonedx-npm@6.0.1 --package-lock-only --omit dev \
+            --spec-version 1.6 --output-format JSON \
+            --output-file ../../../sbom/buddy-frontend.cdx.json
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom
+          path: sbom/*.cdx.json
+          if-no-files-found: error
+
   publish:
     name: Publish ${{ matrix.image }}
-    needs: [version, build]
+    needs: [version, build, sbom]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -247,3 +298,73 @@ jobs:
           subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.digest.outputs.digest }}
           push-to-registry: true
+
+      # Keycloak has no CycloneDX SBOM: its BuildKit SBOM already lists its Maven packages.
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: matrix.image != 'keycloak'
+        with:
+          name: sbom
+          path: ${{ runner.temp }}/sbom
+
+      # Verifiable with: gh attestation verify oci://<image>:<tag> --repo kimipsen/buddy
+      #   --predicate-type https://cyclonedx.org/bom
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        if: matrix.image != 'keycloak'
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          sbom-path: ${{ runner.temp }}/sbom/buddy-${{ matrix.image }}.cdx.json
+          push-to-registry: true
+
+  # A release gets every SBOM as an asset: the two CycloneDX files and each image's BuildKit SPDX
+  # SBOM per architecture. Releases are usually created by hand after `task release`; when this job
+  # gets there first, it creates the release with generated notes, which can still be edited.
+  release-assets:
+    if: github.ref_type == 'tag'
+    needs: [version, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+    env:
+      REGISTRY: ${{ needs.version.outputs.registry }}
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: sbom
+          path: sbom
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image SBOMs
+        run: |
+          for image in api frontend keycloak; do
+            docker buildx imagetools inspect "$REGISTRY/buddy-$image:$VERSION" \
+              --format '{{json .SBOM}}' > "$RUNNER_TEMP/$image.json"
+            for arch in amd64 arm64; do
+              jq -e ".\"linux/$arch\".SPDX" "$RUNNER_TEMP/$image.json" \
+                > "sbom/buddy-$image-linux-$arch.spdx.json"
+            done
+          done
+          ls -l sbom
+
+      # --verify-tag: never create a tag, only a release for the one that triggered the run.
+      # A pre-release version (1.7.0-rc.1) gets a pre-release, as it gets no `latest` image tag.
+      # --clobber lets a re-run replace the files.
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            prerelease=()
+            [[ "$VERSION" == *-* ]] && prerelease=(--prerelease)
+            gh release create "$TAG" --verify-tag --generate-notes "${prerelease[@]}"
+          fi
+          gh release upload "$TAG" sbom/* --clobber

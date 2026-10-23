@@ -1,6 +1,15 @@
 # SBOM generation for builds
 
-Status: Proposed (not yet implemented)
+Status: Implemented, not yet run on a release. In
+[`publish-images.yml`](../../../.github/workflows/publish-images.yml), a new `sbom` job makes
+`buddy-api.cdx.json` (CycloneDX .NET tool 6.3.1, pinned in `dotnet-tools.json`) and
+`buddy-frontend.cdx.json` (`cyclonedx-npm` 6.0.1) and uploads them as the `sbom` workflow artifact.
+The `publish` job attests them against the api and frontend images, and a tag-only
+`release-assets` job attaches them and the six BuildKit SPDX image SBOMs to the GitHub release,
+creating the release when it's missing. Changes from the proposal: `actions/attest` instead of the
+deprecated `actions/attest-sbom`; `release-assets` logs in to GHCR with `packages: read`; the
+frontend SBOM gets its name and version from `npm pkg set` in the CI checkout; and both SBOMs are
+pinned to CycloneDX 1.6 (the .NET tool defaults to 1.7).
 
 ## Context
 
@@ -78,18 +87,22 @@ Backend, with the tool pinned in [`dotnet-tools.json`](../../../src/backend/dotn
 next to `dotnet-stryker` (Dependabot's `nuget` entry for `/src/backend` keeps local tools current):
 
 ```bash
-dotnet tool restore --tool-manifest src/backend/dotnet-tools.json
-dotnet restore src/backend/buddy/buddy.csproj
-dotnet CycloneDX src/backend/buddy/buddy.csproj --output-format Json \
-  --set-version "$VERSION" --output sbom --filename buddy-api.cdx.json
+cd src/backend
+dotnet tool restore
+dotnet CycloneDX buddy/buddy.csproj --configuration Release \
+  --output-format Json --spec-version 1.6 \
+  --set-name buddy-api --set-version "$VERSION" \
+  --output ../../sbom --filename buddy-api.cdx.json
 ```
 
 Frontend, pinned with `npx --yes` the same way `security-scan.yml` pins `audit-ci@7.1.0`:
 
 ```bash
 cd src/frontend/buddy
+npm pkg set name=buddy-frontend version="$VERSION"
 npx --yes @cyclonedx/cyclonedx-npm@6.0.1 --package-lock-only --omit dev \
-  --output-format JSON --output-file ../../../sbom/buddy-frontend.cdx.json
+  --spec-version 1.6 --output-format JSON \
+  --output-file ../../../sbom/buddy-frontend.cdx.json
 ```
 
 - **Only `buddy.csproj`**, not `backend.slnx`: the integration tests (xunit, Alba,
@@ -101,10 +114,11 @@ npx --yes @cyclonedx/cyclonedx-npm@6.0.1 --package-lock-only --omit dev \
 - **`--package-lock-only`** reads `package-lock.json` without `npm ci`, so the job needs no
   `node_modules`. The lock file is the same one the Dockerfile's `npm ci --ignore-scripts` installs
   from, so the versions match the image.
-- The exact flags should be checked against each tool's `--help` when this is built; the CycloneDX
-  .NET tool has renamed options between major versions. Check too that the tool runs under the
-  `11.0.100-rc` SDK from [`global.json`](../../../global.json); if it doesn't, the fallback is
-  Syft on `dotnet publish` output (below).
+- Checked in the devcontainer on 2026-10-23: the .NET tool runs under the `11.0.100-rc` SDK from
+  [`global.json`](../../../global.json) and lists 91 packages (Marten and WolverineFx with
+  `pkg:nuget` PURLs; analyzers with scope `excluded`), and the npm SBOM lists the 15 runtime
+  packages (`@angular/core` 22.2.1, `rxjs` 7.8.2, ...) and no dev tooling. Each takes 2-3
+  seconds. Without `npm pkg set` the frontend SBOM would describe `buddy@0.0.0`.
 
 Considered and rejected:
 
@@ -122,7 +136,7 @@ Considered and rejected:
 ## Decision: attest the source SBOMs against their images
 
 **Decision: in the `publish` job, after `attest-build-provenance`, the `api` and `frontend`
-matrix entries also run `actions/attest-sbom` with their CycloneDX file as the predicate and the
+matrix entries also run `actions/attest` with their CycloneDX file as the predicate and the
 multi-arch image digest as the subject, pushed to the registry.**
 
 ```yaml
@@ -135,7 +149,7 @@ multi-arch image digest as the subject, pushed to the registry.**
 
 # Verifiable with: gh attestation verify oci://<image>:<tag> --repo kimipsen/buddy
 #   --predicate-type https://cyclonedx.org/bom
-- uses: actions/attest-sbom@<sha> # v2.x
+- uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
   if: matrix.image != 'keycloak'
   with:
     subject-name: ${{ env.IMAGE }}
@@ -150,8 +164,8 @@ multi-arch image digest as the subject, pushed to the registry.**
 - It reuses the permissions the `publish` job already has (`id-token: write`,
   `attestations: write`, `packages: write`).
 - Keycloak has no source SBOM; its BuildKit SBOM is complete.
-- Check when building whether `attest-sbom` has been folded into `actions/attest` by then, and use
-  whichever is current, pinned by SHA like every other action.
+- `actions/attest-sbom` is deprecated in favour of `actions/attest`, which creates an SBOM
+  attestation when it's given `sbom-path`.
 
 The unsigned BuildKit SBOMs stay as they are. Signing them too would mean extracting each
 architecture's SPDX and attesting it against the per-architecture digest, which is more work than
@@ -166,10 +180,11 @@ exist yet, and uploads all the SBOMs as assets.**
 ```yaml
 release-assets:
   if: github.ref_type == 'tag'
-  needs: [version, publish, sbom]
+  needs: [version, publish]
   runs-on: ubuntu-latest
   permissions:
     contents: write
+    packages: read
   steps:
     - uses: actions/download-artifact@... # the sbom artifact
     - name: Image SBOMs
@@ -194,7 +209,7 @@ release-assets:
         gh release upload "$TAG" sbom/* --clobber
 ```
 
-Each release gets eight files, about 21 MB in total:
+Each release gets eight files, about 27 MB in total:
 
 | Asset                                                         | Format         | Source              |
 | ------------------------------------------------------------- | -------------- | ------------------- |
@@ -210,7 +225,7 @@ Each release gets eight files, about 21 MB in total:
   `--prerelease`, the same rule metadata-action uses to withhold `latest`.
 - **`--clobber`** makes a re-run of the workflow (`gh run rerun`) replace the files instead of
   failing.
-- `contents: write` is granted to this job only, keeping the workflow's least-privilege default.
+- `contents: write` (and `packages: read`, for the GHCR login) is granted to this job only, keeping the workflow's least-privilege default.
 - Only after `publish`: a release whose images failed the Trivy gate gets no SBOMs, because there
   is nothing to describe.
 
@@ -252,7 +267,7 @@ Considered and rejected:
 | Backend SBOM         | CycloneDX .NET tool on `buddy.csproj` only, pinned in `dotnet-tools.json`; Syft on publish output as fallback |
 | Frontend SBOM        | `cyclonedx-npm --package-lock-only --omit dev`, so it lists what's bundled into the image                     |
 | Format               | CycloneDX JSON for source SBOMs, SPDX JSON (as BuildKit writes it) for images; no conversion                  |
-| Signing              | `attest-sbom` attests the api and frontend CycloneDX SBOMs against their multi-arch image digests             |
+| Signing              | `actions/attest` attests the api and frontend CycloneDX SBOMs against their multi-arch image digests          |
 | Workflow artifacts   | One `sbom` artifact per run with the two CycloneDX files                                                      |
 | Release assets       | A tag-only `release-assets` job uploads all eight SBOMs, creating the release if it's missing                 |
 
@@ -283,7 +298,7 @@ flowchart TB
             BK["buildx: sbom: true\nSPDX attestation per arch"]
         end
         Sbom["sbom (new)\nCycloneDX .NET tool -> buddy-api.cdx.json\ncyclonedx-npm -> buddy-frontend.cdx.json"]
-        Publish["publish (per image)\nimagetools create + tags\nattest-build-provenance\nattest-sbom (api, frontend) (new)"]
+        Publish["publish (per image)\nimagetools create + tags\nattest-build-provenance\nactions/attest SBOM (api, frontend) (new)"]
         Release["release-assets (new, tags only)\nextract 6 image SPDX files\ngh release create if missing\ngh release upload --clobber"]
     end
     Artifact[("workflow artifact: sbom")]

@@ -125,9 +125,6 @@ in real time.
 
 ### Platform
 
-- [ ] Software bills of materials (SBOMs) for the backend, frontend and every published image,
-      attested in GHCR and attached to each GitHub release (proposed, not yet implemented — see
-      [SBOM generation for builds](docs/backend/analysis/sbom-generation.md))
 - [x] Keycloak authentication, token lifecycle, and role-based routing by Keycloak group: only
       `buddy-guardian` members see the guardian pages and only `buddy-child` members the child
       board; an account in neither group can't use Buddy
@@ -146,6 +143,8 @@ in real time.
       and [Buddy as a mobile app](docs/frontend/analysis/mobile-app.md))
 - [x] Versioned multi-arch Docker images (amd64 and arm64) published to the GitHub Container
       Registry on every release
+- [x] Software bills of materials (SBOMs) for the backend, frontend and every published image,
+      attested in GHCR and attached to each GitHub release
 
 ## Repository structure
 

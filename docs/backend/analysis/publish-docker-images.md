@@ -217,16 +217,16 @@ package. Digests from builds that failed the scan stay behind untagged until the
 
 ## Decisions made
 
-| Question      | Decision                                                                                   |
-| ------------- | ------------------------------------------------------------------------------------------ |
-| Registry      | GHCR, authenticated with `GITHUB_TOKEN`; no extra account                                  |
-| Workflow      | A new `publish-images.yml`, on release tags, `master` pushes and manual runs, never on PRs |
-| Frontend URLs | Read at container start: Caddy serves `runtime-config.json` from env; build args removed   |
-| Architectures | `linux/amd64` and `linux/arm64`, each on a native runner, joined into one tag              |
-| Tags          | SemVer from release tags plus `latest`; `edge` and `sha-*` from `master`                   |
-| Gate          | Trivy on the pushed digest before tagging, same rules as security-scan                     |
-| Supply chain  | GitHub build provenance and SBOM; cosign deferred                                          |
-| Deploys       | Phase 2, after publishing has worked for a release or two                                  |
+| Question      | Decision                                                                                      |
+| ------------- | --------------------------------------------------------------------------------------------- |
+| Registry      | GHCR, authenticated with `GITHUB_TOKEN`; no extra account                                     |
+| Workflow      | A new `publish-images.yml`, on release tags, `master` pushes and manual runs, never on PRs    |
+| Frontend URLs | Read at container start: Caddy serves `runtime-config.json` from env; build args removed      |
+| Architectures | `linux/amd64` and `linux/arm64`, each on a native runner, joined into one tag                 |
+| Tags          | SemVer from release tags plus `latest`; `edge` and `sha-*` from `master`                      |
+| Gate          | Trivy on the pushed digest before tagging, same rules as security-scan                        |
+| Supply chain  | GitHub build provenance and SBOMs ([sbom-generation.md](sbom-generation.md)); cosign deferred |
+| Deploys       | Phase 2, after publishing has worked for a release or two                                     |
 
 ## Remaining open questions
 
@@ -258,7 +258,7 @@ flowchart TB
             Amd["ubuntu-latest\nlinux/amd64"]
             Arm["ubuntu-24.04-arm\nlinux/arm64"]
         end
-        Publish["publish (per image)\nTrivy gate on digest\nimagetools create + tags\nprovenance + SBOM"]
+        Publish["publish (per image)\nTrivy gate on digest\nimagetools create + tags\nprovenance + SBOM\n(see sbom-generation.md)"]
     end
     GHCR[("ghcr.io/owner/\nbuddy-api, buddy-frontend, buddy-keycloak")]
     subgraph Deploys["Deployments (phase 2)"]

@@ -63,6 +63,19 @@ Registry as `ghcr.io/kimipsen/buddy-api`, `buddy-frontend` and `buddy-keycloak`:
 same gate as `security-scan.yml`) and carries build provenance and an SBOM; check one with
 `gh attestation verify oci://ghcr.io/kimipsen/buddy-api:1.5.3 --repo kimipsen/buddy`.
 
+Every published build also has software bills of materials (SBOMs;
+[design](backend/analysis/sbom-generation.md)):
+
+- Each image has BuildKit's SPDX SBOM per architecture:
+  `docker buildx imagetools inspect ghcr.io/kimipsen/buddy-api:1.7.0 --format '{{json .SBOM}}'`.
+- The api and frontend images also have a signed CycloneDX SBOM of their NuGet and npm packages
+  (the frontend image's own SBOM can't see the bundled npm packages):
+  `gh attestation verify oci://ghcr.io/kimipsen/buddy-frontend:1.7.0 --repo kimipsen/buddy --predicate-type https://cyclonedx.org/bom`.
+- The run's `sbom` workflow artifact holds the two CycloneDX files.
+- A release gets all eight files as assets. If the GitHub release doesn't exist yet when the
+  workflow gets there, the workflow creates it with generated notes; edit the notes afterwards
+  as usual.
+
 The frontend image works for any deployment: it reads `API_BASE_URL`, `KEYCLOAK_AUTHORITY` and
 the optional `REPOSITORY_URL` from its environment when it starts.
 
