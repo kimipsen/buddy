@@ -258,6 +258,7 @@ deploy/      Production Docker Compose and Caddy deployment
 - [AI assistant meal filter](docs/backend/analysis/ai-assistant-meal-filter.md)
 - [Mealie integration](docs/backend/analysis/mealie-integration.md)
 - [Pickup and drop-off schedules](docs/backend/analysis/pickup-schedules.md)
+- [Pickup iCal feed](docs/backend/analysis/pickup-ical-feed.md)
 - [Babysitters](docs/backend/analysis/babysitters.md)
 - [Gamified progress](docs/backend/analysis/gamified-progress.md)
 
