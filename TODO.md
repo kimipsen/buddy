@@ -28,15 +28,6 @@ how to install Buddy.
       the published Docker images, the `.env` settings and the first Keycloak setup, and link the
       [VM deploy guide](deploy/README.md) and the [Azure deploy guide](deploy/README-azure.md).
 
-### SBOM generation (2026-10-20)
-
-Built in [SBOM generation for builds](docs/backend/analysis/sbom-generation.md); not yet run.
-
-- [ ] **First release run.** Push the next tag (a pre-release such as `v1.6.2-rc.1` is enough) and
-      check the run's `sbom` artifact, the eight assets on the release (and that the release is a
-      pre-release), and
-      `gh attestation verify oci://ghcr.io/kimipsen/buddy-frontend:<version> --repo kimipsen/buddy --predicate-type https://cyclonedx.org/bom`.
-
 ### Publishing Docker images (2026-10-19)
 
 Plan in [Publishing Docker images on GitHub](docs/backend/analysis/publish-docker-images.md).
@@ -918,3 +909,7 @@ output.
 - [x] **Frontend.** Generate a CycloneDX SBOM of the npm dependencies in the frontend build and
       upload it as a workflow artifact.
 - [x] **Releases.** Attach the backend, frontend and image SBOMs to the GitHub release as assets.
+- [x] **First release run.** Push the next tag (a pre-release such as `v1.6.2-rc.1` is enough) and
+      check the run's `sbom` artifact, the eight assets on the release (and that the release is a
+      pre-release), and
+      `gh attestation verify oci://ghcr.io/kimipsen/buddy-frontend:<version> --repo kimipsen/buddy --predicate-type https://cyclonedx.org/bom`. Done on `v1.6.2-rc.1` (2026-10-23).

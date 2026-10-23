@@ -1,6 +1,6 @@
 # SBOM generation for builds
 
-Status: Implemented, not yet run on a release. In
+Status: Implemented, and first run on the `v1.6.2-rc.1` pre-release (2026-10-23). In
 [`publish-images.yml`](../../../.github/workflows/publish-images.yml), a new `sbom` job makes
 `buddy-api.cdx.json` (CycloneDX .NET tool 6.3.1, pinned in `dotnet-tools.json`) and
 `buddy-frontend.cdx.json` (`cyclonedx-npm` 6.0.1) and uploads them as the `sbom` workflow artifact.
