@@ -408,6 +408,7 @@ self-hosted runner.
 | Pass/fail                | Shared k6 thresholds (p95/p99 per read/write, dashboard group duration, < 0.5 % errors, no 5xx) plus the post-run health, `53300` and restart checks |
 | Server-side visibility   | The existing OTLP export into `grafana/otel-lgtm`. k6 sends its metrics there over OTLP too                                                          |
 | When it runs             | Typecheck + smoke on PRs. Smoke + load + rate-limit nightly. The heavy profiles on demand                                                            |
+| Expected peak            | Defend about 28 dashboard loads/s (about 450 requests/s, roughly 700 families active at once): the first `breakpoint` result divided by 3            |
 
 ## Implementation notes
 
@@ -425,14 +426,58 @@ Things found while building it that aren't obvious from the code:
 - **k6's TypeScript sees no `crypto` or `console` in `@types/k6`.** `globals.d.ts` declares the two
   runtime globals the scripts use, instead of pulling in `lib: ["dom"]`.
 
+## Measured results
+
+The first runs of `load-tests.yml` on GitHub-hosted `ubuntu-latest` runners (4 vCPU, shared by
+k6 and the whole stack), on 2026-10-24. They are the start of the calibration data, not yet the
+five `load` runs the thresholds question asks for.
+
+### `load`: 50 families, 10-minute hold
+
+| p95 / p99                | [Run 1](https://github.com/kimipsen/buddy/actions/runs/40090760839) | [Run 2](https://github.com/kimipsen/buddy/actions/runs/40092907141) |
+| ------------------------ | ------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Dashboard (whole screen) | 33 / 42 ms                                                          | 39 / 47 ms                                                          |
+| Reads                    | 4 / 6 ms                                                            | 4 / 7 ms                                                            |
+| Writes                   | 8 / 80 ms                                                           | 11 / 85 ms                                                          |
+| iCal feeds               | 18 / 24 ms                                                          | 23 / 33 ms                                                          |
+| Requests, failed         | 22,190, 0 %                                                         | 22,733, 0 %                                                         |
+
+- The two runs differ by 7-41 % on the same commit, a few milliseconds in absolute terms. That
+  is runner variance, and it's why the nightly comparison is a trend report, not a gate.
+- 50 families drive about 32 requests/s (about 0.65 requests/s per family).
+- Reads are fast partly because most repeat reads answer `304 Not Modified`. That saves the
+  transfer, not the server work: the API renders and hashes the body before it can answer `304`.
+- Every proposed threshold is an order of magnitude above these numbers, so as they stand they
+  would only catch a large regression.
+
+### `breakpoint`
+
+[Run](https://github.com/kimipsen/buddy/actions/runs/40094760768): 100 seeded families, arrival
+rate rising by 5 dashboard loads/s per minute.
+
+- **Stopped after 16m48s at about 84 dashboard loads/s** (about 17 requests each, so about 1,400
+  requests/s), when the dashboard's whole-screen p95 reached 1.64 s (limit 1.5 s) and read p99
+  reached 804 ms (limit 800 ms). 709,623 requests in all.
+- **It degraded without failing:** 0 failed requests, 0 5xx, no `53300`, no API restart, and all
+  702,489 checks passed. The read median was still 2.5 ms at the end; only the tail grew.
+- **A lower bound.** At the end k6 ran 532 VUs and dropped 491 iterations it couldn't schedule,
+  on the same 4 CPUs as the API, Postgres and Keycloak. Part of the slowdown is k6 competing for
+  CPU, so one 1-vCPU API container can likely take more.
+
+Divided by the safety factor of 3, this gives the number to defend: about 28 dashboard loads/s,
+about 450 requests/s, or roughly 700 families active at the same moment at the `load` profile's
+mix. The nightly `load` run stays at 50 families: it's a trend check, not a capacity test.
+
 ## Remaining open questions
 
-- **What is the expected peak?** The `load` level (50 families active at once) is a guess. Lean:
-  derive it from the number of registered families once production has some. Until then, use the
-  `breakpoint` result divided by a safety factor of 3 as the number to defend.
-- **Should the thresholds be stricter?** The p95 numbers are proposals. Lean: run `load` five
-  times on the load stack, set each threshold at about 1.5 times the observed p95, and record the
-  result here as a decision.
+- **Should the thresholds be stricter?** The p95 numbers are proposals, and the first two `load`
+  runs came in far below them (see [Measured results](#measured-results)). Lean: three more
+  `load` runs, then set each threshold at about 1.5 times the worst observed p95 and record it
+  here as a decision. Thresholds that tight could fail on runner noise alone, so weigh them
+  against the run-to-run spread before making them a gate.
+- **Revisit the expected peak with real numbers.** It now comes from the breakpoint result (see
+  Decisions made). Lean: once production has registered families, compare their real morning
+  peak with it, and re-run `breakpoint` after changes to the data access layer.
 - **Self-hosted runner or Grafana Cloud k6 for stable numbers?** GitHub runners vary too much for
   a hard regression gate. Lean: start with trend reporting only. If a regression gate becomes
   wanted, add a small self-hosted runner (the Oracle free tier has room for a second VM), or run

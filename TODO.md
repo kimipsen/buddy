@@ -10,8 +10,10 @@
 
 Plan in [Performance and load testing with k6](docs/backend/analysis/load-testing-k6.md).
 
-- [ ] **Settle the remaining open questions** (expected peak, runner for stable numbers, staging).
-- [ ] **Calibrate.** Five `load` runs on the load stack; record the VU level and thresholds in the doc.
+- [ ] **Settle the remaining open questions** (runner for stable numbers, staging). The expected
+      peak is settled from the first breakpoint run (2026-10-24).
+- [ ] **Calibrate.** Three more `load` runs (two are recorded in the doc's Measured results), then
+      set the thresholds from them.
 
 ### Publishing Docker images (2026-10-19)
 
