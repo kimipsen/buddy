@@ -111,8 +111,13 @@ export function currentRun(
   const started = candidates.filter(
     ({ window }) => window.startMs <= nowMs && nowMs <= window.endMs + CURRENT_RUN_GRACE_MS,
   );
+  // Laid out so the Stryker comment below covers only the equivalent `>`.
+  // prettier-ignore
   const upcoming = candidates.filter(
-    ({ window }) => window.startMs > nowMs && window.startMs - nowMs <= CURRENT_RUN_LOOK_AHEAD_MS,
+    ({ window }) =>
+      // Stryker disable next-line EqualityOperator: a run starting exactly now is always in `started`, which wins over `upcoming`
+      window.startMs > nowMs &&
+      window.startMs - nowMs <= CURRENT_RUN_LOOK_AHEAD_MS,
   );
 
   return earliest(started) ?? earliest(upcoming);

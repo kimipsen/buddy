@@ -86,6 +86,19 @@ function note(date: string, dosage: string): MedicineEffectNote {
   };
 }
 
+function regimenNote(date: string, ...medicines: [name: string, dosage: string][]) {
+  return {
+    ...note(date, ''),
+    regimen: medicines.map(([name, dosage]) => ({
+      medicineId: name,
+      name,
+      dosage,
+      doses: [],
+      isExcludedFromEffects: false,
+    })),
+  } satisfies MedicineEffectNote;
+}
+
 function checkIn(
   date: string,
   time: string,
@@ -134,6 +147,13 @@ describe('visit summary stats', () => {
       nightWakeUps: 2,
       tiredMornings: 1,
     });
+  });
+
+  it('counts falling asleep at bedtime as no time at all, not a whole day', () => {
+    expect(
+      sleepStats([night('2026-03-02', { bedTime: '20:00:00', fellAsleepTime: '20:00:00' })])
+        .averageMinutesToFallAsleep,
+    ).toBe(0);
   });
 
   it('has no averages without nights', () => {
@@ -210,6 +230,21 @@ describe('visit summary stats', () => {
     expect(stats.adultNotes).toEqual([{ date: '2026-03-02', time: '16:10', note: 'Bus' }]);
   });
 
+  it('lists the adults’ notes oldest first, to the minute, leaving out blank ones', () => {
+    const stats = feelingsStats([
+      checkIn('2026-03-02', '18:30:00', { note: 'Evening' }),
+      checkIn('2026-03-03', '08:00:00', { note: 'Next day' }),
+      checkIn('2026-03-02', '09:15:00', { note: 'Morning' }),
+      checkIn('2026-03-02', '12:00:00', { note: '   ' }),
+    ]);
+
+    expect(stats.adultNotes).toEqual([
+      { date: '2026-03-02', time: '09:15', note: 'Morning' },
+      { date: '2026-03-02', time: '18:30', note: 'Evening' },
+      { date: '2026-03-03', time: '08:00', note: 'Next day' },
+    ]);
+  });
+
   it('lays the period out as Monday-first weeks with padding days outside it', () => {
     const medicine: VisitSummaryMedicineSection = {
       schedules: [schedule('m1')],
@@ -241,6 +276,71 @@ describe('visit summary stats', () => {
     expect(weeks[0][3]).toMatchObject({ doses: null, doseChange: true });
     expect(weeks[1][1]).toMatchObject({ date: '2026-03-10', inPeriod: true });
     expect(weeks[1][2]).toMatchObject({ inPeriod: false });
+  });
+
+  it('includes the week that starts on the period’s last day', () => {
+    const weeks = overviewWeeks('2026-03-04', '2026-03-09', null, null, null, '2026-03-09');
+
+    expect(weeks).toHaveLength(2);
+    expect(weeks[1][0]).toMatchObject({ date: '2026-03-09', inPeriod: true });
+  });
+
+  it('shows only past doses and check-ins of each day itself, never on padding days', () => {
+    const medicine: VisitSummaryMedicineSection = {
+      schedules: [schedule('m1')],
+      doses: [
+        dose('m1', '2026-03-03', 'Taken'),
+        dose('m1', '2026-03-04', 'Taken'),
+        dose('m1', '2026-03-04', 'Skipped'),
+      ],
+      effectNotes: [],
+      excludedMedicineCount: 0,
+    };
+
+    const [week] = overviewWeeks(
+      '2026-03-04',
+      '2026-03-08',
+      null,
+      medicine,
+      [
+        checkIn('2026-03-04', '16:00', { zone: 'Red' }),
+        checkIn('2026-03-05', '09:00', { zone: 'Blue' }),
+      ],
+      '2026-03-10',
+    );
+
+    expect(week[1]).toMatchObject({ date: '2026-03-03', inPeriod: false, doses: null });
+    expect(week[2]).toMatchObject({ doses: { taken: 1, due: 2 }, zones: ['Red'] });
+    expect(week[3]).toMatchObject({ zones: ['Blue'] });
+  });
+
+  it('marks a dose change only where the regimen differs from the last noted day in the period', () => {
+    const medicine: VisitSummaryMedicineSection = {
+      schedules: [],
+      doses: [],
+      effectNotes: [
+        // A padding day before the period isn't the starting point.
+        regimenNote('2026-03-03', ['Concerta', '27 mg']),
+        regimenNote('2026-03-04', ['Concerta', '18 mg'], ['Melatonin', '3 mg']),
+        // The same medicines listed in another order are the same regimen.
+        regimenNote('2026-03-05', ['Melatonin', '3 mg'], ['Concerta', '18 mg']),
+        // 03-06 has no note; the next note still compares with 03-05.
+        regimenNote('2026-03-07', ['Concerta', '27 mg'], ['Melatonin', '3 mg']),
+      ],
+      excludedMedicineCount: 0,
+    };
+
+    const [week] = overviewWeeks('2026-03-04', '2026-03-08', null, medicine, null, '2026-03-08');
+
+    expect(week.map((day) => day.doseChange)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+    ]);
   });
 
   it('counts the days of a period inclusively', () => {

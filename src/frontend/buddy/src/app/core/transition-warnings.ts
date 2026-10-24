@@ -131,7 +131,14 @@ export function isInQuietHours(
   const now = minutesOfDayInTimeZone(new Date(nowMs), timeZone);
   const from = minutesOf(quietHours.from);
   const to = minutesOf(quietHours.to);
-  return from < to ? now >= from && now < to : now >= from || now < to;
+  // Laid out so the Stryker comment below covers only the equivalent `from < to`.
+  // prettier-ignore
+  return (
+    // Stryker disable next-line EqualityOperator: From == To can't happen, ConfigureTransitionWarnings.Validator rejects it
+    from < to
+      ? now >= from && now < to
+      : now >= from || now < to
+  );
 }
 
 export function computeTransitionWarnings(input: {

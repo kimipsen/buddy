@@ -100,6 +100,21 @@ describe('currentRun', () => {
     expect(currentRun([morning()], end + CURRENT_RUN_GRACE_MS + 1)).toBeNull();
   });
 
+  it('keeps a late run around for half an hour and shows the next one a quarter of an hour early', () => {
+    expect(currentRun([morning()], at('07:53'))?.itemId).toBe('morning');
+    expect(currentRun([morning()], at('07:54'))).toBeNull();
+    expect(currentRun([evening], at('18:45'))?.itemId).toBe('evening');
+    expect(currentRun([evening], at('18:44'))).toBeNull();
+  });
+
+  it('counts a run as started from the instant its first subtask starts', () => {
+    expect(currentRun([morning()], at('07:00'))?.itemId).toBe('morning');
+  });
+
+  it('keeps a partly done run current', () => {
+    expect(currentRun([morning([true, false, false])], at('07:10'))?.itemId).toBe('morning');
+  });
+
   it('looks ahead to a run starting within the look-ahead, and no further', () => {
     const start = at('19:00');
     expect(currentRun([evening], start - CURRENT_RUN_LOOK_AHEAD_MS)?.itemId).toBe('evening');
@@ -114,6 +129,12 @@ describe('currentRun', () => {
   it('takes the earlier of two overlapping runs', () => {
     const overlapping = run('other', [subtask('other', 'x', '06:55', '07:30')]);
     expect(currentRun([morning(), overlapping], at('07:02'))?.itemId).toBe('other');
+    expect(currentRun([overlapping, morning()], at('07:02'))?.itemId).toBe('other');
+  });
+
+  it('keeps the first listed of two runs starting together', () => {
+    const together = run('together', [subtask('together', 'x', '07:00', '07:30')]);
+    expect(currentRun([morning(), together], at('07:02'))?.itemId).toBe('morning');
   });
 
   it('skips a finished run', () => {
@@ -134,6 +155,9 @@ describe('currentRun', () => {
       }),
     ]);
     expect(currentRun([plain], at('07:01'))).toBeNull();
+
+    const mixed = run('mixed', [subtask('mixed', 'timed', '07:00', '07:05'), ...plain.subtasks]);
+    expect(currentRun([mixed], at('07:01'))).toBeNull();
   });
 });
 
@@ -160,6 +184,22 @@ describe('timerState (schedule-anchored)', () => {
       deadlineMs: at('07:05'),
       runRemainingMs: 3 * MINUTE + 15 * MINUTE + 3 * MINUTE,
       runBudgetMs: 23 * MINUTE,
+    });
+  });
+
+  it('starts running the instant the window opens, with the whole budget left', () => {
+    expect(timerState(morning(), at('07:00'))).toMatchObject({
+      phase: 'running',
+      remainingMs: 5 * MINUTE,
+      deadlineMs: at('07:05'),
+    });
+  });
+
+  it("is time's up the instant the window closes", () => {
+    expect(timerState(morning(), at('07:05'))).toMatchObject({
+      phase: 'timesUp',
+      remainingMs: 0,
+      deadlineMs: null,
     });
   });
 
@@ -192,6 +232,7 @@ describe('timerState (schedule-anchored)', () => {
       remainingMs: 0,
       runRemainingMs: 0,
       runBudgetMs: 23 * MINUTE,
+      childStarted: false,
     });
   });
 
