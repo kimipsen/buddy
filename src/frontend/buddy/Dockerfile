@@ -16,9 +16,12 @@ RUN npm run build -- --configuration production \
 
 FROM caddy:2-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f AS runtime
 
+# Alpine publishes package fixes (e.g. brotli-libs 1.2.1 for CVE-2026-111497) before the caddy
+# image is rebuilt, so the upgrade picks up what the Trivy gate reports as fixable.
 # Caddy writes its state under /data and /config (XDG_DATA_HOME/XDG_CONFIG_HOME in the base
 # image), so the non-root user must own them.
-RUN if ! id -u caddy >/dev/null 2>&1; then \
+RUN apk upgrade --no-cache \
+    && if ! id -u caddy >/dev/null 2>&1; then \
       addgroup -S caddy && adduser -S -G caddy caddy; \
     fi \
     && chown -R caddy:caddy /data /config

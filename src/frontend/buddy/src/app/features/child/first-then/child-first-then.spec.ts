@@ -54,8 +54,9 @@ interface Options {
 
 describe('ChildFirstThen', () => {
   afterEach(() => {
-    vi.useRealTimers();
+    // Mocks before the real timers, as in child-focus.spec.ts.
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   async function setup(options: Options = {}) {

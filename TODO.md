@@ -6,6 +6,16 @@
 
 ## Open
 
+### Performance and load testing with k6 (2026-10-24)
+
+Plan in [Performance and load testing with k6](docs/backend/analysis/load-testing-k6.md).
+
+- [ ] **Settle the open questions** (expected peak, thresholds, runner) before building.
+- [ ] **Scripts and stack.** `src/load-tests/` (lib, 4 journeys, 7 profiles), the `buddy-load`
+      Compose stack with `grafana/otel-lgtm`, and the `load:*` / `test:load*` tasks.
+- [ ] **CI.** Typecheck + smoke on PRs, the nightly `load-tests.yml`, the on-demand heavy profiles.
+- [ ] **Calibrate.** Five `load` runs on the load stack; record the VU level and thresholds in the doc.
+
 ### Publishing Docker images (2026-10-19)
 
 Plan in [Publishing Docker images on GitHub](docs/backend/analysis/publish-docker-images.md).

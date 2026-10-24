@@ -40,6 +40,7 @@ model or permissions logic.
 - [Weekday recurrence rules](analysis/recurrence-weekdays.md)
 - [Integration testing strategy](analysis/integration-testing-strategy.md)
 - [Mutation testing strategy](analysis/mutation-testing-strategy.md)
+- [Performance and load testing with k6](analysis/load-testing-k6.md)
 - [Backend unit tests as the primary test source](analysis/backend-unit-tests.md)
 - [Validation rules](analysis/validation-rules.md)
 - [Eliminating avoidable nulls](analysis/eliminate-nulls.md)

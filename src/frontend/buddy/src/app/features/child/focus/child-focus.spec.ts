@@ -63,8 +63,10 @@ describe('ChildFocus', () => {
   });
 
   afterEach(() => {
-    vi.useRealTimers();
+    // Mocks first: a spy on a faked setInterval restores to the fake, and the spec files share a
+    // worker, so restoring it after the real timers would leave a setInterval that never fires.
     vi.restoreAllMocks();
+    vi.useRealTimers();
     localStorage.clear();
   });
 

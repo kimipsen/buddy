@@ -246,6 +246,7 @@ deploy/      Production Docker Compose and Caddy deployment
 - [All-day calendar items](docs/backend/analysis/calendar-all-day-items.md)
 - [Integration testing strategy](docs/backend/analysis/integration-testing-strategy.md)
 - [Mutation testing strategy](docs/backend/analysis/mutation-testing-strategy.md)
+- [Performance and load testing with k6](docs/backend/analysis/load-testing-k6.md)
 - [Validation rules](docs/backend/analysis/validation-rules.md)
 - [Child accounts and guardian/parent roles](docs/backend/analysis/child-accounts-and-guardian-roles.md)
 - [Guardian-managed child language](docs/backend/analysis/child-language-settings.md)
