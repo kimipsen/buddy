@@ -45,6 +45,7 @@ export class ChildFocus implements OnInit, OnDestroy {
   private readonly calendars = inject(CalendarsService);
   private readonly clock = inject(ChildClockService);
   private readonly childTimer = inject(ChildTimerService);
+  // Stryker disable next-line StringLiteral: the route always has :itemId, and no run has either fallback as its id
   private readonly itemId = inject(ActivatedRoute).snapshot.paramMap.get('itemId') ?? '';
 
   // Today's occurrences come from the same per-day cache as the child home, so opening this page
@@ -60,7 +61,12 @@ export class ChildFocus implements OnInit, OnDestroy {
 
     const subtasks = this.occurrences
       .value()
-      .filter((occurrence) => occurrence.itemId === this.itemId && occurrence.routine !== null)
+      .filter(
+        (occurrence) =>
+          occurrence.itemId === this.itemId &&
+          // Stryker disable next-line ConditionalExpression: groupTaskRuns leaves a non-routine occurrence out of the run anyway
+          occurrence.routine !== null,
+      )
       .sort(compareOccurrences);
     return groupTaskRuns(subtasks).find(isTaskRun) ?? null;
   });
@@ -90,6 +96,7 @@ export class ChildFocus implements OnInit, OnDestroy {
       }
 
       const id = setTimeout(() => this.now.set(Date.now()), Math.max(0, deadlineMs - Date.now()));
+      // Stryker disable next-line ArrowFunction,CallExpression: a leftover timeout only refreshes `now` to the real time
       onCleanup(() => clearTimeout(id));
     });
   }
@@ -137,21 +144,25 @@ export class ChildFocus implements OnInit, OnDestroy {
 
   protected start(run: TaskRun): void {
     this.childTimer.start(run);
+    // Stryker disable next-line CallExpression: the disc reads the deadline against its own clock, and the buttons only need paused vs running, which a stale `now` can't flip
     this.now.set(Date.now());
   }
 
   protected pause(run: TaskRun): void {
     this.childTimer.pause(run.itemId);
+    // Stryker disable next-line CallExpression: the disc reads the deadline against its own clock, and the buttons only need paused vs running, which a stale `now` can't flip
     this.now.set(Date.now());
   }
 
   protected resume(run: TaskRun): void {
     this.childTimer.resume(run.itemId);
+    // Stryker disable next-line CallExpression: the disc reads the deadline against its own clock, and the buttons only need paused vs running, which a stale `now` can't flip
     this.now.set(Date.now());
   }
 
   protected stop(): void {
     this.childTimer.stop();
+    // Stryker disable next-line CallExpression: the disc reads the deadline against its own clock, and the buttons only need paused vs running, which a stale `now` can't flip
     this.now.set(Date.now());
   }
 }

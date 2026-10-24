@@ -105,6 +105,26 @@ describe('ChildFocus', () => {
     fixture.detectChanges();
   }
 
+  // For tests that also fake the timeouts and intervals, so they can step to an exact instant.
+  function fakeAllTimers(at: number) {
+    vi.useFakeTimers({
+      toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
+    });
+    vi.setSystemTime(at);
+  }
+
+  async function settleFaked(fixture: { detectChanges: () => void }) {
+    for (let round = 0; round < 3; round++) {
+      fixture.detectChanges();
+      await vi.advanceTimersByTimeAsync(0);
+    }
+    fixture.detectChanges();
+  }
+
+  function timerLabel(compiled: HTMLElement): string | null | undefined {
+    return compiled.querySelector('[role="timer"]')?.getAttribute('aria-label');
+  }
+
   function button(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
     return Array.from(compiled.querySelectorAll('button')).find((element) =>
       element.textContent?.includes(text),
@@ -131,6 +151,95 @@ describe('ChildFocus', () => {
     expect(button(compiled, "I'm done")).toBeTruthy();
     expect(button(compiled, 'Start')).toBeTruthy();
     expect(compiled.querySelector('a[href="/child"]')?.textContent).toContain('Back to today');
+  });
+
+  it('takes the steps in time order, whatever order they arrive in', async () => {
+    const { fixture } = await setup({
+      listTodayOccurrences: vi.fn(async () => [...morning()].reverse()),
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('h2')?.textContent).toContain('Get dressed');
+    expect(text(compiled)).toContain('Next: Eat breakfast');
+  });
+
+  it('leaves out an occurrence of the item that is not a routine step', async () => {
+    const plain = nestOccurrence<CalendarOccurrence>({
+      ...subtask('plain', 'Plain task', '11:00', '11:30'),
+      timing: { kind: 1, dueAt: `${today}T11:00:00Z` },
+      routine: null,
+    });
+    const { fixture } = await setup({
+      listTodayOccurrences: vi.fn(async () => [plain, ...morning()]),
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('h2')?.textContent).toContain('Get dressed');
+    expect(text(compiled)).not.toContain('Plain task');
+  });
+
+  it('moves on from the start time to the countdown once the step starts', async () => {
+    fakeAllTimers(NOW);
+    const { fixture } = await setup({
+      listTodayOccurrences: vi.fn(async () => [subtask('sub-1', 'Get dressed', '12:01', '12:06')]),
+    });
+    await settleFaked(fixture);
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(timerLabel(compiled)).toContain('Starts at');
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    await settleFaked(fixture);
+    expect(timerLabel(compiled)).toBe('5 min left');
+  });
+
+  it('stops the minute refresh on leaving', async () => {
+    fakeAllTimers(NOW);
+    const setInterval = vi.spyOn(globalThis, 'setInterval');
+    const clearInterval = vi.spyOn(globalThis, 'clearInterval');
+    const { fixture } = await setup({ listTodayOccurrences: vi.fn(async () => morning()) });
+    await settleFaked(fixture);
+    const minute = setInterval.mock.calls.findIndex(([, ms]) => ms === 60_000);
+    const refreshId = setInterval.mock.results[minute]!.value as unknown;
+
+    fixture.destroy();
+
+    expect(clearInterval).toHaveBeenCalledWith(refreshId);
+  });
+
+  it("drops Pause the moment a child-started step's time runs out", async () => {
+    fakeAllTimers(NOW);
+    const { fixture } = await setup({ listTodayOccurrences: vi.fn(async () => morning()) });
+    await settleFaked(fixture);
+    const compiled = fixture.nativeElement as HTMLElement;
+    // Off the minute, so the deadline doesn't coincide with the minute refresh.
+    await vi.advanceTimersByTimeAsync(30_000);
+    button(compiled, 'Start')!.click();
+    await settleFaked(fixture);
+
+    await vi.advanceTimersByTimeAsync(5 * 60_000 - 1);
+    fixture.detectChanges();
+    expect(button(compiled, 'Pause')).toBeTruthy();
+
+    await vi.advanceTimersByTimeAsync(1);
+    fixture.detectChanges();
+    expect(button(compiled, 'Pause')).toBeUndefined();
+    expect(button(compiled, 'Stop timer')).toBeTruthy();
+  });
+
+  it('reads the time afresh after a step is marked done', async () => {
+    const { fixture } = await setup({ listTodayOccurrences: vi.fn(async () => morning()) });
+    await settle(fixture);
+    const compiled = fixture.nativeElement as HTMLElement;
+    // Done at 12:05, two minutes into the next step's 12:03-12:13 window.
+    vi.setSystemTime(NOW + 5 * 60_000);
+
+    button(compiled, "I'm done")!.click();
+    await settle(fixture);
+
+    expect(compiled.querySelector('h2')?.textContent).toContain('Eat breakfast');
+    expect(timerLabel(compiled)).toBe('8 min left');
   });
 
   it('marks the current step done by its subtask id and moves on, chaining a child-started timer', async () => {

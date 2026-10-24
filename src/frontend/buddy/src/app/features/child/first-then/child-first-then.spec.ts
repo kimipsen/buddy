@@ -7,7 +7,7 @@ import { Mock, afterEach, describe, expect, it, vi } from 'vitest';
 import { ChildClockService } from '../../../core/child-clock.service';
 import { FirstThenBoard, FirstThenService } from '../../../core/first-then.service';
 import { CurrentUser, UsersService } from '../../../core/users.service';
-import { ChildFirstThen, FIRST_THEN_POLL_MS } from './child-first-then';
+import { ChildFirstThen, FIRST_THEN_POLL_MS, THEN_TICK_MS } from './child-first-then';
 
 async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
   for (let round = 0; round < 4; round++) {
@@ -89,7 +89,8 @@ describe('ChildFirstThen', () => {
         {
           provide: ChildClockService,
           useValue: {
-            now: () => NOW,
+            // Follows the faked Date, so a test can let time pass.
+            now: () => Date.now(),
             today: () => TODAY,
             timeZone: signal('UTC').asReadonly(),
           } as unknown as ChildClockService,
@@ -125,6 +126,15 @@ describe('ChildFirstThen', () => {
     expect(compiled.querySelector('img[src="/pictograms/screen-time.svg"]')).not.toBeNull();
   });
 
+  it('shows the spinner until the board arrives', async () => {
+    const { compiled } = await setup({
+      firstThen: { getMyBoard: vi.fn(() => new Promise<FirstThenBoard>(() => undefined)) },
+    });
+
+    expect(compiled.querySelector('app-loading-spinner')).not.toBeNull();
+    expect(compiled.querySelector('[data-testid="first-then-first"]')).toBeNull();
+  });
+
   it('shows a waiting board: the First with Done, the Then locked after it', async () => {
     const { compiled } = await setup();
 
@@ -137,6 +147,16 @@ describe('ChildFirstThen', () => {
     expect(then.textContent).toContain('iPad');
     expect(then.textContent).toContain('After Homework');
     expect(button(compiled, 'All done')).toBeUndefined();
+    expect(compiled.querySelector('[data-testid="first-then-changed"]')).toBeNull();
+    expect(liveRegion(compiled)).toBe('');
+  });
+
+  it('does not play the unlock animation for a board that loads already unlocked', async () => {
+    const { compiled } = await setup({ myBoard: unlocked() });
+
+    expect(compiled.querySelector('[data-testid="first-then-then"]')!.classList).not.toContain(
+      'motion-safe:animate-scale-in',
+    );
   });
 
   it('ticks the First with the revision it shows, unlocks the Then and announces it', async () => {
@@ -155,6 +175,20 @@ describe('ChildFirstThen', () => {
     expect(compiled.querySelector('[data-testid="first-then-then"]')!.classList).toContain(
       'motion-safe:animate-scale-in',
     );
+    expect(compiled.querySelector('[data-testid="first-then-changed"]')).toBeNull();
+  });
+
+  it('sends one tick for a double tap, with the button disabled while it is out', async () => {
+    const { fixture, compiled, firstThen } = await setup();
+    firstThen.actOnMyBoard.mockImplementation(() => new Promise<FirstThenBoard>(() => undefined));
+
+    button(compiled, 'Done!')!.click();
+    await settle(fixture);
+    button(compiled, 'Done!')!.click();
+    await settle(fixture);
+
+    expect(firstThen.actOnMyBoard).toHaveBeenCalledTimes(1);
+    expect(button(compiled, 'Done!')!.disabled).toBe(true);
   });
 
   it('undoes a mis-tap and ends the board', async () => {
@@ -169,6 +203,9 @@ describe('ChildFirstThen', () => {
     await settle(fixture);
     expect(firstThen.actOnMyBoard).toHaveBeenLastCalledWith('first/reopen', 1);
     expect(button(compiled, 'Done!')).toBeDefined();
+    expect(compiled.querySelector('[data-testid="first-then-then"]')!.classList).not.toContain(
+      'motion-safe:animate-scale-in',
+    );
 
     // Back to unlocked, then All done.
     (firstThen.actOnMyBoard as ReturnType<typeof vi.fn>).mockResolvedValueOnce(unlocked());
@@ -204,6 +241,63 @@ describe('ChildFirstThen', () => {
     });
     expect(over.compiled.querySelector('[role="timer"]')).toBeNull();
     expect(over.compiled.textContent).toContain("Time's up");
+  });
+
+  it('says time’s up the moment the Then runs out, without waiting for a poll', async () => {
+    // 20 minutes from 14:45:10 runs out at 15:05:10, ten seconds after NOW.
+    const { fixture, compiled } = await setup({
+      myBoard: unlocked({ unlockedAt: '2026-10-14T14:45:10+00:00' }),
+      showVisualTimers: false,
+    });
+    expect(compiled.textContent).not.toContain("Time's up");
+
+    vi.advanceTimersByTime(THEN_TICK_MS);
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain("Time's up");
+  });
+
+  it('ticks only while an unlocked Then is counting down', async () => {
+    const counting = await setup({ myBoard: unlocked(), showVisualTimers: false });
+    const ticking = vi.getTimerCount();
+    counting.firstThen.actOnMyBoard.mockResolvedValueOnce(none);
+    button(counting.compiled, 'All done')!.click();
+    await settle(counting.fixture);
+    // Only the poll is left once the board has ended.
+    expect(vi.getTimerCount()).toBe(ticking - 1);
+    TestBed.resetTestingModule();
+
+    await setup({ myBoard: board(), showVisualTimers: false });
+    expect(vi.getTimerCount()).toBe(ticking - 1);
+    TestBed.resetTestingModule();
+
+    await setup({ myBoard: unlocked({ thenMinutes: null }), showVisualTimers: false });
+    expect(vi.getTimerCount()).toBe(ticking - 1);
+  });
+
+  it('reads the time afresh when a poll brings a Then that has already run out', async () => {
+    const { fixture, compiled, firstThen } = await setup({ showVisualTimers: false });
+    // Runs out at 15:05:30, between the first load and the poll a minute later.
+    firstThen.getMyBoard.mockResolvedValue(unlocked({ unlockedAt: '2026-10-14T14:45:30+00:00' }));
+
+    vi.advanceTimersByTime(FIRST_THEN_POLL_MS);
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain("Time's up");
+  });
+
+  it('reads the time afresh after a tick', async () => {
+    const { fixture, compiled, firstThen } = await setup({ showVisualTimers: false });
+    firstThen.actOnMyBoard.mockResolvedValueOnce(
+      unlocked({ unlockedAt: '2026-10-14T15:00:00+00:00' }),
+    );
+    // The page sat open for 25 minutes; the 20-minute Then the server unlocked at 15:00 is over.
+    vi.setSystemTime(NOW + 25 * 60_000);
+
+    button(compiled, 'Done!')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain("Time's up");
   });
 
   it('shows no disc for a Then without a length', async () => {
@@ -265,6 +359,33 @@ describe('ChildFirstThen', () => {
     expect(button(compiled, 'Done!')).toBeDefined();
   });
 
+  it('clears the error when the next try works', async () => {
+    const { fixture, compiled, firstThen } = await setup();
+    firstThen.actOnMyBoard.mockRejectedValueOnce(new HttpErrorResponse({ status: 0 }));
+
+    button(compiled, 'Done!')!.click();
+    await settle(fixture);
+    expect(compiled.textContent).toContain('That didn’t work. Try again.');
+
+    button(compiled, 'Done!')!.click();
+    await settle(fixture);
+    expect(compiled.textContent).not.toContain('That didn’t work. Try again.');
+  });
+
+  it('keeps the board on screen when a later poll fails', async () => {
+    const { fixture, compiled, firstThen } = await setup();
+    firstThen.getMyBoard.mockRejectedValue(new HttpErrorResponse({ status: 0 }));
+
+    vi.advanceTimersByTime(FIRST_THEN_POLL_MS);
+    await settle(fixture);
+
+    expect(firstThen.getMyBoard).toHaveBeenCalledTimes(2);
+    expect(compiled.textContent).not.toContain('Could not load your board.');
+    expect(compiled.querySelector('[data-testid="first-then-first"]')!.textContent).toContain(
+      'Homework',
+    );
+  });
+
   it('shows a load error only when there is no board to keep showing', async () => {
     const { compiled } = await setup({
       firstThen: {
@@ -288,6 +409,9 @@ describe('ChildFirstThen', () => {
     button(compiled, 'Not done yet')!.click();
     await settle(fixture);
     expect(liveRegion(compiled)).toBe('');
+    expect(compiled.querySelector('[data-testid="first-then-then"]')!.classList).not.toContain(
+      'motion-safe:animate-scale-in',
+    );
 
     button(compiled, 'Done!')!.click();
     await settle(fixture);

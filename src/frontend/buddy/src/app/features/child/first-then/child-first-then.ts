@@ -55,6 +55,7 @@ export class ChildFirstThen implements OnInit, OnDestroy {
   private readonly me = resource({ loader: () => this.users.ensureCurrentUser() });
   private readonly loaded = signal<FirstThenBoard | null>(null);
   protected readonly loading = signal(true);
+  // Stryker disable next-line BooleanLiteral: only read once loading is over, and every load sets it first
   protected readonly loadError = signal(false);
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -160,7 +161,15 @@ export class ChildFirstThen implements OnInit, OnDestroy {
       this.loaded.set(updated);
       this.now.set(this.clock.now());
 
-      if (action === 'first/complete' && updated.state === 'Unlocked' && updated.then) {
+      // Laid out so each Stryker comment below covers only its own condition.
+      // prettier-ignore
+      if (
+        // Stryker disable next-line ConditionalExpression: only first/complete comes back Unlocked (a reopen is Waiting, an end None)
+        action === 'first/complete' &&
+        // Stryker disable next-line ConditionalExpression: a first/complete that succeeds always comes back Unlocked
+        updated.state === 'Unlocked' &&
+        updated.then
+      ) {
         this.justUnlocked.set(true);
         this.announcement.set(
           this.translation.translate('firstThen.child.unlocked', { then: updated.then.title }),
