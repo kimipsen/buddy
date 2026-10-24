@@ -1,6 +1,11 @@
 # Performance and load testing with k6
 
-Status: Proposed (not yet implemented)
+Status: Implemented (scripts, stack, tasks and CI; the VU levels and thresholds are still the
+proposed values, not yet calibrated). `src/load-tests/`: 4 journeys and 7 profiles, typed against
+the generated OpenAPI contract; the `buddy-load` Compose stack with `grafana/otel-lgtm`
+(`stack.sh`); `task load:stack:up|down`, `task test:load`, `task test:load:typecheck`; nightly and
+on-demand `.github/workflows/load-tests.yml`; typecheck + smoke in `e2e-tests.yml`; a pre-commit
+check. See [src/load-tests/README.md](../../../src/load-tests/README.md).
 
 ## Context
 
@@ -102,15 +107,19 @@ layout:**
 
 ```text
 src/load-tests/
-  package.json            # devDependencies only: typescript, @types/k6 (for tsc --noEmit and the editor)
+  package.json            # devDependencies only: typescript, @types/k6, prettier (type check, format, editor)
   tsconfig.json
   docker-compose.load.yml # the isolated load stack (see "Environment")
+  stack.sh                # builds the API image and starts/stops the stack (task load:stack:*)
+  run.sh                  # runs one profile, then the Docker-side checks (task test:load)
   lib/
-    config.ts             # BASE_URL, KEYCLOAK_URL, profile -> options, read from __ENV
+    config.ts             # BASE_URL, KEYCLOAK_URL, FAMILIES ... from __ENV; the target allowlist; thresholds
+    contract.ts           # route and body types from the generated buddy-api.ts
     auth.ts               # direct-grant token fetch and refresh, cached per VU
     api.ts                # typed get/post/put wrappers: Idempotency-Key, If-None-Match, tags
     seed.ts               # creates N families through the Keycloak admin API + the Buddy API
-    checks.ts             # shared check() helpers (status, envelope, no 5xx)
+    checks.ts             # the shared 2xx/304 check and the server_errors counter
+    run.ts                # setup()/teardown() and the weighted journey mix
   journeys/
     guardian-morning.ts   # the dashboard fan-out (see "Workload model")
     guardian-writes.ts
@@ -118,6 +127,7 @@ src/load-tests/
     ical-poll.ts
   scenarios/
     smoke.ts  load.ts  stress.ts  spike.ts  soak.ts  breakpoint.ts  rate-limit.ts
+  scripts/summarize.mjs   # the p95 table for the nightly job summary
   results/                # git-ignored: summary.json, report.html per run
 ```
 
@@ -146,9 +156,11 @@ calls are read from the frontend code.
 - **Think time** between actions is 3-10 s, randomised. A virtual user (VU) stands for a person,
   not a busy loop. So "N VUs" reads as "N families active at the same moment", which a non-engineer
   can follow.
-- **Every request carries a `name` tag** with the route template (`/medicines/children/{id}/doses`),
-  not the raw URL. Otherwise each child id becomes its own metric series. Thresholds and reports
-  group by journey (`group`) and by route.
+- **Every request carries a `name` tag** with the route template
+  (`/medicines/children/{childId}/doses`), not the raw URL. Otherwise each child id becomes its own
+  metric series. Thresholds and reports group by journey (`group`), by route and by `kind`
+  (`read`, `write`, `ical`). The route template is the OpenAPI path itself (`lib/contract.ts`), so
+  a journey that names a route the API no longer has fails the type check.
 - **The AI assistant, Mealie and outbound email are left out of the default mix.** They call
   third-party services (the family's LLM provider, the family's Mealie server, SMTP) and have
   strict rate limits of their own. A load test would measure those services, not Buddy. They get no
@@ -156,8 +168,8 @@ calls are read from the frontend code.
 - **Keycloak's login is left out.** Tokens are fetched in `setup()`, outside the measured
   iterations (see [Test data and tokens](#decision-test-data-and-tokens-are-seeded-per-run-in-setup)).
   rate-limiting.md treats Keycloak as a separate service with its own brute-force protection, and
-  we do the same here. The `spike` profile is the exception: it fetches a token for each VU as it
-  starts, because a 07:00 rush is also a burst of logins.
+  we do the same here. The `spike` profile is the exception: each VU gets a fresh token from
+  Keycloak as it starts, because a 07:00 rush is also a burst of logins.
 
 When a feature adds a screen that guardians visit often, its requests are added to the matching
 journey in the same PR. This is a checklist item, the same as adding the page to `pages.ts` for the
@@ -184,23 +196,23 @@ limit, it records where and stops, instead of overloading a dying stack for the 
 ## Decision: an isolated, production-sized load stack; never production
 
 **Decision: load runs against a stack of their own, `src/load-tests/docker-compose.load.yml`
-(Compose project `buddy-load`).** The stack runs the published API image, which by default is the
-one built from the current commit. It has its own Postgres, its own Keycloak (importing
-`.devcontainer/keycloak/buddy-realm.json`), Mailpit, and a `grafana/otel-lgtm` container. The API
-container gets the same `cpus: 1.0` / `mem_limit: 2g` as the Azure Container App. Postgres and
-Keycloak get the Oracle VM's sizes. That way a run measures the size we actually deploy, not the
-dev machine. `task load:stack:down` runs `docker compose down -v`, so cleaning up is just deleting
-the volume.
+(Compose project `buddy-load`).** `stack.sh up` builds the API image from the working tree, so a
+run measures the current code (`BUDDY_API_IMAGE=<image>` runs a published image instead). The
+stack has its own Postgres, its own Keycloak (importing `.devcontainer/keycloak/buddy-realm.json`)
+and a `grafana/otel-lgtm` container. It has no Mailpit, because no journey sends mail. The API
+container gets the same `cpus: 1.0` / `mem_limit: 2g` as the Azure Container App, and Keycloak
+gets the Azure Keycloak app's 0.5 vCPU / 1 GiB. Postgres gets 1 vCPU / 2 GiB. That way a run
+measures the size we actually deploy, not the dev machine. `task load:stack:down` runs
+`docker compose down -v`, so cleaning up is just deleting the volume.
 
 Why not the other environments:
 
 - **The dev stack (`db:5432`, `keycloak:8080`).** All worktrees share it (CLAUDE.md). A soak run
   would leave thousands of throwaway families in the dev database, and it would slow down whatever
   else is running, including the e2e tests and `task docs:screenshots`. The only thing that may
-  target it is the `smoke` profile (`TARGET=dev`), with the same `load.` username prefix and a
-  cleanup script modelled on
-  [`cleanup-leftover-e2e-data.mjs`](../../../src/frontend/buddy/e2e/scripts/cleanup-leftover-e2e-data.mjs).
-  `smoke` is small enough to share the stack.
+  target it is the `smoke` profile (`TARGET=dev`). Every seeded username starts with
+  `load.<run id>.`, and `teardown()` removes the run's children, groups and accounts, then any
+  Keycloak user left with that prefix. `smoke` is small enough to share the stack.
 - **Production.** Rejected for v1. The Oracle VM runs everything on one free host, so a stress run
   would take down real families' mornings. The load users' health data (doses, sleep, feelings)
   would land in the same database as real data, which raises GDPR record-keeping questions
@@ -221,16 +233,18 @@ production ceiling. They are still good for comparing commits, which is what the
 
 1. Through the Keycloak admin API (master `admin-cli`, as
    [`keycloak-admin-client.ts`](../../../src/frontend/buddy/e2e/support/keycloak-admin-client.ts)
-   does), create `FAMILIES` guardians (`load.g0001`, ...) in `buddy-guardian`, and 1-3 children
-   each in `buddy-child`. The child count is weighted towards 2, because the per-child fan-out is
+   does), create `FAMILIES` guardians (`load.<run id>.g0001`, ...) in `buddy-guardian`. Each gets
+   1-3 children through `CreateChild`, then a permanent password through the admin API, as
+   `demo-family.ts` does. The child count is weighted towards 2, because the per-child fan-out is
    what we want to measure.
 2. Through the Buddy API, as each guardian, create the same shape of data as `demo-family.ts`: a
-   family group and calendar, recurring tasks, a medicine schedule, a week of meals, a pickup
-   schedule and an iCal token. Writing through the API means every event, snapshot and index
-   document exists exactly as production would write it.
+   family group and calendar, a weekly event, a daily task per child, a medicine schedule, a meal
+   plan for 11 days, a week of pickups, a First-Then board, and the calendar, meal-plan and pickup
+   iCal tokens. Writing through the API means every event, snapshot and index document exists
+   exactly as production would write it.
 3. Fetch one direct-grant token per user and return
-   `{ families: [{ guardianToken, childTokens, childIds, calendarIds, icalUrls }] }`. Each VU picks
-   `families[(__VU - 1) % families.length]`.
+   `{ families: [{ guardian, tokens, calendarId, children: [{ id, username, tokens, taskItemId,
+medicineId }], icalPaths }] }`. Each VU picks `families[(vu.idInTest - 1) % families.length]`.
 4. `lib/auth.ts` refreshes a token when less than 60 s of its lifetime remains. Soak runs last
    longer than the realm's access-token lifetime, and a wave of `401`s would hide the real results.
 
@@ -263,6 +277,10 @@ measuring.
   (rate-limiting.md, "limits come from configuration"), the other way round.
 - The `rate-limit` profile runs with the production defaults and checks that the flood is answered
   only with `429` responses that carry `Retry-After`.
+- The `breakpoint` profile is the exception to the per-user default. It measures the stack's
+  capacity with no think time, so `run.sh` restarts the API with
+  `LOAD_AUTHENTICATED_TOKEN_LIMIT` raised for that run. Otherwise the per-user limiter, not the
+  stack, would end the run.
 
 `429`s are tagged `expected_response:false` like any other error, and they count against the
 error-rate threshold in every profile except `rate-limit`.
@@ -278,32 +296,40 @@ export const thresholds = {
   http_req_failed: ['rate<0.005'], // < 0.5 % non-2xx/304
   'http_req_duration{kind:read}': ['p(95)<300', 'p(99)<800'],
   'http_req_duration{kind:write}': ['p(95)<500', 'p(99)<1200'],
-  'http_req_duration{name:ical}': ['p(95)<800'], // the full-range expansion
+  'http_req_duration{kind:ical}': ['p(95)<800'], // the full-range expansion
   'group_duration{group:::guardian-morning}': ['p(95)<1500'], // the whole dashboard, fan-out included
   checks: ['rate>0.99'],
+  server_errors: ['count==0'], // any 5xx or connection failure
 };
 ```
 
+- **`smoke` keeps only the correctness thresholds** (checks, failures, 5xx). Its eight
+  iterations, often against an API that has only just started, are too few and too cold for
+  latency numbers to mean anything. A first build showed reads at a p95 of 412 ms right after an
+  API restart, against 210 ms warm.
 - **`group_duration` for the dashboard** is the number a guardian actually feels. A 50 ms endpoint
-  called 15 times through a concurrency limit of 4 can still give a slow screen.
-- **A `5xx` fails a check in every profile**, `breakpoint` included. A `5xx` means the API broke.
-  It never means "busy", which the API answers with `429`.
-- **Server-side checks at the end of a run:** `/health/ready` still answers `200`, and nothing in
-  the API logs matches `53300`. `teardown()` does both and fails the run otherwise.
+  called 15 times through a concurrency limit of 4 can still give a slow screen. It's the only
+  journey with no think time inside its group, so it's the only whole-screen number.
+- **A `5xx` fails the run in every profile**, `breakpoint` included (`server_errors`). A `5xx`
+  means the API broke. It never means "busy", which the API answers with `429`.
+- **Server-side checks at the end of a run:** `teardown()` checks that `/health/ready` still
+  answers `200`. k6 can't see Docker, so `run.sh` checks the rest after k6 exits. It fails the run
+  when the API logged `53300`, or when its container restarted or was OOM-killed during the run.
 
 ## Decision: observability during a run uses the API's existing OpenTelemetry
 
 **Decision: the load stack runs `grafana/otel-lgtm` (Grafana, Tempo, Loki, Prometheus/Mimir in one
 container), and the API's `OTEL_EXPORTER_OTLP_ENDPOINT` points at it.** k6 sends its own metrics to
-the same Prometheus (`K6_PROMETHEUS_RW_SERVER_URL`, `--out experimental-prometheus-rw`). One
+the same backend over OTLP (`--out opentelemetry`, `K6_OTEL_GRPC_EXPORTER_ENDPOINT`). One
 Grafana dashboard then shows k6's request rate and latency next to the API's request duration, the
 Npgsql pool usage and command time, Wolverine handler time and process CPU and memory, on one time
 axis. When p95 bends in `stress`, the trace of a slow request shows whether the time went into
 Postgres, a handler or the thread pool. The API needs no code change for this. It is exactly what
 observability.md built the OTLP export for.
 
-Every run also writes `results/<profile>-<timestamp>/summary.json` (`handleSummary`) and
-`report.html` (`K6_WEB_DASHBOARD_EXPORT`). CI uploads these as artifacts.
+Every run also writes `results/<profile>-<timestamp>/summary.json` (`--summary-export`, with p99
+added to the trend stats) and `report.html` (`K6_WEB_DASHBOARD_EXPORT`; k6 skips it for runs too
+short to chart, such as `smoke`). CI uploads these as artifacts.
 
 Rejected: InfluxDB plus a hand-built Grafana dashboard (a second metrics store for k6 only), and the
 Aspire dashboard. Aspire is great for traces, but it doesn't keep metrics over a two-hour soak, and
@@ -315,10 +341,10 @@ k6 can't write to it.
 nightly and on `workflow_dispatch`.**
 
 ```text
-task load:stack:up       # docker compose -p buddy-load up -d --wait, waits for /health/ready
-task load:stack:down     # down -v
-task test:load PROFILE=smoke|load|stress|spike|soak|breakpoint|rate-limit [TARGET=stack|dev] [FAMILIES=n]
-task test:load:typecheck # tsc --noEmit in src/load-tests (also run by the pre-commit hook on staged *.ts there)
+task load:stack:up       # stack.sh up: build the API image, compose up --wait (until /health/ready)
+task load:stack:down     # stack.sh down: compose down -v
+task test:load PROFILE=smoke|load|stress|spike|soak|breakpoint|rate-limit [TARGET=stack|dev] [FAMILIES=n VUS=n HOLD=10m ...]
+task test:load:typecheck # tsc --noEmit in src/load-tests (the pre-commit hook also runs it, plus Prettier, on staged files there)
 ```
 
 - **On pull requests:** only `test:load:typecheck`, plus `smoke` against the dev-sized services in
@@ -348,17 +374,17 @@ self-hosted runner.
 
 ## Failure and edge-case behavior
 
-| Case                                                 | Behavior                                                                                                                                                                 |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Load stack not ready                                 | `load:stack:up` waits on `/health/ready`. `setup()` checks it again and aborts before seeding.                                                                           |
-| `BASE_URL` not on the allowlist                      | `config.ts` throws in the init stage, so no request is sent.                                                                                                             |
-| Seeding fails partway                                | `setup()` throws, and the run aborts. On the load stack, `down -v` cleans up. On `TARGET=dev`, the cleanup script removes the `load.*` users.                            |
-| Access token expires in a long run                   | `auth.ts` refreshes it 60 s before expiry. A `401` in a measured iteration is a failed check, not a retry.                                                               |
-| `429` during `load`                                  | Counts as an error, and the run fails. Either the workload model or the default limit is wrong, and we decide which.                                                     |
-| `53300` / pool exhaustion during `spike`             | Requests fail with `5xx`, checks fail, and `teardown()` reports the log match. This is the incident regression the suite exists to catch.                                |
-| API container OOM-killed or restarted                | `task test:load` checks the API container's `RestartCount` / `OOMKilled` (`docker inspect`) after the run and fails it; `teardown()` also sees a failed readiness check. |
-| An endpoint renamed or a DTO reshaped                | `test:load:typecheck` fails on the PR.                                                                                                                                   |
-| A new screen added without its requests in a journey | Not caught automatically. It is a review checklist item (see "Workload model").                                                                                          |
+| Case                                                 | Behavior                                                                                                                                                                       |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Load stack not ready                                 | `load:stack:up` waits on `/health/ready`. `setup()` checks it again and aborts before seeding.                                                                                 |
+| `BASE_URL` not on the allowlist                      | `config.ts` throws in the init stage, so no request is sent.                                                                                                                   |
+| Seeding fails partway                                | `setup()` throws, and the run aborts. On the load stack, `down -v` cleans up. On `TARGET=dev`, delete the `load.<run id>.*` Keycloak users by hand.                            |
+| Access token expires in a long run                   | `auth.ts` refreshes it 60 s before expiry. A `401` in a measured iteration is a failed check, not a retry.                                                                     |
+| `429` during `load`                                  | Counts as an error, and the run fails. Either the workload model or the default limit is wrong, and we decide which.                                                           |
+| `53300` / pool exhaustion during `spike`             | Requests fail with `5xx`, `server_errors` fails, and `run.sh` reports the log match. This is the incident regression the suite exists to catch.                                |
+| API container OOM-killed or restarted                | `run.sh` checks the API container's `RestartCount` / `StartedAt` / `OOMKilled` (`docker inspect`) after the run and fails it; `teardown()` also sees a failed readiness check. |
+| An endpoint renamed or a DTO reshaped                | `test:load:typecheck` fails on the PR.                                                                                                                                         |
+| A new screen added without its requests in a journey | Not caught automatically. It is a review checklist item (see "Workload model").                                                                                                |
 
 ## Estimate
 
@@ -370,18 +396,34 @@ self-hosted runner.
 
 ## Decisions made
 
-| Question                 | Decision                                                                                                                        |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| Which tool               | k6 from its pinned Docker image, TypeScript scripts. Reviewable code, built-in thresholds, shares the generated API types       |
-| Where the scripts live   | `src/load-tests/`: `lib/`, `journeys/`, `scenarios/`. Journeys are written once and reused by every profile                     |
-| What traffic is modelled | 4 journeys copied from the real frontend calls (the dashboard fan-out included). AI, Mealie, email and Keycloak login left out  |
-| Which test types         | smoke, load, stress, spike, soak, breakpoint, rate-limit                                                                        |
-| Which environment        | An isolated `buddy-load` Compose stack at production sizes. Smoke only on the dev stack. Never production in v1                 |
-| Test data                | Seeded per run in `setup()` through Keycloak admin + the Buddy API, as `demo-family.ts` does. Optional history backfill         |
-| Rate limiting            | Kept on. Per-user defaults unchanged. Per-IP and per-feed limits raised on the load stack. A dedicated `rate-limit` profile     |
-| Pass/fail                | Shared k6 thresholds (p95/p99 per read/write, dashboard group duration, < 0.5 % errors, no 5xx) plus `teardown()` health checks |
-| Server-side visibility   | The existing OTLP export into `grafana/otel-lgtm`. k6 writes to the same Prometheus                                             |
-| When it runs             | Typecheck + smoke on PRs. Smoke + load + rate-limit nightly. The heavy profiles on demand                                       |
+| Question                 | Decision                                                                                                                                             |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Which tool               | k6 from its pinned Docker image, TypeScript scripts. Reviewable code, built-in thresholds, shares the generated API types                            |
+| Where the scripts live   | `src/load-tests/`: `lib/`, `journeys/`, `scenarios/`. Journeys are written once and reused by every profile                                          |
+| What traffic is modelled | 4 journeys copied from the real frontend calls (the dashboard fan-out included). AI, Mealie, email and Keycloak login left out                       |
+| Which test types         | smoke, load, stress, spike, soak, breakpoint, rate-limit                                                                                             |
+| Which environment        | An isolated `buddy-load` Compose stack at production sizes. Smoke only on the dev stack. Never production in v1                                      |
+| Test data                | Seeded per run in `setup()` through Keycloak admin + the Buddy API, as `demo-family.ts` does. Optional history backfill                              |
+| Rate limiting            | Kept on. Per-user defaults unchanged. Per-IP and per-feed limits raised on the load stack. A dedicated `rate-limit` profile                          |
+| Pass/fail                | Shared k6 thresholds (p95/p99 per read/write, dashboard group duration, < 0.5 % errors, no 5xx) plus the post-run health, `53300` and restart checks |
+| Server-side visibility   | The existing OTLP export into `grafana/otel-lgtm`. k6 sends its metrics there over OTLP too                                                          |
+| When it runs             | Typecheck + smoke on PRs. Smoke + load + rate-limit nightly. The heavy profiles on demand                                                            |
+
+## Implementation notes
+
+Things found while building it that aren't obvious from the code:
+
+- **k6 2.3's TypeScript loader hangs on a generic arrow function in a class field**
+  (`post = <P>(…) => …`): `k6 run` never gets past loading the module and prints nothing. Plain
+  generic methods, functions and top-level arrows are fine. `lib/api.ts` and `lib/seed.ts` use
+  methods for that reason.
+- **The devcontainer's nested Docker has no DNS on bridge networks.** Containers resolve each
+  other's service names, but not `nuget.org`. So `stack.sh` builds the API image with
+  `docker build --network host`; compose's own build would need a buildx entitlement grant for
+  that. `TARGET=dev` runs k6 with `--network host`, which reaches `localhost:5193` and the
+  devcontainer's `keycloak` hostname.
+- **k6's TypeScript sees no `crypto` or `console` in `@types/k6`.** `globals.d.ts` declares the two
+  runtime globals the scripts use, instead of pulling in `lib: ["dom"]`.
 
 ## Remaining open questions
 
@@ -414,7 +456,7 @@ flowchart TB
         Setup["setup()\nseed N families\nfetch tokens"]
         Journeys["journeys\nguardian-morning / guardian-writes\nchild-board / ical-poll"]
         Profiles["scenarios\nsmoke · load · stress · spike\nsoak · breakpoint · rate-limit"]
-        Teardown["teardown()\n/health/ready, no 53300"]
+        Teardown["teardown()\n/health/ready, cleanup"]
         Profiles --> Journeys
         Setup --> Journeys --> Teardown
     end
@@ -433,6 +475,6 @@ flowchart TB
     Setup -- "admin API: create users" --> KC
     Setup -- "direct grant" --> KC
     Journeys -- "HTTP + Bearer\nIdempotency-Key / If-None-Match" --> API
-    Runner -- "Prometheus remote write" --> LGTM
+    Runner -- "OTLP metrics" --> LGTM
     Runner -- "summary.json + report.html" --> Artifacts["results/ (CI artifact)"]
 ```

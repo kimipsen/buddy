@@ -1,0 +1,101 @@
+name: Load tests (k6)
+
+# docs/backend/analysis/load-testing-k6.md, "CI". Nightly: smoke, a 10-minute load run and the
+# rate-limit check against the isolated load stack, with a p95 trend in the job summary. The heavy
+# profiles (stress, spike, soak, breakpoint) run on demand only: their absolute numbers on shared
+# runners vary too much to gate anything. Pull requests get typecheck + smoke in e2e-tests.yml.
+
+on:
+  # Nightly at 01:00 UTC, before the mutation run.
+  schedule:
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Which profile to run (nightly runs smoke, load and rate-limit)
+        type: choice
+        default: nightly
+        options: [nightly, smoke, load, stress, spike, soak, breakpoint, rate-limit]
+      vus:
+        description: Peak families (VUS); empty for the profile's default
+        required: false
+      hold:
+        description: How long to hold the peak (HOLD, e.g. 10m); empty for the profile's default
+        required: false
+
+# Least privilege for the GITHUB_TOKEN; a job that needs more asks for it itself.
+permissions:
+  contents: read
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    permissions:
+      contents: read
+      # Reads the previous nightly run's summary artifact for the trend.
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Start the load stack
+        run: src/load-tests/stack.sh up
+
+      - name: Smoke
+        run: PROFILE=smoke src/load-tests/run.sh
+
+      - name: Load (10 min)
+        if: ${{ github.event_name == 'schedule' || inputs.profile == 'nightly' }}
+        run: PROFILE=load HOLD=10m src/load-tests/run.sh
+
+      - name: Rate limit
+        if: ${{ github.event_name == 'schedule' || inputs.profile == 'nightly' }}
+        run: PROFILE=rate-limit src/load-tests/run.sh
+
+      - name: ${{ inputs.profile }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.profile != 'nightly' && inputs.profile != 'smoke' }}
+        # Inputs through env, never interpolated into the script.
+        env:
+          PROFILE: ${{ inputs.profile }}
+          VUS: ${{ inputs.vus }}
+          HOLD: ${{ inputs.hold }}
+        run: src/load-tests/run.sh
+
+      - name: Previous nightly summary
+        if: ${{ !cancelled() && github.event_name == 'schedule' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow load-tests.yml --event schedule \
+            --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          if [ -n "$run_id" ]; then
+            gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --name load-test-results --dir previous
+          fi
+
+      - name: Job summary
+        if: ${{ !cancelled() }}
+        working-directory: src/load-tests
+        run: |
+          for summary in results/*/summary.json; do
+            [ -f "$summary" ] || continue
+            profile=$(basename "$(dirname "$summary")" | sed 's/-[0-9TZ]*$//')
+            previous=$(ls ../../previous/"$profile"-*/summary.json 2>/dev/null | head -n1 || true)
+            { echo "### $profile"; node scripts/summarize.mjs "$summary" "$previous"; echo; } >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: API logs
+        if: ${{ failure() }}
+        run: docker compose -f src/load-tests/docker-compose.load.yml logs api --tail 300
+
+      - name: Upload results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: load-test-results
+          path: src/load-tests/results/
+          retention-days: 30
+
+      - name: Stop the load stack
+        if: ${{ always() }}
+        run: src/load-tests/stack.sh down

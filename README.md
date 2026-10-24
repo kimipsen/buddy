@@ -153,6 +153,7 @@ src/
   backend/   .NET API with event-sourced aggregates, Marten/PostgreSQL storage,
              and Keycloak-backed authentication
   frontend/  Angular application for guardians and children
+  load-tests/ k6 performance and load tests against an isolated, production-sized stack
 docs/
   backend/   Backend glossary, flow docs, HTTP semantics, and design analyses
   frontend/  Frontend architecture, feature status, and design analyses
@@ -172,8 +173,8 @@ deploy/      Production Docker Compose and Caddy deployment
   GitHub Copilot to keep `docs/`, this README and `TODO.md` in sync with commits.
 - [Screenshots](docs/screenshots/README.md) — every page of the app with demo
   data; regenerate with `task docs:screenshots`.
-- [Testing](docs/testing.md) — commands for frontend, backend, and mutation
-  test suites.
+- [Testing](docs/testing.md) — commands for frontend, backend, mutation and
+  load test suites.
 - [Installation](docs/installation.md) — how to install your own Buddy, and every setting and
   command-line argument it takes.
 - [Deployment](deploy/README.md) — production Docker Compose and Caddy setup.

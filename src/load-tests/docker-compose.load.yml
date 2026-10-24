@@ -1,0 +1,135 @@
+# The isolated load-test stack (docs/backend/analysis/load-testing-k6.md, "Environment"):
+# its own Postgres, Keycloak and API, sized like production, plus Grafana's all-in-one OTLP
+# backend for the server-side numbers, and k6 on the same network.
+#
+#   task load:stack:up / task test:load PROFILE=… / task load:stack:down
+#
+# Never shares the devcontainer's database or Keycloak, so a soak can't fill the dev database and
+# `down -v` is the whole cleanup. Credentials here are throwaway values for this stack only.
+
+name: buddy-load
+
+services:
+  db:
+    image: postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
+    command: ['postgres', '-c', 'max_connections=200']
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: buddy
+    volumes:
+      - load-db:/var/lib/postgresql
+      - ../../.devcontainer/postgres/init-keycloak-db.sh:/docker-entrypoint-initdb.d/init-keycloak-db.sh:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    cpus: 1.0
+    mem_limit: 2g
+
+  keycloak:
+    # Same version and realm import as the devcontainer; the size of the Azure Keycloak app.
+    image: quay.io/keycloak/keycloak:26.8.1
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: db
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ../../.devcontainer/keycloak:/opt/keycloak/data/import:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'exec 3<>/dev/tcp/127.0.0.1/8080']
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    cpus: 0.5
+    mem_limit: 1g
+
+  api:
+    # stack.sh up builds buddy-api:load from the working tree, so a run measures the current code;
+    # BUDDY_API_IMAGE=<image> runs a published image instead.
+    image: ${BUDDY_API_IMAGE:-buddy-api:load}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Postgres: 'Host=db;Port=5432;Database=buddy;Username=postgres;Password=postgres'
+      # k6 fetches its tokens from keycloak:8080 on this network, so that is the issuer too.
+      Authentication__Keycloak__Authority: 'http://keycloak:8080/realms/buddy'
+      Authentication__Keycloak__ValidIssuer: 'http://keycloak:8080/realms/buddy'
+      Authentication__Keycloak__Audience: 'buddy-api'
+      Authentication__Keycloak__RequireHttpsMetadata: 'false'
+      # buddy-admin-cli's secret from the realm export (.devcontainer/keycloak/buddy-realm.json),
+      # as the e2e workflow uses it.
+      Authentication__KeycloakAdmin__ClientSecret: 'buddy-admin-cli-dev-secret'
+      # No mail is sent by the load journeys; nothing listens here.
+      Mail__Host: 'localhost'
+      OTEL_EXPORTER_OTLP_ENDPOINT: 'http://lgtm:4317'
+      # Every anonymous request comes from k6's one IP, where production sees many calendar
+      # servers, so the per-IP and per-feed limits are raised. The per-user limit keeps its
+      # production default (each VU is its own user) unless a profile raises it on purpose
+      # (breakpoint). See load-testing-k6.md, "Rate limits".
+      RateLimiting__Anonymous__TokenLimit: '100000'
+      RateLimiting__Anonymous__TokensPerPeriod: '10000'
+      RateLimiting__IcalFeed__TokenLimit: '100000'
+      RateLimiting__IcalFeed__TokensPerPeriod: '10000'
+      RateLimiting__Authenticated__TokenLimit: '${LOAD_AUTHENTICATED_TOKEN_LIMIT:-200}'
+      RateLimiting__Authenticated__TokensPerPeriod: '${LOAD_AUTHENTICATED_TOKENS_PER_PERIOD:-5}'
+    depends_on:
+      db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    # The aspnet runtime image has no curl/wget; bash's /dev/tcp does the GET (as in production).
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'bash',
+          '-c',
+          "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200 '",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+    # The size of the Azure Container App (deploy/azure/deploy.sh).
+    cpus: 1.0
+    mem_limit: 2g
+    ports:
+      - '127.0.0.1:5280:8080'
+
+  lgtm:
+    # Grafana, Prometheus, Tempo and Loki in one container, with an OTLP receiver on 4317/4318.
+    image: grafana/otel-lgtm:0.36.0@sha256:57c04cbd8e7022f32bb84c4ac005d79baf8b08e2c5be44facf11f5f1f9944ba2
+    ports:
+      - '127.0.0.1:3300:3000'
+
+  k6:
+    image: grafana/k6:2.3.0@sha256:9c2dee7f8ed74d317e4027c06a10f169b625638189de8d4555d0b3486a5aeb34
+    profiles: [k6]
+    # Writable results/ on the bind mount: run as the invoking user, not k6's uid 12345.
+    user: '${LOAD_UID:-1000}'
+    working_dir: /scripts
+    volumes:
+      - .:/scripts
+    environment:
+      BASE_URL: http://api:8080
+      KEYCLOAK_URL: http://keycloak:8080
+      K6_NO_USAGE_REPORT: 'true'
+      # k6's own metrics go to the same backend as the API's, on one time axis.
+      K6_OTEL_GRPC_EXPORTER_ENDPOINT: lgtm:4317
+      K6_OTEL_GRPC_EXPORTER_INSECURE: 'true'
+      K6_OTEL_SERVICE_NAME: k6
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  load-db:

@@ -165,6 +165,27 @@ container-backed integration tests. Reports are written under
 [mutation testing strategy](backend/analysis/mutation-testing-strategy.md) for
 verified scoping instructions and expected runtime characteristics.
 
+## Load testing (k6)
+
+Performance and load tests for the API live in `src/load-tests` and run with
+[k6](https://grafana.com/docs/k6/latest/) against an isolated, production-sized
+Compose stack (own Postgres and Keycloak, the API built from the working tree,
+Grafana on <http://localhost:3300>):
+
+```bash
+task load:stack:up
+task test:load                                  # smoke
+task test:load PROFILE=load VUS=50 HOLD=10m     # or stress, spike, soak, breakpoint, rate-limit
+task load:stack:down
+```
+
+`task test:load:typecheck` checks the scripts against the generated API types.
+Pull requests run the type check and a smoke run in the e2e workflow; the
+`Load tests (k6)` workflow runs smoke, load and rate-limit nightly and any
+profile on demand. See [src/load-tests/README.md](../src/load-tests/README.md)
+and the design in
+[load-testing-k6.md](backend/analysis/load-testing-k6.md).
+
 ## Continuous integration
 
 - `.github/workflows/backend-tests.yml` restores, builds, and runs the backend
@@ -226,8 +247,8 @@ cd src/frontend/buddy && npx ng test --watch=false --coverage --coverage-reporte
 
 `task hooks:install` (with `AGENT=none` to skip the AI documentation sync)
 adds a pre-commit hook. It runs Prettier and ESLint on staged frontend files,
-the en/da parity check when translations change, and `dotnet format whitespace`
-on staged C# files. See `.devcontainer/git-hooks/README.md`.
+the en/da parity check when translations change, `dotnet format whitespace`
+on staged C# files, and Prettier plus `tsc` on staged load-test files. See `.devcontainer/git-hooks/README.md`.
 
 ### Nightly mutation testing
 

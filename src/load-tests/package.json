@@ -1,0 +1,16 @@
+{
+  "name": "buddy-load-tests",
+  "private": true,
+  "description": "k6 load tests for the Buddy API (docs/backend/analysis/load-testing-k6.md). k6 runs the .ts files itself; these packages only type-check them.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@types/k6": "2.3.0",
+    "prettier": "3.9.9",
+    "typescript": "6.0.3"
+  }
+}

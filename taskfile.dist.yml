@@ -86,6 +86,58 @@ tasks:
     cmds:
       - npm run test:e2e
 
+  load:stack:up:
+    desc: >-
+      Start the isolated k6 load-test stack (own Postgres, Keycloak, the API built from the working
+      tree, Grafana on http://localhost:3300) and wait until the API is ready. BUDDY_API_IMAGE=<image>
+      runs a published API image instead. See docs/backend/analysis/load-testing-k6.md.
+    dir: src/load-tests
+    cmds:
+      - ./stack.sh up
+    env:
+      BUDDY_API_IMAGE: '{{.BUDDY_API_IMAGE}}'
+
+  load:stack:down:
+    desc: Stop the load-test stack and delete its data (the whole cleanup)
+    dir: src/load-tests
+    cmds:
+      - ./stack.sh down
+
+  test:load:
+    desc: >-
+      Run one k6 profile. Usage: task test:load PROFILE=smoke|load|stress|spike|soak|breakpoint|rate-limit
+      [TARGET=stack|dev] [FAMILIES=n VUS=n HOLD=10m ...]. TARGET=stack (default) needs task load:stack:up;
+      TARGET=dev runs smoke against the running dev API. Results land in src/load-tests/results/.
+    dir: src/load-tests
+    cmds:
+      - ./run.sh
+    # Task CLI variables (VUS=20) aren't environment variables; run.sh passes the non-empty ones to k6.
+    env:
+      PROFILE: '{{.PROFILE | default "smoke"}}'
+      TARGET: '{{.TARGET | default "stack"}}'
+      BASE_URL: '{{.BASE_URL}}'
+      KEYCLOAK_URL: '{{.KEYCLOAK_URL}}'
+      FAMILIES: '{{.FAMILIES}}'
+      VUS: '{{.VUS}}'
+      HOLD: '{{.HOLD}}'
+      STEPS: '{{.STEPS}}'
+      RATE_STEP: '{{.RATE_STEP}}'
+      MINUTES: '{{.MINUTES}}'
+      MAX_VUS: '{{.MAX_VUS}}'
+      DURATION: '{{.DURATION}}'
+      RECOVERY_AT: '{{.RECOVERY_AT}}'
+      SEED_HISTORY_DAYS: '{{.SEED_HISTORY_DAYS}}'
+      THINK_TIME: '{{.THINK_TIME}}'
+      CLEANUP: '{{.CLEANUP}}'
+      RUN_ID: '{{.RUN_ID}}'
+
+  test:load:typecheck:
+    desc: Type-check the k6 scripts against @types/k6 and the generated API contract (buddy-api.ts)
+    dir: src/load-tests
+    cmds:
+      - '[ -d node_modules ] || npm ci --no-audit --no-fund'
+      - npx tsc --noEmit -p tsconfig.json
+
   docs:screenshots:
     desc: >-
       Regenerate the page screenshots in docs/screenshots (and its README.md).

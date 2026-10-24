@@ -12,6 +12,8 @@ Runs on the staged files only, and only the checks that apply to them:
 - Translation files under `src/app/core/i18n`: the en/da parity check.
 - C# files: `dotnet format whitespace --verify-no-changes`. Code style and analyzers that need the
   compiler run in the build, which fails on them.
+- k6 load-test files under `src/load-tests`: Prettier, plus `tsc --noEmit` over the whole load-test
+  project (skipped until `npm ci` has run there).
 - Markdown files, anywhere in the repo: Prettier (the `.prettierrc` next to the file; code samples
   inside fences are left as written) and markdownlint (`.markdownlint-cli2.jsonc`). Check or fix
   the whole repo with `task lint:markdown` / `task lint:markdown FIX=1`.

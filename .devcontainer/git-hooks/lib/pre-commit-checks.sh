@@ -4,17 +4,19 @@
 
 FRONTEND_DIR="src/frontend/buddy"
 I18N_DIR="$FRONTEND_DIR/src/app/core/i18n"
+LOAD_TESTS_DIR="src/load-tests"
 
 pre_commit_run() {
   local root
   root="$(git rev-parse --show-toplevel)"
   cd "$root"
 
-  local -a staged frontend backend markdown
+  local -a staged frontend backend markdown load_tests
   mapfile -t staged < <(git diff --cached --name-only --diff-filter=ACMR)
   frontend=()
   backend=()
   markdown=()
+  load_tests=()
   local i18n_changed=0 file
 
   for file in "${staged[@]}"; do
@@ -22,6 +24,8 @@ pre_commit_run() {
       *.md) markdown+=("$file") ;;
       "$FRONTEND_DIR"/*) frontend+=("${file#"$FRONTEND_DIR"/}") ;;
       src/backend/*.cs) backend+=("$file") ;;
+      "$LOAD_TESTS_DIR"/*.ts | "$LOAD_TESTS_DIR"/*.mjs | "$LOAD_TESTS_DIR"/*.json | "$LOAD_TESTS_DIR"/*.yml)
+        load_tests+=("${file#"$LOAD_TESTS_DIR"/}") ;;
     esac
     case "$file" in
       "$I18N_DIR"/*) i18n_changed=1 ;;
@@ -33,6 +37,7 @@ pre_commit_run() {
   ((i18n_changed == 0)) || check_i18n || failed=1
   ((${#backend[@]} == 0)) || check_backend "${backend[@]}" || failed=1
   ((${#markdown[@]} == 0)) || check_markdown "${markdown[@]}" || failed=1
+  ((${#load_tests[@]} == 0)) || check_load_tests "${load_tests[@]}" || failed=1
 
   if ((failed)); then
     echo >&2
@@ -91,6 +96,27 @@ check_markdown() {
   # The banner and summary go to stdout; the findings themselves to stderr.
   if ! "$bin/markdownlint-cli2" "$@" >/dev/null; then
     echo "  fix: task lint:markdown FIX=1 fixes some rules; fix the rest by hand (rules in .markdownlint-cli2.jsonc)." >&2
+    failed=1
+  fi
+
+  return "$failed"
+}
+
+# The k6 scripts (docs/backend/analysis/load-testing-k6.md): Prettier on the staged files, and the
+# whole project's type check, since a change to one module can break another's types.
+check_load_tests() {
+  if [[ ! -x "$LOAD_TESTS_DIR/node_modules/.bin/tsc" ]]; then
+    echo "pre-commit: $LOAD_TESTS_DIR/node_modules is missing (run npm ci there) -- skipping load-test checks." >&2
+    return 0
+  fi
+
+  local failed=0
+  echo "pre-commit: load tests: prettier (${#} file(s)) and tsc"
+  if ! (cd "$LOAD_TESTS_DIR" && node_modules/.bin/prettier --check --log-level warn "$@"); then
+    echo "  fix: (cd $LOAD_TESTS_DIR && npm run format)" >&2
+    failed=1
+  fi
+  if ! (cd "$LOAD_TESTS_DIR" && node_modules/.bin/tsc --noEmit -p tsconfig.json); then
     failed=1
   fi
 

@@ -10,10 +10,7 @@
 
 Plan in [Performance and load testing with k6](docs/backend/analysis/load-testing-k6.md).
 
-- [ ] **Settle the open questions** (expected peak, thresholds, runner) before building.
-- [ ] **Scripts and stack.** `src/load-tests/` (lib, 4 journeys, 7 profiles), the `buddy-load`
-      Compose stack with `grafana/otel-lgtm`, and the `load:*` / `test:load*` tasks.
-- [ ] **CI.** Typecheck + smoke on PRs, the nightly `load-tests.yml`, the on-demand heavy profiles.
+- [ ] **Settle the remaining open questions** (expected peak, runner for stable numbers, staging).
 - [ ] **Calibrate.** Five `load` runs on the load stack; record the VU level and thresholds in the doc.
 
 ### Publishing Docker images (2026-10-19)
@@ -922,3 +919,11 @@ assigned to, across all their children, so the slots show up in their own calend
       built on `PickupScheduleExpansion`, with integration tests (2026-10-23).
 - [x] **Frontend.** Subscription link (copy, revoke) for the guardian, with en + da strings, and
       updated screenshots (2026-10-23).
+
+### Performance and load testing with k6 (2026-10-24)
+
+- [x] **Scripts and stack.** `src/load-tests/` (lib, 4 journeys, 7 profiles, typed against the
+      OpenAPI contract), the `buddy-load` Compose stack with `grafana/otel-lgtm`, and the
+      `load:*` / `test:load*` tasks (2026-10-24).
+- [x] **CI.** Typecheck + smoke on PRs (`e2e-tests.yml`), the nightly `load-tests.yml` and the
+      on-demand heavy profiles (2026-10-24).

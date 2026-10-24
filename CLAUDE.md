@@ -14,6 +14,7 @@ Buddy is a family coordination app for guardians of children with ADHD; see [REA
 - `task test` (all), `task test:backend`, `task test:frontend`, `task test:e2e`
 - One frontend spec: `cd src/frontend/buddy && npx ng test --watch=false --include src/app/path/foo.spec.ts`
 - One backend test: `dotnet test src/backend/backend.slnx --filter FullyQualifiedName~<Name>`
+- Load tests (k6, `src/load-tests`): `task load:stack:up`, `task test:load PROFILE=smoke|load|stress|spike|soak|breakpoint|rate-limit`, `task load:stack:down`; `task test:load:typecheck` after an API contract change. The load stack has its own database, Keycloak and ports (5280, 3300), so it can run next to the dev servers, but only one worktree at a time can run it
 - Translation parity: `node .claude/skills/i18n/check-parity.mjs`
 - Markdown (Prettier + markdownlint, every tracked `.md`): `task lint:markdown`; `FIX=1` to fix
 - API contract: `task docs:openapi` regenerates `docs/backend/openapi/buddy.json` and the frontend's generated types (`src/app/core/api/buddy-api.ts`) after an endpoint, DTO or error-code change
