@@ -11,9 +11,7 @@
 Plan in [Performance and load testing with k6](docs/backend/analysis/load-testing-k6.md).
 
 - [ ] **Settle the remaining open questions** (runner for stable numbers, staging). The expected
-      peak is settled from the lowest of four breakpoint runs (2026-10-26).
-- [ ] **Calibrate.** One more `load` run (four are recorded in the doc's Measured results), then
-      set the thresholds from them.
+      peak is settled from the lowest of five breakpoint runs (2026-10-26).
 
 ### Publishing Docker images (2026-10-19)
 
@@ -929,3 +927,5 @@ assigned to, across all their children, so the slots show up in their own calend
       `load:*` / `test:load*` tasks (2026-10-24).
 - [x] **CI.** Typecheck + smoke on PRs (`e2e-tests.yml`), the nightly `load-tests.yml` and the
       on-demand heavy profiles (2026-10-24).
+- [x] **Calibrate.** Regression thresholds for `load`/`soak` from five runs (four `load` runs and
+      the `soak`), capacity thresholds kept for `stress`/`spike`/`breakpoint` (2026-10-26).

@@ -49,22 +49,40 @@ export function assertAllowedTarget(): void {
   }
 }
 
-// The pass/fail contract shared by every profile (load-testing-k6.md, "Thresholds"). The numbers
-// are the proposed starting values; calibration runs replace them.
-export const thresholds: Record<string, string[]> = {
+// The pass/fail contract (load-testing-k6.md, "Thresholds"), in two sets.
+
+const correctness: Record<string, string[]> = {
   http_req_failed: ['rate<0.005'],
+  checks: ['rate>0.99'],
+  server_errors: ['count==0'],
+};
+
+// Regression thresholds for the 50-family workload they were measured on (load, soak): about
+// 1.5 times the worst p95/p99 of five runs on GitHub runners, rounded up (2026-10-26, see the
+// doc's Measured results). They catch a real slowdown; runner noise stays under them.
+export const thresholds: Record<string, string[]> = {
+  ...correctness,
+  'http_req_duration{kind:read}': ['p(95)<15', 'p(99)<20'],
+  'http_req_duration{kind:write}': ['p(95)<50', 'p(99)<250'],
+  'http_req_duration{kind:ical}': ['p(95)<50'],
+  'group_duration{group:::guardian-morning}': ['p(95)<80'],
+};
+
+// What a person would still accept, for the profiles that push past the normal load (stress,
+// spike, breakpoint): they ask how far the stack goes before it gets unpleasant, so the
+// regression numbers would stop them at the first sign of load.
+export const capacityThresholds: Record<string, string[]> = {
+  ...correctness,
   'http_req_duration{kind:read}': ['p(95)<300', 'p(99)<800'],
   'http_req_duration{kind:write}': ['p(95)<500', 'p(99)<1200'],
   'http_req_duration{kind:ical}': ['p(95)<800'],
   'group_duration{group:::guardian-morning}': ['p(95)<1500'],
-  checks: ['rate>0.99'],
-  server_errors: ['count==0'],
 };
 
 // The same thresholds, but a breach stops the run (stress, breakpoint): it records where the
 // stack gave out instead of hammering a dying stack for the rest of the stages.
 export function abortingThresholds(
-  base: Record<string, string[]> = thresholds,
+  base: Record<string, string[]> = capacityThresholds,
 ): Record<string, { threshold: string; abortOnFail: boolean; delayAbortEval: string }[]> {
   return Object.fromEntries(
     Object.entries(base).map(([metric, rules]) => [

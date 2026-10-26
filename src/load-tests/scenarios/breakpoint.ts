@@ -1,4 +1,4 @@
-import { abortingThresholds, config, thresholds } from '../lib/config.ts';
+import { abortingThresholds, capacityThresholds, config } from '../lib/config.ts';
 import { setupRun, teardownRun } from '../lib/run.ts';
 
 // How many dashboard loads per second does the stack handle at its current size? An open model:
@@ -30,11 +30,11 @@ export const options = {
   },
   // Only the journey this profile runs; the other journeys' thresholds would have no data.
   thresholds: abortingThresholds({
-    http_req_failed: thresholds.http_req_failed,
-    'http_req_duration{kind:read}': thresholds['http_req_duration{kind:read}'],
+    http_req_failed: capacityThresholds.http_req_failed,
+    'http_req_duration{kind:read}': capacityThresholds['http_req_duration{kind:read}'],
     'group_duration{group:::guardian-morning}':
-      thresholds['group_duration{group:::guardian-morning}'],
-    server_errors: thresholds.server_errors,
+      capacityThresholds['group_duration{group:::guardian-morning}'],
+    server_errors: capacityThresholds.server_errors,
   }),
   setupTimeout: '30m',
   teardownTimeout: '30m',

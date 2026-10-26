@@ -1,4 +1,4 @@
-import { thresholds } from '../lib/config.ts';
+import { capacityThresholds } from '../lib/config.ts';
 import { mix, setupRun, teardownRun } from '../lib/run.ts';
 
 // The 07:00 school-morning rush: 0 to 200 families in 30 s, hold 3 minutes, back to 0. Does the
@@ -17,7 +17,7 @@ export const options = {
     // Quiet afterwards, so the recovery is visible on the dashboards before teardown checks health.
     { duration: '1m', target: 0 },
   ]),
-  thresholds,
+  thresholds: capacityThresholds,
   setupTimeout: '60m',
   teardownTimeout: '60m',
 };

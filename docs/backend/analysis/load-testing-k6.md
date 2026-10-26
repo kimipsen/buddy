@@ -1,7 +1,7 @@
 # Performance and load testing with k6
 
-Status: Implemented (scripts, stack, tasks and CI; the VU levels and thresholds are still the
-proposed values, not yet calibrated). `src/load-tests/`: 4 journeys and 7 profiles, typed against
+Status: Implemented, with thresholds calibrated on GitHub runners (2026-10-26).
+`src/load-tests/`: 4 journeys and 7 profiles, typed against
 the generated OpenAPI contract; the `buddy-load` Compose stack with `grafana/otel-lgtm`
 (`stack.sh`); `task load:stack:up|down`, `task test:load`, `task test:load:typecheck`; nightly and
 on-demand `.github/workflows/load-tests.yml`; typecheck + smoke in `e2e-tests.yml`; a pre-commit
@@ -287,21 +287,49 @@ error-rate threshold in every profile except `rate-limit`.
 
 ## Decision: thresholds are the pass/fail contract
 
-**Decision: every profile shares one set of thresholds in `lib/config.ts`.** The numbers below are
-proposals. The first `load` runs on the load stack will confirm them or set them (see open
-questions).
+**Decision: two sets of thresholds in `lib/config.ts`, sharing the correctness rules.** The first
+proposal was one set for every profile, with user-facing limits (a 1.5 s dashboard). The first
+runs came in an order of magnitude under those limits, so a single set either missed real
+regressions or stopped the capacity profiles at the first sign of load. Settled on 2026-10-26 from
+five runs of the 50-family workload (four `load` runs and the `soak`; see
+[Measured results](#measured-results)):
 
 ```ts
-export const thresholds = {
+const correctness = {
   http_req_failed: ['rate<0.005'], // < 0.5 % non-2xx/304
+  checks: ['rate>0.99'],
+  server_errors: ['count==0'], // any 5xx or connection failure
+};
+
+// load, soak: about 1.5 x the worst p95/p99 of the five runs, rounded up
+export const thresholds = {
+  ...correctness,
+  'http_req_duration{kind:read}': ['p(95)<15', 'p(99)<20'], // worst 7 / 9 ms
+  'http_req_duration{kind:write}': ['p(95)<50', 'p(99)<250'], // worst 31 / 150 ms
+  'http_req_duration{kind:ical}': ['p(95)<50'], // worst 30 ms
+  'group_duration{group:::guardian-morning}': ['p(95)<80'], // worst 51 ms
+};
+
+// stress, spike, breakpoint: what a person would still accept
+export const capacityThresholds = {
+  ...correctness,
   'http_req_duration{kind:read}': ['p(95)<300', 'p(99)<800'],
   'http_req_duration{kind:write}': ['p(95)<500', 'p(99)<1200'],
   'http_req_duration{kind:ical}': ['p(95)<800'], // the full-range expansion
   'group_duration{group:::guardian-morning}': ['p(95)<1500'], // the whole dashboard, fan-out included
-  checks: ['rate>0.99'],
-  server_errors: ['count==0'], // any 5xx or connection failure
 };
 ```
+
+- **The regression set is for the workload it was measured on.** `load` and `soak` run 50
+  families with think time; at 1.5 times the worst of five runs, the spread between GitHub
+  runners (dashboard p95 33-51 ms, write p99 12-150 ms) stays under it, and a slowdown of more
+  than about half fails the nightly run.
+- **The capacity set is for the profiles that push past the normal load.** `stress`, `spike` and
+  `breakpoint` ask how far the stack goes before it gets unpleasant, so they keep the user-facing
+  limits. With the regression numbers, `breakpoint` would stop within its first minutes and stop
+  measuring capacity.
+- **Recalibrate after a deliberate change** to the workload model, the stack sizes or the runner,
+  the same way: five runs, 1.5 times the worst, rounded up.
 
 - **`smoke` keeps only the correctness thresholds** (checks, failures, 5xx). Its eight
   iterations, often against an API that has only just started, are too few and too cold for
@@ -396,19 +424,19 @@ self-hosted runner.
 
 ## Decisions made
 
-| Question                 | Decision                                                                                                                                             |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Which tool               | k6 from its pinned Docker image, TypeScript scripts. Reviewable code, built-in thresholds, shares the generated API types                            |
-| Where the scripts live   | `src/load-tests/`: `lib/`, `journeys/`, `scenarios/`. Journeys are written once and reused by every profile                                          |
-| What traffic is modelled | 4 journeys copied from the real frontend calls (the dashboard fan-out included). AI, Mealie, email and Keycloak login left out                       |
-| Which test types         | smoke, load, stress, spike, soak, breakpoint, rate-limit                                                                                             |
-| Which environment        | An isolated `buddy-load` Compose stack at production sizes. Smoke only on the dev stack. Never production in v1                                      |
-| Test data                | Seeded per run in `setup()` through Keycloak admin + the Buddy API, as `demo-family.ts` does. Optional history backfill                              |
-| Rate limiting            | Kept on. Per-user defaults unchanged. Per-IP and per-feed limits raised on the load stack. A dedicated `rate-limit` profile                          |
-| Pass/fail                | Shared k6 thresholds (p95/p99 per read/write, dashboard group duration, < 0.5 % errors, no 5xx) plus the post-run health, `53300` and restart checks |
-| Server-side visibility   | The existing OTLP export into `grafana/otel-lgtm`. k6 sends its metrics there over OTLP too                                                          |
-| When it runs             | Typecheck + smoke on PRs. Smoke + load + rate-limit nightly. The heavy profiles on demand                                                            |
-| Expected peak            | Defend about 17 dashboard loads/s (about 290 requests/s, roughly 450 families active at once): the lowest of four `breakpoint` runs divided by 3     |
+| Question                 | Decision                                                                                                                                                                                                                                                    |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Which tool               | k6 from its pinned Docker image, TypeScript scripts. Reviewable code, built-in thresholds, shares the generated API types                                                                                                                                   |
+| Where the scripts live   | `src/load-tests/`: `lib/`, `journeys/`, `scenarios/`. Journeys are written once and reused by every profile                                                                                                                                                 |
+| What traffic is modelled | 4 journeys copied from the real frontend calls (the dashboard fan-out included). AI, Mealie, email and Keycloak login left out                                                                                                                              |
+| Which test types         | smoke, load, stress, spike, soak, breakpoint, rate-limit                                                                                                                                                                                                    |
+| Which environment        | An isolated `buddy-load` Compose stack at production sizes. Smoke only on the dev stack. Never production in v1                                                                                                                                             |
+| Test data                | Seeded per run in `setup()` through Keycloak admin + the Buddy API, as `demo-family.ts` does. Optional history backfill                                                                                                                                     |
+| Rate limiting            | Kept on. Per-user defaults unchanged. Per-IP and per-feed limits raised on the load stack. A dedicated `rate-limit` profile                                                                                                                                 |
+| Pass/fail                | Calibrated regression thresholds for `load`/`soak` (dashboard p95 < 80 ms, reads < 15/20 ms), user-facing capacity thresholds for `stress`/`spike`/`breakpoint`, < 0.5 % errors and no 5xx everywhere, plus the post-run health, `53300` and restart checks |
+| Server-side visibility   | The existing OTLP export into `grafana/otel-lgtm`. k6 sends its metrics there over OTLP too                                                                                                                                                                 |
+| When it runs             | Typecheck + smoke on PRs. Smoke + load + rate-limit nightly. The heavy profiles on demand                                                                                                                                                                   |
+| Expected peak            | Defend about 17 dashboard loads/s (about 290 requests/s, roughly 450 families active at once): the lowest of five `breakpoint` runs divided by 3                                                                                                            |
 
 ## Implementation notes
 
@@ -448,8 +476,9 @@ whole stack), 2026-10-24 to 2026-10-26. All on the same API code and the same ru
 - 50 families drive about 25-32 requests/s (about 0.5-0.65 requests/s per family).
 - Reads are fast partly because most repeat reads answer `304 Not Modified`. That saves the
   transfer, not the server work: the API renders and hashes the body before it can answer `304`.
-- Every proposed threshold is an order of magnitude above these numbers, so as they stand they
-  would only catch a large regression.
+- The first proposed thresholds were an order of magnitude above these numbers. These runs, with
+  the `soak`, are what the regression thresholds are now calibrated on (see
+  [Decision: thresholds](#decision-thresholds-are-the-passfail-contract)).
 
 ### `breakpoint`
 
@@ -462,10 +491,11 @@ the dashboard's whole-screen p95 passing 1.5 s (the first also on read p99 passi
 | [10-24 21:41](https://github.com/kimipsen/buddy/actions/runs/40135321613) | 14m37s        | ~73 loads/s              | 539,449  | 0, 0        | 357, 398                     |
 | [10-25 07:20](https://github.com/kimipsen/buddy/actions/runs/40172408972) | 10m32s        | ~53 loads/s              | 285,389  | 0, 0        | 92, 142                      |
 | [10-25 19:44](https://github.com/kimipsen/buddy/actions/runs/40227479002) | 10m29s        | ~52 loads/s              | 281,858  | 0, 0        | 86, 136                      |
+| [10-26 07:41](https://github.com/kimipsen/buddy/actions/runs/40287366923) | 10m09s        | ~51 loads/s              | 264,528  | 0, 0        | 107, 157                     |
 
 - **It always degrades without failing:** no failed requests, no 5xx, no `53300`, no API restart.
   Only the latency tail grows; the read median stays in single-digit milliseconds.
-- **The spread (52-84 loads/s) is the runner, not the code.** Same commit, same image: GitHub
+- **The spread (51-84 loads/s) is the runner, not the code.** Same commit, same image: GitHub
   hands out different hardware from run to run. A capacity number from one hosted run is
   unreliable by more than half.
 - **Each figure is a lower bound** for one 1-vCPU API container: k6 shares the 4 CPUs with the
@@ -498,12 +528,6 @@ trend check, not a capacity test.
 
 ## Remaining open questions
 
-- **Should the thresholds be stricter?** The p95 numbers are proposals, and the four `load` runs
-  so far came in far below them (see [Measured results](#measured-results)). Lean: one more
-  `load` run, then set each threshold at about 1.5 times the worst observed p95 (the dashboard's
-  worst so far is 51 ms, so about 75 ms) and record it here as a decision. The spread between
-  runs is wide (writes p99 16-150 ms), so leave headroom for runner noise before making them a
-  gate.
 - **Revisit the expected peak with real numbers.** It now comes from the breakpoint result (see
   Decisions made). Lean: once production has registered families, compare their real morning
   peak with it, and re-run `breakpoint` after changes to the data access layer.
