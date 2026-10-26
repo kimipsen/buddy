@@ -408,7 +408,7 @@ self-hosted runner.
 | Pass/fail                | Shared k6 thresholds (p95/p99 per read/write, dashboard group duration, < 0.5 % errors, no 5xx) plus the post-run health, `53300` and restart checks |
 | Server-side visibility   | The existing OTLP export into `grafana/otel-lgtm`. k6 sends its metrics there over OTLP too                                                          |
 | When it runs             | Typecheck + smoke on PRs. Smoke + load + rate-limit nightly. The heavy profiles on demand                                                            |
-| Expected peak            | Defend about 28 dashboard loads/s (about 450 requests/s, roughly 700 families active at once): the first `breakpoint` result divided by 3            |
+| Expected peak            | Defend about 17 dashboard loads/s (about 290 requests/s, roughly 450 families active at once): the lowest of four `breakpoint` runs divided by 3     |
 
 ## Implementation notes
 
@@ -428,23 +428,24 @@ Things found while building it that aren't obvious from the code:
 
 ## Measured results
 
-The first runs of `load-tests.yml` on GitHub-hosted `ubuntu-latest` runners (4 vCPU, shared by
-k6 and the whole stack), on 2026-10-24. They are the start of the calibration data, not yet the
-five `load` runs the thresholds question asks for.
+Runs of `load-tests.yml` on GitHub-hosted `ubuntu-latest` runners (4 vCPU, shared by k6 and the
+whole stack), 2026-10-24 to 2026-10-26. All on the same API code and the same runner image
+(`ubuntu-24.04`, 20261021.618).
 
 ### `load`: 50 families, 10-minute hold
 
-| p95 / p99                | [Run 1](https://github.com/kimipsen/buddy/actions/runs/40090760839) | [Run 2](https://github.com/kimipsen/buddy/actions/runs/40092907141) |
-| ------------------------ | ------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Dashboard (whole screen) | 33 / 42 ms                                                          | 39 / 47 ms                                                          |
-| Reads                    | 4 / 6 ms                                                            | 4 / 7 ms                                                            |
-| Writes                   | 8 / 80 ms                                                           | 11 / 85 ms                                                          |
-| iCal feeds               | 18 / 24 ms                                                          | 23 / 33 ms                                                          |
-| Requests, failed         | 22,190, 0 %                                                         | 22,733, 0 %                                                         |
+| p95 / p99                | [10-24 a](https://github.com/kimipsen/buddy/actions/runs/40090760839) | [10-24 b](https://github.com/kimipsen/buddy/actions/runs/40092907141) | [10-25 nightly](https://github.com/kimipsen/buddy/actions/runs/40166537406) | [10-26 nightly](https://github.com/kimipsen/buddy/actions/runs/40276087363) |
+| ------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Dashboard (whole screen) | 33 / 42 ms                                                            | 39 / 47 ms                                                            | 33 / 40 ms                                                                  | 51 / 63 ms                                                                  |
+| Reads                    | 4 / 6 ms                                                              | 4 / 7 ms                                                              | 4 / 6 ms                                                                    | 7 / 9 ms                                                                    |
+| Writes                   | 8 / 80 ms                                                             | 11 / 85 ms                                                            | 31 / 150 ms                                                                 | 10 / 16 ms                                                                  |
+| iCal feeds               | 18 / 24 ms                                                            | 23 / 33 ms                                                            | 30 / 36 ms                                                                  | 28 / 35 ms                                                                  |
+| Requests, failed         | 22,190, 0 %                                                           | 22,733, 0 %                                                           | 22,286, 0 %                                                                 | 21,732, 0 %                                                                 |
 
-- The two runs differ by 7-41 % on the same commit, a few milliseconds in absolute terms. That
-  is runner variance, and it's why the nightly comparison is a trend report, not a gate.
-- 50 families drive about 32 requests/s (about 0.65 requests/s per family).
+- On the same code, the dashboard p95 ranges from 33 to 51 ms and the write p99 from 16 to
+  150 ms. That is runner variance, and it's why the nightly comparison is a trend report, not a
+  gate.
+- 50 families drive about 25-32 requests/s (about 0.5-0.65 requests/s per family).
 - Reads are fast partly because most repeat reads answer `304 Not Modified`. That saves the
   transfer, not the server work: the API renders and hashes the body before it can answer `304`.
 - Every proposed threshold is an order of magnitude above these numbers, so as they stand they
@@ -452,29 +453,57 @@ five `load` runs the thresholds question asks for.
 
 ### `breakpoint`
 
-[Run](https://github.com/kimipsen/buddy/actions/runs/40094760768): 100 seeded families, arrival
-rate rising by 5 dashboard loads/s per minute.
+100 seeded families, arrival rate rising by 5 dashboard loads/s per minute. Every run stopped on
+the dashboard's whole-screen p95 passing 1.5 s (the first also on read p99 passing 800 ms):
 
-- **Stopped after 16m48s at about 84 dashboard loads/s** (about 17 requests each, so about 1,400
-  requests/s), when the dashboard's whole-screen p95 reached 1.64 s (limit 1.5 s) and read p99
-  reached 804 ms (limit 800 ms). 709,623 requests in all.
-- **It degraded without failing:** 0 failed requests, 0 5xx, no `53300`, no API restart, and all
-  702,489 checks passed. The read median was still 2.5 ms at the end; only the tail grew.
-- **A lower bound.** At the end k6 ran 532 VUs and dropped 491 iterations it couldn't schedule,
-  on the same 4 CPUs as the API, Postgres and Keycloak. Part of the slowdown is k6 competing for
-  CPU, so one 1-vCPU API container can likely take more.
+| Run                                                                       | Stopped after | Arrival rate at the stop | Requests | Failed, 5xx | Dropped iterations, peak VUs |
+| ------------------------------------------------------------------------- | ------------- | ------------------------ | -------- | ----------- | ---------------------------- |
+| [10-24 12:38](https://github.com/kimipsen/buddy/actions/runs/40094760768) | 16m48s        | ~84 loads/s              | 709,623  | 0, 0        | 491, 532                     |
+| [10-24 21:41](https://github.com/kimipsen/buddy/actions/runs/40135321613) | 14m37s        | ~73 loads/s              | 539,449  | 0, 0        | 357, 398                     |
+| [10-25 07:20](https://github.com/kimipsen/buddy/actions/runs/40172408972) | 10m32s        | ~53 loads/s              | 285,389  | 0, 0        | 92, 142                      |
+| [10-25 19:44](https://github.com/kimipsen/buddy/actions/runs/40227479002) | 10m29s        | ~52 loads/s              | 281,858  | 0, 0        | 86, 136                      |
 
-Divided by the safety factor of 3, this gives the number to defend: about 28 dashboard loads/s,
-about 450 requests/s, or roughly 700 families active at the same moment at the `load` profile's
-mix. The nightly `load` run stays at 50 families: it's a trend check, not a capacity test.
+- **It always degrades without failing:** no failed requests, no 5xx, no `53300`, no API restart.
+  Only the latency tail grows; the read median stays in single-digit milliseconds.
+- **The spread (52-84 loads/s) is the runner, not the code.** Same commit, same image: GitHub
+  hands out different hardware from run to run. A capacity number from one hosted run is
+  unreliable by more than half.
+- **Each figure is a lower bound** for one 1-vCPU API container: k6 shares the 4 CPUs with the
+  API, Postgres and Keycloak, and dropped iterations it couldn't schedule in every run.
+
+The number to defend uses the lowest run, divided by the safety factor of 3: about 17 dashboard
+loads/s (about 17 requests each, so about 290 requests/s), or roughly 450 families active at the
+same moment at the `load` profile's mix. The nightly `load` run stays at 50 families: it's a
+trend check, not a capacity test.
+
+### `spike` and `soak`
+
+| p95 / p99                | [`spike`](https://github.com/kimipsen/buddy/actions/runs/40229421781): 0 → 200 families in 30 s | [`soak`](https://github.com/kimipsen/buddy/actions/runs/40229399049): 50 families for 2 h |
+| ------------------------ | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Dashboard (whole screen) | 49 / 88 ms                                                                                      | 45 / 55 ms                                                                                |
+| Reads                    | 6 / 9 ms                                                                                        | 6 / 8 ms                                                                                  |
+| Writes                   | 9 / 15 ms                                                                                       | 9 / 12 ms                                                                                 |
+| iCal feeds               | 41 / 86 ms                                                                                      | 25 / 28 ms                                                                                |
+| Requests, failed         | 36,474, 0 %                                                                                     | 211,773, 0.28 %                                                                           |
+
+- **`spike`:** the 07:00 rush, logins included, passed with room to spare: no failures, no 5xx,
+  no `53300`, no restart, and the p99 stayed under 100 ms.
+- **`soak`:** passed. Its 2-hour p95/p99 match the 10-minute `load` runs, and it had no 5xx and
+  no restart. The 0.28 % failures were all the load script's fault, not the API's: the
+  `child-board` journey logged a feelings check-in every third iteration, and each child reached
+  the API's limit of 20 check-ins a day (`400 validation_error`). The journey now deletes each
+  check-in after logging it, which keeps the write load and stays under the limit. The summary
+  can't show a creep inside the 2 hours; for that, watch Grafana during a local soak, since the
+  CI stack is thrown away after each run.
 
 ## Remaining open questions
 
-- **Should the thresholds be stricter?** The p95 numbers are proposals, and the first two `load`
-  runs came in far below them (see [Measured results](#measured-results)). Lean: three more
-  `load` runs, then set each threshold at about 1.5 times the worst observed p95 and record it
-  here as a decision. Thresholds that tight could fail on runner noise alone, so weigh them
-  against the run-to-run spread before making them a gate.
+- **Should the thresholds be stricter?** The p95 numbers are proposals, and the four `load` runs
+  so far came in far below them (see [Measured results](#measured-results)). Lean: one more
+  `load` run, then set each threshold at about 1.5 times the worst observed p95 (the dashboard's
+  worst so far is 51 ms, so about 75 ms) and record it here as a decision. The spread between
+  runs is wide (writes p99 16-150 ms), so leave headroom for runner noise before making them a
+  gate.
 - **Revisit the expected peak with real numbers.** It now comes from the breakpoint result (see
   Decisions made). Lean: once production has registered families, compare their real morning
   peak with it, and re-run `breakpoint` after changes to the data access layer.

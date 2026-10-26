@@ -11,8 +11,8 @@
 Plan in [Performance and load testing with k6](docs/backend/analysis/load-testing-k6.md).
 
 - [ ] **Settle the remaining open questions** (runner for stable numbers, staging). The expected
-      peak is settled from the first breakpoint run (2026-10-24).
-- [ ] **Calibrate.** Three more `load` runs (two are recorded in the doc's Measured results), then
+      peak is settled from the lowest of four breakpoint runs (2026-10-26).
+- [ ] **Calibrate.** One more `load` run (four are recorded in the doc's Measured results), then
       set the thresholds from them.
 
 ### Publishing Docker images (2026-10-19)
