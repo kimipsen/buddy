@@ -39,7 +39,7 @@ describe('ChildHomework', () => {
     localStorage.clear();
   });
 
-  async function setup(user: CurrentUser | Error = me()) {
+  async function setup(user: CurrentUser | Error = me(), settleWith = settle) {
     await TestBed.configureTestingModule({
       imports: [ChildHomework],
       providers: [
@@ -61,7 +61,7 @@ describe('ChildHomework', () => {
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ChildHomework);
-    await settle(fixture);
+    await settleWith(fixture);
     return fixture;
   }
 
@@ -69,6 +69,25 @@ describe('ChildHomework', () => {
     fixture.detectChanges();
     await new Promise((resolve) => setTimeout(resolve, 0));
     fixture.detectChanges();
+  }
+
+  // For tests that fake setTimeout too: a real zero-delay wait would never resolve.
+  async function settleFaked(fixture: ComponentFixture<unknown>) {
+    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(0);
+    fixture.detectChanges();
+  }
+
+  function announcement(fixture: ComponentFixture<unknown>): string | undefined {
+    return el(fixture).querySelector('[data-testid="homework-announcement"]')?.textContent?.trim();
+  }
+
+  function timerLabel(fixture: ComponentFixture<unknown>): string | null | undefined {
+    return el(fixture).querySelector('[role="timer"]')?.getAttribute('aria-label');
+  }
+
+  function titleInputs(fixture: ComponentFixture<unknown>): HTMLInputElement[] {
+    return Array.from(el(fixture).querySelectorAll<HTMLInputElement>('input[type="text"]'));
   }
 
   function el(fixture: ComponentFixture<unknown>): HTMLElement {
@@ -301,10 +320,12 @@ describe('ChildHomework', () => {
     expect(text(fixture)).toContain('Maths');
     expect(text(fixture)).toContain('Reading');
     expect(readHomeworkSession(today)).toBeNull();
+    expect(announcement(fixture)).toBe('All done!');
 
     button(fixture, 'Plan more homework').click();
     await settle(fixture);
     expect(text(fixture)).toContain("Write down tonight's homework.");
+    expect(announcement(fixture)).toBe('');
   });
 
   it('stops homework only after a confirm', async () => {
@@ -326,6 +347,172 @@ describe('ChildHomework', () => {
 
     expect(readHomeworkSession(today)).toBeNull();
     expect(text(fixture)).toContain("Write down tonight's homework.");
+    expect(el(fixture).querySelectorAll('[data-testid="homework-part"]')).toHaveLength(1);
+    expect(titleInputs(fixture)[0].value).toBe('');
+
+    await typeTitle(fixture, 0, 'Spelling');
+    button(fixture, 'Start').click();
+    await settle(fixture);
+    expect(text(fixture)).not.toContain('Stop homework? Your plan will be cleared.');
+    expect(hasButton(fixture, 'Stop homework')).toBe(true);
+  });
+
+  it('starts with nothing announced', async () => {
+    const fixture = await setup();
+
+    expect(announcement(fixture)).toBe('');
+  });
+
+  it('offers estimates from 5 to 120 minutes in steps of 5', async () => {
+    const fixture = await setup();
+
+    const options = Array.from(el(fixture).querySelector('select')?.options ?? []).map((o) =>
+      o.textContent?.trim(),
+    );
+    expect(options).toHaveLength(24);
+    expect(options.slice(0, 3)).toEqual(['5 min', '10 min', '15 min']);
+    expect(options.at(-1)).toBe('120 min');
+  });
+
+  it('changes only the part being edited, and removes only the part asked for', async () => {
+    const fixture = await setup();
+    button(fixture, 'Add more homework').click();
+    await settle(fixture);
+
+    await typeTitle(fixture, 0, 'Maths');
+    await typeTitle(fixture, 1, 'Reading');
+    await chooseEstimate(fixture, 1, '5 min');
+    expect(titleInputs(fixture).map((input) => input.value)).toEqual(['Maths', 'Reading']);
+    const selects = el(fixture).querySelectorAll('select');
+    expect(selects[0].selectedOptions[0].textContent?.trim()).toBe('20 min');
+    expect(selects[1].selectedOptions[0].textContent?.trim()).toBe('5 min');
+
+    button(fixture, 'Remove homework 2').click();
+    await settle(fixture);
+    expect(titleInputs(fixture).map((input) => input.value)).toEqual(['Maths']);
+  });
+
+  it('does not start from a submitted form while a title is missing', async () => {
+    const fixture = await setup();
+
+    el(fixture).querySelector('form')?.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(readHomeworkSession(today)).toBeNull();
+    expect(text(fixture)).toContain("Write down tonight's homework.");
+  });
+
+  it('colours the disc green for a chunk and blue for a break', async () => {
+    storeSession();
+    const focus = await setup();
+    expect(el(focus).querySelector('app-visual-timer [fill="#10b981"]')).not.toBeNull();
+    expect(el(focus).querySelector('app-visual-timer [fill="#38bdf8"]')).toBeNull();
+
+    TestBed.resetTestingModule();
+    storeSession(1);
+    const rest = await setup();
+    expect(el(rest).querySelector('app-visual-timer [fill="#38bdf8"]')).not.toBeNull();
+    expect(el(rest).querySelector('app-visual-timer [fill="#10b981"]')).toBeNull();
+  });
+
+  it('suggests a different break idea for each break, starting over after the last', async () => {
+    const ideas = [
+      'Drink some water',
+      'Jump 10 times',
+      'Stretch up high',
+      'Look out of the window',
+      'Take 5 slow breaths',
+      'Walk around the room',
+      'Shake your arms and legs',
+      'Have a small snack',
+      'Drink some water',
+    ];
+
+    for (const [index, idea] of ideas.entries()) {
+      TestBed.resetTestingModule();
+      let session = start(
+        createSession(
+          [{ id: 'project', title: 'Project', estimateMinutes: 100 }],
+          { focusMinutes: 10, breakMinutes: 2 },
+          today,
+        ),
+        NOW,
+      );
+      // Chunk, break, chunk, break, ...: break number `index` sits at step 2 * index + 1.
+      for (let i = 0; i < 2 * index + 1; i++) {
+        session = next(session, NOW);
+      }
+      writeHomeworkSession(session);
+
+      const fixture = await setup();
+      expect(el(fixture).querySelector('[data-testid="break-idea"]')?.textContent?.trim()).toBe(
+        `Break idea: ${idea}`,
+      );
+    }
+  });
+
+  it('does not offer Done with the part on the last chunk of all', async () => {
+    storeSession(4);
+    const fixture = await setup();
+
+    expect(el(fixture).querySelector('h2')?.textContent).toContain('Reading: 1 of 1');
+    expect(hasButton(fixture, 'Done with Reading')).toBe(false);
+    expect(hasButton(fixture, "I'm done")).toBe(true);
+  });
+
+  it('announces the break after finishing a part early', async () => {
+    storeSession();
+    const fixture = await setup();
+
+    button(fixture, 'Done with Maths').click();
+    await settle(fixture);
+
+    expect(announcement(fixture)).toBe('Break time.');
+  });
+
+  it('counts the time left from the moment Keep going is pressed', async () => {
+    storeSession();
+    const fixture = await setup();
+
+    vi.setSystemTime(NOW + 5 * MIN);
+    button(fixture, 'Pause').click();
+    await settle(fixture);
+    vi.setSystemTime(NOW + 15 * MIN);
+    button(fixture, 'Keep going').click();
+    await settle(fixture);
+
+    expect(timerLabel(fixture)).toBe('5 min left');
+  });
+
+  it("switches to Time for a break the moment the chunk's time runs out", async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+    vi.setSystemTime(NOW);
+    storeSession();
+    const fixture = await setup(me(), settleFaked);
+    expect(text(fixture)).not.toContain('Time for a break!');
+
+    await vi.advanceTimersByTimeAsync(10 * MIN - 1_000);
+    await settleFaked(fixture);
+    expect(text(fixture)).not.toContain('Time for a break!');
+
+    await vi.advanceTimersByTimeAsync(1_000);
+    await settleFaked(fixture);
+    expect(text(fixture)).toContain('Time for a break!');
+  });
+
+  it('refreshes the time every minute and stops when the page closes', async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
+    vi.setSystemTime(NOW);
+    storeSession();
+    const fixture = await setup();
+
+    vi.setSystemTime(NOW + 11 * MIN);
+    vi.advanceTimersByTime(60_000);
+    await settle(fixture);
+    expect(text(fixture)).toContain('Time for a break!');
+
+    fixture.destroy();
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('shows no disc or bar when the guardian turned timers off', async () => {

@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChildClockService } from '../../../../core/child-clock.service';
@@ -9,6 +10,7 @@ import {
   MyFeelingsToday,
 } from '../../../../core/feelings.service';
 import { CurrentUser, UsersService } from '../../../../core/users.service';
+import { FeelingTagChips } from '../../../../shared/feeling-tag-chips/feeling-tag-chips';
 import { FEELINGS_TICK_MS, FeelingsCheckIn } from './feelings-check-in';
 
 async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
@@ -52,9 +54,17 @@ describe('FeelingsCheckIn', () => {
     };
   }
 
-  async function setup(today: MyFeelingsToday = todayResponse()) {
+  async function setup(
+    today: MyFeelingsToday | Error = todayResponse(),
+    user: CurrentUser | Error = { name: { givenName: 'Emil' } } as CurrentUser,
+  ) {
     const feelings = {
-      getMyToday: vi.fn(async () => today),
+      getMyToday: vi.fn(async () => {
+        if (today instanceof Error) {
+          throw today;
+        }
+        return today;
+      }),
       checkIn: vi.fn(async () => checkIn()),
       undoCheckIn: vi.fn(async () => undefined),
     } satisfies Partial<FeelingsService>;
@@ -66,7 +76,12 @@ describe('FeelingsCheckIn', () => {
         {
           provide: UsersService,
           useValue: {
-            ensureCurrentUser: vi.fn(async () => ({ name: { givenName: 'Emil' } }) as CurrentUser),
+            ensureCurrentUser: vi.fn(async () => {
+              if (user instanceof Error) {
+                throw user;
+              }
+              return user;
+            }),
           },
         },
         {
@@ -300,6 +315,224 @@ describe('FeelingsCheckIn', () => {
     expect(el.textContent).toContain('It’s too late to undo that one.');
     expect(buttonByText(el, 'Undo')).toBeUndefined();
     expect(el.querySelectorAll('[data-testid="feelings-today-chips"] li')).toHaveLength(1);
+  });
+
+  it('announces nothing until something happens', async () => {
+    const { el } = await setup();
+
+    expect(el.querySelector('[role="status"]')?.textContent).toBe('');
+  });
+
+  it('shows the load error without highlighting the card', async () => {
+    const { el } = await setup(new Error('offline'));
+
+    expect(el.textContent).toContain('Something went wrong. Try again later.');
+    expect(el.querySelector('[data-testid="feelings-prompt"]')).toBeNull();
+    expect(el.querySelector('section')?.className).not.toContain('border-amber-300');
+  });
+
+  it('thanks without a name when the child’s name did not load', async () => {
+    const { fixture, el } = await setup(todayResponse(), new Error('offline'));
+
+    zoneButton(el, 'Green').click();
+    await settle(fixture);
+    buttonByText(el, 'Done').click();
+    await settle(fixture);
+
+    expect(el.querySelector('[data-testid="feelings-thanks"]')?.textContent?.trim()).toBe(
+      'Thanks!',
+    );
+  });
+
+  it('stops re-reading the clock once the card is gone', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const { fixture } = await setup();
+
+    fixture.destroy();
+
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('starts afresh after Check in again', async () => {
+    const { fixture, feelings, el } = await setup();
+
+    zoneButton(el, 'Yellow').click();
+    await settle(fixture);
+    buttonByText(el, 'Worried').click();
+    buttonByText(el, '+ Add a note').click();
+    await settle(fixture);
+    const note = el.querySelector('textarea') as HTMLTextAreaElement;
+    note.value = 'Maths test';
+    note.dispatchEvent(new Event('input'));
+    await settle(fixture);
+    buttonByText(el, 'Done').click();
+    await settle(fixture);
+
+    buttonByText(el, 'Check in again').click();
+    await settle(fixture);
+    expect(buttonByText(el, 'Undo')).toBeUndefined();
+    expect(zoneButton(el, 'Yellow').getAttribute('aria-pressed')).toBe('false');
+
+    zoneButton(el, 'Yellow').click();
+    await settle(fixture);
+    expect(el.querySelector('textarea')).toBeNull();
+    expect(buttonByText(el, 'Worried').getAttribute('aria-pressed')).toBe('false');
+    buttonByText(el, 'Done').click();
+    await settle(fixture);
+
+    expect(feelings.checkIn).toHaveBeenLastCalledWith({ zone: 'Yellow', tags: [], note: '' });
+  });
+
+  it('goes back to the buttons without a picked face', async () => {
+    const { fixture, el } = await setup();
+
+    zoneButton(el, 'Yellow').click();
+    await settle(fixture);
+    buttonByText(el, 'Back').click();
+    await settle(fixture);
+
+    expect(buttonByText(el, 'Done')).toBeUndefined();
+    expect(zoneButton(el, 'Yellow').getAttribute('aria-pressed')).toBe('false');
+    expect(el.textContent).toContain('Tap the one that fits right now.');
+  });
+
+  it('clears the save error when the child picks another face', async () => {
+    const { fixture, feelings, el } = await setup();
+    feelings.checkIn.mockRejectedValueOnce(new Error('offline'));
+
+    zoneButton(el, 'Blue').click();
+    await settle(fixture);
+    buttonByText(el, 'Done').click();
+    await settle(fixture);
+    zoneButton(el, 'Green').click();
+    await settle(fixture);
+
+    expect(el.textContent).not.toContain('That didn’t save. Try again.');
+  });
+
+  it('clears the too-late message when the child picks a face again', async () => {
+    const { fixture, feelings, el } = await setup();
+    feelings.undoCheckIn.mockRejectedValueOnce(new HttpErrorResponse({ status: 409 }));
+
+    zoneButton(el, 'Red').click();
+    await settle(fixture);
+    buttonByText(el, 'Done').click();
+    await settle(fixture);
+    buttonByText(el, 'Undo').click();
+    await settle(fixture);
+    zoneButton(el, 'Green').click();
+    await settle(fixture);
+
+    expect(el.textContent).not.toContain('It’s too late to undo that one.');
+  });
+
+  it('takes a word off again on a second tap', async () => {
+    const { fixture, feelings, el } = await setup();
+
+    zoneButton(el, 'Yellow').click();
+    await settle(fixture);
+    for (const tag of ['Worried', 'School', 'Worried']) {
+      buttonByText(el, tag).click();
+      await settle(fixture);
+    }
+    buttonByText(el, 'Done').click();
+    await settle(fixture);
+
+    expect(feelings.checkIn).toHaveBeenCalledWith({ zone: 'Yellow', tags: ['School'], note: '' });
+  });
+
+  it('ignores a fourth word even if the chips let one through', async () => {
+    const { fixture, feelings, el } = await setup();
+
+    zoneButton(el, 'Yellow').click();
+    await settle(fixture);
+    for (const tag of ['Worried', 'School', 'Friends']) {
+      buttonByText(el, tag).click();
+      await settle(fixture);
+    }
+    fixture.debugElement
+      .query(By.directive(FeelingTagChips))
+      .componentInstance.toggled.emit('Home');
+    await settle(fixture);
+    buttonByText(el, 'Done').click();
+    await settle(fixture);
+
+    expect(feelings.checkIn).toHaveBeenCalledWith({
+      zone: 'Yellow',
+      tags: ['Worried', 'School', 'Friends'],
+      note: '',
+    });
+  });
+
+  it('runs the undo window from the moment the save came back', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval'] });
+    const { fixture, el } = await setup();
+
+    zoneButton(el, 'Green').click();
+    await settle(fixture);
+    nowMs = SAVED_AT + 5 * 60_000;
+    buttonByText(el, 'Done').click();
+    await settle(fixture);
+
+    nowMs = SAVED_AT + 14 * 60_000;
+    vi.advanceTimersByTime(FEELINGS_TICK_MS);
+    await settle(fixture);
+
+    expect(el.textContent).toContain('You can undo for 1 more min.');
+  });
+
+  it('undoes only the check-in just saved and keeps the earlier ones', async () => {
+    const { fixture, el } = await setup(todayResponse({ checkIns: [checkIn({ id: 'c0' })] }));
+
+    zoneButton(el, 'Red').click();
+    await settle(fixture);
+    buttonByText(el, 'Done').click();
+    await settle(fixture);
+    expect(el.querySelectorAll('[data-testid="feelings-today-chips"] li')).toHaveLength(2);
+
+    buttonByText(el, 'Undo').click();
+    await settle(fixture);
+
+    expect(el.querySelectorAll('[data-testid="feelings-today-chips"] li')).toHaveLength(1);
+  });
+
+  for (const [name, error] of [
+    ['an offline error', new Error('offline')],
+    ['a server error', new HttpErrorResponse({ status: 500 })],
+  ] as const) {
+    it(`says the undo failed on ${name} and keeps Undo`, async () => {
+      const { fixture, feelings, el } = await setup();
+      feelings.undoCheckIn.mockRejectedValueOnce(error);
+
+      zoneButton(el, 'Red').click();
+      await settle(fixture);
+      buttonByText(el, 'Done').click();
+      await settle(fixture);
+      buttonByText(el, 'Undo').click();
+      await settle(fixture);
+
+      expect(el.textContent).toContain('That couldn’t be undone.');
+      expect(el.textContent).not.toContain('too late');
+      expect(buttonByText(el, 'Undo')).toBeTruthy();
+    });
+  }
+
+  it('names the time and the word on each chip for screen readers', async () => {
+    const { el } = await setup(todayResponse({ checkIns: [checkIn()] }));
+
+    expect(el.querySelector('[data-testid="feelings-today-chips"] .sr-only')?.textContent).toBe(
+      '15:30 Wound up',
+    );
+  });
+
+  it('does not reload while the child’s day is the same', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval'] });
+    const { fixture, feelings } = await setup();
+
+    vi.advanceTimersByTime(FEELINGS_TICK_MS);
+    await settle(fixture);
+
+    expect(feelings.getMyToday).toHaveBeenCalledTimes(1);
   });
 
   it('reloads once for a new day, even if the server still answers the old one', async () => {

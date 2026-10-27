@@ -59,7 +59,9 @@ export class FeelingsCheckIn {
   protected readonly step = signal<Step>('pick');
   protected readonly zone = signal<FeelingZone | null>(null);
   protected readonly tags = signal<FeelingTag[]>([]);
+  // Stryker disable next-line StringLiteral: the first pick() always resets it, and nothing reads it before that
   protected readonly note = signal('');
+  // Stryker disable next-line BooleanLiteral: the first pick() always resets it, and nothing reads it before that
   protected readonly noteOpen = signal(false);
   protected readonly lastSaved = signal<FeelingCheckIn | null>(null);
   // When the save came back, on this device's clock. The undo countdown runs from here rather than
@@ -79,6 +81,7 @@ export class FeelingsCheckIn {
   protected readonly zoneInfo = zoneInfo;
 
   protected readonly displayMode = computed(() =>
+    // Stryker disable next-line StringLiteral: without today the steps aren't shown, and anything but 'FacesOnly' reads the same
     this.today.hasValue() ? this.today.value().displayMode : 'FacesAndWords',
   );
   protected readonly facesOnly = computed(() => this.displayMode() === 'FacesOnly');
@@ -107,6 +110,7 @@ export class FeelingsCheckIn {
 
     // The undo window closing ends the "Thanks" state.
     effect(() => {
+      // Stryker disable next-line ConditionalExpression: undoMinutesLeft only drops to 0 on the saved step or where the step is set to 'pick' anyway
       if (this.step() === 'saved' && this.undoMinutesLeft() === 0) {
         this.step.set('pick');
       }
@@ -141,6 +145,7 @@ export class FeelingsCheckIn {
   }
 
   protected back(): void {
+    // Stryker disable next-line CallExpression: zone is only read on the details step, and every way into it sets zone first
     this.zone.set(null);
     this.step.set('pick');
   }
@@ -165,6 +170,7 @@ export class FeelingsCheckIn {
         this.lastSaved.set(saved);
         this.updateToday((today) => ({ ...today, checkIns: [...today.checkIns, saved] }));
         this.announcement.set(this.savedAnnouncement(zone));
+        // Stryker disable next-line CallExpression: zone is only read on the details step, and every way into it sets zone first
         this.zone.set(null);
         this.step.set('saved');
       },
@@ -187,6 +193,7 @@ export class FeelingsCheckIn {
           ...today,
           checkIns: today.checkIns.filter((c) => c.id !== saved.id),
         }));
+        // Stryker disable next-line CallExpression: lastSaved is only read on the saved step, and every way into it sets lastSaved first
         this.lastSaved.set(null);
         this.announcement.set(this.translation.translate('feelings.child.undone'));
         this.step.set('pick');
@@ -195,6 +202,7 @@ export class FeelingsCheckIn {
         // The server's window closed first (check_in_undo_window_closed): the check-in stays, and
         // the card goes back to the buttons.
         if (error instanceof HttpErrorResponse && error.status === 409) {
+          // Stryker disable next-line CallExpression: lastSaved is only read on the saved step, and every way into it sets lastSaved first
           this.lastSaved.set(null);
           this.step.set('pick');
           return 'feelings.child.undoTooLate';
@@ -206,6 +214,7 @@ export class FeelingsCheckIn {
   }
 
   protected checkInAgain(): void {
+    // Stryker disable next-line CallExpression: lastSaved is only read on the saved step, and every way into it sets lastSaved first
     this.lastSaved.set(null);
     this.step.set('pick');
   }
