@@ -47,6 +47,11 @@ updates:
       frontend-dependencies:
         patterns:
           - "*"
+    ignore:
+      # @angular/build pins the TypeScript minor it supports (22.2: >=6.0 <6.1), so only patches
+      # come on their own; a new minor or major moves together with Angular.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
   # Keycloak theme build tooling
   - package-ecosystem: "npm"
