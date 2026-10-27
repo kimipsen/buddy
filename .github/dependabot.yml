@@ -4,7 +4,9 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "cron"
+      cronjob: "0 6 * * 1,5" # Monday and Friday, 06:00
+      timezone: "Europe/Copenhagen"
     groups:
       github-actions:
         patterns:
@@ -14,7 +16,9 @@ updates:
   - package-ecosystem: "devcontainers"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "cron"
+      cronjob: "0 6 * * 1,5" # Monday and Friday, 06:00
+      timezone: "Europe/Copenhagen"
     groups:
       devcontainer-features:
         patterns:
@@ -24,7 +28,9 @@ updates:
   - package-ecosystem: "nuget"
     directory: "/src/backend"
     schedule:
-      interval: "weekly"
+      interval: "cron"
+      cronjob: "0 6 * * 1,5" # Monday and Friday, 06:00
+      timezone: "Europe/Copenhagen"
     groups:
       backend-dependencies:
         patterns:
@@ -34,7 +40,9 @@ updates:
   - package-ecosystem: "npm"
     directory: "/src/frontend/buddy"
     schedule:
-      interval: "weekly"
+      interval: "cron"
+      cronjob: "0 6 * * 1,5" # Monday and Friday, 06:00
+      timezone: "Europe/Copenhagen"
     groups:
       frontend-dependencies:
         patterns:
@@ -44,7 +52,9 @@ updates:
   - package-ecosystem: "npm"
     directory: "/themes/buddy/build"
     schedule:
-      interval: "weekly"
+      interval: "cron"
+      cronjob: "0 6 * * 1,5" # Monday and Friday, 06:00
+      timezone: "Europe/Copenhagen"
     groups:
       theme-build-dependencies:
         patterns:
@@ -54,12 +64,16 @@ updates:
   - package-ecosystem: "docker"
     directory: "/.devcontainer"
     schedule:
-      interval: "weekly"
+      interval: "cron"
+      cronjob: "0 6 * * 1,5" # Monday and Friday, 06:00
+      timezone: "Europe/Copenhagen"
 
   - package-ecosystem: "docker"
     directory: "/src/backend/buddy"
     schedule:
-      interval: "weekly"
+      interval: "cron"
+      cronjob: "0 6 * * 1,5" # Monday and Friday, 06:00
+      timezone: "Europe/Copenhagen"
     # A new SDK tag must land together with global.json (and the runtime tag); Dependabot can't
     # change those in one PR, so it only refreshes the digests of the pinned tags.
     ignore:
@@ -71,7 +85,9 @@ updates:
   - package-ecosystem: "docker"
     directory: "/src/frontend/buddy"
     schedule:
-      interval: "weekly"
+      interval: "cron"
+      cronjob: "0 6 * * 1,5" # Monday and Friday, 06:00
+      timezone: "Europe/Copenhagen"
     ignore:
       # The Node major is pinned in .nvmrc and package.json "engines"; change all three together.
       - dependency-name: "node"
@@ -81,9 +97,13 @@ updates:
   - package-ecosystem: "docker-compose"
     directory: "/deploy"
     schedule:
-      interval: "weekly"
+      interval: "cron"
+      cronjob: "0 6 * * 1,5" # Monday and Friday, 06:00
+      timezone: "Europe/Copenhagen"
 
   - package-ecosystem: "docker"
     directory: "/deploy/azure/keycloak"
     schedule:
-      interval: "weekly"
+      interval: "cron"
+      cronjob: "0 6 * * 1,5" # Monday and Friday, 06:00
+      timezone: "Europe/Copenhagen"
