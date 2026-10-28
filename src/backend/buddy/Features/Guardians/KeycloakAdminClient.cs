@@ -198,12 +198,13 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
     // follow-up rather than a correctness gap.
     private async Task<string> GetServiceAccountTokenAsync(KeycloakAdminOptions admin, CancellationToken cancellationToken)
     {
-        using var response = await httpClient.PostAsync(admin.TokenEndpoint, new FormUrlEncodedContent(new Dictionary<string, string>
+        using var form = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["grant_type"] = "client_credentials",
             ["client_id"] = admin.ClientId,
             ["client_secret"] = admin.ClientSecret
-        }), cancellationToken);
+        });
+        using var response = await httpClient.PostAsync(admin.TokenEndpoint, form, cancellationToken);
 
         EnsureSuccess(response, "service account token");
 

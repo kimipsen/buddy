@@ -41,7 +41,7 @@ public sealed class SmtpEmailSender(IOptionsMonitor<MailOptions> options, Fronte
     {
         var mail = options.CurrentValue;
 
-        var message = new MimeMessage();
+        using var message = new MimeMessage();
         message.From.Add(new MailboxAddress(mail.FromName ?? mail.FromAddress, mail.FromAddress));
         message.To.Add(MailboxAddress.Parse(emailAddress));
         message.Subject = subject;

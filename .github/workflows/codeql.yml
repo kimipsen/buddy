@@ -39,12 +39,22 @@ jobs:
         include:
           # Built for real (manual build mode), so the extractor sees the same compilation as the
           # SDK pinned in global.json -- .NET 11 preview with C# preview features.
+          # The excluded queries misread that preview code: they flag nearly every local that is
+          # read on the next line (`var command = ...; await bus.InvokeAsync(command)`) and
+          # implicit conversions to union types, ~1000 false positives with no real hit among them.
           - name: backend
             language: csharp
             build-mode: manual
             config: |
               paths:
                 - src/backend
+              query-filters:
+                - exclude:
+                    id: cs/useless-assignment-to-local
+                - exclude:
+                    id: cs/useless-upcast
+                - exclude:
+                    id: cs/useless-cast-to-self
           # TypeScript needs no build. Generated output, dependencies and reports stay out.
           - name: frontend
             language: javascript-typescript
@@ -92,12 +102,14 @@ jobs:
           output: sarif-results
 
       # A traced C# build ignores paths-ignore, so the source-generator output CodeQL writes under
-      # obj/ (Marten/JasperFx evolvers) is analysed too. Its results aren't ours to fix; drop them.
+      # obj/ (Marten/JasperFx evolvers) and the committed Wolverine handler code in
+      # Internal/Generated (task codegen:backend) are analysed too. Their results aren't ours to
+      # fix; drop them.
       - name: Drop results in generated code
         run: |
           for f in sarif-results/*.sarif; do
             jq '.runs[].results |= map(select(
-                  (.locations[0].physicalLocation.artifactLocation.uri // "") | test("(^|/)obj/") | not))' \
+                  (.locations[0].physicalLocation.artifactLocation.uri // "") | test("(^|/)(obj|Internal/Generated)/") | not))' \
               "$f" > "$f.tmp"
             mv "$f.tmp" "$f"
           done
