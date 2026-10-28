@@ -1141,6 +1141,51 @@ describe('ManageCalendars', () => {
     expect(compiled.textContent).toContain('Unable to revoke this link.');
   });
 
+  describe('after a failed revoke', () => {
+    async function failRevoke() {
+      const tokens = [icalToken({ tokenId: 'token-a' })];
+      const { fixture } = await setup({
+        calendars: {
+          listMyCalendars: vi.fn(async () => [calendar()]),
+          listIcalTokens: vi.fn(async () => tokens),
+          revokeIcalToken: vi.fn(async () => Promise.reject(new Error('boom'))),
+        },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Subscribe')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Revoke')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Unable to revoke this link.');
+
+      return { fixture, compiled };
+    }
+
+    it('hides the revoke error when the iCal panel is closed and opened again', async () => {
+      const { fixture, compiled } = await failRevoke();
+
+      findButtonByText(compiled, 'Close')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Subscribe')!.click();
+      await settle(fixture);
+
+      expect(icalPanelOpen(compiled)).toBe(true);
+      expect(compiled.textContent).not.toContain('Unable to revoke this link.');
+    });
+
+    it('hides the revoke error once a new link has been generated', async () => {
+      const { fixture, compiled } = await failRevoke();
+
+      findButtonByText(compiled, 'Generate new link')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain('https://api.buddy.test/ical/token-new.ics');
+      expect(compiled.textContent).not.toContain('Unable to revoke this link.');
+    });
+  });
+
   // ----- In-flight, retry and reset behaviour -----
 
   describe('create in flight and retry', () => {

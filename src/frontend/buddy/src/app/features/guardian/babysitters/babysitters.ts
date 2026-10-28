@@ -30,7 +30,9 @@ export class GuardianBabysitters {
   protected readonly newContactInfo = signal('');
 
   protected readonly editingId = signal<string | null>(null);
+  // Stryker disable next-line StringLiteral: startEdit() sets it before the edit form, its only reader, renders
   protected readonly editName = signal('');
+  // Stryker disable next-line StringLiteral: startEdit() sets it before the edit form, its only reader, renders
   protected readonly editContactInfo = signal('');
 
   protected readonly saving = createAction();

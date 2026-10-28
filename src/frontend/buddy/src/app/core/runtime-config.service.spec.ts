@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { RuntimeConfig, RuntimeConfigService } from './runtime-config.service';
+import { isRuntimeConfig, RuntimeConfig, RuntimeConfigService } from './runtime-config.service';
 
 describe('RuntimeConfigService', () => {
   let service: RuntimeConfigService;
@@ -202,5 +202,61 @@ describe('RuntimeConfigService', () => {
     fetchMock.mockRejectedValue(new Error('network down'));
 
     await expect(service.load()).rejects.toThrow('network down');
+  });
+
+  it.each([
+    ['null', null],
+    ['a JSON string', 'https://api.buddy.test'],
+  ])('rejects a config body that is %s instead of an object', async (_, body) => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => body,
+    });
+
+    await expect(service.load()).rejects.toThrow('Runtime config is missing');
+  });
+
+  it('rejects a config whose keycloak is null', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({ ...config, keycloak: null }),
+    });
+
+    await expect(service.load()).rejects.toThrow('Runtime config is missing');
+  });
+});
+
+describe('isRuntimeConfig', () => {
+  const keycloak = {
+    authority: 'https://auth.buddy.test',
+    clientId: 'buddy-web',
+    realm: 'buddy',
+    redirectPath: '/auth/callback',
+  };
+
+  it('accepts a plain object with apiBaseUrl and every keycloak field', () => {
+    expect(isRuntimeConfig({ keycloak, apiBaseUrl: 'https://api.buddy.test' })).toBe(true);
+  });
+
+  it('rejects null and non-object values, even a function carrying the right fields', () => {
+    expect(isRuntimeConfig(null)).toBe(false);
+    expect(isRuntimeConfig(undefined)).toBe(false);
+    expect(
+      isRuntimeConfig(Object.assign(() => undefined, { keycloak, apiBaseUrl: 'https://api' })),
+    ).toBe(false);
+  });
+
+  it('rejects a keycloak section that is null or not an object, even a function carrying the right fields', () => {
+    expect(isRuntimeConfig({ keycloak: null, apiBaseUrl: 'https://api' })).toBe(false);
+    expect(
+      isRuntimeConfig({
+        keycloak: Object.assign(() => undefined, keycloak),
+        apiBaseUrl: 'https://api',
+      }),
+    ).toBe(false);
   });
 });

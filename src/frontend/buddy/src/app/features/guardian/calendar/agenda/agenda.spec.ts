@@ -1230,7 +1230,15 @@ describe('CalendarAgenda', () => {
         'Sat',
         'Sun',
       ]);
-      expect(buttons.map((b) => b.getAttribute('aria-label'))).toContain('Saturday');
+      expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ]);
       expect(buttons.every((b) => b.getAttribute('aria-pressed') === 'true')).toBe(true);
 
       await chooseRepeat(fixture, 3);

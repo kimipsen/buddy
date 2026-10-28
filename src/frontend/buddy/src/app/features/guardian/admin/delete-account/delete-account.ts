@@ -34,6 +34,7 @@ export class DeleteAccount {
   // What the deletion takes with it (children with no other guardian, owned groups), fetched each
   // time the dialog opens. A failed fetch doesn't block the deletion; the dialog just says so.
   protected readonly preview = signal<AccountDeletionPreview | null>(null);
+  // Stryker disable next-line BooleanLiteral: openConfirm() resets it before the dialog, its only reader, renders
   protected readonly previewFailed = signal(false);
 
   protected openConfirm(): void {
@@ -77,6 +78,7 @@ export class DeleteAccount {
       panel.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'),
     );
     const first = buttons.at(0) ?? panel;
+    // Stryker disable next-line UnaryOperator: the dialog has exactly two buttons, enabled or disabled together, so at(1) is at(-1)
     const last = buttons.at(-1) ?? panel;
     const active = document.activeElement as HTMLElement | null;
 

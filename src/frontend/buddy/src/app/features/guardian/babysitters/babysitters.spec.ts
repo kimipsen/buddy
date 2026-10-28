@@ -112,6 +112,20 @@ describe('GuardianBabysitters', () => {
     expect(contact.value).toBe('');
   });
 
+  it('starts with an empty form and adds a babysitter without contact info', async () => {
+    const { fixture, compiled, service } = await setup();
+    const name = compiled.querySelector<HTMLInputElement>('#new-babysitter-name')!;
+    const contact = compiled.querySelector<HTMLInputElement>('#new-babysitter-contact')!;
+    expect(contact.value).toBe('');
+
+    type(name, 'Bo');
+    await settle(fixture);
+    findButton(compiled, 'Add babysitter')!.click();
+    await settle(fixture);
+
+    expect(service.add).toHaveBeenCalledWith({ name: 'Bo', contactInfo: '' });
+  });
+
   it('edits a babysitter in place', async () => {
     const { fixture, compiled, service } = await setup();
 

@@ -394,6 +394,24 @@ describe('AiProviderSettingsComponent', () => {
     expect(compiled.textContent).not.toContain('Unable to save this API key.');
   });
 
+  it('ignores a blank key submitted with Enter and keeps the editor open', async () => {
+    const { fixture, aiAssistant } = await setup();
+    await settle(fixture);
+
+    const compiled: HTMLElement = fixture.nativeElement;
+    rowButton(compiled, 'OpenAi', 'Add key')!.click();
+    await settle(fixture);
+    await typeKey(fixture, '   ');
+
+    compiled
+      .querySelector<HTMLInputElement>('input[name="apiKey"]')!
+      .form!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(aiAssistant.setProviderApiKey).not.toHaveBeenCalled();
+    expect(compiled.querySelector('input[name="apiKey"]')).not.toBeNull();
+  });
+
   it('trims the API key and closes the editor after a successful save', async () => {
     const { fixture, aiAssistant } = await setup();
     await settle(fixture);

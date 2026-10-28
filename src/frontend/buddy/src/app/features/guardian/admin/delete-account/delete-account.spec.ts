@@ -129,6 +129,30 @@ describe('DeleteAccount', () => {
 
       expect(users.getAccountDeletionPreview).toHaveBeenCalledTimes(2);
     });
+
+    it('drops the previous preview on reopen and says it is checking again', async () => {
+      const getAccountDeletionPreview = vi
+        .fn<UsersService['getAccountDeletionPreview']>()
+        .mockResolvedValueOnce({
+          ...emptyPreview(),
+          childrenErased: [{ id: 'child-1', givenName: 'Ida', familyName: 'Hansen' }],
+        })
+        .mockReturnValueOnce(new Promise<never>(() => undefined));
+      const { fixture } = setup({ users: { getAccountDeletionPreview } });
+
+      openDialog(fixture);
+      await settle(fixture);
+      expect(dialog(fixture.nativeElement)!.textContent).toContain('Ida Hansen');
+
+      findButtonByText(fixture.nativeElement, 'Cancel')!.click();
+      fixture.detectChanges();
+      openDialog(fixture);
+      await settle(fixture);
+
+      const text = dialog(fixture.nativeElement)!.textContent;
+      expect(text).not.toContain('Ida Hansen');
+      expect(text).toContain('Checking what else will be deleted…');
+    });
   });
 
   // The dim layer behind the panel: pointer-only, so it is hidden from assistive tech.

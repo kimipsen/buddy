@@ -343,6 +343,23 @@ describe('visit summary stats', () => {
     ]);
   });
 
+  it('keeps the medicines of a regimen apart when comparing two days', () => {
+    // Run together, both days would read "Concerta 18 mgMelatonin 3 mg".
+    const medicine: VisitSummaryMedicineSection = {
+      schedules: [],
+      doses: [],
+      effectNotes: [
+        regimenNote('2026-03-04', ['Concerta', '18 mg'], ['Melatonin', '3 mg']),
+        regimenNote('2026-03-05', ['Concerta', '18 mgMelatonin 3 mg']),
+      ],
+      excludedMedicineCount: 0,
+    };
+
+    const [week] = overviewWeeks('2026-03-04', '2026-03-05', null, medicine, null, '2026-03-05');
+
+    expect(week.find((day) => day.date === '2026-03-05')?.doseChange).toBe(true);
+  });
+
   it('counts the days of a period inclusively', () => {
     expect(periodDays('2026-03-02', '2026-03-29')).toBe(28);
   });
