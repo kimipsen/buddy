@@ -18,3 +18,14 @@ CVE-2026-97031 exp:2026-11-15
 # the API process, and the web image's Caddy serves static files and doesn't verify client
 # certificate chains. Recheck when this expires.
 CVE-2026-111943 exp:2026-11-19
+
+# web (usr/bin/caddy, from caddy:2-alpine): go-jose v4.1.5 DoS when parsing JWKs with RSA keys,
+# fixed in 4.1.6 but not yet in the upstream image (already on the newest caddy:2-alpine digest).
+# The web image's Caddy only serves static files on :80 and does no ACME or JWT handling, so it
+# never parses a JWK. Dependabot's digest bump brings the rebuild. Recheck when this expires.
+CVE-2026-116587 exp:2026-11-15
+
+# keycloak (guava 33.6.0, bundled by quay.io/keycloak/keycloak:26.8.1, the newest release): Guava
+# DoS, fixed in 33.7.2. Swapping a jar inside Keycloak's distribution isn't supported; the fix
+# arrives with the next Keycloak release. Recheck when this expires.
+CVE-2026-102554 exp:2026-11-15
