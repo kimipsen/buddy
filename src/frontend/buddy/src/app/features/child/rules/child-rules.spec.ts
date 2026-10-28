@@ -201,4 +201,38 @@ describe('ChildRules', () => {
 
     expect(compiled.textContent).toContain('Unable to load your rules.');
   });
+
+  it('drops the “just changed” note once the child has read the new version', async () => {
+    const getChildRules = vi
+      .fn()
+      .mockResolvedValueOnce(rules())
+      .mockResolvedValueOnce(
+        rules({
+          households: [
+            {
+              scopeKind: 'Group',
+              scopeId: 'home',
+              label: 'Holm family',
+              rules: [rule('h1', 'Dinner', { body: 'New text', revision: 2 })],
+            },
+          ],
+        }),
+      );
+    const acknowledge = vi
+      .fn()
+      .mockRejectedValueOnce(new HttpErrorResponse({ status: 409 }))
+      .mockResolvedValue(undefined);
+    const { fixture, compiled } = await setup({ getChildRules, acknowledge });
+
+    readButton(card(compiled, 'h1'))!.click();
+    await settle(fixture);
+    expect(card(compiled, 'h1').querySelector('[role="status"]')).not.toBeNull();
+
+    readButton(card(compiled, 'h1'))!.click();
+    await settle(fixture);
+
+    expect(acknowledge).toHaveBeenLastCalledWith({ kind: 'Group', id: 'home' }, 'h1', 2);
+    expect(card(compiled, 'h1').querySelector('[role="status"]')).toBeNull();
+    expect(card(compiled, 'h1').textContent).toContain('Read');
+  });
 });

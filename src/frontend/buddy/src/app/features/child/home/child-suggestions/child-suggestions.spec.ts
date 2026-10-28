@@ -173,6 +173,12 @@ describe('ChildSuggestions', () => {
         resolvedAt: new Date(now - 3 * DAY - 1).toISOString(),
       }),
       suggestion({
+        id: 'e',
+        title: 'Exactly three days',
+        status: 'Declined',
+        resolvedAt: new Date(now - 3 * DAY).toISOString(),
+      }),
+      suggestion({
         id: 'd',
         title: 'Sun hat',
         status: 'Withdrawn',
@@ -184,6 +190,68 @@ describe('ChildSuggestions', () => {
     expect(text).toContain('Recorder · Added to your list');
     expect(text).toContain('Sweets · Not added this time');
     expect(text).not.toContain('Old idea');
+    expect(text).not.toContain('Exactly three days');
     expect(text).not.toContain('Sun hat');
+  });
+
+  it('sends nothing when the form is submitted with only spaces', async () => {
+    const { fixture, compiled, stub } = await setup();
+
+    await fillAndSend(fixture, compiled, '   ');
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(stub.suggestChecklistItem).not.toHaveBeenCalled();
+    expect(compiled.querySelector('form')).not.toBeNull();
+  });
+
+  it('keeps Send disabled while the suggestion is being sent', async () => {
+    const { fixture, compiled } = await setup([], {
+      suggestChecklistItem: vi.fn(() => new Promise<TaskTemplate>(() => undefined)),
+    });
+
+    await fillAndSend(fixture, compiled, 'Recorder');
+    buttonByText(compiled, 'Send to a grown-up')!.click();
+    await settle(fixture);
+
+    expect(buttonByText(compiled, 'Send to a grown-up')!.disabled).toBe(true);
+  });
+
+  it('clears the last error when the sheet is opened again', async () => {
+    const { fixture, compiled } = await setup([], {
+      suggestChecklistItem: vi
+        .fn()
+        .mockRejectedValue(
+          new HttpErrorResponse({ status: 409, error: { code: 'checklist_item_exists' } }),
+        ),
+    });
+
+    await fillAndSend(fixture, compiled, 'Lunchbox');
+    buttonByText(compiled, 'Send to a grown-up')!.click();
+    await settle(fixture);
+    expect(compiled.querySelector('[role="alert"]')).not.toBeNull();
+
+    buttonByText(compiled, 'Cancel')!.click();
+    await settle(fixture);
+    buttonByText(compiled, 'Suggest something')!.click();
+    await settle(fixture);
+
+    expect(compiled.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('shows an error when taking a suggestion back fails', async () => {
+    const { fixture, compiled, changed } = await setup([suggestion()], {
+      withdrawChecklistSuggestion: vi
+        .fn()
+        .mockRejectedValue(new HttpErrorResponse({ status: 500 })),
+    });
+
+    compiled.querySelector<HTMLButtonElement>('button[aria-label="Take back Recorder"]')!.click();
+    await settle(fixture);
+
+    expect(compiled.querySelector('[role="alert"]')?.textContent?.trim()).toBe(
+      'That didn’t work. Try again.',
+    );
+    expect(changed).not.toHaveBeenCalled();
   });
 });

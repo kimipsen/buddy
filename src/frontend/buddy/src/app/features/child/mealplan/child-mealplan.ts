@@ -101,6 +101,7 @@ export class ChildMealplan {
   protected readonly editingKey = signal<string | null>(null);
   protected readonly commentDraft = linkedSignal(() => {
     const key = this.editingKey();
+    // Stryker disable next-line StringLiteral: the draft is read only by the open note form and its Save, so never while editingKey is null
     return key === null ? '' : (untracked(() => this.entryAt(key))?.rating?.comment ?? '');
   });
 

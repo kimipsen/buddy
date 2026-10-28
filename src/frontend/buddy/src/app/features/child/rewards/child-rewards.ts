@@ -38,6 +38,7 @@ export class ChildRewards {
     this.progress.hasValue() ? this.progress.value().spendableStars : 0,
   );
   protected readonly rewards = computed(() =>
+    // Stryker disable next-line ArrayDeclaration: the template reads rewards() only once progress has loaded, and a loader-backed resource is never idle without a value
     this.progress.hasValue() ? this.progress.value().rewards : [],
   );
   protected readonly pending = computed(() =>
@@ -59,6 +60,7 @@ export class ChildRewards {
   }
 
   protected statusKey(request: RewardRequest): string {
+    // Stryker disable next-line StringLiteral: only history rows call this, and history() never holds a Pending request
     return request.status === 'Pending' ? '' : STATUS_KEYS[request.status];
   }
 

@@ -34,6 +34,7 @@ export class ChildMenu {
   protected toggle(): void {
     this.open.update((value) => !value);
 
+    // Stryker disable next-line ConditionalExpression: after closing, the panel is gone, so focusFirstItem() finds nothing to focus
     if (this.open()) {
       afterNextRender(() => this.focusFirstItem(), { injector: this.injector });
     }

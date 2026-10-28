@@ -37,7 +37,10 @@ describe('FirstThenCard', () => {
     vi.restoreAllMocks();
   });
 
+  let nowMs = Date.parse(`${TODAY}T12:00:00Z`);
+
   async function setup(getMyBoard: () => Promise<FirstThenBoard>) {
+    nowMs = Date.parse(`${TODAY}T12:00:00Z`);
     const firstThen: Partial<FirstThenService> = { getMyBoard: vi.fn(getMyBoard) };
 
     await TestBed.configureTestingModule({
@@ -48,8 +51,8 @@ describe('FirstThenCard', () => {
         {
           provide: ChildClockService,
           useValue: {
-            now: () => Date.parse(`${TODAY}T12:00:00Z`),
-            today: () => TODAY,
+            now: () => nowMs,
+            today: (ms: number) => new Date(ms).toISOString().slice(0, 10),
             timeZone: signal('UTC').asReadonly(),
           } as unknown as ChildClockService,
         },
@@ -130,5 +133,25 @@ describe('FirstThenCard', () => {
 
     fixture.destroy();
     expect(cleared).toHaveBeenCalled();
+  });
+
+  it('stops reloading once destroyed', async () => {
+    const { fixture, firstThen } = await setup(async () => board());
+
+    fixture.destroy();
+    document.dispatchEvent(new Event('visibilitychange'));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(firstThen.getMyBoard).toHaveBeenCalledTimes(1);
+  });
+
+  it('judges the board against the clock at load time, so a board from before midnight drops out', async () => {
+    const { card } = await setup(async () => {
+      // The child's day moved on while the board was loading.
+      nowMs = Date.parse('2026-10-15T00:05:00Z');
+      return board();
+    });
+
+    expect(card()).toBeNull();
   });
 });

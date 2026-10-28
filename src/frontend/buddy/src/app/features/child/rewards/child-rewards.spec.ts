@@ -253,4 +253,108 @@ describe('ChildRewards', () => {
     expect(compiled.textContent).toContain('Not this time');
     expect(compiled.textContent).not.toContain('Waiting for a grown-up');
   });
+
+  it('keeps a waiting request out of the earlier ones', async () => {
+    const { compiled } = await setup({
+      getMyProgress: vi.fn(async () => summary({ rewardRequests: [request('r1')] })),
+    });
+
+    expect(compiled.textContent).toContain('Waiting for a grown-up');
+    expect(compiled.textContent).not.toContain('Earlier');
+  });
+
+  it('disables every reward and request button while a request is being sent', async () => {
+    let finish!: (value: ProgressSummary) => void;
+    const { fixture, compiled } = await setup({
+      getMyProgress: vi.fn(async () => summary({ rewardRequests: [request('r1')] })),
+      requestReward: vi.fn(() => new Promise<ProgressSummary>((resolve) => (finish = resolve))),
+    });
+
+    buttonIn(rewardCard(compiled, 'screen'), 'Ask for this')!.click();
+    fixture.detectChanges();
+
+    expect(buttonIn(rewardCard(compiled, 'screen'), 'Ask for this')!.disabled).toBe(true);
+    const waiting = compiled.querySelector<HTMLElement>('[data-request-id="r1"]')!;
+    expect(buttonIn(waiting, 'Never mind')!.disabled).toBe(true);
+
+    finish(summary({ rewardRequests: [request('r1')] }));
+    await settle(fixture);
+
+    expect(buttonIn(rewardCard(compiled, 'screen'), 'Ask for this')!.disabled).toBe(false);
+  });
+
+  it('disables asking for a reward while a request is being withdrawn', async () => {
+    const { fixture, compiled } = await setup({
+      getMyProgress: vi.fn(async () => summary({ rewardRequests: [request('r1')] })),
+      cancelRewardRequest: vi.fn(() => new Promise<ProgressSummary>(() => undefined)),
+    });
+
+    buttonIn(compiled.querySelector<HTMLElement>('[data-request-id="r1"]')!, 'Never mind')!.click();
+    fixture.detectChanges();
+
+    expect(buttonIn(rewardCard(compiled, 'screen'), 'Ask for this')!.disabled).toBe(true);
+  });
+
+  it('clears a failed withdrawal’s message when the child asks for a reward next', async () => {
+    const { fixture, compiled } = await setup({
+      getMyProgress: vi.fn(async () => summary({ rewardRequests: [request('r1')] })),
+      cancelRewardRequest: vi.fn(async () => {
+        throw conflict('reward_request_resolved');
+      }),
+    });
+
+    buttonIn(compiled.querySelector<HTMLElement>('[data-request-id="r1"]')!, 'Never mind')!.click();
+    await settle(fixture);
+    expect(compiled.textContent).toContain('Couldn’t take that back.');
+
+    buttonIn(rewardCard(compiled, 'screen'), 'Ask for this')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).not.toContain('Couldn’t take that back.');
+  });
+
+  it('clears a failed request’s message when the child withdraws a request next', async () => {
+    const { fixture, compiled } = await setup({
+      getMyProgress: vi.fn(async () => summary({ rewardRequests: [request('r1')] })),
+      requestReward: vi.fn(async () => {
+        throw conflict('too_many_pending_requests');
+      }),
+    });
+
+    buttonIn(rewardCard(compiled, 'screen'), 'Ask for this')!.click();
+    await settle(fixture);
+    expect(compiled.textContent).toContain('You’re already waiting on lots of rewards.');
+
+    buttonIn(compiled.querySelector<HTMLElement>('[data-request-id="r1"]')!, 'Never mind')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).not.toContain('You’re already waiting on lots of rewards.');
+  });
+
+  it('lets a reload that is still running win over a request that answers first', async () => {
+    let finishReload!: (value: ProgressSummary) => void;
+    const { fixture, compiled } = await setup({
+      getMyProgress: vi
+        .fn()
+        .mockResolvedValueOnce(summary({ rewardRequests: [request('r1')] }))
+        .mockReturnValueOnce(new Promise<ProgressSummary>((resolve) => (finishReload = resolve))),
+      // A failed withdrawal reloads the progress.
+      cancelRewardRequest: vi.fn(async () => {
+        throw conflict('reward_request_resolved');
+      }),
+      requestReward: vi.fn(async () => summary({ spendableStars: 2 })),
+    });
+
+    buttonIn(compiled.querySelector<HTMLElement>('[data-request-id="r1"]')!, 'Never mind')!.click();
+    await settle(fixture);
+    buttonIn(rewardCard(compiled, 'screen'), 'Ask for this')!.click();
+    await settle(fixture);
+
+    finishReload(summary({ spendableStars: 4 }));
+    await settle(fixture);
+
+    expect(compiled.querySelector('[data-testid="reward-balance"]')?.textContent).toContain(
+      '4 stars to spend',
+    );
+  });
 });

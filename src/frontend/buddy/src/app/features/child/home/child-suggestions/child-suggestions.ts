@@ -56,6 +56,7 @@ export class ChildSuggestions {
   );
 
   protected readonly open = signal(false);
+  // Stryker disable next-line StringLiteral: the form that reads title() only opens through openSheet(), which resets it to ''
   protected readonly title = signal('');
   protected readonly weekdays = signal<DayOfWeek[]>([]);
   protected readonly saving = createAction<string>();

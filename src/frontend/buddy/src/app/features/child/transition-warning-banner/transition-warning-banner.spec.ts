@@ -31,10 +31,11 @@ describe('TransitionWarningBanner', () => {
   let fixture: ComponentFixture<TransitionWarningBanner>;
 
   function setup(warnings: TransitionWarning[], active = true) {
+    const isActive = signal(active);
     const feed = {
-      active: signal(active),
+      active: isActive,
       warningsAt: vi.fn((nowMs: number) =>
-        active ? warnings.filter((w) => w.startsAtMs > nowMs) : [],
+        isActive() ? warnings.filter((w) => w.startsAtMs > nowMs) : [],
       ),
       dismiss: vi.fn(),
       refresh: vi.fn(async () => undefined),
@@ -60,7 +61,19 @@ describe('TransitionWarningBanner', () => {
   afterEach(() => {
     fixture?.destroy();
     vi.useRealTimers();
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
   });
+
+  function setVisibility(state: DocumentVisibilityState) {
+    Object.defineProperty(document, 'visibilityState', { value: state, configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }
+
+  function button(element: HTMLElement, text: string): HTMLButtonElement {
+    return [...element.querySelectorAll('button')].find((b) =>
+      b.textContent?.includes(text),
+    ) as HTMLButtonElement;
+  }
 
   it('renders nothing, not even its live region, and runs no tick while warnings are off', () => {
     const { feed, element } = setup([warning()], false);
@@ -169,5 +182,75 @@ describe('TransitionWarningBanner', () => {
     fixture.detectChanges();
 
     expect(card(element)).toBeNull();
+  });
+
+  it('keeps only the feed check running while warnings are off', () => {
+    setup([warning()], false);
+
+    expect(vi.getTimerCount()).toBe(1);
+  });
+
+  it('starts the tick when warnings are switched on, from the current time, and stops it when they go off', () => {
+    const { feed, element } = setup([warning()], false);
+
+    // The clock stood still while off; switching on catches up before the first stage shows.
+    vi.setSystemTime(NOW + 2 * 60_000);
+    feed.active.set(true);
+    fixture.detectChanges();
+
+    expect(card(element)?.textContent).toContain('8 minutes until Football');
+    expect(vi.getTimerCount()).toBe(2);
+
+    feed.active.set(false);
+    fixture.detectChanges();
+
+    expect(vi.getTimerCount()).toBe(1);
+  });
+
+  it('catches the countdown up when the device wakes, but not while it stays hidden', () => {
+    const { feed, element } = setup([warning()]);
+    expect(feed.refresh).toHaveBeenCalledTimes(1);
+
+    // The tick doesn't run while the device sleeps: move the clock without firing timers.
+    vi.setSystemTime(NOW + 3 * 60_000);
+    setVisibility('hidden');
+    fixture.detectChanges();
+
+    expect(feed.refresh).toHaveBeenCalledTimes(1);
+    expect(card(element)?.textContent).toContain('10 minutes until Football');
+
+    setVisibility('visible');
+    fixture.detectChanges();
+
+    expect(feed.refresh).toHaveBeenLastCalledWith(true);
+    expect(card(element)?.textContent).toContain('7 minutes until Football');
+  });
+
+  it('stops the feed check and the wake-up reload when destroyed', () => {
+    const { feed } = setup([], false);
+
+    fixture.destroy();
+
+    expect(vi.getTimerCount()).toBe(0);
+    setVisibility('visible');
+    vi.advanceTimersByTime(REFRESH_CHECK_MS * 2);
+    expect(feed.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes the other warnings when the current one is dismissed', () => {
+    const { element } = setup([
+      warning(),
+      warning({ key: 'item:swim:2026-10-13:15', title: 'Swimming', startsAtMs: NOW + 12 * 60_000 }),
+    ]);
+
+    button(element, '+1 more').click();
+    fixture.detectChanges();
+    expect(element.querySelector('ul')).not.toBeNull();
+
+    button(element, 'Got it').click();
+    fixture.detectChanges();
+
+    expect(button(element, '+1 more').getAttribute('aria-expanded')).toBe('false');
+    expect(element.querySelector('ul')).toBeNull();
   });
 });

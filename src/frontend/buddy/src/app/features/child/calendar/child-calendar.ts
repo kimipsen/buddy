@@ -341,6 +341,7 @@ export class ChildCalendar {
         );
         // If the child moved to another week meanwhile, that week's own load already has fresh
         // data -- writing this one back would cancel it (while loading) or throw (after an error).
+        // Stryker disable next-line ConditionalExpression: once the other week has loaded, none of its occurrences share this key (it includes the date), so the write-back would change nothing
         if (this.anchorDate() !== anchorDate || !this.week.hasValue() || this.week.isLoading()) {
           return;
         }

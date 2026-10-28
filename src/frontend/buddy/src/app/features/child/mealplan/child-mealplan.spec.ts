@@ -487,7 +487,9 @@ describe('ChildMealplan', () => {
   });
 
   describe('a rating that resolves after switching week', () => {
-    async function rateThenSwitchWeek(nextWeek: () => Promise<MealPlanEntry[]>) {
+    async function rateThenSwitchWeek(
+      nextWeek: (scope: unknown, from: string) => Promise<MealPlanEntry[]>,
+    ) {
       const pendingRating = deferred<Meal>();
       const listMealPlan = vi
         .fn()
@@ -525,6 +527,22 @@ describe('ChildMealplan', () => {
 
       expect(compiled.textContent).toContain('Meal meal-older');
       expect(compiled.textContent).not.toContain('Meal meal-from');
+      expect(compiled.textContent).not.toContain('Unable to save your rating. Try again.');
+    });
+
+    it('leaves an already loaded new week as it loaded it', async () => {
+      // The new week holds the same meal, still unrated in what its own load returned.
+      const { fixture, compiled, pendingRating } = await rateThenSwitchWeek(
+        async (_scope, from) => [entryAt(from, 'Breakfast', 'meal-from')],
+      );
+      const ratedStars = () =>
+        compiled.querySelectorAll('button[aria-label^="Rate"].text-amber-400');
+      expect(ratedStars()).toHaveLength(0);
+
+      pendingRating.resolve(savedRating());
+      await settle(fixture);
+
+      expect(ratedStars()).toHaveLength(0);
       expect(compiled.textContent).not.toContain('Unable to save your rating. Try again.');
     });
 
@@ -573,5 +591,28 @@ describe('ChildMealplan', () => {
       'Something went wrong loading your meals. Try again in a bit.',
     );
     expect(compiled.textContent).toContain('Meal meal-from');
+  });
+
+  it('drops a rating error when the child moves to another week', async () => {
+    const { fixture } = await setup({
+      mealplans: {
+        listMealPlan: vi.fn(async (_scope, from: string) => [
+          entryAt(from, 'Breakfast', 'meal-from'),
+        ]),
+        rateMeal: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    compiled.querySelector<HTMLButtonElement>('button[aria-label^="Rate"]')!.click();
+    await settle(fixture);
+    expect(compiled.textContent).toContain('Unable to save your rating. Try again.');
+
+    findButtonByText(compiled, '← Previous week')?.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain('Meal meal-from');
+    expect(compiled.textContent).not.toContain('Unable to save your rating. Try again.');
   });
 });

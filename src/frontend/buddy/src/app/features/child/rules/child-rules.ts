@@ -89,6 +89,5 @@ function markedRead(rules: ChildRulesData, read: ChildRule): ChildRulesData {
     ...rules,
     personal: mark(rules.personal),
     households: rules.households.map(mark),
-    pendingAcknowledgements: Math.max(0, rules.pendingAcknowledgements - 1),
   };
 }

@@ -438,6 +438,37 @@ describe('ChildCalendar', () => {
     expect(findButtonByAriaLabel(compiled, 'Mark not done')).toBeUndefined();
   });
 
+  it('drops a task-update error when the child moves to another week', async () => {
+    const task = occurrence({
+      itemId: 'task-1',
+      kind: 'Task',
+      title: 'Feed the cat',
+      startsAt: null,
+      endsAt: null,
+      dueAt: `${today}T17:00:00Z`,
+    });
+    const { fixture } = await setup({
+      calendars: {
+        listOccurrencesInRange: vi.fn(async () => [task]),
+        setTaskCompletion: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByAriaLabel(compiled, 'Mark done')!.click();
+    await settle(fixture);
+    expect(compiled.textContent).toContain('Something went wrong updating that task.');
+
+    Array.from(compiled.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Next week'))
+      ?.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).not.toContain('Loading your calendar…');
+    expect(compiled.textContent).not.toContain('Something went wrong updating that task.');
+  });
+
   it('clears a previous load error once a later week loads successfully', async () => {
     const listOccurrencesInRange = vi
       .fn<CalendarsService['listOccurrencesInRange']>()
