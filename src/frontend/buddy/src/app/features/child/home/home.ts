@@ -106,6 +106,7 @@ const STARTING_PROGRESS: ProgressSummary = {
   unlockedMilestones: [],
   displayIcon: '🌱',
   nextGoalThreshold: 0,
+  // Stryker disable next-line StringLiteral: never shown, the badge hides its next goal while the threshold (0) isn't above the stars (0)
   nextGoalIcon: '🌱',
   goalPosts: [],
   spendableStars: 0,
@@ -190,11 +191,13 @@ export class ChildHome implements OnInit, OnDestroy {
     return step.kind === 'focus'
       ? {
           isBreak: false,
+          // Stryker disable next-line StringLiteral: readHomeworkSession only returns sessions whose focus steps name one of its parts, so the find never misses
           title: session.parts.find((part) => part.id === step.partId)?.title ?? '',
           index: step.index,
           of: step.of,
         }
-      : { isBreak: true, title: '', index: 0, of: 0 };
+      : // Stryker disable next-line StringLiteral: a break's title is never read, the template shows the break label instead
+        { isBreak: true, title: '', index: 0, of: 0 };
   })();
 
   protected readonly guardianKind = GUARDIAN;
@@ -278,6 +281,7 @@ export class ChildHome implements OnInit, OnDestroy {
   });
 
   protected readonly todaysPickups = computed(() =>
+    // Stryker disable next-line ArrayDeclaration: loadTodaysPickups never fails, so there's no value only while loading, when contentLoading() hides every section
     this.pickupsToday.hasValue() ? this.pickupsToday.value() : [],
   );
 
@@ -316,7 +320,8 @@ export class ChildHome implements OnInit, OnDestroy {
   protected readonly commentDraft = linkedSignal(() => {
     const slot = this.editingSlot();
     return slot === null
-      ? ''
+      ? // Stryker disable next-line StringLiteral: the draft is only read while a note is open (slot set), and opening one recomputes it
+        ''
       : (untracked(() => this.entriesBySlot()[slot])?.rating?.comment ?? '');
   });
 
@@ -393,17 +398,17 @@ export class ChildHome implements OnInit, OnDestroy {
       return null;
     }
 
-    const state = timerState(run, this.now(), this.childTimer.anchorFor(run.itemId));
-    return state.phase === 'done' ? null : state;
+    // currentRun() only picks a run with a subtask left, so the state is never 'done'.
+    return timerState(run, this.now(), this.childTimer.anchorFor(run.itemId));
   });
 
-  // Tomorrow's packing lists whose evening time has passed on the child's clock. The date check
-  // hides the old list while the new tomorrow is loading after midnight.
+  // Tomorrow's packing lists whose evening time has passed on the child's clock. After midnight the
+  // new tomorrow's date reloads the resource, which drops the old list until the new one loads.
   protected readonly packForTomorrow = computed<TaskRun[]>(() => {
     const loaded = this.tomorrow.hasValue() ? this.tomorrow.value() : undefined;
     const now = this.now();
 
-    if (!loaded || loaded.date !== this.clock.tomorrow(now)) {
+    if (!loaded) {
       return [];
     }
 
@@ -425,6 +430,7 @@ export class ChildHome implements OnInit, OnDestroy {
         this.groupedTasks().some((entry) => isTaskRun(entry) && isChecklistRun(entry))),
   );
   private readonly checklistTemplates = resource({
+    // Stryker disable next-line BooleanLiteral: only undefined (idle) vs anything else (load) matters to resource params
     params: () => (this.checklistOnScreen() ? true : undefined),
     loader: async () =>
       this.taskLibrary.fetchTaskTemplates((await this.users.ensureCurrentUser()).id),
@@ -702,10 +708,6 @@ export class ChildHome implements OnInit, OnDestroy {
     starCount: number,
     comment: string,
   ): Promise<void> {
-    if (!this.meals.hasValue()) {
-      return;
-    }
-
     await this.rating.run(
       entry.slot,
       async () => {

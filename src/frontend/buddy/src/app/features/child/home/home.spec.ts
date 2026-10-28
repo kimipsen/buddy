@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -19,6 +20,7 @@ import { ProgressService } from '../../../core/progress.service';
 import { TaskLibraryService, TaskTemplate } from '../../../core/task-library.service';
 import { CurrentUser, UsersService } from '../../../core/users.service';
 import { ChildHome } from './home';
+import { ChildSuggestions } from './child-suggestions/child-suggestions';
 import { FlatOccurrence, nestOccurrence } from '../../../../testing/occurrence-fixture';
 import { disableFeatures } from '../../../../testing/features-fixture';
 import { createSession, next } from '../../../core/homework-session';
@@ -289,6 +291,35 @@ describe('ChildHome', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('app-loading-spinner')).toBeTruthy();
+  });
+
+  it('keeps the loading spinner until pickups have loaded too', async () => {
+    const pickups = deferred<PickupOccurrence[]>();
+    const { fixture } = await setup({
+      pickups: { listSchedule: vi.fn(() => pickups.promise) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('app-loading-spinner')).toBeTruthy();
+    expect(compiled.textContent).not.toContain('Nothing to show yet');
+
+    pickups.resolve([]);
+    await settle(fixture);
+    expect(compiled.querySelector('app-loading-spinner')).toBeNull();
+    expect(compiled.textContent).toContain('Nothing to show yet');
+  });
+
+  it('shows no medicine section, only the load error, when doses fail to load', async () => {
+    const { fixture } = await setup({
+      medicines: { listDoses: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Something went wrong. Try again in a bit.');
+    expect(sectionRows(compiled, 'Medicine today')).toHaveLength(0);
+    expect(compiled.textContent).toContain('Nothing to show yet');
   });
 
   it('shows the empty state once loading finishes with nothing to show', async () => {
@@ -1555,6 +1586,24 @@ describe('ChildHome', () => {
     expect(
       compiled.querySelector('[data-testid="homework-in-progress"]')?.textContent?.trim(),
     ).toBe('📚 Homework: Maths: 1 of 2. Continue');
+
+    // A later part's chunk names that part, not the first one.
+    TestBed.resetTestingModule();
+    const twoParts = createSession(
+      [
+        { id: 'reading', title: 'Reading', estimateMinutes: 15 },
+        { id: 'maths', title: 'Maths', estimateMinutes: 30 },
+      ],
+      { focusMinutes: 15, breakMinutes: 5 },
+      today,
+    );
+    writeHomeworkSession(next(next(twoParts, Date.now()), Date.now()));
+    const later = await setup();
+    await settle(later.fixture);
+    compiled = later.fixture.nativeElement as HTMLElement;
+    expect(
+      compiled.querySelector('[data-testid="homework-in-progress"]')?.textContent?.trim(),
+    ).toBe('📚 Homework: Maths: 1 of 2. Continue');
   });
 
   it('shows no homework link or card when homework is off', async () => {
@@ -1711,6 +1760,128 @@ describe('ChildHome', () => {
       expect(localStorage.getItem('buddy_child_timer')).toBeNull();
     });
 
+    it('keeps a timer the child started on this device while timers are on', async () => {
+      localStorage.setItem(
+        'buddy_child_timer',
+        JSON.stringify({
+          itemId: 'run-1',
+          date: today,
+          anchor: { subtaskKey: `run-1:sub-1:${today}`, startedAtMs: NOW, pausedAtMs: null },
+        }),
+      );
+      const { fixture } = await setup({
+        calendars: { listTodayOccurrences: vi.fn(async () => morning()) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(findButtonByText(compiled, 'Pause')).toBeTruthy();
+      expect(findButtonByText(compiled, 'Start')).toBeUndefined();
+      expect(localStorage.getItem('buddy_child_timer')).not.toBeNull();
+    });
+
+    it('shows time’s up the moment the current step’s time runs out', async () => {
+      const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+      const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+      const { fixture } = await setup({
+        calendars: { listTodayOccurrences: vi.fn(async () => morning()) },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      const disc = () => subtaskRow(compiled, 'Get dressed').querySelector('[role="timer"]')!;
+      expect(disc().getAttribute('aria-label')).toBe('3 min left');
+
+      // Get dressed ends at 12:03, three minutes from now: the page wakes up right then.
+      const wakeUp = setTimeoutSpy.mock.calls.findIndex(([, delay]) => delay === 180_000);
+      expect(wakeUp).toBeGreaterThanOrEqual(0);
+      const wakeUpId = setTimeoutSpy.mock.results[wakeUp].value;
+
+      vi.setSystemTime(Date.parse(`${today}T12:03:00Z`));
+      (setTimeoutSpy.mock.calls[wakeUp][0] as () => void)();
+      fixture.detectChanges();
+
+      expect(rowText(disc())).toContain("Time's up");
+      // Recalculating replaced the wake-up, so the old one is cleared.
+      expect(clearTimeoutSpy).toHaveBeenCalledWith(wakeUpId);
+    });
+
+    it('reads the clock afresh on every timer button', async () => {
+      // 11:00-12:40: each minute is one percent of the event's progress fill.
+      const football = occurrence({
+        itemId: 'football',
+        kind: 'Event',
+        title: 'Football',
+        icon: '⚽',
+        startsAt: `${today}T11:00:00Z`,
+        endsAt: `${today}T12:40:00Z`,
+      });
+      const { fixture } = await setup({
+        calendars: { listTodayOccurrences: vi.fn(async () => [...morning(), football]) },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      const progressFill = () => sectionRows(compiled, 'Events today')[0]!.style.background;
+      const fill = (percent: number) =>
+        `linear-gradient(to right, rgb(203, 213, 225) ${percent}%, transparent ${percent}%) transparent`;
+      const stepLabel = () =>
+        compiled.querySelectorAll('[role="timer"]')[1]!.getAttribute('aria-label');
+      expect(progressFill()).toBe(fill(60));
+
+      vi.setSystemTime(Date.parse(`${today}T12:01:00Z`));
+      findButtonByText(compiled, 'Start')!.click();
+      fixture.detectChanges();
+      expect(progressFill()).toBe(fill(61));
+
+      vi.setSystemTime(Date.parse(`${today}T12:02:00Z`));
+      findButtonByText(compiled, 'Pause')!.click();
+      fixture.detectChanges();
+      expect(progressFill()).toBe(fill(62));
+
+      // Paused with four minutes left, so a minute later it carries on with four minutes left.
+      vi.setSystemTime(Date.parse(`${today}T12:03:00Z`));
+      findButtonByText(compiled, 'Keep going')!.click();
+      fixture.detectChanges();
+      expect(progressFill()).toBe(fill(63));
+      expect(stepLabel()).toBe('4 min left');
+
+      vi.setSystemTime(Date.parse(`${today}T12:04:00Z`));
+      findButtonByText(compiled, 'Stop timer')!.click();
+      fixture.detectChanges();
+      expect(progressFill()).toBe(fill(64));
+    });
+
+    it('gives a packing list no timer, even when its items have times', async () => {
+      const timedChecklistItem = (subtaskId: string, title: string, start: string, end: string) =>
+        occurrence({
+          itemId: 'bag-item',
+          title,
+          icon: '🎒',
+          startsAt: `${today}T${start}:00Z`,
+          endsAt: `${today}T${end}:00Z`,
+          routine: {
+            subtaskId,
+            parentTitle: 'School bag',
+            parentIcon: '🎒',
+            checklist: { eveningBeforeFrom: null },
+          },
+        });
+      const { fixture } = await setup({
+        calendars: {
+          listTodayOccurrences: vi.fn(async () => [
+            timedChecklistItem('lunchbox', 'Lunchbox', '11:58', '12:03'),
+            timedChecklistItem('gym', 'Gym clothes', '12:03', '12:13'),
+          ]),
+        },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain('0 of 2 packed');
+      expect(compiled.querySelector('[role="timer"]')).toBeNull();
+      expect(findButtonByText(compiled, 'Start')).toBeUndefined();
+    });
+
     it('starts, pauses, resumes and stops a child-started timer, keeping it on this device', async () => {
       const { fixture } = await setup({
         calendars: { listTodayOccurrences: vi.fn(async () => morning()) },
@@ -1751,8 +1922,14 @@ describe('ChildHome', () => {
         async () =>
           ({ itemId: 'run-1', occurrenceDate: today, isCompleted: true }) as TaskCompletion,
       );
+      // An earlier run, already done, comes first in the list: the timer must move on in the run
+      // the ticked subtask belongs to.
+      const earlier = runSubtask('run-0', 'sub-0', 'Wake up', '07:00', '07:05', true);
       const { fixture, calendars, progress } = await setup({
-        calendars: { listTodayOccurrences: vi.fn(async () => morning()), setTaskCompletion },
+        calendars: {
+          listTodayOccurrences: vi.fn(async () => [earlier, ...morning()]),
+          setTaskCompletion,
+        },
       });
       await settle(fixture);
       const compiled = fixture.nativeElement as HTMLElement;
@@ -1777,6 +1954,7 @@ describe('ChildHome', () => {
           .querySelector('[role="timer"]')
           ?.getAttribute('aria-label'),
       ).toBe('10 min left');
+      expect(findButtonByText(compiled, 'Pause')).toBeTruthy();
     });
 
     it('announces the next step from the run bar, which stays put while the disc moves rows', async () => {
@@ -1926,7 +2104,10 @@ describe('ChildHome', () => {
       const setTaskCompletion = vi.fn(async () => ({}) as TaskCompletion);
       const { fixture, compiled, progress } = await setupPacking({
         at: evening,
-        tomorrow: [item(tomorrowIso, 'lunchbox', 'Lunchbox')],
+        tomorrow: [
+          item(tomorrowIso, 'lunchbox', 'Lunchbox'),
+          item(tomorrowIso, 'gym', 'Gym clothes'),
+        ],
         setTaskCompletion,
       });
 
@@ -1941,7 +2122,7 @@ describe('ChildHome', () => {
         true,
         'lunchbox',
       );
-      expect(section.textContent).toContain('1 of 1 packed');
+      expect(section.textContent).toContain('1 of 2 packed');
       expect(progress.getMyProgress).toHaveBeenCalledTimes(2);
     });
 
@@ -1991,6 +2172,178 @@ describe('ChildHome', () => {
       await setupPacking({ at: evening, taskLibrary: { fetchTaskTemplates } });
 
       expect(fetchTaskTemplates).not.toHaveBeenCalled();
+    });
+
+    it('asks for templates for today’s packing list, but not for a plain task', async () => {
+      const forList = vi.fn(async () => []);
+      await setupPacking({
+        at: afternoon,
+        today: [item(todayIso, 'lunchbox', 'Lunchbox')],
+        taskLibrary: { fetchTaskTemplates: forList },
+      });
+      expect(forList).toHaveBeenCalledWith('child-1');
+
+      TestBed.resetTestingModule();
+      const forPlainTask = vi.fn(async () => []);
+      await setupPacking({
+        at: afternoon,
+        today: [occurrence({ itemId: 'chore', title: 'Feed the cat' })],
+        taskLibrary: { fetchTaskTemplates: forPlainTask },
+      });
+      expect(forPlainTask).not.toHaveBeenCalled();
+    });
+
+    it('shows tomorrow’s list from the exact minute of its evening time', async () => {
+      const at = (hours: number, minutes: number) => new Date(2026, 9, 13, hours, minutes);
+      const halfPast = [item(tomorrowIso, 'lunchbox', 'Lunchbox', false, '17:30:00')];
+
+      const before = await setupPacking({ at: at(17, 29), tomorrow: halfPast });
+      expect(before.compiled.querySelector('[data-testid="pack-for-tomorrow"]')).toBeNull();
+
+      TestBed.resetTestingModule();
+      const onTheMinute = await setupPacking({ at: at(17, 30), tomorrow: halfPast });
+      expect(
+        onTheMinute.compiled.querySelector('[data-testid="pack-for-tomorrow"]'),
+      ).not.toBeNull();
+    });
+
+    it('hides the old list after midnight while the new tomorrow is still loading', async () => {
+      const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
+      const { fixture, compiled, calendars } = await setupPacking({
+        at: evening,
+        tomorrow: [item(tomorrowIso, 'lunchbox', 'Lunchbox')],
+      });
+      expect(compiled.querySelector('[data-testid="pack-for-tomorrow"]')).not.toBeNull();
+
+      vi.mocked(calendars.listOccurrencesInRange!).mockReturnValue(new Promise(() => undefined));
+      const tick = setIntervalSpy.mock.calls.find(
+        ([, delay]) => delay === 60_000,
+      )![0] as () => void;
+      // The next evening: the list loaded for the 14th is today's now, past its evening time.
+      vi.setSystemTime(new Date(2026, 9, 14, 18, 30));
+      tick();
+      await settle(fixture);
+
+      expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2026-10-15', '2026-10-15');
+      expect(compiled.querySelector('[data-testid="pack-for-tomorrow"]')).toBeNull();
+    });
+
+    it('shows a load error when ticking an item of tomorrow’s list fails', async () => {
+      const { fixture, compiled } = await setupPacking({
+        at: evening,
+        tomorrow: [item(tomorrowIso, 'lunchbox', 'Lunchbox')],
+        setTaskCompletion: vi.fn(async () => Promise.reject(new Error('boom'))),
+      });
+
+      const section = compiled.querySelector<HTMLElement>('[data-testid="pack-for-tomorrow"]')!;
+      findButtonByAriaLabel(section, 'Mark done')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain('Something went wrong. Try again in a bit.');
+      expect(section.textContent).toContain('0 of 1 packed');
+    });
+
+    describe('with two lists for tomorrow', () => {
+      function swimItem(subtaskId: string, title: string): CalendarOccurrence {
+        return occurrence({
+          itemId: 'swim-item',
+          title,
+          icon: '🏊',
+          timing: { kind: 1, dueAt: `${tomorrowIso}T07:00:00Z` },
+          routine: {
+            subtaskId,
+            parentTitle: 'Swim bag',
+            parentIcon: '🏊',
+            checklist: { eveningBeforeFrom: '17:00:00' },
+          },
+        });
+      }
+
+      function pending(id: string, title: string): TaskTemplate['suggestions'][number] {
+        return {
+          id,
+          title,
+          weekdays: [],
+          suggestedBy: 'child-1',
+          status: 'Pending',
+          suggestedAt: '2026-10-12T15:00:00Z',
+          resolvedAt: null,
+          subtaskId: null,
+        };
+      }
+
+      const swimTemplate: TaskTemplate = {
+        ...bagTemplate(),
+        id: 'swim-1',
+        name: 'Swim bag',
+        subtasks: [{ id: 'towel', title: 'Towel', icon: null, durationMinutes: 0, weekdays: [] }],
+        suggestions: [pending('suggestion-2', 'Goggles')],
+      };
+
+      async function setupTwoLists() {
+        const context = await setupPacking({
+          at: evening,
+          // Sent out of order, and with an event carrying a packing routine, which isn't a task.
+          tomorrow: [
+            swimItem('towel', 'Towel'),
+            item(tomorrowIso, 'lunchbox', 'Lunchbox'),
+            occurrence({
+              itemId: 'concert',
+              kind: 'Event',
+              title: 'Concert',
+              icon: '🎻',
+              timing: { kind: 1, dueAt: `${tomorrowIso}T09:00:00Z` },
+              routine: {
+                subtaskId: 'violin',
+                parentTitle: 'Concert bag',
+                parentIcon: '🎻',
+                checklist: { eveningBeforeFrom: '17:00:00' },
+              },
+            }),
+          ],
+          taskLibrary: {
+            fetchTaskTemplates: vi.fn(async () => [
+              swimTemplate,
+              bagTemplate({ suggestions: [pending('suggestion-1', 'Recorder')] }),
+            ]),
+          },
+        });
+        const lists = () =>
+          Array.from(
+            context.compiled.querySelectorAll<HTMLLIElement>(
+              '[data-testid="pack-for-tomorrow"] > ul > li',
+            ),
+          );
+        return { ...context, lists };
+      }
+
+      it('lists only tasks, in due order, each with the suggestions of its own template', async () => {
+        const { lists } = await setupTwoLists();
+
+        expect(lists().map((list) => rowText(list.querySelector('div')!))).toEqual([
+          '🎒 School bag 0 of 1 packed',
+          '🏊 Swim bag 0 of 1 packed',
+        ]);
+        expect(lists()[0]!.textContent).toContain('Recorder');
+        expect(lists()[0]!.textContent).not.toContain('Goggles');
+        expect(lists()[1]!.textContent).toContain('Goggles');
+      });
+
+      it('keeps the template a list’s suggestions changed, and leaves the other list’s alone', async () => {
+        const { fixture, lists } = await setupTwoLists();
+
+        const suggestions = fixture.debugElement.queryAll(By.directive(ChildSuggestions));
+        (suggestions[0]!.componentInstance as ChildSuggestions).changed.emit(
+          bagTemplate({
+            suggestions: [pending('suggestion-1', 'Recorder'), pending('suggestion-3', 'Flute')],
+          }),
+        );
+        fixture.detectChanges();
+
+        expect(lists()[0]!.textContent).toContain('Flute');
+        expect(lists()[1]!.textContent).toContain('Goggles');
+        expect(lists()[1]!.textContent).not.toContain('Flute');
+      });
     });
   });
 
