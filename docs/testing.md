@@ -273,6 +273,12 @@ changed. With no cache (first run, or evicted after 7 days unused), the run
 starts from the committed `stryker-incremental.json` and goes through every
 file again.
 
+With the command test runner, Stryker stores the whole test output of every
+mutant run as its `statusReason`, which pushed the report past GitHub's 100 MB
+file limit. When the batch script exits, `scripts/mutation-slim-report.mjs`
+keeps only the last 1000 characters of each reason, so both the cached and the
+committed report stay small. Run it yourself after a direct `npx stryker run`.
+
 Each batch runs only the specs that exercise its files: the colocated
 `foo.spec.ts` and every spec that imports `foo`. A file that no spec imports,
 such as a child component, uses the specs of the files that import it. The

@@ -248,6 +248,9 @@ if [[ "$MODE" == "dry-run" ]]; then
   exit 0
 fi
 
+# Keeps the report small enough to commit and cache, however the run ends.
+trap 'node scripts/mutation-slim-report.mjs "$INCREMENTAL_FILE"' EXIT
+
 deadline=""
 [[ -n "$MAX_MINUTES" ]] && deadline=$(( $(date +%s) + MAX_MINUTES * 60 ))
 

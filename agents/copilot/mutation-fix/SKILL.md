@@ -84,7 +84,7 @@ npx stryker run --mutate "<file1>,<file2>,..." --incremental --force --concurren
 
 Run it in the background as in step 1, with its own log and exit file (`> <scratchpad>/round-N.log 2>&1; echo $? > <scratchpad>/round-N.log.exit`), and start the 5-minute status updates on that log. **`--force` is required.** This project uses the command test runner with coverage analysis off, so Stryker can't see that a spec changed: without `--force` it reuses every cached result ("N of N mutant result(s) are reused"), finishes in seconds and reports the same survivors. `--force` re-tests every mutant in the listed files, and `--incremental` still writes the fresh results to `reports/stryker-incremental.json`. Because every mutant in those files gets retested, pass only the files that still have survivors. Without `MUTATION_SPECS`, each mutant runs the whole suite; to keep it as fast as the batch, prefix the command with the specs of the files you re-run, e.g. `MUTATION_SPECS="--include src/app/foo/foo.spec.ts --include src/app/bar/bar.spec.ts" npx stryker run ...`.
 
-Then go back to step 2 with the same file list.
+When it finishes, run `node scripts/mutation-slim-report.mjs` so the report stays under GitHub's 100 MB file limit (Stryker stores the whole test output of every mutant run; the batch script does this itself). Then go back to step 2 with the same file list.
 
 Stop looping when any of these is true:
 
