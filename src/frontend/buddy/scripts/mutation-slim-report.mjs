@@ -6,9 +6,14 @@
 // summary) is worth keeping; Stryker doesn't read it when it reuses results.
 // Short reasons, such as those of `// Stryker disable` comments, are kept as is.
 //
+// It also drops files that were deleted or are no longer in stryker.conf.json's
+// `mutate` globs. Stryker never re-tests those, so their old results would stay
+// in the score and the nightly findings issue for good.
+//
 // Usage:
 //   node scripts/mutation-slim-report.mjs [report.json] [--max-chars N]
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { matchesGlob } from 'node:path';
 
 const args = process.argv.slice(2);
 const i = args.indexOf('--max-chars');
@@ -18,6 +23,20 @@ const path = args[0] ?? 'reports/stryker-incremental.json';
 if (!existsSync(path)) process.exit(0);
 
 const report = JSON.parse(readFileSync(path, 'utf8'));
+
+const { mutate } = JSON.parse(readFileSync('stryker.conf.json', 'utf8'));
+const included = mutate.filter((g) => !g.startsWith('!'));
+const excluded = mutate.filter((g) => g.startsWith('!')).map((g) => g.slice(1));
+const stale = Object.keys(report.files).filter(
+  (file) =>
+    !existsSync(file) ||
+    !included.some((g) => matchesGlob(file, g)) ||
+    excluded.some((g) => matchesGlob(file, g)),
+);
+for (const file of stale) delete report.files[file];
+if (stale.length > 0)
+  console.log(`Dropped ${stale.length} file(s) no longer mutated: ${stale.join(', ')}`);
+
 let trimmed = 0;
 for (const file of Object.values(report.files)) {
   for (const mutant of file.mutants) {
