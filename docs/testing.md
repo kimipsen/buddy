@@ -281,7 +281,10 @@ With the command test runner, Stryker stores the whole test output of every
 mutant run as its `statusReason`, which pushed the report past GitHub's 100 MB
 file limit. When the batch script exits, `scripts/mutation-slim-report.mjs`
 keeps only the last 1000 characters of each reason, so both the cached and the
-committed report stay small. Run it yourself after a direct `npx stryker run`.
+committed report stay small. It also drops report entries for files that were
+deleted or fall outside the `mutate` globs in `stryker.conf.json`, which
+Stryker never re-tests and which would otherwise stay in the score for good.
+Run it yourself after a direct `npx stryker run`.
 
 Each batch runs only the specs that exercise its files: the colocated
 `foo.spec.ts` and every spec that imports `foo`. A file that no spec imports,
