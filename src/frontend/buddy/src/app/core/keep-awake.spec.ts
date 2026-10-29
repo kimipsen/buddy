@@ -51,8 +51,10 @@ describe('keepAwakeWhile', () => {
 
   it('holds nothing while no timer runs', () => {
     create();
-    vi.advanceTimersByTime(SESSION_KEEP_ALIVE_MS * 3);
+    set(false);
 
+    expect(vi.getTimerCount()).toBe(0);
+    vi.advanceTimersByTime(SESSION_KEEP_ALIVE_MS * 3);
     expect(hold).not.toHaveBeenCalled();
     expect(getAccessToken).not.toHaveBeenCalled();
   });
@@ -107,6 +109,8 @@ describe('keepAwakeWhile', () => {
     wanted.set(true);
     wanted.set(false);
     TestBed.tick();
+    // The keep-alive and the one grace timeout, not a second one.
+    expect(vi.getTimerCount()).toBe(2);
     vi.advanceTimersByTime(1);
 
     expect(release).toHaveBeenCalledTimes(1);
@@ -130,6 +134,16 @@ describe('keepAwakeWhile', () => {
     expect(release).toHaveBeenCalledTimes(1);
     vi.advanceTimersByTime(SESSION_KEEP_ALIVE_MS * 3);
     expect(getAccessToken).not.toHaveBeenCalled();
+  });
+
+  it('leaves no timer behind when the page goes away during the grace', () => {
+    const fixture = create();
+    set(true);
+    set(false);
+    fixture.destroy();
+
+    expect(release).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('releases nothing on destroy when it never held', () => {
