@@ -10,6 +10,7 @@ import {
   TaskCompletion,
 } from '../../../core/calendars.service';
 import { todayIsoDate } from '../../../core/date-utils';
+import { ScreenWakeLockService } from '../../../core/screen-wake-lock.service';
 import { UsersService } from '../../../core/users.service';
 import { ChildFocus } from './child-focus';
 
@@ -194,6 +195,20 @@ describe('ChildFocus', () => {
     await vi.advanceTimersByTimeAsync(60_000);
     await settleFaked(fixture);
     expect(timerLabel(compiled)).toBe('5 min left');
+  });
+
+  it('keeps the screen on once the step runs, not while it is still to come', async () => {
+    const hold = vi.spyOn(ScreenWakeLockService.prototype, 'hold');
+    fakeAllTimers(NOW);
+    const { fixture } = await setup({
+      listTodayOccurrences: vi.fn(async () => [subtask('sub-1', 'Get dressed', '12:01', '12:06')]),
+    });
+    await settleFaked(fixture);
+    expect(hold).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    await settleFaked(fixture);
+    expect(hold).toHaveBeenCalledTimes(1);
   });
 
   it('stops the minute refresh on leaving', async () => {

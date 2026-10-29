@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { todayIsoDate } from '../../../core/date-utils';
+import { ScreenWakeLockService } from '../../../core/screen-wake-lock.service';
 import { createSession, next, start } from '../../../core/homework-session';
 import { readHomeworkSession, writeHomeworkSession } from '../../../core/homework-storage';
 import { CurrentUser, UsersService } from '../../../core/users.service';
@@ -226,6 +227,19 @@ describe('ChildHomework', () => {
     expect(el(fixture).querySelector('[role="timer"]')?.getAttribute('aria-label')).toBe(
       '1 min left',
     );
+  });
+
+  it('keeps the screen on while a chunk runs, not once its time is up', async () => {
+    const hold = vi.spyOn(ScreenWakeLockService.prototype, 'hold');
+    storeSession();
+    await setup();
+    expect(hold).toHaveBeenCalledTimes(1);
+
+    TestBed.resetTestingModule();
+    hold.mockClear();
+    vi.setSystemTime(NOW + 11 * MIN);
+    await setup();
+    expect(hold).not.toHaveBeenCalled();
   });
 
   it('pauses and resumes a chunk', async () => {

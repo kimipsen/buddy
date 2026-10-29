@@ -11,6 +11,7 @@ import {
 import { RouterLink } from '@angular/router';
 
 import { ChildClockService } from '../../../core/child-clock.service';
+import { keepAwakeWhile } from '../../../core/keep-awake';
 import {
   boardForChild,
   isBoardChanged,
@@ -83,6 +84,15 @@ export class ChildFirstThen implements OnInit, OnDestroy {
   private stopPolling: (() => void) | undefined;
 
   constructor() {
+    // A running Then keeps the screen on, also with the disc switched off: "Time's up" still
+    // shows (docs/frontend/analysis/keep-screen-awake.md).
+    keepAwakeWhile(
+      computed(() => {
+        const board = this.board();
+        return !!board && thenTimerState(board, this.now())?.phase === 'running';
+      }),
+    );
+
     // The tick runs only while an unlocked Then is counting down.
     effect((onCleanup) => {
       const board = this.board();

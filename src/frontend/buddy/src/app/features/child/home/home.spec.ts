@@ -10,6 +10,7 @@ import {
   TaskCompletion,
 } from '../../../core/calendars.service';
 import { addDaysIso, todayIsoDate } from '../../../core/date-utils';
+import { ScreenWakeLockService } from '../../../core/screen-wake-lock.service';
 import { FeelingsService } from '../../../core/feelings.service';
 import { GuardianSummary, GuardiansService, SiblingSummary } from '../../../core/guardians.service';
 import { ChildRules, HouseRulesService } from '../../../core/house-rules.service';
@@ -1721,6 +1722,28 @@ describe('ChildHome', () => {
       expect(compiled.querySelector('a[href="/child/focus/run-1"]')?.textContent?.trim()).toBe(
         'Focus',
       );
+    });
+
+    it('keeps the screen on while the current run counts down, and not without one', async () => {
+      const hold = vi.spyOn(ScreenWakeLockService.prototype, 'hold');
+      try {
+        const running = await setup({
+          calendars: { listTodayOccurrences: vi.fn(async () => morning()) },
+        });
+        await settle(running.fixture);
+        expect(hold).toHaveBeenCalledTimes(1);
+        TestBed.resetTestingModule();
+        hold.mockClear();
+
+        vi.setSystemTime(Date.parse(`${today}T15:00:00Z`));
+        const idle = await setup({
+          calendars: { listTodayOccurrences: vi.fn(async () => morning()) },
+        });
+        await settle(idle.fixture);
+        expect(hold).not.toHaveBeenCalled();
+      } finally {
+        hold.mockRestore();
+      }
     });
 
     it('shows no timer when no run is current', async () => {

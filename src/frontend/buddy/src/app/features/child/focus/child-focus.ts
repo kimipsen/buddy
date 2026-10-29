@@ -15,6 +15,7 @@ import { ChildClockService } from '../../../core/child-clock.service';
 import { completeChildTask } from '../../../core/child-task-completion';
 import { ChildTimerService } from '../../../core/child-timer.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { keepAwakeWhile } from '../../../core/keep-awake';
 import {
   TaskRun,
   compareOccurrences,
@@ -88,6 +89,9 @@ export class ChildFocus implements OnInit, OnDestroy {
   protected readonly saving = createAction<string>();
 
   constructor() {
+    // A running step keeps the iPad's screen on (docs/frontend/analysis/keep-screen-awake.md).
+    keepAwakeWhile(computed(() => this.state()?.phase === 'running'));
+
     // Recalculate the moment the current step's time runs out, so the buttons follow the disc.
     effect((onCleanup) => {
       const deadlineMs = this.state()?.deadlineMs;
