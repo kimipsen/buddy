@@ -506,6 +506,9 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Expired sessions during in-app navigation](analysis/expired-session-handling.md) — implemented
   redirect to `/login` with a "session expired" notice when the Keycloak session ends mid-use, and
   return to the interrupted page after signing in
+- [Keep the screen awake while a child's timer runs](analysis/keep-screen-awake.md) — proposed
+  Screen Wake Lock while a child timer is running (2-minute grace after "Time's up") and a token
+  keep-alive for the same span, so long timers neither dim the iPad nor end the session
 - [In-app help for guardians](analysis/in-app-help.md) — implemented per-page inline help panel
   toggled from the shell header, a `/guardian/help` index, typed en/da help dictionaries and a
   coverage spec that requires help for every guardian page

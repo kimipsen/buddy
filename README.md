@@ -92,6 +92,9 @@ in real time.
 
 ### Child
 
+- [ ] Keep the screen awake, and the session alive, while a child's timer runs
+      (proposed, not yet implemented — see
+      [Keep the screen awake](docs/frontend/analysis/keep-screen-awake.md))
 - [ ] Now / Next / Later strip: a reduced day view with three cards for overwhelmed moments
       (proposed, not yet implemented — see
       [Now / Next / Later strip](docs/frontend/analysis/now-next-later.md))
