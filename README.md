@@ -92,9 +92,6 @@ in real time.
 
 ### Child
 
-- [ ] Keep the screen awake, and the session alive, while a child's timer runs
-      (proposed, not yet implemented — see
-      [Keep the screen awake](docs/frontend/analysis/keep-screen-awake.md))
 - [ ] Now / Next / Later strip: a reduced day view with three cards for overwhelmed moments
       (proposed, not yet implemented — see
       [Now / Next / Later strip](docs/frontend/analysis/now-next-later.md))
@@ -125,6 +122,9 @@ in real time.
       [Homework splitter](docs/frontend/analysis/homework-splitter.md)
 - [x] Pictograms: in-house picture symbols on tasks, routine steps and First-Then boards for
       children who don't read yet (see [Pictogram support](docs/frontend/analysis/pictograms.md))
+- [x] The screen stays on, and the session alive, while a child's timer runs, so a long timer
+      neither dims the iPad nor signs the child out — see
+      [Keep the screen awake](docs/frontend/analysis/keep-screen-awake.md)
 
 ### Platform
 

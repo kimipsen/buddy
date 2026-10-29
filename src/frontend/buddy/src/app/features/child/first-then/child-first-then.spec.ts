@@ -6,6 +6,7 @@ import { Mock, afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ChildClockService } from '../../../core/child-clock.service';
 import { FirstThenBoard, FirstThenService } from '../../../core/first-then.service';
+import { ScreenWakeLockService } from '../../../core/screen-wake-lock.service';
 import { CurrentUser, UsersService } from '../../../core/users.service';
 import { ChildFirstThen, FIRST_THEN_POLL_MS, THEN_TICK_MS } from './child-first-then';
 
@@ -244,6 +245,24 @@ describe('ChildFirstThen', () => {
     expect(over.compiled.textContent).toContain("Time's up");
   });
 
+  it('keeps the screen on while the Then runs, also with timers off, and not before or after', async () => {
+    const hold = vi.spyOn(ScreenWakeLockService.prototype, 'hold');
+
+    await setup({ myBoard: board() });
+    expect(hold).not.toHaveBeenCalled();
+    TestBed.resetTestingModule();
+
+    await setup({
+      myBoard: unlocked({ unlockedAt: '2026-10-14T14:00:00+00:00' }),
+      showVisualTimers: false,
+    });
+    expect(hold).not.toHaveBeenCalled();
+    TestBed.resetTestingModule();
+
+    await setup({ myBoard: unlocked(), showVisualTimers: false });
+    expect(hold).toHaveBeenCalledTimes(1);
+  });
+
   it('says time’s up the moment the Then runs out, without waiting for a poll', async () => {
     // 20 minutes from 14:45:10 runs out at 15:05:10, ten seconds after NOW.
     const { fixture, compiled } = await setup({
@@ -264,16 +283,18 @@ describe('ChildFirstThen', () => {
     counting.firstThen.actOnMyBoard.mockResolvedValueOnce(none);
     button(counting.compiled, 'All done')!.click();
     await settle(counting.fixture);
-    // Only the poll is left once the board has ended.
+    // The tick stops once the board has ended. The screen stays on for its grace, so the session
+    // keep-alive interval is still there (core/keep-awake.ts).
     expect(vi.getTimerCount()).toBe(ticking - 1);
     TestBed.resetTestingModule();
 
+    // With nothing counting down, neither the tick nor the keep-alive runs: only the poll.
     await setup({ myBoard: board(), showVisualTimers: false });
-    expect(vi.getTimerCount()).toBe(ticking - 1);
+    expect(vi.getTimerCount()).toBe(ticking - 2);
     TestBed.resetTestingModule();
 
     await setup({ myBoard: unlocked({ thenMinutes: null }), showVisualTimers: false });
-    expect(vi.getTimerCount()).toBe(ticking - 1);
+    expect(vi.getTimerCount()).toBe(ticking - 2);
   });
 
   it('reads the time afresh when a poll brings a Then that has already run out', async () => {

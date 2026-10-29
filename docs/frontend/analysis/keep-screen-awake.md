@@ -1,6 +1,10 @@
 # Keep the screen awake while a child's timer runs — implementation plan
 
-Status: Proposed (not yet implemented). This is a follow-up to
+Status: Implemented. `core/screen-wake-lock.service.ts` (`ScreenWakeLockService`, a ref-counted
+Screen Wake Lock that re-requests on `visibilitychange`) and `core/keep-awake.ts`
+(`keepAwakeWhile`, with the 2-minute grace and the 4-minute token keep-alive), hooked into `/child`,
+`/child/focus/:itemId`, `/child/homework` and `/child/first-then`, with unit specs and
+`e2e/keep-screen-awake.spec.ts`. Frontend only. This is a follow-up to
 [Visual time-left timer for the child](visual-time-left-timer.md), which built the run bar, the
 focus view and the shared disc, and to
 [Expired sessions during in-app navigation](expired-session-handling.md), which sends a child whose
@@ -86,9 +90,9 @@ re-requesting it.
 
 **Decision: re-request on `visibilitychange`.**
 
-The browser drops a wake lock whenever the page is hidden (app switch, manual lock button). The
-helper listens for `visibilitychange` and requests the lock again when the page is visible and the
-lock is still wanted, the same listener shape as
+The browser drops a wake lock whenever the page is hidden (app switch, manual lock button).
+`ScreenWakeLockService` listens for `visibilitychange` once, for the whole app, and requests the
+lock again when the page is visible and anyone still holds it, the same listener shape as
 [visible-poll.ts](../../../src/frontend/buddy/src/app/core/visible-poll.ts).
 
 **Decision: one root service, one per-component helper.**
@@ -96,8 +100,8 @@ lock is still wanted, the same listener shape as
 `core/screen-wake-lock.service.ts` owns the single `WakeLockSentinel` and counts holders, so two
 components that both want it (the run bar on `/child` and a future banner) can't release each
 other's lock. Components don't call it directly; they call `keepAwakeWhile(signal)` once in their
-constructor (injection context), which wires an `effect`, the grace timer, the visibility listener
-and `DestroyRef` clean-up. Rejected: calling `request()`/`release()` from each component's
+constructor (injection context), which wires an `effect`, the grace timer, the keep-alive and
+`DestroyRef` clean-up. Rejected: calling `request()`/`release()` from each component's
 `ngOnInit`/`ngOnDestroy`, because four components would each re-implement the grace and the
 visibility handling.
 
@@ -133,11 +137,12 @@ export class ScreenWakeLockService {
   private holders = 0;
   private sentinel: WakeLockSentinel | null = null;
 
-  /** Returns the release function; safe to call more than once. */
-  hold(): () => void { ... }
+  constructor() {
+    // Re-requests on visibilitychange (visible) while anyone holds it.
+  }
 
-  /** Re-requests after the page became visible again, if anyone still holds it. */
-  reacquire(): void { ... }
+  /** Takes the lock (if the browser allows) and returns the release function, safe to call twice. */
+  hold(): () => void { ... }
 }
 ```
 
@@ -171,17 +176,21 @@ keepAwakeWhile(computed(() => {                                           // chi
 
 ### 4. Testing
 
-- `screen-wake-lock.service.spec.ts`: a stub `navigator.wakeLock` (via a `DOCUMENT`/`navigator`
-  test double). One `request` for two holders; release only after the last; no throw without the
-  API or when `request` rejects; `reacquire` requests again only with holders.
+- `screen-wake-lock.service.spec.ts`: a stub `navigator.wakeLock`. One `request` for two holders;
+  release only after the last; a double release counts once; a lock granted after everyone let go
+  is released at once; `visibilitychange` to visible requests again only when the lock was dropped
+  and someone holds it; no throw without the API, on a refused request or a failing release.
 - `keep-awake.spec.ts` with fake timers: holds on `true`; still held at grace − 1 ms after `false`,
-  released at grace; a flip back inside the grace doesn't re-request; `visibilitychange` to
-  visible re-requests; `getAccessToken` called every `SESSION_KEEP_ALIVE_MS` while wanted and not
-  after the grace; destroy releases and clears both timers.
-- One case in each of the four component specs: running → service held; paused (or `upcoming`) →
-  not held. The First-Then spec also covers "timers off, Then running → held".
-- e2e (optional, cheap): in `child-focus` or `first-then`, stub `navigator.wakeLock` with
-  `page.addInitScript` to record calls, start the timer and assert one `request('screen')`.
+  released at grace; a flip back inside the grace doesn't re-request; `getAccessToken` called every
+  `SESSION_KEEP_ALIVE_MS` while wanted and not after the grace; destroy releases and clears both
+  timers.
+- One case in each of the four component specs: running → service held; `upcoming`, `timesUp` or
+  no current run → not held. The First-Then spec also covers "timers off, Then running → held".
+  The First-Then "ticks only while counting down" case counts the keep-alive interval too.
+- e2e: `e2e/keep-screen-awake.spec.ts` stubs `navigator.wakeLock` with `page.addInitScript` to
+  record calls, has a guardian set a First – Then board, and checks that the child's page asks for
+  no lock before Done and for one `request('screen')` once the Then counts down. First – Then
+  rather than `/child/focus`, because a routine would have to be scheduled at the current minute.
   Headless Chromium may refuse a real lock, so the stub is required.
 
 ## Edge cases
@@ -197,6 +206,15 @@ keepAwakeWhile(computed(() => {                                           // chi
 | Screen locked anyway (no API) for > 30 min      | Session idles out as today; `/login?reason=session-expired` on next tap    |
 | Keep-alive refresh fails                        | `expireSession()`; timer keeps counting; next request redirects            |
 | Timer running for > 10 h (SSO Session Max)      | Not a realistic timer; the session ends as today                           |
+
+## Decisions made
+
+| Question                     | Decision                                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------------------------- |
+| When is the screen kept on?  | While a timer's phase is `running`, plus a 2-minute grace after it stops (user, 2026-10-29) |
+| How do sessions last longer? | A token keep-alive every 4 minutes for the same span; no Keycloak change (user, 2026-10-29) |
+| Guardian setting?            | None; "only while running" limits the battery cost                                          |
+| e2e                          | One spec on First – Then with a stubbed `navigator.wakeLock` (user, 2026-10-29)             |
 
 ## Rejected alternatives
 

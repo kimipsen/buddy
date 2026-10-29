@@ -254,6 +254,10 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
   auto-chain after a tick) for the child home and the focus view, kept on the device by
   `core/child-timer-storage.ts`; the timer itself is the pure `core/visual-timer.ts`, drawn by
   `shared/visual-timer`
+- `ScreenWakeLockService` holds the Screen Wake Lock for the child's timer pages (ref-counted,
+  re-requested when the page is shown again); pages use it through `keepAwakeWhile` in
+  `core/keep-awake.ts`, which also refreshes the token every 4 minutes while a timer runs
+  ([design](analysis/keep-screen-awake.md))
 - `MealplansService` calls meal-library, meal-plan, rating, group-sharing, iCal
   subscription-token and import (preview, commit, list, undo) endpoints, and the Mealie recipe
   links on library meals (link, unlink, create from a recipe), keeping the shared meal list in step
@@ -506,9 +510,10 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Expired sessions during in-app navigation](analysis/expired-session-handling.md) — implemented
   redirect to `/login` with a "session expired" notice when the Keycloak session ends mid-use, and
   return to the interrupted page after signing in
-- [Keep the screen awake while a child's timer runs](analysis/keep-screen-awake.md) — proposed
-  Screen Wake Lock while a child timer is running (2-minute grace after "Time's up") and a token
-  keep-alive for the same span, so long timers neither dim the iPad nor end the session
+- [Keep the screen awake while a child's timer runs](analysis/keep-screen-awake.md) — implemented
+  `ScreenWakeLockService` and `keepAwakeWhile` on the four child timer pages: a Screen Wake Lock
+  while a timer is running (2-minute grace after "Time's up") and a token keep-alive for the same
+  span, so long timers neither dim the iPad nor end the session
 - [In-app help for guardians](analysis/in-app-help.md) — implemented per-page inline help panel
   toggled from the shell header, a `/guardian/help` index, typed en/da help dictionaries and a
   coverage spec that requires help for every guardian page

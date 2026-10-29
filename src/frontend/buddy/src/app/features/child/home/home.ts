@@ -26,6 +26,7 @@ import { currentStep } from '../../../core/homework-session';
 import { readHomeworkSession } from '../../../core/homework-storage';
 import { HouseRulesService } from '../../../core/house-rules.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { keepAwakeWhile } from '../../../core/keep-awake';
 import {
   AgendaEntry,
   TaskRun,
@@ -452,6 +453,9 @@ export class ChildHome implements OnInit, OnDestroy {
   );
 
   constructor() {
+    // A running routine keeps the screen on (docs/frontend/analysis/keep-screen-awake.md).
+    keepAwakeWhile(computed(() => this.timer()?.phase === 'running'));
+
     // Recalculate the moment the current step's time runs out, rather than at the next minute
     // tick, so the buttons (Pause) follow the disc straight away.
     effect((onCleanup) => {

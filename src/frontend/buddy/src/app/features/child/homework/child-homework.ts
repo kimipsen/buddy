@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { ChildClockService } from '../../../core/child-clock.service';
+import { keepAwakeWhile } from '../../../core/keep-awake';
 import {
   DEFAULT_HOMEWORK_CHUNKS,
   ESTIMATE_STEP_MINUTES,
@@ -176,6 +177,9 @@ export class ChildHomework implements OnInit, OnDestroy {
   protected readonly announcement = signal('');
 
   constructor() {
+    // A running chunk or break keeps the screen on (docs/frontend/analysis/keep-screen-awake.md).
+    keepAwakeWhile(computed(() => this.state()?.phase === 'running'));
+
     // Recalculate the moment the current step's time runs out, so the heading and buttons follow
     // the disc.
     effect((onCleanup) => {
