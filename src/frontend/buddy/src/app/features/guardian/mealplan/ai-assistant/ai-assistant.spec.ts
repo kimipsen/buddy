@@ -403,6 +403,46 @@ describe('MealplanAiAssistant', () => {
     expect(compiled.textContent).toContain('Plan five dinners.');
   });
 
+  it('scrolls the transcript to the newest message when the reply arrives', async () => {
+    const userMessage = {
+      role: 'User' as const,
+      text: 'Plan five dinners.',
+      occurredAt: '2026-08-01T00:00:00Z',
+    };
+    const { fixture } = await setup({
+      aiAssistant: {
+        getCurrentSession: vi.fn(async () => session()),
+        sendMessage: vi.fn(async () =>
+          session({
+            transcript: [
+              userMessage,
+              { role: 'Assistant', text: 'Here is your plan.', occurredAt: '2026-08-01T00:00:01Z' },
+            ],
+          }),
+        ),
+      },
+    });
+    await settle(fixture);
+
+    const compiled: HTMLElement = fixture.nativeElement;
+    // jsdom does no layout, so give the log a height to scroll to.
+    const log = compiled.querySelector<HTMLElement>('[role="log"]')!;
+    Object.defineProperty(log, 'scrollHeight', { configurable: true, value: 640 });
+    Object.defineProperty(log, 'scrollTop', { configurable: true, writable: true, value: 0 });
+
+    const input = compiled.querySelector<HTMLInputElement>('input[name="aiMessage"]')!;
+    input.value = 'Plan five dinners.';
+    input.dispatchEvent(new Event('input'));
+    await settle(fixture);
+    expect(log.scrollTop).toBe(0);
+
+    findButtonByText(compiled, 'Send')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain('Here is your plan.');
+    expect(log.scrollTop).toBe(640);
+  });
+
   it('applies the draft and shows the applied outcome with a way to start over', async () => {
     const { fixture, aiAssistant } = await setup({
       aiAssistant: {

@@ -1,4 +1,13 @@
-import { Component, computed, inject, resource, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  afterRenderEffect,
+  computed,
+  inject,
+  resource,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
@@ -96,6 +105,19 @@ export class MealplanAiAssistant {
   protected readonly allSlots = ALL_SLOTS;
 
   protected readonly assistant = resource({ loader: () => this.load() });
+  private readonly transcript = viewChild<ElementRef<HTMLElement>>('transcript');
+  private readonly transcriptLength = computed(() =>
+    this.assistant.hasValue() ? (this.assistant.value()?.session?.transcript.length ?? 0) : 0,
+  );
+
+  // Keeps the newest message in view: after a reply arrives, and when a session is started or resumed.
+  private readonly scrollTranscript = afterRenderEffect(() => {
+    this.transcriptLength();
+    const element = this.transcript()?.nativeElement;
+    if (element) {
+      element.scrollTop = element.scrollHeight;
+    }
+  });
   protected readonly lastOutcome = signal<'applied' | 'discarded' | null>(null);
 
   protected readonly fromDate = signal(todayIsoDate());
