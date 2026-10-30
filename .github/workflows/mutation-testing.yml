@@ -139,6 +139,12 @@ jobs:
         timeout-minutes: 250
         run: ./scripts/mutation-batch.sh --rerun-changed --max-minutes 230 --batch-size 10 --concurrency "$(nproc)"
 
+      # The batch script slims the report on exit; this repeats it in case anything wrote the
+      # report after that, so the cache and the findings issue never carry an unslimmed one.
+      - name: Slim mutation report
+        if: always()
+        run: node scripts/mutation-slim-report.mjs
+
       - name: Save mutation progress
         if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

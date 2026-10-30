@@ -41,6 +41,7 @@ __screenshots__/
 
 # Stryker mutation testing
 /reports/mutation
+/reports/stryker-incremental.json.pre-batch
 .stryker-tmp/
 .mutation-batch-progress
 

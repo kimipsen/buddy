@@ -280,13 +280,25 @@ while true; do
   if [[ -n "$deadline" ]]; then
     left=$(( deadline - $(date +%s) ))
     status=0
+    # A stopped Stryker still writes the mutants it got through into the
+    # report, so keep a copy to put back: a half-run batch isn't recorded and
+    # would otherwise show up as findings. Stryker is run directly, not via
+    # npx, so timeout waits for it to finish writing before the EXIT trap
+    # slims the report; npx exits at once and Stryker would overwrite it.
+    [[ -f "$INCREMENTAL_FILE" ]] && cp "$INCREMENTAL_FILE" "$INCREMENTAL_FILE.pre-batch"
     timeout --kill-after=60 "$left" \
-      npx stryker run --mutate "$batch_joined" --incremental --concurrency "$CONCURRENCY" || status=$?
+      node_modules/.bin/stryker run --mutate "$batch_joined" --incremental --concurrency "$CONCURRENCY" || status=$?
     if [[ "$status" -eq 124 || "$status" -eq 137 ]]; then
+      if [[ -f "$INCREMENTAL_FILE.pre-batch" ]]; then
+        mv "$INCREMENTAL_FILE.pre-batch" "$INCREMENTAL_FILE"
+      else
+        rm -f "$INCREMENTAL_FILE"
+      fi
       echo "Time budget of $MAX_MINUTES minutes used up mid-batch; it will be re-run next time."
       echo "Stopped at $done_count/$total files covered."
       exit 0
     fi
+    rm -f "$INCREMENTAL_FILE.pre-batch"
     [[ "$status" -eq 0 ]] || exit "$status"
   else
     npx stryker run --mutate "$batch_joined" --incremental --concurrency "$CONCURRENCY"
