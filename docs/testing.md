@@ -284,6 +284,10 @@ keeps only the last 1000 characters of each reason, so both the cached and the
 committed report stay small. It also drops report entries for files that were
 deleted or fall outside the `mutate` globs in `stryker.conf.json`, which
 Stryker never re-tests and which would otherwise stay in the score for good.
+The workflow runs it once more before saving the cache. When the time budget
+stops a batch mid-run, the script puts back the report from before that batch,
+so a half-run batch adds no findings and is re-run next time (it runs Stryker
+directly, not through `npx`, so `timeout` waits for Stryker to finish writing).
 Run it yourself after a direct `npx stryker run`. When the time budget stops a
 batch mid-run, the script restores the report from before that batch, so a
 half-run batch isn't recorded and shows up as no findings; the batch is re-run
