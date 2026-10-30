@@ -207,7 +207,11 @@ public static class SendAiSessionMessageHandler
                 newEvents.AddRange(outcome.DraftEvents);
             }
 
-            history.Add(new AiChatMessage(AiChatMessageRole.Assistant, completion.Text, turnInvocations));
+            // The text accompanying tool calls ("Let me check the calendar...") is dropped, as it is
+            // never persisted and so AiSessionHistoryBuilder replays the same shape. Kept, adapters
+            // place it after the tool results, ending the request on an assistant turn: a prefill,
+            // which Anthropic rejects with a 400.
+            history.Add(new AiChatMessage(AiChatMessageRole.Assistant, "", turnInvocations));
 
             if (iteration == MaxToolLoopIterations - 1)
             {
