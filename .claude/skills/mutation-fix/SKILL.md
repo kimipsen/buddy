@@ -31,7 +31,7 @@ Every 5 minutes it prints one line with the elapsed time, the batch (`Running ba
 - A Monitor ends after 30 minutes. When it expires and the `.exit` file still doesn't exist, start it again with the same command. Elapsed time counts from the log's creation, so it carries on across re-arms.
 - On a `may be hung` warning, check that the run's still alive (`ps -ef | grep -c '[s]tryker'`, and the end of the log) and tell the user what you found. Don't kill the run unless they ask.
 
-- Take the batch's file list from the `Running batch X-Y of Z:` lines in the output. **Remember it**: it's the scope for the rest of the loop.
+- Take the batch's file list from the `Running batch X-Y of Z:` lines in the output. **Remember it**: it's the scope for the rest of the loop. Files listed under `Skipping N file(s) already clean and unchanged:` are not in it: their recorded results have no survivors and neither they nor their specs changed since, so the script counts them as covered without running Stryker.
 - If the output says `All N files have been covered`, stop and tell the user (and notify, see step 6); they can start over with `task test:mutation:frontend:batch -- --reset`.
 - If Stryker fails before testing mutants (initial test run failed, TypeScript errors), stop, report the error and notify (step 6) — don't try to fix unrelated breakage silently.
 
@@ -97,6 +97,8 @@ Stop looping when any of these is true:
 - a round killed nothing new — you're stuck; report what's left and why instead of retrying the same approach;
 - `MAX_ROUNDS` (default 4) re-runs have been done.
 
+Once the loop has stopped, if you re-ran any files in this step, record their new fingerprint so later batches can skip the ones left clean: `scripts/mutation-batch.sh --record <file1> <file2> ...`. The rounds changed their specs, so the fingerprint saved by the batch run no longer matches.
+
 ## 5. Report
 
 Finish with a short summary:
@@ -106,7 +108,7 @@ Finish with a short summary:
 - every `// Stryker disable` added, with its reason;
 - any dead code deleted;
 - anything left unfixed (not-worth-it or stuck), with the reason, and any possible bugs found;
-- that `reports/stryker-incremental.json` changed — it's the committed baseline the nightly CI run starts from, so it should be committed together with the spec changes.
+- that `reports/stryker-incremental.json` and `reports/mutation-fingerprints.json` changed — they're the committed baseline the nightly CI run starts from, so they should be committed together with the spec changes.
 
 Don't commit unless the user asks. The HTML report for a closer look is at `reports/mutation/index.html`.
 

@@ -288,11 +288,17 @@ The workflow runs it once more before saving the cache. When the time budget
 stops a batch mid-run, the script puts back the report from before that batch,
 so a half-run batch adds no findings and is re-run next time (it runs Stryker
 directly, not through `npx`, so `timeout` waits for Stryker to finish writing).
-Run it yourself after a direct `npx stryker run`. When the time budget stops a
-batch mid-run, the script restores the report from before that batch, so a
-half-run batch isn't recorded and shows up as no findings; the batch is re-run
-next time. The workflow also runs the slim script once more before saving the
-cache, in case anything wrote the report after the batch script exited.
+Run it yourself after a direct `npx stryker run`.
+
+The script skips files it can't learn anything new about.
+`reports/mutation-fingerprints.json`, committed next to the report, holds a
+hash of each file and its specs as of the file's recorded results. When the
+report shows no surviving or uncovered mutants for a file and that hash still
+matches, the file is counted as covered without running Stryker, so a batch of
+such files finishes in seconds (`--dry-run` lists them). A change to the file or
+to any of its specs makes it run again. After re-running Stryker on files
+yourself (`/mutation-fix` does, with `--force`), record their new hash with
+`scripts/mutation-batch.sh --record <files>`.
 
 Each batch runs only the specs that exercise its files: the colocated
 `foo.spec.ts` and every spec that imports `foo`. A file that no spec imports,

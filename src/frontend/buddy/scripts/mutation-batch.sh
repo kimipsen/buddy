@@ -16,9 +16,15 @@
 # as you go. Once every file has been covered, that file is a full baseline
 # you can commit and reuse for incremental/diff-based runs.
 #
+# reports/mutation-fingerprints.json (committed, like the report) holds the
+# fingerprint of each file and its specs as of its recorded results. A file
+# whose results have no survivors and whose fingerprint still matches is
+# counted as covered without running Stryker: a re-run can't change anything.
+#
 # Usage:
 #   scripts/mutation-batch.sh [--batch-size N] [--concurrency N] [--max-minutes N]
 #                             [--rerun-changed] [--status] [--reset] [--dry-run]
+#   scripts/mutation-batch.sh --record FILE...
 #
 #   --max-minutes N   Keep running batches until N minutes have passed. A batch
 #                     still running at the deadline is stopped and not recorded,
@@ -27,6 +33,9 @@
 #   --rerun-changed   Also re-run files whose source or specs changed since
 #                     they were last covered (CI's nightly mode). Without it a
 #                     covered file stays covered until --reset.
+#   --record FILE...  Records the files as covered at their current fingerprint,
+#                     after re-running Stryker on them yourself (e.g. with
+#                     --force once their specs are fixed).
 #
 # Env vars (overridden by flags): BATCH_SIZE, CONCURRENCY
 set -euo pipefail
@@ -39,6 +48,7 @@ MAX_MINUTES=""
 RERUN_CHANGED=0
 PROGRESS_FILE=".mutation-batch-progress"
 INCREMENTAL_FILE="reports/stryker-incremental.json"
+FINGERPRINT_FILE="reports/mutation-fingerprints.json"
 MODE="run"
 
 while [[ $# -gt 0 ]]; do
@@ -70,6 +80,12 @@ while [[ $# -gt 0 ]]; do
     --dry-run)
       MODE="dry-run"
       shift
+      ;;
+    --record)
+      MODE="record"
+      shift
+      record_files=("$@")
+      break
       ;;
     -h|--help)
       grep '^#' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
@@ -163,10 +179,53 @@ record_progress() {
   local tmp f
   tmp="$(mktemp)"
   awk 'NR == FNR { drop[$0] = 1; next } !drop[$1]' <(printf '%s\n' "$@") "$PROGRESS_FILE" > "$tmp"
+  local pairs=()
   for f in "$@"; do
-    echo "$f $(fingerprint "$f")" >> "$tmp"
+    pairs+=("$f=$(fingerprint "$f")")
+    echo "${pairs[-1]/=/ }" >> "$tmp"
   done
   mv "$tmp" "$PROGRESS_FILE"
+  record_fingerprints "${pairs[@]}"
+}
+
+# Stores `path=fingerprint` pairs in the committed fingerprint file, dropping
+# entries for files that no longer exist.
+record_fingerprints() {
+  node -e '
+    const fs = require("node:fs");
+    const [path, ...pairs] = process.argv.slice(1);
+    const old = fs.existsSync(path) ? JSON.parse(fs.readFileSync(path, "utf8")) : {};
+    for (const pair of pairs) {
+      const i = pair.lastIndexOf("=");
+      old[pair.slice(0, i)] = pair.slice(i + 1);
+    }
+    const kept = Object.keys(old).filter((f) => fs.existsSync(f)).sort();
+    fs.writeFileSync(path, JSON.stringify(Object.fromEntries(kept.map((f) => [f, old[f]])), null, 2) + "\n");
+  ' "$FINGERPRINT_FILE" "$@"
+}
+
+# Prints the files among `remaining` that the report already shows with no
+# surviving or uncovered mutants, at the fingerprint they still have.
+clean_and_unchanged() {
+  [[ -f "$INCREMENTAL_FILE" && -f "$FINGERPRINT_FILE" && "${#remaining[@]}" -gt 0 ]] || return 0
+  local f pairs=()
+  for f in "${remaining[@]}"; do
+    pairs+=("$f=$(fingerprint "$f")")
+  done
+  node -e '
+    const fs = require("node:fs");
+    const [reportPath, fingerprintPath, ...pairs] = process.argv.slice(1);
+    const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+    const recorded = JSON.parse(fs.readFileSync(fingerprintPath, "utf8"));
+    for (const pair of pairs) {
+      const i = pair.lastIndexOf("=");
+      const [file, hash] = [pair.slice(0, i), pair.slice(i + 1)];
+      const mutants = report.files[file]?.mutants;
+      if (recorded[file] === hash && mutants !== undefined &&
+          !mutants.some((m) => m.status === "Survived" || m.status === "NoCoverage"))
+        console.log(file);
+    }
+  ' "$INCREMENTAL_FILE" "$FINGERPRINT_FILE" "${pairs[@]}"
 }
 
 compute_remaining() {
@@ -229,6 +288,30 @@ if [[ "$MODE" == "status" ]]; then
     echo "Next up: ${remaining[0]}"
   fi
   exit 0
+fi
+
+if [[ "$MODE" == "record" ]]; then
+  [[ "${#record_files[@]}" -gt 0 ]] || { echo "--record needs at least one file" >&2; exit 1; }
+  for f in "${record_files[@]}"; do
+    [[ -f "$f" ]] || { echo "No such file: $f" >&2; exit 1; }
+  done
+  record_progress "${record_files[@]}"
+  echo "Recorded ${#record_files[@]} file(s) at their current fingerprint."
+  exit 0
+fi
+
+mapfile -t skipped < <(clean_and_unchanged)
+if [[ "${#skipped[@]}" -gt 0 ]]; then
+  if [[ "$MODE" == "dry-run" ]]; then
+    echo "Would skip ${#skipped[@]} file(s) already clean and unchanged:"
+  else
+    echo "Skipping ${#skipped[@]} file(s) already clean and unchanged:"
+    record_progress "${skipped[@]}"
+  fi
+  printf '  %s\n' "${skipped[@]}"
+  # Leave them out of the batches below, also in a dry run.
+  for f in "${skipped[@]}"; do done_hash["$f"]="$(fingerprint "$f")"; done
+  compute_remaining
 fi
 
 if [[ "$MODE" == "dry-run" ]]; then
