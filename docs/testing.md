@@ -284,7 +284,11 @@ keeps only the last 1000 characters of each reason, so both the cached and the
 committed report stay small. It also drops report entries for files that were
 deleted or fall outside the `mutate` globs in `stryker.conf.json`, which
 Stryker never re-tests and which would otherwise stay in the score for good.
-Run it yourself after a direct `npx stryker run`.
+Run it yourself after a direct `npx stryker run`. When the time budget stops a
+batch mid-run, the script restores the report from before that batch, so a
+half-run batch isn't recorded and shows up as no findings; the batch is re-run
+next time. The workflow also runs the slim script once more before saving the
+cache, in case anything wrote the report after the batch script exited.
 
 Each batch runs only the specs that exercise its files: the colocated
 `foo.spec.ts` and every spec that imports `foo`. A file that no spec imports,
