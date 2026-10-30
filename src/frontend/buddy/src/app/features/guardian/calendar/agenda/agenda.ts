@@ -257,11 +257,8 @@ export class CalendarAgenda {
 
   // Mon-Sun headers for the month grid, computed once here since MonthGrid has no locale of its
   // own -- the first seven days() entries in month mode are always a complete Monday-start week.
+  // Only the month grid reads it, so it's never computed in the other views.
   protected readonly weekdayLabels = computed(() => {
-    if (this.viewMode() !== 'month') {
-      return [];
-    }
-
     const locale = this.translation.language();
     return this.days()
       .slice(0, 7)

@@ -1647,6 +1647,53 @@ describe('CalendarAgenda', () => {
     expect(compiled.querySelector('app-month-grid')).toBeTruthy();
   });
 
+  it('heads the month grid Mon-Sun and mutes the padding days from adjacent months', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2024, 5, 15)); // June 2024's grid starts on Monday May 27
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Month')!.click();
+    await settle(fixture);
+
+    const grid = (fixture.nativeElement as HTMLElement).querySelector('app-month-grid')!;
+    const headers = Array.from(grid.querySelectorAll('.grid > div')).map((cell) =>
+      cell.textContent?.trim(),
+    );
+    expect(headers).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+
+    const padding = findButtonByText(grid as HTMLElement, '27')!;
+    const inMonth = findButtonByText(grid as HTMLElement, '10')!;
+    expect(padding.classList).toContain('text-slate-400');
+    expect(inMonth.classList).not.toContain('text-slate-400');
+  });
+
+  it('labels each day of the week view with its short weekday, month and day', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2024, 5, 15));
+    const at = (date: string) =>
+      occurrence({ itemId: date, startsAt: `${date}T09:00:00Z`, endsAt: `${date}T10:00:00Z` });
+    const { fixture } = await setup({
+      calendars: {
+        listOccurrencesInRange: vi.fn(async () => [at('2024-06-15'), at('2024-06-21')]),
+      },
+    });
+    await settle(fixture);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Sat, Jun 15');
+    expect(text).toContain('Fri, Jun 21');
+  });
+
+  it('offers Event and Task as the kinds of a new item', async () => {
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(findButtonByText(compiled, 'Event')).toBeDefined();
+    expect(findButtonByText(compiled, 'Task')).toBeDefined();
+  });
+
   it('"Today" jumps the anchor back to today without changing the current view mode', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2024, 5, 15));
@@ -1952,6 +1999,36 @@ describe('CalendarAgenda', () => {
         alarms: [],
       });
       expect(calendars.createItem).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      [35, '35m'],
+      [60, '1h'],
+      [90, '1h 30m'],
+    ])('shows how long a %i-minute template takes as "%s"', async (minutes, duration) => {
+      const timed = taskTemplate({ totalDurationMinutes: minutes });
+      const { fixture } = await setup({ templates: [timed] });
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Task')!.click();
+      await settle(fixture);
+      compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'From template')!.click();
+      await settle(fixture);
+      compiled = fixture.nativeElement as HTMLElement;
+      compiled
+        .querySelector<HTMLInputElement>('app-task-picker input')!
+        .dispatchEvent(new Event('focus'));
+      await settle(fixture);
+      compiled = fixture.nativeElement as HTMLElement;
+      Array.from(compiled.querySelectorAll<HTMLButtonElement>('app-task-picker ul li button'))
+        .find((button) => button.textContent?.includes('Morning routine'))!
+        .click();
+      await settle(fixture);
+
+      const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(text).toContain(`Takes ${duration} — ends around`);
     });
 
     it('labels the time "Leave by" for a packing list and "Due time" otherwise', async () => {

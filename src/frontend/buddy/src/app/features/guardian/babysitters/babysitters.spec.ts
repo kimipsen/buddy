@@ -144,6 +144,60 @@ describe('GuardianBabysitters', () => {
     expect(compiled.querySelector('#edit-name-b-1')).toBeNull();
   });
 
+  it('prefills the contact info when editing and saves it trimmed', async () => {
+    const { fixture, compiled, service } = await setup();
+
+    findButton(compiled, 'Edit')!.click();
+    await settle(fixture);
+    const contact = compiled.querySelector<HTMLInputElement>('#edit-contact-b-1')!;
+    expect(contact.value).toBe('+45 12 34 56 78');
+    type(contact, '  +45 87 65 43 21  ');
+    await settle(fixture);
+
+    findButton(compiled, 'Save')!.click();
+    await settle(fixture);
+
+    expect(service.update).toHaveBeenCalledWith('b-1', {
+      name: 'Anna',
+      contactInfo: '+45 87 65 43 21',
+    });
+  });
+
+  it('shows the save error when saving an edit fails', async () => {
+    const { fixture, compiled } = await setup({
+      update: vi.fn(async () => {
+        throw new Error('boom');
+      }),
+    });
+
+    findButton(compiled, 'Edit')!.click();
+    await settle(fixture);
+    findButton(compiled, 'Save')!.click();
+    await settle(fixture);
+
+    expect(compiled.querySelector('[role="alert"]')?.textContent).toContain(
+      'Unable to save the babysitter.',
+    );
+  });
+
+  it('shows the remove error when archiving fails, and clears it when an edit starts', async () => {
+    const { fixture, compiled } = await setup({
+      archive: vi.fn(async () => {
+        throw new Error('boom');
+      }),
+    });
+
+    findButton(compiled, 'Remove')!.click();
+    await settle(fixture);
+    expect(compiled.querySelector('[role="alert"]')?.textContent).toContain(
+      'Unable to remove the babysitter.',
+    );
+
+    findButton(compiled, 'Edit')!.click();
+    await settle(fixture);
+    expect(compiled.querySelector('[role="alert"]')).toBeNull();
+  });
+
   it('cancels an edit without saving', async () => {
     const { fixture, compiled, service } = await setup();
 

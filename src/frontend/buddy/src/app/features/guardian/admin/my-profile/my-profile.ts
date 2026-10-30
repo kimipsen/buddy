@@ -60,11 +60,13 @@ export class MyProfile {
   // they mirror. Each one follows only its own stored value, so saving one section keeps unsaved
   // edits in the others. The form only renders once the profile has loaded, so the fallbacks
   // never show.
+  // Stryker disable StringLiteral: the fallbacks never show, see above
   protected readonly givenName = this.formField((profile) => profile?.name.givenName ?? '');
   protected readonly familyName = this.formField((profile) => profile?.name.familyName ?? '');
   protected readonly callingName = this.formField((profile) => profile?.callingName ?? '');
   protected readonly email = this.formField((profile) => profile?.email.value ?? '');
   protected readonly timeZoneId = this.formField((profile) => profile?.timeZoneId ?? '');
+  // Stryker restore StringLiteral
   protected readonly language = this.formField<Language>(
     (profile) => profile?.language ?? DEFAULT_LANGUAGE,
   );

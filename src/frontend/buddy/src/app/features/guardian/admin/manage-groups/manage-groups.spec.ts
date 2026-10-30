@@ -1658,6 +1658,45 @@ describe('ManageGroups', () => {
     expect(findButtonByText(compiled, 'Cancel')).toBeTruthy();
   });
 
+  it('closes the prompt after deleting even when the reloaded list still has the group', async () => {
+    const { fixture, groups } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Delete')!.click();
+    await settle(fixture);
+
+    findButtonByText(compiled, 'Confirm')!.click();
+    await settle(fixture);
+
+    expect(groups.deleteGroup).toHaveBeenCalledWith('group-1');
+    expect(compiled.textContent).not.toContain(
+      'Delete this group? It will be hidden from everyone, including you.',
+    );
+    expect(findButtonByText(compiled, 'Delete')).toBeTruthy();
+  });
+
+  it('clears the previous delete error when the delete prompt is opened again', async () => {
+    const { fixture } = await setup({
+      groups: { deleteGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Delete')!.click();
+    await settle(fixture);
+    findButtonByText(compiled, 'Confirm')!.click();
+    await settle(fixture);
+    expect(compiled.textContent).toContain('Unable to delete this group.');
+
+    findButtonByText(compiled, 'Cancel')!.click();
+    await settle(fixture);
+    findButtonByText(compiled, 'Delete')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).not.toContain('Unable to delete this group.');
+  });
+
   it('disables the confirm and cancel buttons while a delete is in flight', async () => {
     const pending = deferred<void>();
     const { fixture } = await setup({ groups: { deleteGroup: vi.fn(() => pending.promise) } });

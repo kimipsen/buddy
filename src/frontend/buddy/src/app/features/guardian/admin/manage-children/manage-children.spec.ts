@@ -710,6 +710,87 @@ describe('ManageChildren', () => {
       expect(compiled.textContent).toContain('Unable to delete this child.');
     });
 
+    it('shows a generic error on a non-409 HTTP error', async () => {
+      const deleteChild = vi.fn(async () =>
+        Promise.reject(new HttpErrorResponse({ status: 500, statusText: 'Server Error' })),
+      );
+      const { fixture } = await setup({
+        guardians: { listMyChildren: vi.fn(async () => [child()]), deleteChild },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Delete')!.click();
+      fixture.detectChanges();
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Delete')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain('Unable to delete this child.');
+      expect(compiled.textContent).not.toContain('Other guardians still have access');
+    });
+
+    it('clears the delete error when a delete is requested again', async () => {
+      const deleteChild = vi.fn(async () => Promise.reject(new Error('boom')));
+      const { fixture } = await setup({
+        guardians: { listMyChildren: vi.fn(async () => [child()]), deleteChild },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Delete')!.click();
+      fixture.detectChanges();
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Delete')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Unable to delete this child.');
+
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Cancel')!.click();
+      fixture.detectChanges();
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Delete')!.click();
+      fixture.detectChanges();
+
+      expect(compiled.textContent).not.toContain('Unable to delete this child.');
+    });
+
+    it("closes another child's pending confirmation when a different one is requested", async () => {
+      const listMyChildren = vi.fn(async () => [
+        child(),
+        child({
+          id: 'child-2',
+          guardianLinkId: 'link-2',
+          name: { givenName: 'Ada', familyName: 'Kid' },
+        }),
+      ]);
+      const { fixture } = await setup({ guardians: { listMyChildren } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const request = (name: string, action: string) => {
+        findButtonByText(childRow(compiled, name), action)!.click();
+        fixture.detectChanges();
+      };
+      const rowText = (name: string) => childRow(compiled, name).textContent;
+
+      request('Sam Kid', 'Delete');
+      request('Ada Kid', 'Remove');
+      expect(rowText('Sam Kid')).not.toContain('This can’t be undone.');
+
+      request('Sam Kid', 'Delete');
+      expect(rowText('Ada Kid')).not.toContain('Remove this child?');
+
+      request('Ada Kid', 'Reset password');
+      expect(rowText('Sam Kid')).not.toContain('This can’t be undone.');
+
+      request('Sam Kid', 'Remove');
+      expect(rowText('Ada Kid')).not.toContain('they are signed out');
+
+      request('Ada Kid', 'Reset password');
+      expect(rowText('Sam Kid')).not.toContain('Remove this child?');
+
+      request('Sam Kid', 'Delete');
+      expect(rowText('Ada Kid')).not.toContain('they are signed out');
+      expect(rowText('Sam Kid')).toContain('This can’t be undone.');
+    });
+
     it('closes a pending remove confirmation, and remove closes a pending delete', async () => {
       const { fixture, compiled } = await requestDelete();
 

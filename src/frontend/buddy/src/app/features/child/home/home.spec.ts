@@ -2146,6 +2146,13 @@ describe('ChildHome', () => {
         'lunchbox',
       );
       expect(section.textContent).toContain('1 of 2 packed');
+      const toggleFor = (title: string) =>
+        Array.from(section.querySelectorAll('li li'))
+          .find((row) => row.textContent?.includes(title))!
+          .querySelector('button')!
+          .getAttribute('aria-label');
+      expect(toggleFor('Lunchbox')).toBe('Mark not done');
+      expect(toggleFor('Gym clothes')).toBe('Mark done');
       expect(progress.getMyProgress).toHaveBeenCalledTimes(2);
     });
 

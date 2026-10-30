@@ -367,6 +367,20 @@ describe('MyProfile', () => {
       expect(callingNameButton(compiled).disabled).toBe(true);
     });
 
+    it('confirms the save only once it has finished', async () => {
+      const { fixture, compiled, users } = await setup();
+      const pending = deferred<CurrentUser>();
+      users.updateCallingName.mockReturnValueOnce(pending.promise);
+
+      await type(fixture, input(compiled, 'callingName'), 'Mor');
+      await submit(fixture, callingNameButton(compiled));
+      expect(compiled.textContent).not.toContain('Calling name updated.');
+
+      pending.resolve(withChanges({ callingName: 'Mor' }));
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Calling name updated.');
+    });
+
     it('saves an empty value to clear the calling name', async () => {
       const { fixture, compiled, users } = await setup({
         user: Promise.resolve(withChanges({ callingName: 'Mor' })),

@@ -95,12 +95,14 @@ export class ManageGroups {
   // The invite just sent from the open panel, whose link the inviter can copy or share themself
   // (SMS, chat). Gone once the panel closes: the server keeps only the token's hash.
   protected readonly sentInvite = signal<SentGroupInvite | null>(null);
+  // Stryker disable next-line BooleanLiteral: sending an invite resets it before the link (and its copied state) ever renders
   protected readonly inviteLinkCopied = signal(false);
   protected readonly canShareInviteLink = typeof navigator.share === 'function';
 
   // The children panel simply shows no candidates if this fails -- manage-children already
   // surfaces a dedicated load error for the guardian's own children list.
   protected readonly myChildren = resource({
+    // Stryker disable next-line ArrowFunction: its one reader falls back to [] for an undefined value too
     loader: () => this.guardians.listMyChildren().catch((): ChildSummary[] => []),
   });
 

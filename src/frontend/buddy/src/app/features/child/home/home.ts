@@ -718,11 +718,8 @@ export class ChildHome implements OnInit, OnDestroy {
         const { id: childId } = await this.users.ensureCurrentUser();
         const meal = await this.mealplans.rateMeal(childId, entry.mealId, starCount, comment);
         const myRating = meal.ratings.find((rating) => rating.childId === childId) ?? null;
-
-        if (!this.meals.hasValue() || this.meals.isLoading()) {
-          return;
-        }
-
+        // Unlike the other sections, meals are never reloaded, and a meal can only be rated once
+        // they've loaded, so they always hold a value here.
         const next = { ...this.meals.value() };
 
         for (const [slot, existing] of Object.entries(next)) {
