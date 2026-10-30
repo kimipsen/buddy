@@ -85,11 +85,9 @@ jobs:
 
       # Reads package-lock.json, so nothing is installed. Dev dependencies count too: they run in
       # CI and in the image builds. Low-severity advisories are listed but don't fail the job.
-      # Allowlisted advisories (remove each once a patched release exists):
-      # - GHSA-vfj7-8cjw-p6xm: braces <= 3.0.3, no fix released (2026-10-16). Only reached through
-      #   markdownlint-cli2, which globs our own markdown files.
+      # Fix a transitive one with a pin in package.json "overrides".
       - name: npm audit
-        run: npx --yes audit-ci@7.1.0 --moderate --allowlist GHSA-vfj7-8cjw-p6xm
+        run: npx --yes audit-ci@7.1.0 --moderate
 
   image:
     name: Container image (${{ matrix.name }})
