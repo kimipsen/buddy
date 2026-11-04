@@ -148,6 +148,37 @@ The [integration testing strategy](backend/analysis/integration-testing-strategy
 documents the Testcontainers fixture, endpoint coverage guard, and event-shape
 golden files.
 
+### Keycloak 401s or a hanging run on WSL2
+
+If tests fail in `BuddyApiFixture.CreateUserAsync` with `401 (Unauthorized)`,
+take 10 s or more each, or the run stops making progress while the test
+Keycloak container sits at about one full core of CPU, check the clock before
+the fixture. On WSL2 the VM's wall clock can keep stepping backwards (seen:
+-500 ms every 5 s plus a ±7.6 s swing). Each backward step makes Keycloak's
+Hibernate spin in `SimpleTimestamper.next()` until real time catches up, and
+tokens stamped before the step look issued in the future, so the admin API
+rejects them. It isn't memory: the heap stays well under its 512 MB cap. CI is
+unaffected.
+
+Measure the drift for 30 s (prints nothing but the summary when the clock is
+steady):
+
+```bash
+python3 -c '
+import time
+p = time.time() - time.monotonic(); n = 0
+for _ in range(600):
+    time.sleep(0.05); o = time.time() - time.monotonic()
+    if abs(o - p) > 0.002: n += 1; print(f"wall clock stepped {(o - p) * 1000:+.0f} ms")
+    p = o
+print(f"jumps={n}")'
+```
+
+Any jumps mean the fix is on the Windows side: run `wsl --shutdown` and reopen
+the devcontainer. If the jumps return, two time services are correcting the
+clock against each other: keep only one (WSL's own sync, or `systemd-timesyncd`
+/ `chrony` in the distro) and run `w32tm /resync` on the host.
+
 ## Backend mutation testing
 
 Restore the repository-local Stryker.NET tool and run it from the integration
