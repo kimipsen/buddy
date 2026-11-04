@@ -71,6 +71,9 @@ and are unit-tested in Vitest:
 - **Columns:** `buildDateRangeIso(start, 7)`, in order, so whichever day was
   picked is column one. Day headers use the user's locale (`Intl` weekday
   names, matching the en/da dictionaries).
+- **Meal cells:** the meal's name for the row's slot on that day. A meal eaten at friends or
+  family (`FriendsAndFamily`) prints with 👪 in front of its name, and one eaten at a restaurant
+  (`Restaurant`) with 🍽️, so a child reading the plan doesn't expect that exact dish.
 - **Day bucketing:** an occurrence lands in every column its local
   `[timing.startsAt, timing.endsAt)` overlaps. Tasks use `sortAt` (their due instant). All-day
   items sort first, then by start time, then by name (locale-aware, shared `compareOccurrences`).
