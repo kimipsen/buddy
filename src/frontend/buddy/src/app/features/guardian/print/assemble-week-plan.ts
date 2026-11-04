@@ -8,6 +8,7 @@ import {
   toTimeInTimeZone,
 } from '../../../core/date-utils';
 import { CalendarItemKind, CalendarItemOccurrence } from '../../../core/calendars.service';
+import { MealEatingOut } from '../../../core/mealplans.service';
 import { PickupOccurrence, PickupSlot } from '../../../core/pickups.service';
 import {
   PRINT_ROW_KIND,
@@ -40,6 +41,14 @@ const PICKUP_SELF_ESCORT = 1;
 const PICKUP_SIBLING = 2;
 const PICKUP_PLAYDATE = 3;
 const PICKUP_BABYSITTER = 4;
+
+// A meal eaten away from home prints with an icon, so a child reading the plan doesn't expect
+// that exact dish: at a friend's or family's table they eat what the hosts serve.
+const EATING_OUT_ICONS: Record<MealEatingOut, string | null> = {
+  None: null,
+  FriendsAndFamily: '👪',
+  Restaurant: '🍽️',
+};
 
 const BLANK: WeekPlanCell = { type: 'blank' };
 const MARK: WeekPlanCell = { type: 'mark' };
@@ -141,7 +150,9 @@ function mealCells(row: PrintTemplateRow, { dates, sources }: RowContext): WeekP
 
   return dates.map((date) => {
     const entry = entries.find((e) => e.date === date && e.slot === row.mealSlot);
-    return entry ? text({ text: entry.mealName, icon: null, color: null }) : BLANK;
+    return entry
+      ? text({ text: entry.mealName, icon: EATING_OUT_ICONS[entry.eatingOut], color: null })
+      : BLANK;
   });
 }
 

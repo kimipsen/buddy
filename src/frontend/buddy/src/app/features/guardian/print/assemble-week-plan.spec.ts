@@ -132,8 +132,12 @@ describe('assembleWeekPlan', () => {
   });
 
   describe('meal rows', () => {
-    const entry = (date: string, slot: MealPlanEntry['slot'], mealName: string) =>
-      ({ date, slot, mealName }) as MealPlanEntry;
+    const entry = (
+      date: string,
+      slot: MealPlanEntry['slot'],
+      mealName: string,
+      eatingOut: MealPlanEntry['eatingOut'] = 'None',
+    ) => ({ date, slot, mealName, eatingOut }) as MealPlanEntry;
 
     it('prints the meal for the row’s slot on its day, from the family or group scope', () => {
       const meals = new Map([
@@ -164,6 +168,31 @@ describe('assembleWeekPlan', () => {
       expect(model.rows[0].cells[1]).toEqual({ type: 'blank' });
       expect(model.rows[0].cells[2]).toMatchObject({ value: { text: 'Pasta' } });
       expect(model.rows[1].cells[1]).toMatchObject({ value: { text: 'Butterchicken' } });
+    });
+
+    it('marks a meal eaten at friends or family, or at a restaurant, with its own icon', () => {
+      const meals = new Map([
+        [
+          'child:signe',
+          [
+            entry('2026-09-28', 'Dinner', 'Mormor', 'FriendsAndFamily'),
+            entry('2026-09-29', 'Dinner', 'Pizzeria', 'Restaurant'),
+            entry('2026-09-30', 'Dinner', 'Pasta'),
+          ],
+        ],
+      ]);
+
+      const model = assembleWeekPlan(
+        template([row(PRINT_ROW_KIND.meal, { childId: 'signe', mealSlot: 'Dinner' })]),
+        sources({ meals }),
+        OPTIONS,
+      );
+
+      expect(model.rows[0].cells.slice(0, 3)).toEqual([
+        { type: 'text', value: { text: 'Mormor', icon: '👪', color: null } },
+        { type: 'text', value: { text: 'Pizzeria', icon: '🍽️', color: null } },
+        { type: 'text', value: { text: 'Pasta', icon: null, color: null } },
+      ]);
     });
   });
 
