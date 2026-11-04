@@ -6,7 +6,7 @@
 # Pinned by tag and digest, so a rebuild of the same commit uses the same SDK and runtime. The SDK
 # tag matches global.json at the repo root (which this build context can't see): bump both together.
 # Dependabot keeps the digests current for security patches.
-FROM mcr.microsoft.com/dotnet/sdk:11.0.100-rc.2@sha256:db7d1f28c0805ea69fe43f73e54cffd2a0689a0c637a6078328e27c5aab2314a AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0.100-rc.3@sha256:3a9175b6c54b2f076817af1360f691c9994447b192faa48a1a1f112a516844c7 AS build
 WORKDIR /src
 
 # .editorconfig carries the analyzer exceptions; without it the analyzers (warnings as errors) fail
@@ -20,7 +20,7 @@ ARG BUDDY_COMMIT=unknown
 RUN dotnet publish buddy/buddy.csproj -c Release -o /app \
       -p:MinVerVersionOverride="$BUDDY_VERSION" -p:SourceRevisionId="$BUDDY_COMMIT"
 
-FROM mcr.microsoft.com/dotnet/aspnet:11.0.0-rc.2@sha256:9a52cade70623cb66cad79baeea5ae9995b42b38d169ccc2a95b4f6b041e9874 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:11.0.0-rc.3@sha256:bae0269049d5061ab7f49995cc1acebf54b75471c096c4a1f874e27661d44045 AS runtime
 
 # A home directory, because Data Protection (MealplansFeature) keeps its key ring under
 # ~/.aspnet when nothing else is configured; without one the keys would live only in memory.
