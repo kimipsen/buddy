@@ -180749,10 +180749,10 @@
           "id": "1",
           "mutatorName": "BlockStatement",
           "replacement": "{}",
-          "statusReason": "…ChimeService\u001b[2m > \u001b[22mplays two rising bell notes once unlocked\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected [] to deeply equal [ 784, 1047 ]\u001b[39m\n\n- Expected\n+ Received\n\n- [\n-   784,\n-   1047,\n- ]\n+ []\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m96:81\u001b[22m\u001b[39m\n\n    \u001b[90m 94|\u001b[39m\n    \u001b[90m 95|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m 96|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.frequenc…\n    \u001b[90m   |\u001b[39m                                                                                 \u001b[31m^\u001b[39m\n    \u001b[90m 97|\u001b[39m       784, 1047,\n    \u001b[90m 98|\u001b[39m     ]);\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m5 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:46:28\n\n\u001b[2m   Duration \u001b[22m 1.19s\u001b[2m (environment 56%, setup 24%, transform 14%, tests 5%, worker 1%)\u001b[22m\n\n\n",
+          "statusReason": "…vice\u001b[2m > \u001b[22mplays two rising bell notes once unlocked\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected [] to deeply equal [ 784, 1047 ]\u001b[39m\n\n- Expected\n+ Received\n\n- [\n-   784,\n-   1047,\n- ]\n+ []\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m96:81\u001b[22m\u001b[39m\n\n    \u001b[90m 94|\u001b[39m\n    \u001b[90m 95|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m 96|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.frequenc…\n    \u001b[90m   |\u001b[39m                                                                                 \u001b[31m^\u001b[39m\n    \u001b[90m 97|\u001b[39m       784, 1047,\n    \u001b[90m 98|\u001b[39m     ]);\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m5 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\u001b[2m   Start at \u001b[22m 09:09:01\n\n\u001b[2m   Duration \u001b[22m 1.18s\u001b[2m (environment 58%, setup 23%, transform 14%, tests 4%, worker 1%, import 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "duration": 6269,
+          "duration": 6231,
           "killedBy": [
             "0"
           ],
@@ -180775,7 +180775,7 @@
           "status": "CompileError",
           "location": {
             "end": {
-              "column": 48,
+              "column": 37,
               "line": 30
             },
             "start": {
@@ -180792,7 +180792,7 @@
           "status": "CompileError",
           "location": {
             "end": {
-              "column": 48,
+              "column": 37,
               "line": 30
             },
             "start": {
@@ -180803,13 +180803,13 @@
         },
         {
           "id": "12",
-          "mutatorName": "LogicalOperator",
-          "replacement": "!context && context.state !== 'running'",
-          "statusReason": "src/app/core/time-up-chime.service.ts(30,21): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(34,20): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(37,26): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(38,20): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(47,40): error TS18047: 'context' is possibly 'null'.\n",
+          "mutatorName": "EqualityOperator",
+          "replacement": "context?.state === 'running'",
+          "statusReason": "src/app/core/time-up-chime.service.ts(34,20): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(37,26): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(38,20): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(47,40): error TS18047: 'context' is possibly 'null'.\n",
           "status": "CompileError",
           "location": {
             "end": {
-              "column": 48,
+              "column": 37,
               "line": 30
             },
             "start": {
@@ -180822,10 +180822,10 @@
           "id": "7",
           "mutatorName": "BlockStatement",
           "replacement": "{}",
-          "statusReason": "…pChimeService\u001b[2m > \u001b[22mplays two rising bell notes once unlocked\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected [] to deeply equal [ 784, 1047 ]\u001b[39m\n\n- Expected\n+ Received\n\n- [\n-   784,\n-   1047,\n- ]\n+ []\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m96:81\u001b[22m\u001b[39m\n\n    \u001b[90m 94|\u001b[39m\n    \u001b[90m 95|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m 96|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.frequenc…\n    \u001b[90m   |\u001b[39m                                                                                 \u001b[31m^\u001b[39m\n    \u001b[90m 97|\u001b[39m       784, 1047,\n    \u001b[90m 98|\u001b[39m     ]);\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m5 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:46:33\n\n\u001b[2m   Duration \u001b[22m 1.20s\u001b[2m (environment 59%, setup 23%, transform 12%, tests 4%, worker 1%)\u001b[22m\n\n\n",
+          "statusReason": "…himeService\u001b[2m > \u001b[22mplays two rising bell notes once unlocked\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected [] to deeply equal [ 784, 1047 ]\u001b[39m\n\n\n- Expected\n+ Received\n\n- [\n-   784,\n-   1047,\n- ]\n+ []\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m96:81\u001b[22m\u001b[39m\n\n    \u001b[90m 94|\u001b[39m\n    \u001b[90m 95|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m 96|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.frequenc…\n    \u001b[90m   |\u001b[39m                                                                                 \u001b[31m^\u001b[39m\n    \u001b[90m 97|\u001b[39m       784, 1047,\n    \u001b[90m 98|\u001b[39m     ]);\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m5 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 09:09:06\n\n\u001b[2m   Duration \u001b[22m 1.30s\u001b[2m (environment 55%, setup 26%, transform 13%, tests 4%, worker 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "duration": 5837,
+          "duration": 6175,
           "killedBy": [
             "0"
           ],
@@ -180842,13 +180842,13 @@
         },
         {
           "id": "13",
-          "mutatorName": "BooleanLiteral",
-          "replacement": "context",
-          "statusReason": "src/app/core/time-up-chime.service.ts(30,20): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(34,20): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(37,26): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(38,20): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(47,40): error TS18047: 'context' is possibly 'null'.\n",
+          "mutatorName": "OptionalChaining",
+          "replacement": "context.state",
+          "statusReason": "src/app/core/time-up-chime.service.ts(30,9): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(34,20): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(37,26): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(38,20): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(47,40): error TS18047: 'context' is possibly 'null'.\n",
           "status": "CompileError",
           "location": {
             "end": {
-              "column": 17,
+              "column": 23,
               "line": 30
             },
             "start": {
@@ -180858,24 +180858,24 @@
           }
         },
         {
-          "id": "16",
+          "id": "14",
           "mutatorName": "StringLiteral",
           "replacement": "\"\"",
-          "statusReason": "src/app/core/time-up-chime.service.ts(30,21): error TS2367: This comparison appears to be unintentional because the types 'AudioContextState' and '\"\"' have no overlap.\n",
+          "statusReason": "src/app/core/time-up-chime.service.ts(30,9): error TS2367: This comparison appears to be unintentional because the types 'AudioContextState | undefined' and '\"\"' have no overlap.\n",
           "status": "CompileError",
           "location": {
             "end": {
-              "column": 48,
+              "column": 37,
               "line": 30
             },
             "start": {
-              "column": 39,
+              "column": 28,
               "line": 30
             }
           }
         },
         {
-          "id": "17",
+          "id": "15",
           "mutatorName": "BlockStatement",
           "replacement": "{}",
           "statusReason": "src/app/core/time-up-chime.service.ts(32,20): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(35,26): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(36,20): error TS18047: 'context' is possibly 'null'.\nsrc/app/core/time-up-chime.service.ts(45,40): error TS18047: 'context' is possibly 'null'.\n",
@@ -180886,7 +180886,7 @@
               "line": 32
             },
             "start": {
-              "column": 50,
+              "column": 39,
               "line": 30
             }
           }
@@ -180895,10 +180895,10 @@
           "id": "8",
           "mutatorName": "CallExpression",
           "replacement": ";",
-          "statusReason": "…eUpChimeService\u001b[2m > \u001b[22mplays two rising bell notes once unlocked\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected [] to deeply equal [ 784, 1047 ]\u001b[39m\n\n- Expected\n+ Received\n\n- [\n-   784,\n-   1047,\n- ]\n+ []\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m96:81\u001b[22m\u001b[39m\n\n    \u001b[90m 94|\u001b[39m\n    \u001b[90m 95|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m 96|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.frequenc…\n    \u001b[90m   |\u001b[39m                                                                                 \u001b[31m^\u001b[39m\n    \u001b[90m 97|\u001b[39m       784, 1047,\n    \u001b[90m 98|\u001b[39m     ]);\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m5 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:46:39\n\n\u001b[2m   Duration \u001b[22m 1.32s\u001b[2m (environment 58%, setup 25%, transform 12%, tests 4%, worker 1%)\u001b[22m\n\n\n",
+          "statusReason": "…UpChimeService\u001b[2m > \u001b[22mplays two rising bell notes once unlocked\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected [] to deeply equal [ 784, 1047 ]\u001b[39m\n\n- Expected\n+ Received\n\n- [\n-   784,\n-   1047,\n- ]\n+ []\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m96:81\u001b[22m\u001b[39m\n\n    \u001b[90m 94|\u001b[39m\n    \u001b[90m 95|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m 96|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.frequenc…\n    \u001b[90m   |\u001b[39m                                                                                 \u001b[31m^\u001b[39m\n    \u001b[90m 97|\u001b[39m       784, 1047,\n    \u001b[90m 98|\u001b[39m     ]);\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m5 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 09:09:13\n\n\u001b[2m   Duration \u001b[22m 1.27s\u001b[2m (environment 60%, setup 22%, transform 13%, tests 4%, worker 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "duration": 6005,
+          "duration": 6453,
           "killedBy": [
             "0"
           ],
@@ -180914,7 +180914,7 @@
           }
         },
         {
-          "id": "22",
+          "id": "20",
           "mutatorName": "StringLiteral",
           "replacement": "\"\"",
           "statusReason": "src/app/core/time-up-chime.service.ts(40,7): error TS2322: Type '\"\"' is not assignable to type 'OscillatorType'.\n",
@@ -180934,10 +180934,10 @@
           "id": "9",
           "mutatorName": "BlockStatement",
           "replacement": "{}",
-          "statusReason": "…\u001b[39m\n\n\u001b[41m\u001b[1m FAIL \u001b[22m\u001b[49m \u001b[30m\u001b[42m buddy \u001b[49m\u001b[39m src/app/core/time-up-chime.service.spec.ts\u001b[2m > \u001b[22mTimeUpChimeService\u001b[2m > \u001b[22mignores a refused resume\n\n\u001b[31m\u001b[1mTypeError\u001b[22m: Cannot read properties of undefined (reading 'resume')\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m127:13\u001b[22m\u001b[39m\n\n    \u001b[90m125|\u001b[39m     chime.play();\n    \u001b[90m126|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m127|\u001b[39m     context.resume.mockRejectedValueOnce(new Error('NotAllowedError'));\n    \u001b[90m   |\u001b[39m             \u001b[31m^\u001b[39m\n    \u001b[90m128|\u001b[39m\n    \u001b[90m129|\u001b[39m     chime.unlock();\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m3 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m4 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:46:46\n\n\u001b[2m   Duration \u001b[22m 1.27s\u001b[2m (environment 60%, setup 23%, transform 11%, tests 5%, worker 1%)\u001b[22m\n\n\n",
+          "statusReason": "…2m\u001b[39m\n\n\u001b[41m\u001b[1m FAIL \u001b[22m\u001b[49m \u001b[30m\u001b[42m buddy \u001b[49m\u001b[39m src/app/core/time-up-chime.service.spec.ts\u001b[2m > \u001b[22mTimeUpChimeService\u001b[2m > \u001b[22mignores a refused resume\n\u001b[31m\u001b[1mTypeError\u001b[22m: Cannot read properties of undefined (reading 'resume')\u001b[39m\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m127:13\u001b[22m\u001b[39m\n\n    \u001b[90m125|\u001b[39m     chime.play();\n    \u001b[90m126|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m127|\u001b[39m     context.resume.mockRejectedValueOnce(new Error('NotAllowedError'));\n    \u001b[90m   |\u001b[39m             \u001b[31m^\u001b[39m\n    \u001b[90m128|\u001b[39m\n    \u001b[90m129|\u001b[39m     chime.unlock();\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m3 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m4 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\u001b[2m   Start at \u001b[22m 09:09:19\n\n\u001b[2m   Duration \u001b[22m 1.23s\u001b[2m (environment 60%, setup 22%, transform 12%, tests 4%, worker 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "duration": 6286,
+          "duration": 6075,
           "killedBy": [
             "0"
           ],
@@ -180953,7 +180953,7 @@
           }
         },
         {
-          "id": "32",
+          "id": "30",
           "mutatorName": "BlockStatement",
           "replacement": "{}",
           "statusReason": "src/app/core/time-up-chime.service.ts(53,27): error TS2355: A function whose declared type is neither 'undefined', 'void', nor 'any' must return a value.\n",
@@ -180970,29 +180970,7 @@
           }
         },
         {
-          "id": "14",
-          "mutatorName": "ConditionalExpression",
-          "replacement": "false",
-          "statusReason": "…e/time-up-chime.service.spec.ts\u001b[2m > \u001b[22mTimeUpChimeService\u001b[2m > \u001b[22mstays silent while the browser still blocks audio\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected [ FakeOscillator{ …(5) }, …(1) ] to have a length of +0 but got 2\u001b[39m\n\n- Expected\n+ Received\n\n- 0\n+ 2\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m120:56\u001b[22m\u001b[39m\n\n    \u001b[90m118|\u001b[39m     chime.play();\n    \u001b[90m119|\u001b[39m\n    \u001b[90m120|\u001b[39m     expect(FakeAudioContext.instances[0]!.oscillators).toHaveLength(0);\n    \u001b[90m   |\u001b[39m                                                        \u001b[31m^\u001b[39m\n    \u001b[90m121|\u001b[39m   });\n    \u001b[90m122|\u001b[39m\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:46:52\n\n\u001b[2m   Duration \u001b[22m 1.18s\u001b[2m (environment 55%, setup 24%, transform 14%, tests 5%, worker 1%, import 1%)\u001b[22m\n\n\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "duration": 5761,
-          "killedBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 48,
-              "line": 30
-            },
-            "start": {
-              "column": 21,
-              "line": 30
-            }
-          }
-        },
-        {
-          "id": "35",
+          "id": "33",
           "mutatorName": "ConditionalExpression",
           "replacement": "false",
           "statusReason": "src/app/core/time-up-chime.service.ts(61,28): error TS18048: 'AudioContextType' is possibly 'undefined'.\n",
@@ -181009,7 +180987,29 @@
           }
         },
         {
-          "id": "37",
+          "id": "17",
+          "mutatorName": "BlockStatement",
+          "replacement": "{}",
+          "statusReason": "…pChimeService\u001b[2m > \u001b[22mplays two rising bell notes once unlocked\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected [] to deeply equal [ 784, 1047 ]\u001b[39m\n\n- Expected\n+ Received\n\n- [\n-   784,\n-   1047,\n- ]\n+ []\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m96:81\u001b[22m\u001b[39m\n\n    \u001b[90m 94|\u001b[39m\n    \u001b[90m 95|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m 96|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.frequenc…\n    \u001b[90m   |\u001b[39m                                                                                 \u001b[31m^\u001b[39m\n    \u001b[90m 97|\u001b[39m       784, 1047,\n    \u001b[90m 98|\u001b[39m     ]);\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 09:09:25\n\n\u001b[2m   Duration \u001b[22m 1.20s\u001b[2m (environment 58%, setup 25%, transform 12%, tests 4%, worker 1%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 5720,
+          "killedBy": [
+            "0"
+          ],
+          "location": {
+            "end": {
+              "column": 6,
+              "line": 50
+            },
+            "start": {
+              "column": 44,
+              "line": 35
+            }
+          }
+        },
+        {
+          "id": "35",
           "mutatorName": "OptionalChaining",
           "replacement": "this.document.defaultView.AudioContext",
           "statusReason": "src/app/core/time-up-chime.service.ts(55,32): error TS2531: Object is possibly 'null'.\n",
@@ -181026,7 +181026,7 @@
           }
         },
         {
-          "id": "38",
+          "id": "36",
           "mutatorName": "BooleanLiteral",
           "replacement": "AudioContextType",
           "statusReason": "src/app/core/time-up-chime.service.ts(61,28): error TS18048: 'AudioContextType' is possibly 'undefined'.\n",
@@ -181043,29 +181043,7 @@
           }
         },
         {
-          "id": "15",
-          "mutatorName": "EqualityOperator",
-          "replacement": "context.state === 'running'",
-          "statusReason": "…m src/app/core/time-up-chime.service.spec.ts\u001b[2m > \u001b[22mTimeUpChimeService\u001b[2m > \u001b[22mstays silent while the browser still blocks audio\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected [ FakeOscillator{ …(5) }, …(1) ] to have a length of +0 but got 2\u001b[39m\n\n- Expected\n+ Received\n\n- 0\n+ 2\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m120:56\u001b[22m\u001b[39m\n\n    \u001b[90m118|\u001b[39m     chime.play();\n    \u001b[90m119|\u001b[39m\n    \u001b[90m120|\u001b[39m     expect(FakeAudioContext.instances[0]!.oscillators).toHaveLength(0);\n    \u001b[90m   |\u001b[39m                                                        \u001b[31m^\u001b[39m\n    \u001b[90m121|\u001b[39m   });\n    \u001b[90m122|\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m5 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:46:57\n\n\u001b[2m   Duration \u001b[22m 1.26s\u001b[2m (environment 59%, setup 25%, transform 11%, tests 5%, worker 1%)\u001b[22m\n\n\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "duration": 5540,
-          "killedBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 48,
-              "line": 30
-            },
-            "start": {
-              "column": 21,
-              "line": 30
-            }
-          }
-        },
-        {
-          "id": "39",
+          "id": "37",
           "mutatorName": "ConditionalExpression",
           "replacement": "true",
           "statusReason": "src/app/core/time-up-chime.service.ts(61,28): error TS18048: 'AudioContextType' is possibly 'undefined'.\n",
@@ -181082,7 +181060,7 @@
           }
         },
         {
-          "id": "40",
+          "id": "38",
           "mutatorName": "ConditionalExpression",
           "replacement": "false",
           "statusReason": "src/app/core/time-up-chime.service.ts(61,28): error TS18048: 'AudioContextType' is possibly 'undefined'.\n",
@@ -181099,7 +181077,29 @@
           }
         },
         {
-          "id": "41",
+          "id": "18",
+          "mutatorName": "ArithmeticOperator",
+          "replacement": "startS - index * NOTE_GAP_S",
+          "statusReason": "… once unlocked\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected [ 10, 9.65 ] to deeply equal [ 10, 10.35 ]\u001b[39m\n\n- Expected\n+ Received\n\n  [\n    10,\n-   10.35,\n+   9.65,\n  ]\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m100:89\u001b[22m\u001b[39m\n\n    \u001b[90m 98|\u001b[39m     ]);\n    \u001b[90m 99|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.type)).t…\n    \u001b[90m100|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.start.mo…\n    \u001b[90m   |\u001b[39m                                                                                         \u001b[31m^\u001b[39m\n    \u001b[90m101|\u001b[39m       10, 10.35,\n    \u001b[90m102|\u001b[39m     ]);\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\u001b[2m   Start at \u001b[22m 09:09:31\n\n\u001b[2m   Duration \u001b[22m 1.16s\u001b[2m (environment 59%, setup 23%, transform 12%, tests 5%, worker 1%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 6030,
+          "killedBy": [
+            "0"
+          ],
+          "location": {
+            "end": {
+              "column": 46,
+              "line": 36
+            },
+            "start": {
+              "column": 19,
+              "line": 36
+            }
+          }
+        },
+        {
+          "id": "39",
           "mutatorName": "BlockStatement",
           "replacement": "{}",
           "statusReason": "src/app/core/time-up-chime.service.ts(59,28): error TS18048: 'AudioContextType' is possibly 'undefined'.\n",
@@ -181117,56 +181117,12 @@
         },
         {
           "id": "19",
-          "mutatorName": "BlockStatement",
-          "replacement": "{}",
-          "statusReason": "…e\u001b[2m > \u001b[22mplays two rising bell notes once unlocked\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected [] to deeply equal [ 784, 1047 ]\u001b[39m\n\n- Expected\n+ Received\n\n- [\n-   784,\n-   1047,\n- ]\n+ []\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m96:81\u001b[22m\u001b[39m\n\n    \u001b[90m 94|\u001b[39m\n    \u001b[90m 95|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m 96|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.frequenc…\n    \u001b[90m   |\u001b[39m                                                                                 \u001b[31m^\u001b[39m\n    \u001b[90m 97|\u001b[39m       784, 1047,\n    \u001b[90m 98|\u001b[39m     ]);\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:47:03\n\n\u001b[2m   Duration \u001b[22m 1.44s\u001b[2m (environment 57%, setup 24%, transform 12%, tests 5%, worker 1%, import 1%)\u001b[22m\n\n\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "duration": 6271,
-          "killedBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 6,
-              "line": 50
-            },
-            "start": {
-              "column": 44,
-              "line": 35
-            }
-          }
-        },
-        {
-          "id": "20",
-          "mutatorName": "ArithmeticOperator",
-          "replacement": "startS - index * NOTE_GAP_S",
-          "statusReason": "…d\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected [ 10, 9.65 ] to deeply equal [ 10, 10.35 ]\u001b[39m\n\n\n- Expected\n+ Received\n\n  [\n    10,\n-   10.35,\n+   9.65,\n  ]\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m100:89\u001b[22m\u001b[39m\n\n    \u001b[90m 98|\u001b[39m     ]);\n    \u001b[90m 99|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.type)).t…\n    \u001b[90m100|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.start.mo…\n    \u001b[90m   |\u001b[39m                                                                                         \u001b[31m^\u001b[39m\n    \u001b[90m101|\u001b[39m       10, 10.35,\n    \u001b[90m102|\u001b[39m     ]);\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:47:08\n\n\u001b[2m   Duration \u001b[22m 1.25s\u001b[2m (environment 57%, setup 25%, transform 13%, tests 4%, worker 1%, import 1%)\u001b[22m\n\n\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "duration": 6167,
-          "killedBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 46,
-              "line": 36
-            },
-            "start": {
-              "column": 19,
-              "line": 36
-            }
-          }
-        },
-        {
-          "id": "21",
           "mutatorName": "ArithmeticOperator",
           "replacement": "index / NOTE_GAP_S",
-          "statusReason": "…22m: expected [ 10, 12.857142857142858 ] to deeply equal [ 10, 10.35 ]\u001b[39m\n\n\n- Expected\n+ Received\n\n  [\n    10,\n-   10.35,\n+   12.857142857142858,\n  ]\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m100:89\u001b[22m\u001b[39m\n\n    \u001b[90m 98|\u001b[39m     ]);\n    \u001b[90m 99|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.type)).t…\n    \u001b[90m100|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.start.mo…\n    \u001b[90m   |\u001b[39m                                                                                         \u001b[31m^\u001b[39m\n    \u001b[90m101|\u001b[39m       10, 10.35,\n    \u001b[90m102|\u001b[39m     ]);\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:47:10\n\n\u001b[2m   Duration \u001b[22m 1.97s\u001b[2m (environment 38%, setup 26%, transform 23%, tests 12%, import 1%, worker 1%)\u001b[22m\n\n\n",
+          "statusReason": "…ertionError\u001b[22m: expected [ 10, 12.857142857142858 ] to deeply equal [ 10, 10.35 ]\u001b[39m\n\n- Expected\n+ Received\n\n  [\n    10,\n-   10.35,\n+   12.857142857142858,\n  ]\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m100:89\u001b[22m\u001b[39m\n\n    \u001b[90m 98|\u001b[39m     ]);\n    \u001b[90m 99|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.type)).t…\n    \u001b[90m100|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.start.mo…\n    \u001b[90m   |\u001b[39m                                                                                         \u001b[31m^\u001b[39m\n    \u001b[90m101|\u001b[39m       10, 10.35,\n    \u001b[90m102|\u001b[39m     ]);\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 09:09:38\n\n\u001b[2m   Duration \u001b[22m 1.27s\u001b[2m (environment 60%, setup 22%, transform 13%, tests 4%, worker 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "duration": 7345,
+          "duration": 7089,
           "killedBy": [
             "0"
           ],
@@ -181182,13 +181138,13 @@
           }
         },
         {
-          "id": "23",
+          "id": "21",
           "mutatorName": "CallExpression",
           "replacement": ";",
-          "statusReason": "…[2m > \u001b[22mTimeUpChimeService\u001b[2m > \u001b[22mplays two rising bell notes once unlocked\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected \"vi.fn()\" to be called with arguments: [ 0.0001, 10 ]\n\nNumber of calls: 0\n\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m108:33\u001b[22m\u001b[39m\n\n    \u001b[90m106|\u001b[39m\n    \u001b[90m107|\u001b[39m     const gain = context.gains[0]!.gain;\n    \u001b[90m108|\u001b[39m     expect(gain.setValueAtTime).toHaveBeenCalledWith(0.0001, 10);\n    \u001b[90m   |\u001b[39m                                 \u001b[31m^\u001b[39m\n    \u001b[90m109|\u001b[39m     expect(gain.exponentialRampToValueAtTime.mock.calls).toEqual([\n    \u001b[90m110|\u001b[39m       [0.3, 10.02],\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:47:15\n\n\u001b[2m   Duration \u001b[22m 1.33s\u001b[2m (environment 62%, setup 20%, transform 13%, tests 4%, worker 1%)\u001b[22m\n\n\n",
+          "statusReason": "…TimeUpChimeService\u001b[2m > \u001b[22mplays two rising bell notes once unlocked\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected \"vi.fn()\" to be called with arguments: [ 0.0001, 10 ]\n\nNumber of calls: 0\n\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m108:33\u001b[22m\u001b[39m\n\n    \u001b[90m106|\u001b[39m\n    \u001b[90m107|\u001b[39m     const gain = context.gains[0]!.gain;\n    \u001b[90m108|\u001b[39m     expect(gain.setValueAtTime).toHaveBeenCalledWith(0.0001, 10);\n    \u001b[90m   |\u001b[39m                                 \u001b[31m^\u001b[39m\n    \u001b[90m109|\u001b[39m     expect(gain.exponentialRampToValueAtTime.mock.calls).toEqual([\n    \u001b[90m110|\u001b[39m       [0.3, 10.02],\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 09:09:39\n\n\u001b[2m   Duration \u001b[22m 1.29s\u001b[2m (environment 52%, setup 27%, transform 14%, tests 6%, worker 1%, import 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "duration": 7075,
+          "duration": 7180,
           "killedBy": [
             "0"
           ],
@@ -181204,13 +181160,13 @@
           }
         },
         {
-          "id": "25",
+          "id": "23",
           "mutatorName": "ArithmeticOperator",
           "replacement": "atS - 0.02",
-          "statusReason": "… 0.0001, 11.2 ] ]\u001b[39m\n\n- Expected\n+ Received\n\n@@ -1,9 +1,9 @@\n  [\n    [\n      0.3,\n-     10.02,\n+     9.98,\n    ],\n    [\n      0.0001,\n      11.2,\n    ],\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m109:58\u001b[22m\u001b[39m\n\n    \u001b[90m107|\u001b[39m     const gain = context.gains[0]!.gain;\n    \u001b[90m108|\u001b[39m     expect(gain.setValueAtTime).toHaveBeenCalledWith(0.0001, 10);\n    \u001b[90m109|\u001b[39m     expect(gain.exponentialRampToValueAtTime.mock.calls).toEqual([\n    \u001b[90m   |\u001b[39m                                                          \u001b[31m^\u001b[39m\n    \u001b[90m110|\u001b[39m       [0.3, 10.02],\n    \u001b[90m111|\u001b[39m       [0.0001, 11.2],\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:47:17\n\n\u001b[2m   Duration \u001b[22m 1.97s\u001b[2m (environment 43%, setup 38%, transform 15%, tests 4%, worker 1%)\u001b[22m\n\n\n",
+          "statusReason": "… 0.0001, 11.2 ] ]\u001b[39m\n\n- Expected\n+ Received\n\n@@ -1,9 +1,9 @@\n  [\n    [\n      0.3,\n-     10.02,\n+     9.98,\n    ],\n    [\n      0.0001,\n      11.2,\n    ],\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m109:58\u001b[22m\u001b[39m\n\n    \u001b[90m107|\u001b[39m     const gain = context.gains[0]!.gain;\n    \u001b[90m108|\u001b[39m     expect(gain.setValueAtTime).toHaveBeenCalledWith(0.0001, 10);\n    \u001b[90m109|\u001b[39m     expect(gain.exponentialRampToValueAtTime.mock.calls).toEqual([\n    \u001b[90m   |\u001b[39m                                                          \u001b[31m^\u001b[39m\n    \u001b[90m110|\u001b[39m       [0.3, 10.02],\n    \u001b[90m111|\u001b[39m       [0.0001, 11.2],\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 09:09:45\n\n\u001b[2m   Duration \u001b[22m 1.18s\u001b[2m (environment 55%, setup 26%, transform 14%, tests 5%, worker 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "duration": 6800,
+          "duration": 6850,
           "killedBy": [
             "0"
           ],
@@ -181226,13 +181182,13 @@
           }
         },
         {
-          "id": "27",
+          "id": "25",
           "mutatorName": "ArithmeticOperator",
           "replacement": "atS - NOTE_LENGTH_S",
-          "statusReason": "….02 ], [ 0.0001, 11.2 ] ]\u001b[39m\n\n- Expected\n+ Received\n\n@@ -3,8 +3,8 @@\n      0.3,\n      10.02,\n    ],\n    [\n      0.0001,\n-     11.2,\n+     8.8,\n    ],\n  ]\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m109:58\u001b[22m\u001b[39m\n\n    \u001b[90m107|\u001b[39m     const gain = context.gains[0]!.gain;\n    \u001b[90m108|\u001b[39m     expect(gain.setValueAtTime).toHaveBeenCalledWith(0.0001, 10);\n    \u001b[90m109|\u001b[39m     expect(gain.exponentialRampToValueAtTime.mock.calls).toEqual([\n    \u001b[90m   |\u001b[39m                                                          \u001b[31m^\u001b[39m\n    \u001b[90m110|\u001b[39m       [0.3, 10.02],\n    \u001b[90m111|\u001b[39m       [0.0001, 11.2],\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\u001b[2m   Start at \u001b[22m 08:47:22\n\n\u001b[2m   Duration \u001b[22m 1.19s\u001b[2m (environment 56%, setup 24%, transform 14%, tests 5%, worker 1%)\u001b[22m\n\n\n",
+          "statusReason": "…2 ], [ 0.0001, 11.2 ] ]\u001b[39m\n\n\n- Expected\n+ Received\n\n@@ -3,8 +3,8 @@\n      0.3,\n      10.02,\n    ],\n    [\n      0.0001,\n-     11.2,\n+     8.8,\n    ],\n  ]\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m109:58\u001b[22m\u001b[39m\n\n    \u001b[90m107|\u001b[39m     const gain = context.gains[0]!.gain;\n    \u001b[90m108|\u001b[39m     expect(gain.setValueAtTime).toHaveBeenCalledWith(0.0001, 10);\n    \u001b[90m109|\u001b[39m     expect(gain.exponentialRampToValueAtTime.mock.calls).toEqual([\n    \u001b[90m   |\u001b[39m                                                          \u001b[31m^\u001b[39m\n    \u001b[90m110|\u001b[39m       [0.3, 10.02],\n    \u001b[90m111|\u001b[39m       [0.0001, 11.2],\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 09:09:46\n\n\u001b[2m   Duration \u001b[22m 1.28s\u001b[2m (environment 53%, setup 26%, transform 13%, tests 7%, worker 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "duration": 7078,
+          "duration": 6311,
           "killedBy": [
             "0"
           ],
@@ -181248,13 +181204,13 @@
           }
         },
         {
-          "id": "28",
+          "id": "26",
           "mutatorName": "CallExpression",
           "replacement": ";",
-          "statusReason": "…lays two rising bell notes once unlocked\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected \"vi.fn()\" to be called with arguments: [ FakeGain{ …(2) } ]\n\nNumber of calls: 0\n\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m104:45\u001b[22m\u001b[39m\n\n    \u001b[90m102|\u001b[39m     ]);\n    \u001b[90m103|\u001b[39m     expect(context.oscillators[0]!.stop).toHaveBeenCalledWith(11.2);\n    \u001b[90m104|\u001b[39m     expect(context.oscillators[0]!.connect).toHaveBeenCalledWith(conte…\n    \u001b[90m   |\u001b[39m                                             \u001b[31m^\u001b[39m\n    \u001b[90m105|\u001b[39m     expect(context.gains[0]!.connect).toHaveBeenCalledWith(context.des…\n    \u001b[90m106|\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:47:24\n\n\u001b[2m   Duration \u001b[22m 2.04s\u001b[2m (environment 38%, transform 26%, setup 23%, tests 11%, import 1%)\u001b[22m\n\n\n",
+          "statusReason": "…g bell notes once unlocked\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected \"vi.fn()\" to be called with arguments: [ FakeGain{ …(2) } ]\n\nNumber of calls: 0\n\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m104:45\u001b[22m\u001b[39m\n\n    \u001b[90m102|\u001b[39m     ]);\n    \u001b[90m103|\u001b[39m     expect(context.oscillators[0]!.stop).toHaveBeenCalledWith(11.2);\n    \u001b[90m104|\u001b[39m     expect(context.oscillators[0]!.connect).toHaveBeenCalledWith(conte…\n    \u001b[90m   |\u001b[39m                                             \u001b[31m^\u001b[39m\n    \u001b[90m105|\u001b[39m     expect(context.gains[0]!.connect).toHaveBeenCalledWith(context.des…\n    \u001b[90m106|\u001b[39m\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 09:09:52\n\n\u001b[2m   Duration \u001b[22m 1.24s\u001b[2m (environment 59%, setup 22%, transform 13%, tests 4%, worker 1%, import 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "duration": 6945,
+          "duration": 7056,
           "killedBy": [
             "0"
           ],
@@ -181270,13 +181226,13 @@
           }
         },
         {
-          "id": "29",
+          "id": "27",
           "mutatorName": "CallExpression",
           "replacement": ";",
-          "statusReason": "…e unlocked\n\n\u001b[31m\u001b[1mTypeError\u001b[22m: Cannot read properties of undefined (reading '0')\u001b[39m\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m100:81\u001b[22m\u001b[39m\n\n    \u001b[90m 98|\u001b[39m     ]);\n    \u001b[90m 99|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.type)).t…\n    \u001b[90m100|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.start.mo…\n    \u001b[90m   |\u001b[39m                                                                                 \u001b[31m^\u001b[39m\n    \u001b[90m101|\u001b[39m       10, 10.35,\n    \u001b[90m102|\u001b[39m     ]);\n\n\u001b[90m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m100:32\u001b[22m\u001b[39m\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:47:28\n\n\u001b[2m   Duration \u001b[22m 1.27s\u001b[2m (environment 58%, setup 22%, transform 12%, tests 7%, worker 1%)\u001b[22m\n\n\n",
+          "statusReason": "… unlocked\n\n\u001b[31m\u001b[1mTypeError\u001b[22m: Cannot read properties of undefined (reading '0')\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m100:81\u001b[22m\u001b[39m\n\n    \u001b[90m 98|\u001b[39m     ]);\n    \u001b[90m 99|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.type)).t…\n    \u001b[90m100|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.start.mo…\n    \u001b[90m   |\u001b[39m                                                                                 \u001b[31m^\u001b[39m\n    \u001b[90m101|\u001b[39m       10, 10.35,\n    \u001b[90m102|\u001b[39m     ]);\n\n\u001b[90m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m100:32\u001b[22m\u001b[39m\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 09:09:53\n\n\u001b[2m   Duration \u001b[22m 1.33s\u001b[2m (environment 56%, setup 26%, transform 13%, tests 4%, worker 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "duration": 6617,
+          "duration": 7621,
           "killedBy": [
             "0"
           ],
@@ -181292,13 +181248,13 @@
           }
         },
         {
-          "id": "31",
+          "id": "29",
           "mutatorName": "ArithmeticOperator",
           "replacement": "atS - NOTE_LENGTH_S",
-          "statusReason": "…\u001b[22m: expected \"vi.fn()\" to be called with arguments: [ 11.2 ]\n\nReceived:\n\n  1st vi.fn() call:\n\n  [\n-   11.2,\n+   8.8,\n  ]\n\n\nNumber of calls: 1\n\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m103:42\u001b[22m\u001b[39m\n\n    \u001b[90m101|\u001b[39m       10, 10.35,\n    \u001b[90m102|\u001b[39m     ]);\n    \u001b[90m103|\u001b[39m     expect(context.oscillators[0]!.stop).toHaveBeenCalledWith(11.2);\n    \u001b[90m   |\u001b[39m                                          \u001b[31m^\u001b[39m\n    \u001b[90m104|\u001b[39m     expect(context.oscillators[0]!.connect).toHaveBeenCalledWith(conte…\n    \u001b[90m105|\u001b[39m     expect(context.gains[0]!.connect).toHaveBeenCalledWith(context.des…\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:47:31\n\n\u001b[2m   Duration \u001b[22m 1.90s\u001b[2m (environment 42%, setup 38%, transform 17%, tests 3%, worker 1%)\u001b[22m\n\n\n",
+          "statusReason": "…[22m: expected \"vi.fn()\" to be called with arguments: [ 11.2 ]\n\nReceived:\n\n  1st vi.fn() call:\n\n  [\n-   11.2,\n+   8.8,\n  ]\n\n\nNumber of calls: 1\n\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m103:42\u001b[22m\u001b[39m\n\n    \u001b[90m101|\u001b[39m       10, 10.35,\n    \u001b[90m102|\u001b[39m     ]);\n    \u001b[90m103|\u001b[39m     expect(context.oscillators[0]!.stop).toHaveBeenCalledWith(11.2);\n    \u001b[90m   |\u001b[39m                                          \u001b[31m^\u001b[39m\n    \u001b[90m104|\u001b[39m     expect(context.oscillators[0]!.connect).toHaveBeenCalledWith(conte…\n    \u001b[90m105|\u001b[39m     expect(context.gains[0]!.connect).toHaveBeenCalledWith(context.des…\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 09:09:59\n\n\u001b[2m   Duration \u001b[22m 1.25s\u001b[2m (environment 60%, setup 21%, transform 13%, tests 5%, worker 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "duration": 7227,
+          "duration": 7002,
           "killedBy": [
             "0"
           ],
@@ -181314,13 +181270,35 @@
           }
         },
         {
-          "id": "33",
+          "id": "31",
           "mutatorName": "BooleanLiteral",
           "replacement": "this.context",
-          "statusReason": "…1m\u001b[1m FAIL \u001b[22m\u001b[49m \u001b[30m\u001b[42m buddy \u001b[49m\u001b[39m src/app/core/time-up-chime.service.spec.ts\u001b[2m > \u001b[22mTimeUpChimeService\u001b[2m > \u001b[22mignores a refused resume\n\n\u001b[31m\u001b[1mTypeError\u001b[22m: Cannot read properties of undefined (reading 'resume')\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m127:13\u001b[22m\u001b[39m\n\n    \u001b[90m125|\u001b[39m     chime.play();\n    \u001b[90m126|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m127|\u001b[39m     context.resume.mockRejectedValueOnce(new Error('NotAllowedError'));\n    \u001b[90m   |\u001b[39m             \u001b[31m^\u001b[39m\n    \u001b[90m128|\u001b[39m\n    \u001b[90m129|\u001b[39m     chime.unlock();\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m4 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m3 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:47:35\n\n\u001b[2m   Duration \u001b[22m 1.26s\u001b[2m (environment 54%, setup 24%, transform 15%, tests 5%, worker 1%, import 1%)\u001b[22m\n\n\n",
+          "statusReason": "…m\u001b[1m FAIL \u001b[22m\u001b[49m \u001b[30m\u001b[42m buddy \u001b[49m\u001b[39m src/app/core/time-up-chime.service.spec.ts\u001b[2m > \u001b[22mTimeUpChimeService\u001b[2m > \u001b[22mignores a refused resume\n\n\u001b[31m\u001b[1mTypeError\u001b[22m: Cannot read properties of undefined (reading 'resume')\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m127:13\u001b[22m\u001b[39m\n\n    \u001b[90m125|\u001b[39m     chime.play();\n    \u001b[90m126|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m127|\u001b[39m     context.resume.mockRejectedValueOnce(new Error('NotAllowedError'));\n    \u001b[90m   |\u001b[39m             \u001b[31m^\u001b[39m\n    \u001b[90m128|\u001b[39m\n    \u001b[90m129|\u001b[39m     chime.unlock();\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m4 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m3 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 09:10:00\n\n\u001b[2m   Duration \u001b[22m 1.40s\u001b[2m (environment 59%, setup 21%, transform 12%, tests 7%, worker 1%, import 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "duration": 6866,
+          "duration": 6719,
+          "killedBy": [
+            "0"
+          ],
+          "location": {
+            "end": {
+              "column": 22,
+              "line": 54
+            },
+            "start": {
+              "column": 9,
+              "line": 54
+            }
+          }
+        },
+        {
+          "id": "32",
+          "mutatorName": "ConditionalExpression",
+          "replacement": "true",
+          "statusReason": "…ChimeService\u001b[2m > \u001b[22mplays two rising bell notes once unlocked\n\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected [] to deeply equal [ 784, 1047 ]\u001b[39m\n\n\n- Expected\n+ Received\n\n- [\n-   784,\n-   1047,\n- ]\n+ []\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m96:81\u001b[22m\u001b[39m\n\n    \u001b[90m 94|\u001b[39m\n    \u001b[90m 95|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m 96|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.frequenc…\n    \u001b[90m   |\u001b[39m                                                                                 \u001b[31m^\u001b[39m\n    \u001b[90m 97|\u001b[39m       784, 1047,\n    \u001b[90m 98|\u001b[39m     ]);\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m5 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 09:10:15\n\n\u001b[2m   Duration \u001b[22m 1.26s\u001b[2m (environment 60%, setup 22%, transform 13%, tests 4%, worker 1%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 6919,
           "killedBy": [
             "0"
           ],
@@ -181337,34 +181315,12 @@
         },
         {
           "id": "34",
-          "mutatorName": "ConditionalExpression",
-          "replacement": "true",
-          "statusReason": "…mTimeUpChimeService\u001b[2m > \u001b[22mplays two rising bell notes once unlocked\n\u001b[31m\u001b[1mAssertionError\u001b[22m: expected [] to deeply equal [ 784, 1047 ]\u001b[39m\n\n- Expected\n+ Received\n\n- [\n-   784,\n-   1047,\n- ]\n+ []\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m96:81\u001b[22m\u001b[39m\n    \u001b[90m 94|\u001b[39m\n    \u001b[90m 95|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m 96|\u001b[39m     expect(context.oscillators.map((oscillator) => oscillator.frequenc…\n    \u001b[90m   |\u001b[39m                                                                                 \u001b[31m^\u001b[39m\n    \u001b[90m 97|\u001b[39m       784, 1047,\n    \u001b[90m 98|\u001b[39m     ]);\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m5 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\u001b[2m   Start at \u001b[22m 08:47:38\n\u001b[2m   Duration \u001b[22m 1.88s\u001b[2m (environment 42%, setup 29%, transform 21%, tests 7%, import 1%)\u001b[22m\n\n\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "duration": 6221,
-          "killedBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 22,
-              "line": 54
-            },
-            "start": {
-              "column": 9,
-              "line": 54
-            }
-          }
-        },
-        {
-          "id": "36",
           "mutatorName": "BlockStatement",
           "replacement": "{}",
-          "statusReason": "…m\u001b[1m FAIL \u001b[22m\u001b[49m \u001b[30m\u001b[42m buddy \u001b[49m\u001b[39m src/app/core/time-up-chime.service.spec.ts\u001b[2m > \u001b[22mTimeUpChimeService\u001b[2m > \u001b[22mignores a refused resume\n\n\u001b[31m\u001b[1mTypeError\u001b[22m: Cannot read properties of undefined (reading 'resume')\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m127:13\u001b[22m\u001b[39m\n\n    \u001b[90m125|\u001b[39m     chime.play();\n    \u001b[90m126|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m127|\u001b[39m     context.resume.mockRejectedValueOnce(new Error('NotAllowedError'));\n    \u001b[90m   |\u001b[39m             \u001b[31m^\u001b[39m\n    \u001b[90m128|\u001b[39m\n    \u001b[90m129|\u001b[39m     chime.unlock();\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m4 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m3 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 08:47:42\n\n\u001b[2m   Duration \u001b[22m 1.28s\u001b[2m (environment 57%, setup 26%, transform 12%, tests 4%, worker 1%, import 1%)\u001b[22m\n\n\n",
+          "statusReason": "…\u001b[1m FAIL \u001b[22m\u001b[49m \u001b[30m\u001b[42m buddy \u001b[49m\u001b[39m src/app/core/time-up-chime.service.spec.ts\u001b[2m > \u001b[22mTimeUpChimeService\u001b[2m > \u001b[22mignores a refused resume\n\n\u001b[31m\u001b[1mTypeError\u001b[22m: Cannot read properties of undefined (reading 'resume')\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m127:13\u001b[22m\u001b[39m\n\n    \u001b[90m125|\u001b[39m     chime.play();\n    \u001b[90m126|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m127|\u001b[39m     context.resume.mockRejectedValueOnce(new Error('NotAllowedError'));\n    \u001b[90m   |\u001b[39m             \u001b[31m^\u001b[39m\n    \u001b[90m128|\u001b[39m\n    \u001b[90m129|\u001b[39m     chime.unlock();\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m4 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m3 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 09:10:07\n\n\u001b[2m   Duration \u001b[22m 1.46s\u001b[2m (environment 51%, setup 27%, transform 15%, tests 6%, worker 1%, import 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "duration": 6859,
+          "duration": 7571,
           "killedBy": [
             "0"
           ],
@@ -181380,13 +181336,13 @@
           }
         },
         {
-          "id": "42",
+          "id": "40",
           "mutatorName": "BlockStatement",
           "replacement": "{}",
-          "statusReason": "…m\u001b[1m FAIL \u001b[22m\u001b[49m \u001b[30m\u001b[42m buddy \u001b[49m\u001b[39m src/app/core/time-up-chime.service.spec.ts\u001b[2m > \u001b[22mTimeUpChimeService\u001b[2m > \u001b[22mignores a refused resume\n\n\u001b[31m\u001b[1mTypeError\u001b[22m: Cannot read properties of undefined (reading 'resume')\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m127:13\u001b[22m\u001b[39m\n\n    \u001b[90m125|\u001b[39m     chime.play();\n    \u001b[90m126|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m127|\u001b[39m     context.resume.mockRejectedValueOnce(new Error('NotAllowedError'));\n    \u001b[90m   |\u001b[39m             \u001b[31m^\u001b[39m\n    \u001b[90m128|\u001b[39m\n    \u001b[90m129|\u001b[39m     chime.unlock();\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m4 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m3 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\u001b[2m   Start at \u001b[22m 08:47:44\n\n\u001b[2m   Duration \u001b[22m 1.04s\u001b[2m (environment 55%, setup 23%, transform 16%, tests 5%, worker 1%, import 1%)\u001b[22m\n\n\n",
+          "statusReason": "…2m\u001b[39m\n\n\u001b[41m\u001b[1m FAIL \u001b[22m\u001b[49m \u001b[30m\u001b[42m buddy \u001b[49m\u001b[39m src/app/core/time-up-chime.service.spec.ts\u001b[2m > \u001b[22mTimeUpChimeService\u001b[2m > \u001b[22mignores a refused resume\n\n\u001b[31m\u001b[1mTypeError\u001b[22m: Cannot read properties of undefined (reading 'resume')\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/core/time-up-chime.service.spec.ts:\u001b[2m127:13\u001b[22m\u001b[39m\n    \u001b[90m125|\u001b[39m     chime.play();\n    \u001b[90m126|\u001b[39m     const context = FakeAudioContext.instances[0]!;\n    \u001b[90m127|\u001b[39m     context.resume.mockRejectedValueOnce(new Error('NotAllowedError'));\n    \u001b[90m   |\u001b[39m             \u001b[31m^\u001b[39m\n    \u001b[90m128|\u001b[39m\n    \u001b[90m129|\u001b[39m     chime.unlock();\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m4 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m3 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 09:10:12\n\n\u001b[2m   Duration \u001b[22m 1.59s\u001b[2m (environment 61%, setup 23%, transform 11%, tests 3%, worker 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "duration": 5820,
+          "duration": 6251,
           "killedBy": [
             "0"
           ],
@@ -181402,7 +181358,7 @@
           }
         }
       ],
-      "source": "import { DOCUMENT } from '@angular/common';\nimport { Injectable, inject } from '@angular/core';\n\n// Two soft bell notes, rising: a \"ding-dong\" rather than an alarm, so time's up nudges instead of\n// startling.\nconst NOTES_HZ = [784, 1047];\nconst NOTE_GAP_S = 0.35;\nconst NOTE_LENGTH_S = 1.2;\nconst PEAK_GAIN = 0.3;\n\n// The chime the child's focus view plays when a step's time runs out (GitHub issue #49).\n// Synthesised with the Web Audio API, so there's no sound file to ship. Browsers only let a page\n// make sound after the user has interacted with it, so call unlock() from a tap; where the browser\n// has no Web Audio, or still refuses, nothing plays and the disc alone says time's up.\n@Injectable({ providedIn: 'root' })\nexport class TimeUpChimeService {\n  private readonly document = inject(DOCUMENT);\n  private context: AudioContext | null = null;\n\n  /** Creates or resumes the audio context; call it from a user gesture (a tap). */\n  unlock(): void {\n    const context = this.audioContext();\n    if (context?.state === 'suspended') {\n      context.resume().catch(() => undefined);\n    }\n  }\n\n  play(): void {\n    const context = this.audioContext();\n    if (!context || context.state !== 'running') {\n      return;\n    }\n\n    const startS = context.currentTime;\n    NOTES_HZ.forEach((frequency, index) => {\n      const atS = startS + index * NOTE_GAP_S;\n      const oscillator = context.createOscillator();\n      const gain = context.createGain();\n\n      oscillator.type = 'sine';\n      oscillator.frequency.value = frequency;\n      // A quick attack and a long exponential fade, like a struck bell.\n      gain.gain.setValueAtTime(0.0001, atS);\n      gain.gain.exponentialRampToValueAtTime(PEAK_GAIN, atS + 0.02);\n      gain.gain.exponentialRampToValueAtTime(0.0001, atS + NOTE_LENGTH_S);\n\n      oscillator.connect(gain).connect(context.destination);\n      oscillator.start(atS);\n      oscillator.stop(atS + NOTE_LENGTH_S);\n    });\n  }\n\n  private audioContext(): AudioContext | null {\n    if (!this.context) {\n      const AudioContextType = this.document.defaultView?.AudioContext;\n      if (!AudioContextType) {\n        return null;\n      }\n\n      try {\n        this.context = new AudioContextType();\n      } catch {\n        // Too many contexts, or audio is disabled: this.context stays null, so nothing plays.\n      }\n    }\n\n    return this.context;\n  }\n}\n"
+      "source": "import { DOCUMENT } from '@angular/common';\nimport { Injectable, inject } from '@angular/core';\n\n// Two soft bell notes, rising: a \"ding-dong\" rather than an alarm, so time's up nudges instead of\n// startling.\nconst NOTES_HZ = [784, 1047];\nconst NOTE_GAP_S = 0.35;\nconst NOTE_LENGTH_S = 1.2;\nconst PEAK_GAIN = 0.3;\n\n// The chime the child's focus view plays when a step's time runs out (GitHub issue #49).\n// Synthesised with the Web Audio API, so there's no sound file to ship. Browsers only let a page\n// make sound after the user has interacted with it, so call unlock() from a tap; where the browser\n// has no Web Audio, or still refuses, nothing plays and the disc alone says time's up.\n@Injectable({ providedIn: 'root' })\nexport class TimeUpChimeService {\n  private readonly document = inject(DOCUMENT);\n  private context: AudioContext | null = null;\n\n  /** Creates or resumes the audio context; call it from a user gesture (a tap). */\n  unlock(): void {\n    const context = this.audioContext();\n    if (context?.state === 'suspended') {\n      context.resume().catch(() => undefined);\n    }\n  }\n\n  play(): void {\n    const context = this.audioContext();\n    if (context?.state !== 'running') {\n      return;\n    }\n\n    const startS = context.currentTime;\n    NOTES_HZ.forEach((frequency, index) => {\n      const atS = startS + index * NOTE_GAP_S;\n      const oscillator = context.createOscillator();\n      const gain = context.createGain();\n\n      oscillator.type = 'sine';\n      oscillator.frequency.value = frequency;\n      // A quick attack and a long exponential fade, like a struck bell.\n      gain.gain.setValueAtTime(0.0001, atS);\n      gain.gain.exponentialRampToValueAtTime(PEAK_GAIN, atS + 0.02);\n      gain.gain.exponentialRampToValueAtTime(0.0001, atS + NOTE_LENGTH_S);\n\n      oscillator.connect(gain).connect(context.destination);\n      oscillator.start(atS);\n      oscillator.stop(atS + NOTE_LENGTH_S);\n    });\n  }\n\n  private audioContext(): AudioContext | null {\n    if (!this.context) {\n      const AudioContextType = this.document.defaultView?.AudioContext;\n      if (!AudioContextType) {\n        return null;\n      }\n\n      try {\n        this.context = new AudioContextType();\n      } catch {\n        // Too many contexts, or audio is disabled: this.context stays null, so nothing plays.\n      }\n    }\n\n    return this.context;\n  }\n}\n"
     }
   },
   "schemaVersion": "1.0",
