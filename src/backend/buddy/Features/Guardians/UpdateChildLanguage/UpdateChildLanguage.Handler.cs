@@ -42,7 +42,6 @@ public static class UpdateChildLanguageHandler
             child = child with { Language = command.Language };
         }
 
-        return new Result<ChildSummary>.Success(new ChildSummary(
-            child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind, child.Language, child.TimeZoneId, child.ShowVisualTimers, child.HomeworkChunks));
+        return new Result<ChildSummary>.Success(ChildSummary.From(child, link));
     }
 }

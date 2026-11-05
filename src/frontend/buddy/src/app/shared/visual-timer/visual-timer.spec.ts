@@ -4,7 +4,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { nestOccurrence } from '../../../testing/occurrence-fixture';
 import { CalendarOccurrence } from '../../core/calendars.service';
-import { UsersService } from '../../core/users.service';
+import { CurrentUser, UsersService } from '../../core/users.service';
+import {
+  DEFAULT_TIMER_PREFERENCES,
+  TIMER_COLORS,
+  TimerPreferences,
+} from '../../core/timer-preferences';
 import { TimerState } from '../../core/visual-timer';
 import { VisualTimer } from './visual-timer';
 
@@ -70,10 +75,22 @@ describe('VisualTimer', () => {
   function setup(
     initial: TimerState,
     inputs: Record<string, unknown> = {},
+    preferences: Partial<TimerPreferences> | null = null,
   ): ComponentFixture<VisualTimer> {
+    const me = preferences
+      ? ({ timerPreferences: { ...DEFAULT_TIMER_PREFERENCES, ...preferences } } as CurrentUser)
+      : null;
     TestBed.configureTestingModule({
       imports: [VisualTimer],
-      providers: [{ provide: UsersService, useValue: { timeZoneId: signal('UTC').asReadonly() } }],
+      providers: [
+        {
+          provide: UsersService,
+          useValue: {
+            timeZoneId: signal('UTC').asReadonly(),
+            currentUser: signal<CurrentUser | null>(me).asReadonly(),
+          },
+        },
+      ],
     });
     const fixture = TestBed.createComponent(VisualTimer);
     fixture.componentRef.setInput('state', initial);
@@ -245,5 +262,110 @@ describe('VisualTimer', () => {
     fixture.detectChanges();
 
     expect(liveRegion(fixture)).toBe('Timer started for dress.');
+  });
+
+  describe("the child's preferences", () => {
+    function svg(fixture: ComponentFixture<VisualTimer>): SVGElement | null {
+      return (fixture.nativeElement as HTMLElement).querySelector('svg');
+    }
+
+    function fills(fixture: ComponentFixture<VisualTimer>): string[] {
+      return [
+        ...(fixture.nativeElement as HTMLElement).querySelectorAll('svg [fill]:not([fill="none"])'),
+      ].map((node) => node.getAttribute('fill')!);
+    }
+
+    function bar(fixture: ComponentFixture<VisualTimer>): HTMLElement | null {
+      return (fixture.nativeElement as HTMLElement).querySelector('[data-testid="timer-bar"]');
+    }
+
+    it('draws in the colour the child picked instead of the routine colour', () => {
+      const fixture = setup(running(5 * MINUTE), { color: '#0f0' }, { color: 'Purple' });
+
+      expect(fills(fixture)).toEqual([TIMER_COLORS.Purple]);
+    });
+
+    it('keeps the routine colour for Routine, and the page colour where the page keeps it', () => {
+      expect(fills(setup(running(5 * MINUTE), { color: '#0f0' }, { color: 'Routine' }))).toEqual([
+        '#0f0',
+      ]);
+      TestBed.resetTestingModule();
+      expect(
+        fills(setup(running(5 * MINUTE), { color: '#0f0', keepColor: true }, { color: 'Blue' })),
+      ).toEqual(['#0f0']);
+    });
+
+    it('colours the run bar with the picked colour too', () => {
+      const fixture = setup(
+        running(5 * MINUTE),
+        { variant: 'bar', color: '#0f0' },
+        { color: 'Pink' },
+      );
+
+      expect((bar(fixture)!.firstElementChild as HTMLElement).style.backgroundColor).toBe(
+        'rgb(236, 72, 153)',
+      );
+    });
+
+    it('hides the minutes but keeps them in the accessible name', () => {
+      const fixture = setup(running(5 * MINUTE), { title: 'Morning' }, { showMinutes: false });
+
+      expect(timer(fixture).getAttribute('aria-label')).toBe('5 min left');
+      expect(timer(fixture).textContent?.trim()).toBe('');
+    });
+
+    it("keeps time's up and the start time when the minutes are hidden", () => {
+      const up = setup(state({ phase: 'timesUp', remainingMs: 0 }), {}, { showMinutes: false });
+      expect(timer(up).textContent).toContain("Time's up");
+      TestBed.resetTestingModule();
+
+      const upcoming = setup(state(), {}, { showMinutes: false });
+      expect(timer(upcoming).textContent).toContain('Starts at 7:05');
+    });
+
+    it("keeps words that aren't a count when the minutes are hidden", () => {
+      const paused = setup(state({ phase: 'paused' }), {}, { showMinutes: false });
+      expect(timer(paused).textContent).toContain('Paused');
+      TestBed.resetTestingModule();
+
+      const bar = setup(
+        running(5 * MINUTE),
+        { variant: 'bar', title: 'Morning' },
+        { showMinutes: false },
+      );
+      expect(timer(bar).textContent?.trim()).toBe('Morning');
+      expect(timer(bar).getAttribute('aria-label')).toBe('15 min left of Morning');
+    });
+
+    it('draws a big step timer as a bar of the step when the child prefers a bar', () => {
+      const fixture = setup(running(5 * MINUTE), { large: true, size: '20rem' }, { shape: 'Bar' });
+
+      expect(svg(fixture)).toBeNull();
+      expect(bar(fixture)!.style.width).toBe('20rem');
+      expect(bar(fixture)!.classList).toContain('h-12');
+      // The step's half, not the run's: 5 of the step's 10 minutes.
+      expect(parseFloat((bar(fixture)!.firstElementChild as HTMLElement).style.width)).toBeCloseTo(
+        50,
+        1,
+      );
+      expect(timer(fixture).textContent).toContain('5 min left');
+    });
+
+    it('keeps the small step disc a disc whatever shape the child prefers', () => {
+      const fixture = setup(running(5 * MINUTE), { size: '28px' }, { shape: 'Bar', size: 'Small' });
+
+      expect(svg(fixture)!.style.width).toBe('28px');
+      expect(bar(fixture)).toBeNull();
+    });
+
+    it('shrinks a big disc to the size the child picked', () => {
+      const fixture = setup(
+        running(5 * MINUTE),
+        { large: true, size: '20rem' },
+        { size: 'Medium' },
+      );
+
+      expect(svg(fixture)!.style.width).toBe('calc(16rem)');
+    });
   });
 });

@@ -1,16 +1,21 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AuthService } from '../../../../core/auth.service';
 import { ThemeMode } from '../../../../core/theme';
 import { ThemeService } from '../../../../core/theme.service';
+import { CurrentUser, UsersService } from '../../../../core/users.service';
 import { ChildMenu } from './child-menu';
 
 // TranslatePipe/TranslationService are used unstubbed (same pattern as profile-menu.spec.ts), so
 // assertions check the real English copy from core/i18n/translations/en/child.ts.
 describe('ChildMenu', () => {
-  async function setup(initialMode: ThemeMode = 'system') {
+  async function setup(
+    initialMode: ThemeMode = 'system',
+    me: CurrentUser | null = { showVisualTimers: true } as CurrentUser,
+  ) {
     const logout = vi.fn();
     const authStub: Partial<AuthService> = { logout };
     const setMode = vi.fn();
@@ -22,6 +27,8 @@ describe('ChildMenu', () => {
       providers: [
         { provide: AuthService, useValue: authStub },
         { provide: ThemeService, useValue: themeStub },
+        { provide: UsersService, useValue: { currentUser: signal(me).asReadonly() } },
+        provideRouter([]),
       ],
     }).compileComponents();
 
@@ -165,8 +172,16 @@ describe('ChildMenu', () => {
     expect(compiled.querySelector('.fixed.inset-0')?.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('moves focus to the first theme button when the menu opens', async () => {
+  it('moves focus to the first item when the menu opens: My timer, or the first theme button', async () => {
     const { fixture, compiled } = await setup();
+
+    fireClick(fixture, toggleButton(compiled));
+
+    expect(document.activeElement).toBe(compiled.querySelector('a[href="/child/timer"]'));
+  });
+
+  it('moves focus to the first theme button when there is no timer link', async () => {
+    const { fixture, compiled } = await setup('system', { showVisualTimers: false } as CurrentUser);
 
     fireClick(fixture, toggleButton(compiled));
 
@@ -211,5 +226,32 @@ describe('ChildMenu', () => {
 
     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('false');
     expect(document.activeElement).not.toBe(toggleButton(compiled));
+  });
+
+  describe('My timer', () => {
+    function myTimerLink(compiled: HTMLElement): HTMLAnchorElement | null {
+      return compiled.querySelector('a[href="/child/timer"]');
+    }
+
+    it('links to the child timer page and closes the menu', async () => {
+      const { fixture, compiled } = await setup();
+      fireClick(fixture, toggleButton(compiled));
+
+      const link = myTimerLink(compiled);
+      expect(link?.textContent).toContain('My timer');
+
+      fireClick(fixture, link!);
+      expect(myTimerLink(compiled)).toBeNull();
+    });
+
+    it.each([
+      ['a guardian turned timers off', { showVisualTimers: false } as CurrentUser],
+      ['the child has not loaded yet', null],
+    ])('is not offered when %s', async (_, me) => {
+      const { fixture, compiled } = await setup('system', me);
+      fireClick(fixture, toggleButton(compiled));
+
+      expect(myTimerLink(compiled)).toBeNull();
+    });
   });
 });

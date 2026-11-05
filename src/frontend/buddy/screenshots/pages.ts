@@ -348,6 +348,23 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     clock: '07:10',
   },
   {
+    name: 'child-timer',
+    title: 'Child: my timer',
+    description:
+      "The child's own timer, started from 2, 5, 10 or 15 minutes, and how every timer looks and sounds: circle or bar, size, colour, the minutes on or off, and a sound with a Listen button. Here Emil is three minutes into a 10-minute timer in the purple he picked.",
+    as: 'child',
+    route: '/child/timer',
+    waitFor: 'How my timer looks',
+    localStorage: (nowMs, today) => ({
+      buddy_child_own_timer: JSON.stringify({
+        date: today,
+        budgetMs: 10 * 60_000,
+        startedAtMs: nowMs - 3 * 60_000,
+        pausedAtMs: null,
+      }),
+    }),
+  },
+  {
     name: 'child-homework',
     title: 'Child: homework',
     description:

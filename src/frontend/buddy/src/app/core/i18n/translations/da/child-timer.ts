@@ -1,0 +1,50 @@
+export const childTimer = {
+  title: 'Mit ur',
+  back: 'Tilbage til min dag',
+  start: {
+    title: 'Start et ur',
+    minutes: '{count} min',
+    startLabel: 'Start et ur på {count} min',
+  },
+  newTimer: 'Nyt ur',
+  look: {
+    title: 'Sådan ser mit ur ud',
+    preview: 'Sådan ser dit ur ud',
+    shapeLabel: 'Form',
+    shape: {
+      Disc: 'Cirkel',
+      Bar: 'Bjælke',
+    },
+    sizeLabel: 'Størrelse',
+    size: {
+      Small: 'Lille',
+      Medium: 'Mellem',
+      Large: 'Stor',
+    },
+    colorLabel: 'Farve',
+    color: {
+      Routine: 'Samme som rutinen',
+      Green: 'Grøn',
+      Blue: 'Blå',
+      Purple: 'Lilla',
+      Pink: 'Lyserød',
+      Orange: 'Orange',
+      Yellow: 'Gul',
+    },
+    showMinutes: 'Vis minutterne',
+  },
+  sound: {
+    title: 'Lyd når tiden er gået',
+    chime: 'Spil en lyd',
+    soundLabel: 'Lyd',
+    sounds: {
+      Bell: 'Klokke',
+      Xylophone: 'Xylofon',
+      Gong: 'Gongong',
+    },
+    play: 'Lyt',
+    onHome: 'Også på min dag-siden',
+    mutedByGuardian: 'En voksen har slået lyden fra.',
+  },
+  saveError: 'Det kunne ikke gemmes. Prøv igen.',
+};

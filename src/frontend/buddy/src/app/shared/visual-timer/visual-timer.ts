@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 
 import { TranslationService } from '../../core/i18n/translation.service';
 import { UsersService } from '../../core/users.service';
+import { scaledTimerSize, timerColor, timerPreferencesOf } from '../../core/timer-preferences';
 import { TimerPhase, TimerState, minutesLeft } from '../../core/visual-timer';
 
 const TICK_MS = 1_000;
@@ -16,7 +17,9 @@ const RADIUS = 47;
 // a slate track, always with a text label, so colour never carries the meaning alone.
 // Presentational: the page computes the TimerState (core/visual-timer.ts); this component only
 // counts down against its deadline between the page's recalculations, once a second, and only
-// while it's running.
+// while it's running. The signed-in child's timer preferences
+// (docs/frontend/analysis/child-timer-preferences.md) pick the colour and whether the minutes show
+// on every timer, and the shape and size of a `large` one.
 @Component({
   selector: 'app-visual-timer',
   imports: [],
@@ -31,8 +34,11 @@ export class VisualTimer {
   readonly variant = input<'disc' | 'bar'>('disc');
   // The disc's width and height as a CSS length; ignored by the bar.
   readonly size = input('28px');
-  // The focus view's big disc: the label goes under it, in large type.
+  // The focus view's big disc: the label goes under it, in large type. Only a large timer follows
+  // the child's shape and size preferences; the small ones are part of a list layout.
   readonly large = input(false);
+  // Keeps `color` whatever the child picked: homework colours focus and breaks differently.
+  readonly keepColor = input(false);
   // The run's title, for the bar's "x min left of {title}".
   readonly title = input('');
   // Whether this timer speaks changes of phase and step through its live region. A page showing
@@ -41,6 +47,22 @@ export class VisualTimer {
   readonly announce = input(true);
 
   private readonly now = signal(Date.now());
+
+  private readonly preferences = computed(() => timerPreferencesOf(this.users.currentUser()));
+
+  protected readonly fill = computed(() =>
+    this.keepColor() ? this.color() : timerColor(this.preferences(), this.color()),
+  );
+
+  // Drawn as a bar: the run's bar, or a big step timer whose child prefers a bar. The bar of a
+  // step still counts down the step (`variant` decides what is counted, this only how it's drawn).
+  protected readonly showsBar = computed(
+    () => this.variant() === 'bar' || (this.large() && this.preferences().shape === 'Bar'),
+  );
+
+  protected readonly scaledSize = computed(() =>
+    this.large() ? scaledTimerSize(this.size(), this.preferences().size) : this.size(),
+  );
 
   // Reduced motion: the disc still shows the time left (it carries information), but only redraws
   // on whole minutes.
@@ -101,35 +123,60 @@ export class VisualTimer {
   protected readonly center = CENTER;
   protected readonly radius = RADIUS;
 
-  // The visible label, which is also the timer's accessible name. Rounded up to whole minutes:
-  // children don't need seconds, and a seconds counter adds pressure.
-  protected readonly label = computed(() => {
+  // The timer's accessible name, and whether it is a count of minutes (which the child can hide
+  // from the visible label). Rounded up to whole minutes: children don't need seconds, and a
+  // seconds counter adds pressure.
+  private readonly labelParts = computed<{ text: string; isCount: boolean }>(() => {
     const phase = this.phase();
     const state = this.state();
     const t = (key: string, params?: Record<string, string | number>) =>
       this.translation.translate(key, params);
 
     if (phase === 'timesUp' && this.variant() === 'disc') {
-      return t('child.home.timer.timesUp');
+      return { text: t('child.home.timer.timesUp'), isCount: false };
     }
 
     if (phase === 'paused' && this.variant() === 'disc') {
-      return t('child.home.timer.paused');
+      return { text: t('child.home.timer.paused'), isCount: false };
     }
 
     if (phase === 'upcoming' && this.variant() === 'disc' && state.startsAtMs !== null) {
-      return t('child.home.timer.startsAt', { time: this.formatTime(state.startsAtMs) });
+      return {
+        text: t('child.home.timer.startsAt', { time: this.formatTime(state.startsAtMs) }),
+        isCount: false,
+      };
     }
 
     const minutes = minutesLeft(this.remainingMs());
 
     if (this.variant() === 'bar') {
-      return t('child.home.timer.runLeft', { count: minutes, title: this.title() });
+      return {
+        text: t('child.home.timer.runLeft', { count: minutes, title: this.title() }),
+        isCount: true,
+      };
     }
 
-    return this.remainingMs() < MINUTE_MS
-      ? t('child.home.timer.underAMinute')
-      : t('child.home.timer.minutesLeft', { count: minutes });
+    return {
+      text:
+        this.remainingMs() < MINUTE_MS
+          ? t('child.home.timer.underAMinute')
+          : t('child.home.timer.minutesLeft', { count: minutes }),
+      isCount: true,
+    };
+  });
+
+  protected readonly label = computed(() => this.labelParts().text);
+
+  // What is printed: the label, except a count of minutes when the child hid the minutes (the run
+  // bar then shows just the run's title). Words like "Time's up" stay, and the accessible name
+  // keeps the minutes for a screen reader.
+  protected readonly visibleLabel = computed(() => {
+    const { text, isCount } = this.labelParts();
+    if (!isCount || this.preferences().showMinutes) {
+      return text;
+    }
+
+    return this.variant() === 'bar' ? this.title() : '';
   });
 
   // The live region speaks only on a change of phase or step, never every minute -- it would keep

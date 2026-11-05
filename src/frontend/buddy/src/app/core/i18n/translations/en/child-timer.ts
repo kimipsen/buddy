@@ -1,0 +1,50 @@
+export const childTimer = {
+  title: 'My timer',
+  back: 'Back to my day',
+  start: {
+    title: 'Start a timer',
+    minutes: '{count} min',
+    startLabel: 'Start a timer for {count} min',
+  },
+  newTimer: 'New timer',
+  look: {
+    title: 'How my timer looks',
+    preview: 'This is what your timer looks like',
+    shapeLabel: 'Shape',
+    shape: {
+      Disc: 'Circle',
+      Bar: 'Bar',
+    },
+    sizeLabel: 'Size',
+    size: {
+      Small: 'Small',
+      Medium: 'Medium',
+      Large: 'Large',
+    },
+    colorLabel: 'Colour',
+    color: {
+      Routine: 'Same as the routine',
+      Green: 'Green',
+      Blue: 'Blue',
+      Purple: 'Purple',
+      Pink: 'Pink',
+      Orange: 'Orange',
+      Yellow: 'Yellow',
+    },
+    showMinutes: 'Show the minutes',
+  },
+  sound: {
+    title: "Sound when time's up",
+    chime: 'Play a sound',
+    soundLabel: 'Sound',
+    sounds: {
+      Bell: 'Bell',
+      Xylophone: 'Xylophone',
+      Gong: 'Gong',
+    },
+    play: 'Listen',
+    onHome: 'Also on my day page',
+    mutedByGuardian: 'A grown-up has turned the sound off.',
+  },
+  saveError: "Couldn't save that. Try again.",
+};

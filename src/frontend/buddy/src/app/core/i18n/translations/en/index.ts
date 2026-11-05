@@ -2,6 +2,7 @@ import { admin } from './admin';
 import { babysitters } from './babysitters';
 import { calendar } from './calendar';
 import { child } from './child';
+import { childTimer } from './child-timer';
 import { common } from './common';
 import { dashboard } from './dashboard';
 import { feelings } from './feelings';
@@ -33,6 +34,7 @@ export const en = {
   babysitters,
   calendar,
   child,
+  childTimer,
   common,
   dashboard,
   feelings,

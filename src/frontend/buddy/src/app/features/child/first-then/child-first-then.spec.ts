@@ -79,6 +79,7 @@ describe('ChildFirstThen', () => {
         async () => ({ showVisualTimers: options.showVisualTimers ?? true }) as CurrentUser,
       ),
       timeZoneId: signal('UTC').asReadonly(),
+      currentUser: signal<CurrentUser | null>(null).asReadonly(),
       profileTimeZoneId: signal<string | null>('UTC').asReadonly(),
     };
 

@@ -83,4 +83,18 @@ public sealed class UserEventShapeTests
     public void CallingNameUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new CallingNameUpdated(FixedUserId, "", "Mor", FixedInstant),
         "Users/CallingNameUpdated.json");
+
+    [Fact]
+    public void TimerPreferencesUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new TimerPreferencesUpdated(
+            FixedUserId,
+            TimerPreferences.Default,
+            new TimerPreferences(TimerShape.Bar, TimerSize.Medium, TimerColor.Purple, ShowMinutes: false, Chime: true, ChimeSound.Gong, ChimeOnHome: true),
+            FixedInstant),
+        "Users/TimerPreferencesUpdated.json");
+
+    [Fact]
+    public void ChimeAllowedUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new ChimeAllowedUpdated(FixedUserId, Before: true, After: false, FixedInstant),
+        "Users/ChimeAllowedUpdated.json");
 }

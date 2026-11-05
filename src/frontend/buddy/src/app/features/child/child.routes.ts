@@ -9,6 +9,7 @@ import { ChildHomework } from './homework/child-homework';
 import { ChildMealplan } from './mealplan/child-mealplan';
 import { ChildRewards } from './rewards/child-rewards';
 import { ChildRules } from './rules/child-rules';
+import { ChildTimerPage } from './timer/child-timer-page';
 import { visualTimersGuard } from './visual-timers.guard';
 
 export const CHILD_ROUTES: Routes = [
@@ -50,5 +51,11 @@ export const CHILD_ROUTES: Routes = [
     path: 'focus/:itemId',
     component: ChildFocus,
     canActivate: [featureGuard('taskLibrary'), visualTimersGuard],
+  },
+  {
+    // The child's own timer and timer settings; nothing to show when a guardian turned timers off.
+    path: 'timer',
+    component: ChildTimerPage,
+    canActivate: [visualTimersGuard],
   },
 ];

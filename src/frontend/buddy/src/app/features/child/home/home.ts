@@ -27,6 +27,8 @@ import { readHomeworkSession } from '../../../core/homework-storage';
 import { HouseRulesService } from '../../../core/house-rules.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { keepAwakeWhile } from '../../../core/keep-awake';
+import { chimeWhenTimeRunsOut } from '../../../core/chime-when-time-runs-out';
+import { TimeUpChimeService } from '../../../core/time-up-chime.service';
 import {
   AgendaEntry,
   TaskRun,
@@ -163,8 +165,11 @@ const NOW_REFRESH_INTERVAL_MS = 60_000;
     FirstThenCard,
   ],
   templateUrl: './home.html',
+  // Any tap lets the page make sound later (browsers block audio until the user interacts).
+  host: { '(pointerdown)': 'unlockChime()' },
 })
 export class ChildHome implements OnInit, OnDestroy {
+  private readonly chime = inject(TimeUpChimeService);
   protected readonly features = inject(FeaturesService);
 
   private readonly guardians = inject(GuardiansService);
@@ -456,6 +461,15 @@ export class ChildHome implements OnInit, OnDestroy {
     // A running routine keeps the screen on (docs/frontend/analysis/keep-screen-awake.md).
     keepAwakeWhile(computed(() => this.timer()?.phase === 'running'));
 
+    // Only when the child turned on "chime on home" (docs/frontend/analysis/child-timer-preferences.md).
+    chimeWhenTimeRunsOut(
+      computed(() => {
+        const timer = this.timer();
+        return timer?.current ? { key: occurrenceKey(timer.current), phase: timer.phase } : null;
+      }),
+      'home',
+    );
+
     // Recalculate the moment the current step's time runs out, rather than at the next minute
     // tick, so the buttons (Pause) follow the disc straight away.
     effect((onCleanup) => {
@@ -475,6 +489,10 @@ export class ChildHome implements OnInit, OnDestroy {
         this.childTimer.stop();
       }
     });
+  }
+
+  protected unlockChime(): void {
+    this.chime.unlock();
   }
 
   ngOnInit(): void {

@@ -9,7 +9,20 @@ internal sealed record NameDto(string GivenName, string FamilyName);
 
 internal sealed record ChildResponseDto(Guid Id, NameDto Name, Guid GuardianLinkId, GuardianKind Kind, string Username, string TemporaryPassword);
 
-internal sealed record ChildSummaryDto(Guid Id, NameDto Name, Guid GuardianLinkId, GuardianKind Kind, string Language, string TimeZoneId, bool ShowVisualTimers, HomeworkChunksDto HomeworkChunks);
+internal sealed record ChildSummaryDto(
+    Guid Id,
+    NameDto Name,
+    Guid GuardianLinkId,
+    GuardianKind Kind,
+    string Language,
+    string TimeZoneId,
+    bool ShowVisualTimers,
+    HomeworkChunksDto HomeworkChunks,
+    TimerPreferencesDto TimerPreferences,
+    bool AllowChime);
+
+internal sealed record TimerPreferencesDto(
+    string Shape, string Size, string Color, bool ShowMinutes, bool Chime, string ChimeSound, bool ChimeOnHome);
 
 internal sealed record HomeworkChunksDto(int FocusMinutes, int BreakMinutes);
 

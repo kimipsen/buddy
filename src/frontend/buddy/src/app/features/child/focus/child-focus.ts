@@ -17,6 +17,7 @@ import { ChildTimerService } from '../../../core/child-timer.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { keepAwakeWhile } from '../../../core/keep-awake';
 import { TimeUpChimeService } from '../../../core/time-up-chime.service';
+import { chimeWhenTimeRunsOut } from '../../../core/chime-when-time-runs-out';
 import {
   TaskRun,
   compareOccurrences,
@@ -108,19 +109,13 @@ export class ChildFocus implements OnInit, OnDestroy {
       onCleanup(() => clearTimeout(id));
     });
 
-    // Chime when the step on screen runs out while the child watches (GitHub issue #49), not when
-    // the page opens on a step that was already over, or when the step changes.
-    let previous: { key: string; phase: TimerState['phase'] } | null = null;
-    effect(() => {
-      const state = this.state();
-      const key = state?.current ? occurrenceKey(state.current) : null;
-      const phase = state?.phase;
-
-      if (previous?.key === key && previous.phase === 'running' && phase === 'timesUp') {
-        this.chime.play();
-      }
-      previous = key !== null && phase !== undefined ? { key, phase } : null;
-    });
+    chimeWhenTimeRunsOut(
+      computed(() => {
+        const state = this.state();
+        return state?.current ? { key: occurrenceKey(state.current), phase: state.phase } : null;
+      }),
+      'focus',
+    );
   }
 
   ngOnInit(): void {

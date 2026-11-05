@@ -341,6 +341,23 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       focusMinutes: 10,
       breakMinutes: 3,
     });
+    // Emil picked his own timer look and sound (/child/timer); Ida's sound is muted by Sara.
+    try {
+      const emilApi = await Api.as(DEMO_USERNAMES.child, DEMO_PASSWORD);
+      await emilApi.patch('/users/me/timer-preferences', {
+        shape: 'Disc',
+        size: 'Large',
+        color: 'Purple',
+        showMinutes: true,
+        chime: true,
+        chimeSound: 'Xylophone',
+        chimeOnHome: false,
+      });
+      await emilApi.dispose();
+    } catch (error) {
+      warn(error);
+    }
+    await api.patch(`/users/me/children/${ida.id}/chime`, { allowChime: false });
 
     // Group and calendars ------------------------------------------------------------------
     const group = await api.post<Named>('/groups', { name: 'Holm family' });

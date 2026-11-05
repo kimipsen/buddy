@@ -210,6 +210,7 @@ The child routes currently include:
   polls every minute and on wake; behind `featureGuard('firstThen')`. The child home shows a card
   for it at the top while a board is current
 - `/child/focus/:itemId` — one of today's routines one step at a time: a large time-left disc for the current step, the next step, and Done / Start / Pause; behind `featureGuard('taskLibrary')` and `visualTimersGuard` (timers off sends the child to `/child`)
+- `/child/timer` — "My timer", linked from the child menu: a timer of the child's own from 2, 5, 10 or 15 minutes (kept on the device by `core/own-timer-storage.ts`, pure state in `core/own-timer.ts`), and the child's timer preferences (shape, size, colour, minutes, chime and sound), saved with `PATCH /users/me/timer-preferences`; behind `visualTimersGuard`
 
 ### Login feature
 
@@ -258,6 +259,12 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
   re-requested when the page is shown again); pages use it through `keepAwakeWhile` in
   `core/keep-awake.ts`, which also refreshes the token every 4 minutes while a timer runs
   ([design](analysis/keep-screen-awake.md))
+- `core/timer-preferences.ts` reads the signed-in child's timer preferences (from
+  `UsersService.currentUser`, a signal that follows every `/users/me` PATCH): `shared/visual-timer`
+  applies the colour and "show minutes" to every timer, and shape and size to the big ones;
+  `chimeFor` decides whether and which sound plays on the focus view, the home and "My timer"
+  (a guardian's `allowChime` wins), through `core/chime-when-time-runs-out.ts`
+  ([design](analysis/child-timer-preferences.md))
 - `TimeUpChimeService` plays the Web Audio chime the focus view sounds when a running step's time
   runs out; the focus view unlocks it on any tap, since browsers block audio until the user
   interacts, and it stays silent where Web Audio is missing or still blocked
@@ -536,6 +543,10 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Visual time-left timer](analysis/visual-time-left-timer.md) — implemented countdown
   disc and bar for the child's current routine and subtask on `/child`, plus a `/child/focus/:itemId`
   focus page, with a per-child guardian switch on `manage-children`
+- [Child timer preferences](analysis/child-timer-preferences.md) — implemented "My timer" page
+  `/child/timer` with the child's own timer and look/sound preferences, the preferences applied in
+  `shared/visual-timer`, three chime sounds, and the guardian's "Allow timer sound" switch and
+  read-only summary on `manage-children`
 - [Homework splitter](analysis/homework-splitter.md) — implemented child page `/child/homework`
   that splits homework into timed focus chunks with breaks and break ideas (browser-only sessions in
   `core/homework-session.ts`/`homework-storage.ts`), a "Homework" link and in-progress card on

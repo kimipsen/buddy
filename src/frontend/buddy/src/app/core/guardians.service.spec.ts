@@ -59,6 +59,16 @@ describe('GuardiansService', () => {
       const child = (id: string, givenName: string): ChildSummary => ({
         showVisualTimers: true,
         homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
+        timerPreferences: {
+          shape: 'Disc',
+          size: 'Large',
+          color: 'Routine',
+          showMinutes: true,
+          chime: true,
+          chimeSound: 'Bell',
+          chimeOnHome: false,
+        },
+        allowChime: true,
         id,
         name: { givenName, familyName: 'Kid' },
         guardianLinkId: `link-${id}`,
@@ -80,6 +90,16 @@ describe('GuardiansService', () => {
         {
           showVisualTimers: true,
           homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
+          timerPreferences: {
+            shape: 'Disc',
+            size: 'Large',
+            color: 'Routine',
+            showMinutes: true,
+            chime: true,
+            chimeSound: 'Bell',
+            chimeOnHome: false,
+          },
+          allowChime: true,
           id: 'child-1',
           name: { givenName: 'Sam', familyName: 'Kid' },
           guardianLinkId: 'link-1',
@@ -365,6 +385,16 @@ describe('GuardiansService', () => {
       const updated: ChildSummary = {
         showVisualTimers: true,
         homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
+        timerPreferences: {
+          shape: 'Disc',
+          size: 'Large',
+          color: 'Routine',
+          showMinutes: true,
+          chime: true,
+          chimeSound: 'Bell',
+          chimeOnHome: false,
+        },
+        allowChime: true,
         id: 'child-1',
         name: { givenName: 'Sam', familyName: 'Kid' },
         guardianLinkId: 'link-1',
@@ -398,6 +428,16 @@ describe('GuardiansService', () => {
       const updated: ChildSummary = {
         showVisualTimers: true,
         homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
+        timerPreferences: {
+          shape: 'Disc',
+          size: 'Large',
+          color: 'Routine',
+          showMinutes: true,
+          chime: true,
+          chimeSound: 'Bell',
+          chimeOnHome: false,
+        },
+        allowChime: true,
         id: 'child-1',
         name: { givenName: 'Sam', familyName: 'Kid' },
         guardianLinkId: 'link-1',
@@ -437,6 +477,16 @@ describe('GuardiansService', () => {
         timeZoneId: 'UTC',
         showVisualTimers: true,
         homeworkChunks: { focusMinutes: 10, breakMinutes: 2 },
+        timerPreferences: {
+          shape: 'Disc',
+          size: 'Large',
+          color: 'Routine',
+          showMinutes: true,
+          chime: true,
+          chimeSound: 'Bell',
+          chimeOnHome: false,
+        },
+        allowChime: true,
       };
 
       const promise = service.updateChildHomeworkChunks('child-1', {
@@ -464,6 +514,16 @@ describe('GuardiansService', () => {
         timeZoneId: 'UTC',
         showVisualTimers: false,
         homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
+        timerPreferences: {
+          shape: 'Disc',
+          size: 'Large',
+          color: 'Routine',
+          showMinutes: true,
+          chime: true,
+          chimeSound: 'Bell',
+          chimeOnHome: false,
+        },
+        allowChime: true,
       };
 
       const promise = service.updateChildVisualTimers('child-1', false);
@@ -481,6 +541,50 @@ describe('GuardiansService', () => {
 
       const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/visual-timers`);
       expect(req.request.body).toEqual({ showVisualTimers: true });
+      req.flush(null, { status: 404, statusText: 'Not Found' });
+
+      await expect(promise).rejects.toBeInstanceOf(HttpErrorResponse);
+    });
+  });
+
+  describe('updateChildChime', () => {
+    it('PATCHes the chime switch and resolves the updated child', async () => {
+      const updated: ChildSummary = {
+        id: 'child-1',
+        name: { givenName: 'Sam', familyName: 'Kid' },
+        guardianLinkId: 'link-1',
+        kind: 'Parent',
+        language: 'en',
+        timeZoneId: 'UTC',
+        showVisualTimers: true,
+        homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
+        timerPreferences: {
+          shape: 'Disc',
+          size: 'Large',
+          color: 'Routine',
+          showMinutes: true,
+          chime: true,
+          chimeSound: 'Bell',
+          chimeOnHome: false,
+        },
+        allowChime: false,
+      };
+
+      const promise = service.updateChildChime('child-1', false);
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/chime`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ allowChime: false });
+      req.flush(updated);
+
+      await expect(promise).resolves.toEqual(updated);
+    });
+
+    it('rejects when the child is not found', async () => {
+      const promise = service.updateChildChime('child-1', true);
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/chime`);
+      expect(req.request.body).toEqual({ allowChime: true });
       req.flush(null, { status: 404, statusText: 'Not Found' });
 
       await expect(promise).rejects.toBeInstanceOf(HttpErrorResponse);

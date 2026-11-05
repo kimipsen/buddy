@@ -328,6 +328,16 @@ The focus view of a routine: one big disc showing how long is left of the curren
 
 <img src="mobile/child-focus.png" alt="Child: one step at a time on a phone" width="320">
 
+## Child: my timer
+
+The child's own timer, started from 2, 5, 10 or 15 minutes, and how every timer looks and sounds: circle or bar, size, colour, the minutes on or off, and a sound with a Listen button. Here Emil is three minutes into a 10-minute timer in the purple he picked.
+
+![Child: my timer](child-timer.png)
+
+<img src="tablet/child-timer.png" alt="Child: my timer on a tablet" width="384">
+
+<img src="mobile/child-timer.png" alt="Child: my timer on a phone" width="320">
+
 ## Child: homework
 
 The homework splitter: the child writes down tonight's homework and Buddy splits it into short focus chunks with breaks, using the lengths a guardian set. Here the child is four minutes into the second of three Maths chunks; a break with a break idea comes next.

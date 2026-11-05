@@ -111,6 +111,49 @@ describe('TimeUpChimeService', () => {
     ]);
   });
 
+  it('plays three quick rising triangle notes for the xylophone', async () => {
+    const chime = setup();
+    chime.unlock();
+    await Promise.resolve();
+
+    chime.play('Xylophone');
+
+    const context = FakeAudioContext.instances[0]!;
+    expect(context.oscillators.map((oscillator) => oscillator.frequency.value)).toEqual([
+      523, 659, 784,
+    ]);
+    expect(context.oscillators.map((oscillator) => oscillator.type)).toEqual([
+      'triangle',
+      'triangle',
+      'triangle',
+    ]);
+    expect(context.oscillators.map((oscillator) => oscillator.start.mock.calls[0]![0])).toEqual([
+      10, 10.18, 10.36,
+    ]);
+    expect(context.oscillators[0]!.stop).toHaveBeenCalledWith(10.5);
+    expect(context.gains[0]!.gain.exponentialRampToValueAtTime.mock.calls).toEqual([
+      [0.35, 10.02],
+      [0.0001, 10.5],
+    ]);
+  });
+
+  it('plays one low, long note for the gong', async () => {
+    const chime = setup();
+    chime.unlock();
+    await Promise.resolve();
+
+    chime.play('Gong');
+
+    const context = FakeAudioContext.instances[0]!;
+    expect(context.oscillators.map((oscillator) => oscillator.frequency.value)).toEqual([196]);
+    expect(context.oscillators[0]!.type).toBe('sine');
+    expect(context.oscillators[0]!.stop).toHaveBeenCalledWith(12.5);
+    expect(context.gains[0]!.gain.exponentialRampToValueAtTime.mock.calls).toEqual([
+      [0.4, 10.02],
+      [0.0001, 12.5],
+    ]);
+  });
+
   it('stays silent while the browser still blocks audio', () => {
     const chime = setup();
 

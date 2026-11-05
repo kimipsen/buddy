@@ -38,6 +38,7 @@ export const child = {
     loadError: 'Something went wrong. Try again in a bit.',
     menu: {
       openLabel: 'Open menu',
+      myTimer: 'My timer',
     },
     theme: {
       label: 'Theme',

@@ -14,7 +14,9 @@ namespace buddy.Features.Users
         LanguageUpdated,
         ShowVisualTimersUpdated,
         HomeworkChunksUpdated,
-        CallingNameUpdated
+        CallingNameUpdated,
+        TimerPreferencesUpdated,
+        ChimeAllowedUpdated
     )
     {
         // Marten hands back the deserialized concrete event object when reading a stream; case
@@ -33,6 +35,8 @@ namespace buddy.Features.Users
             ShowVisualTimersUpdated e => e,
             HomeworkChunksUpdated e => e,
             CallingNameUpdated e => e,
+            TimerPreferencesUpdated e => e,
+            ChimeAllowedUpdated e => e,
             _ => throw new ArgumentException($"Unknown user event payload: {payload.GetType().Name}", nameof(payload)),
         };
 
@@ -52,6 +56,8 @@ namespace buddy.Features.Users
             ShowVisualTimersUpdated => nameof(ShowVisualTimersUpdated),
             HomeworkChunksUpdated => nameof(HomeworkChunksUpdated),
             CallingNameUpdated => nameof(CallingNameUpdated),
+            TimerPreferencesUpdated => nameof(TimerPreferencesUpdated),
+            ChimeAllowedUpdated => nameof(ChimeAllowedUpdated),
         };
     }
 
@@ -100,4 +106,12 @@ namespace buddy.Features.Users
     // A guardian changed what their children call them ("Mor", "Dad"); "" clears it
     // (UpdateCallingNameHandler). Never appended when the value doesn't change.
     public sealed record CallingNameUpdated(UserId UserId, string Before, string After, DateTimeOffset OccurredAt);
+
+    // The user changed how their own visual timers look and sound (UpdateTimerPreferencesHandler).
+    // Meaningful for children only. Never appended when the value doesn't change.
+    public sealed record TimerPreferencesUpdated(UserId UserId, TimerPreferences Before, TimerPreferences After, DateTimeOffset OccurredAt);
+
+    // A guardian allowed or muted the child's time's-up chime (UpdateChildChimeHandler). Appended
+    // to the child's own User stream; never appended when the value doesn't change.
+    public sealed record ChimeAllowedUpdated(UserId UserId, bool Before, bool After, DateTimeOffset OccurredAt);
 }

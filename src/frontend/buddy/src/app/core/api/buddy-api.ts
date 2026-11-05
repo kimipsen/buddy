@@ -132,6 +132,22 @@ export interface paths {
     patch: operations['UpdateCurrentLanguage'];
     trace?: never;
   };
+  '/users/me/timer-preferences': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['UpdateCurrentTimerPreferences'];
+    trace?: never;
+  };
   '/users/me/email/verify/resend': {
     parameters: {
       query?: never;
@@ -338,6 +354,22 @@ export interface paths {
     options?: never;
     head?: never;
     patch: operations['UpdateChildVisualTimers'];
+    trace?: never;
+  };
+  '/users/me/children/{childId}/chime': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['UpdateChildChime'];
     trace?: never;
   };
   '/users/me/children/{childId}/homework-chunks': {
@@ -3599,6 +3631,8 @@ export interface components {
       timeZoneId: components['schemas']['TimeZoneId'];
       showVisualTimers: boolean;
       homeworkChunks: components['schemas']['HomeworkChunks'];
+      timerPreferences: components['schemas']['TimerPreferences'];
+      allowChime: boolean;
     };
     ChildTransitionWarningsResponse: {
       /** Format: uuid */
@@ -3609,6 +3643,8 @@ export interface components {
       quietHours: null | components['schemas']['QuietHours'];
       overrides: components['schemas']['ItemWarningOverrideDetailResponse'][];
     };
+    /** @enum {string} */
+    ChimeSound: 'Bell' | 'Xylophone' | 'Gong';
     Color: string;
     CommitMealPlanImportEntryRequest: {
       /** Format: date */
@@ -5167,6 +5203,21 @@ export interface components {
        */
       kind: 0;
     };
+    /** @enum {string} */
+    TimerColor: 'Routine' | 'Green' | 'Blue' | 'Purple' | 'Pink' | 'Orange' | 'Yellow';
+    TimerPreferences: {
+      shape: components['schemas']['TimerShape'];
+      size: components['schemas']['TimerSize'];
+      color: components['schemas']['TimerColor'];
+      showMinutes: boolean;
+      chime: boolean;
+      chimeSound: components['schemas']['ChimeSound'];
+      chimeOnHome: boolean;
+    };
+    /** @enum {string} */
+    TimerShape: 'Disc' | 'Bar';
+    /** @enum {string} */
+    TimerSize: 'Small' | 'Medium' | 'Large';
     TimeZoneId: string;
     Unplanned: {
       /**
@@ -5186,6 +5237,9 @@ export interface components {
     };
     UpdateCallingNameRequest: {
       callingName: null | string;
+    };
+    UpdateChildChimeRequest: {
+      allowChime: boolean;
     };
     UpdateChildHomeworkChunksRequest: {
       /** Format: int32 */
@@ -5278,6 +5332,15 @@ export interface components {
       icon: string;
       color: string;
     };
+    UpdateTimerPreferencesRequest: {
+      shape: components['schemas']['TimerShape'];
+      size: components['schemas']['TimerSize'];
+      color: components['schemas']['TimerColor'];
+      showMinutes: boolean;
+      chime: boolean;
+      chimeSound: components['schemas']['ChimeSound'];
+      chimeOnHome: boolean;
+    };
     UpdateTimeZoneRequest: {
       timeZoneId: string;
     };
@@ -5293,6 +5356,8 @@ export interface components {
       language: components['schemas']['Language'];
       showVisualTimers: boolean;
       homeworkChunks: components['schemas']['HomeworkChunks'];
+      timerPreferences: components['schemas']['TimerPreferences'];
+      allowChime: boolean;
     };
     VerifyEmailRequest: {
       token: string;
@@ -5874,6 +5939,68 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': components['schemas']['UpdateLanguageRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  UpdateCurrentTimerPreferences: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateTimerPreferencesRequest'];
       };
     };
     responses: {
@@ -6676,6 +6803,70 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': components['schemas']['UpdateChildVisualTimersRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChildSummary'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  UpdateChildChime: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateChildChimeRequest'];
       };
     };
     responses: {

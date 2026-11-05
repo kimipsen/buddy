@@ -137,6 +137,16 @@ export class GuardiansService {
     );
   }
 
+  // Mutes (false) or allows the child's time's-up chime, whatever sound the child picked.
+  updateChildChime(childId: string, allowChime: boolean): Promise<ChildSummary> {
+    return firstValueFrom(
+      this.http.patch<ChildSummary>(
+        `${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/chime`,
+        { allowChime },
+      ),
+    );
+  }
+
   updateChildHomeworkChunks(childId: string, chunks: HomeworkChunks): Promise<ChildSummary> {
     return firstValueFrom(
       this.http.patch<ChildSummary>(

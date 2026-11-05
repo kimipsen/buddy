@@ -22,6 +22,16 @@ export function child(id = 'child-1', givenName = 'Ada'): ChildSummary {
   return {
     showVisualTimers: true,
     homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
+    timerPreferences: {
+      shape: 'Disc',
+      size: 'Large',
+      color: 'Routine',
+      showMinutes: true,
+      chime: true,
+      chimeSound: 'Bell',
+      chimeOnHome: false,
+    },
+    allowChime: true,
     id,
     name: { givenName, familyName: 'Hansen' },
     guardianLinkId: `link-${id}`,

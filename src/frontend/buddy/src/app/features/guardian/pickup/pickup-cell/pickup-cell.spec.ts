@@ -23,6 +23,16 @@ describe('PickupCell', () => {
     return {
       showVisualTimers: true,
       homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
+      timerPreferences: {
+        shape: 'Disc',
+        size: 'Large',
+        color: 'Routine',
+        showMinutes: true,
+        chime: true,
+        chimeSound: 'Bell',
+        chimeOnHome: false,
+      },
+      allowChime: true,
       id,
       name: { givenName, familyName: 'Kid' },
       guardianLinkId: `link-${id}`,

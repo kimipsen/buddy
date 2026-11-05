@@ -178,8 +178,49 @@
               <p class="text-slate-500 dark:text-slate-400">
                 {{ 'admin.manageChildren.visualTimers.hint' | translate }}
               </p>
+              @if (child.showVisualTimers) {
+                @let choices = child.timerPreferences;
+                <p class="text-slate-500 dark:text-slate-400" data-testid="timer-choices">
+                  {{ 'admin.manageChildren.visualTimers.choicesLabel' | translate }}:
+                  {{ shapeLabels[choices.shape] | translate }} ·
+                  {{ sizeLabels[choices.size] | translate }} ·
+                  {{ colorLabels[choices.color] | translate }} ·
+                  {{
+                    (choices.showMinutes
+                      ? 'admin.manageChildren.visualTimers.minutesShown'
+                      : 'admin.manageChildren.visualTimers.minutesHidden'
+                    ) | translate
+                  }}
+                  <!-- Only a sound that can play: the guardian's mute wins over the child's choice. -->
+                  @if (choices.chime && child.allowChime) {
+                    · {{ soundLabels[choices.chimeSound] | translate }}
+                    @if (choices.chimeOnHome) {
+                      ({{ 'admin.manageChildren.visualTimers.soundOnHome' | translate }})
+                    }
+                  }
+                </p>
+              }
             </div>
           </div>
+
+          @if (child.showVisualTimers) {
+            <div class="mt-2 flex items-start gap-2">
+              <app-toggle
+                [checked]="child.allowChime"
+                [disabled]="savingChimeChildId() === child.id"
+                [ariaLabel]="'admin.manageChildren.chime.label' | translate"
+                (checkedChange)="changeChime(child.id, $event)"
+              />
+              <div class="text-xs">
+                <span class="font-medium text-slate-700 dark:text-slate-300">{{
+                  'admin.manageChildren.chime.label' | translate
+                }}</span>
+                <p class="text-slate-500 dark:text-slate-400">
+                  {{ 'admin.manageChildren.chime.hint' | translate }}
+                </p>
+              </div>
+            </div>
+          }
 
           @if (features.enabled('homework')) {
             <div class="mt-2 text-xs" data-testid="homework-lengths">
@@ -259,6 +300,9 @@
             <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ message | translate }}</p>
           }
           @if (visualTimersErrorFor(child.id); as message) {
+            <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ message | translate }}</p>
+          }
+          @if (chimeErrorFor(child.id); as message) {
             <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ message | translate }}</p>
           }
           @if (homeworkErrorFor(child.id); as message) {
