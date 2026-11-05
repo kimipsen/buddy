@@ -24,9 +24,14 @@ FROM mcr.microsoft.com/dotnet/aspnet:11.0.0-rc.3@sha256:bae0269049d5061ab7f49995
 
 # A home directory, because Data Protection (MealplansFeature) keeps its key ring under
 # ~/.aspnet when nothing else is configured; without one the keys would live only in memory.
+# CVE-2026-109518 (apt, fixed in 3.2.1ubuntu0.1) isn't in the rc.3 image yet: drop the apt upgrade
+# once Dependabot's digest bump brings an aspnet rebuild with the fixed apt.
 RUN if ! id -u aspnet >/dev/null 2>&1; then \
 			groupadd --system aspnet && useradd --system --gid aspnet --create-home aspnet; \
-		fi
+		fi \
+	&& apt-get update \
+	&& DEBIAN_FRONTEND=noninteractive apt-get install --only-upgrade -y --no-install-recommends apt libapt-pkg7.0 \
+	&& rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY --from=build /app .
