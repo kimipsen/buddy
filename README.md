@@ -125,6 +125,7 @@ in real time.
 - [x] The screen stays on, and the session alive, while a child's timer runs, so a long timer
       neither dims the iPad nor signs the child out — see
       [Keep the screen awake](docs/frontend/analysis/keep-screen-awake.md)
+- [x] A soft two-note chime in the focus view when the current step's time runs out (issue #49)
 
 ### Platform
 
