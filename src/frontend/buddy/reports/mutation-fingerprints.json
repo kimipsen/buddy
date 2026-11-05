@@ -15,7 +15,7 @@
   "src/app/core/medicine-effects.ts": "8a18e1ab4f89",
   "src/app/core/onboarding.guard.ts": "c22b6b1cbca5",
   "src/app/core/own-timer-storage.ts": "7b3ed4f33456",
-  "src/app/core/own-timer.ts": "42d0eaa2361a",
+  "src/app/core/own-timer.ts": "2cee8947dcdd",
   "src/app/core/pending-return-url.ts": "4be57ee0278b",
   "src/app/core/pictograms.ts": "0ac546ff0dcf",
   "src/app/core/print-page-style.ts": "9398ee41fda0",
@@ -35,7 +35,7 @@
   "src/app/features/child/homework/child-homework.ts": "b9e0d059de28",
   "src/app/features/child/rewards/child-rewards.ts": "81b53baa2514",
   "src/app/features/child/rules/child-rules.ts": "4676cf23b9ec",
-  "src/app/features/child/timer/child-timer-page.ts": "f674c75ccb39",
+  "src/app/features/child/timer/child-timer-page.ts": "ba6ddff5535c",
   "src/app/features/child/transition-warning-banner/transition-warning-banner.ts": "c1bf6f23786a",
   "src/app/features/child/visual-timers.guard.ts": "61929ce05a6d",
   "src/app/shared/visual-timer/visual-timer.ts": "68a43c9809fc"

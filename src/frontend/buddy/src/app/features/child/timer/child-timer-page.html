@@ -125,31 +125,35 @@
         />
       </div>
 
-      <div class="space-y-2">
-        <p id="timer-color-label" class="text-lg font-semibold">
+      <!-- Native radios, so the arrow keys move between colours like any radio group. -->
+      <fieldset class="space-y-2">
+        <legend class="text-lg font-semibold">
           {{ 'childTimer.look.colorLabel' | translate }}
-        </p>
-        <div class="flex flex-wrap gap-3" role="radiogroup" aria-labelledby="timer-color-label">
+        </legend>
+        <div class="flex flex-wrap gap-3">
           @for (option of colorOptions; track option.value) {
-            <button
-              type="button"
-              role="radio"
-              class="size-12 rounded-full border-4 transition focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:focus:ring-emerald-700"
-              [class.border-slate-900]="preferences().color === option.value"
-              [class.dark:border-white]="preferences().color === option.value"
-              [class.border-transparent]="preferences().color !== option.value"
-              [attr.aria-checked]="preferences().color === option.value"
-              [attr.aria-label]="option.label | translate"
-              [attr.title]="option.label | translate"
-              [style.background]="
-                option.hex ??
-                'conic-gradient(#10b981, #0ea5e9, #a855f7, #ec4899, #f97316, #f59e0b, #10b981)'
-              "
-              (click)="change({ color: option.value })"
-            ></button>
+            <label class="cursor-pointer" [attr.title]="option.label | translate">
+              <input
+                type="radio"
+                name="timer-color"
+                class="peer sr-only"
+                [value]="option.value"
+                [checked]="preferences().color === option.value"
+                (change)="change({ color: option.value })"
+              />
+              <span class="sr-only">{{ option.label | translate }}</span>
+              <span
+                aria-hidden="true"
+                class="block size-12 rounded-full border-4 border-transparent transition peer-checked:border-slate-900 peer-focus-visible:ring-4 peer-focus-visible:ring-emerald-300 dark:peer-checked:border-white dark:peer-focus-visible:ring-emerald-700"
+                [style.background]="
+                  option.hex ??
+                  'conic-gradient(#10b981, #0ea5e9, #a855f7, #ec4899, #f97316, #f59e0b, #10b981)'
+                "
+              ></span>
+            </label>
           }
         </div>
-      </div>
+      </fieldset>
 
       <div class="flex items-center justify-between gap-4">
         <span class="text-lg font-semibold">{{ 'childTimer.look.showMinutes' | translate }}</span>

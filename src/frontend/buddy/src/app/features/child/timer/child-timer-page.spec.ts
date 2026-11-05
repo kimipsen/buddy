@@ -87,6 +87,19 @@ describe('ChildTimerPage', () => {
     );
   }
 
+  function colour(fixture: ComponentFixture<ChildTimerPage>, name: string): HTMLInputElement {
+    const label = Array.from(page(fixture).querySelectorAll('fieldset label')).find(
+      (candidate) => candidate.textContent?.trim() === name,
+    );
+    expect(label, `colour "${name}"`).toBeDefined();
+    return label!.querySelector('input[type="radio"]')!;
+  }
+
+  async function pickColour(fixture: ComponentFixture<ChildTimerPage>, name: string) {
+    colour(fixture, name).click();
+    await settle(fixture);
+  }
+
   function ownTimerLabel(fixture: ComponentFixture<ChildTimerPage>) {
     return page(fixture)
       .querySelector('[data-testid="own-timer"] [role="timer"]')
@@ -112,11 +125,17 @@ describe('ChildTimerPage', () => {
     expect(radioLabels(fixture, 'Shape')).toEqual(['Circle', 'Bar']);
     expect(radioLabels(fixture, 'Size')).toEqual(['Small', 'Medium', 'Large']);
     expect(radioLabels(fixture, 'Sound')).toEqual(['Bell', 'Xylophone', 'Gong']);
+    expect(page(fixture).querySelector('fieldset legend')?.textContent?.trim()).toBe('Colour');
     expect(
-      Array.from(
-        page(fixture).querySelectorAll('[aria-labelledby="timer-color-label"] [role="radio"]'),
-      ).map((swatch) => swatch.getAttribute('aria-label')),
+      Array.from(page(fixture).querySelectorAll('fieldset label')).map((label) =>
+        label.textContent?.trim(),
+      ),
     ).toEqual(['Same as the routine', 'Green', 'Blue', 'Purple', 'Pink', 'Orange', 'Yellow']);
+    expect(
+      Array.from(page(fixture).querySelectorAll<HTMLInputElement>('fieldset input')).map(
+        (input) => input.name,
+      ),
+    ).toEqual(Array(7).fill('timer-color'));
   });
 
   it('offers four preset lengths and a preview of the timer before one starts', async () => {
@@ -244,14 +263,14 @@ describe('ChildTimerPage', () => {
     });
     expect(bar.getAttribute('aria-checked')).toBe('true');
 
-    await click(fixture, 'Blue');
+    await pickColour(fixture, 'Blue');
     expect(updateTimerPreferences).toHaveBeenLastCalledWith({
       ...DEFAULT_TIMER_PREFERENCES,
       shape: 'Bar',
       color: 'Blue',
     });
-    expect(button(fixture, 'Blue')!.getAttribute('aria-checked')).toBe('true');
-    expect(button(fixture, 'Same as the routine')!.getAttribute('aria-checked')).toBe('false');
+    expect(colour(fixture, 'Blue').checked).toBe(true);
+    expect(colour(fixture, 'Same as the routine').checked).toBe(false);
   });
 
   it('keeps the first change when a second one is made before the first is saved', async () => {
@@ -266,8 +285,8 @@ describe('ChildTimerPage', () => {
       return save(preferences);
     });
 
-    await click(fixture, 'Blue');
-    expect(button(fixture, 'Blue')!.getAttribute('aria-checked')).toBe('true');
+    await pickColour(fixture, 'Blue');
+    expect(colour(fixture, 'Blue').checked).toBe(true);
     const bar = Array.from(page(fixture).querySelectorAll('[role="radio"]')).find(
       (radio) => radio.textContent?.trim() === 'Bar',
     ) as HTMLButtonElement;
@@ -277,7 +296,7 @@ describe('ChildTimerPage', () => {
     // The second save waits for the first, and carries both changes.
     expect(updateTimerPreferences).toHaveBeenCalledTimes(1);
     expect(bar.getAttribute('aria-checked')).toBe('true');
-    expect(button(fixture, 'Blue')!.getAttribute('aria-checked')).toBe('true');
+    expect(colour(fixture, 'Blue').checked).toBe(true);
 
     let releaseSecond!: () => void;
     const secondSaved = new Promise<void>((resolve) => (releaseSecond = resolve));
@@ -308,14 +327,14 @@ describe('ChildTimerPage', () => {
 
   it('follows the saved preferences once nothing is left to save', async () => {
     const fixture = await setup();
-    await click(fixture, 'Blue');
+    await pickColour(fixture, 'Blue');
 
     // Changed on another device and loaded again: the page shows the account's value.
     me.set(child({ color: 'Pink' }));
     await settle(fixture);
 
-    expect(button(fixture, 'Pink')!.getAttribute('aria-checked')).toBe('true');
-    expect(button(fixture, 'Blue')!.getAttribute('aria-checked')).toBe('false');
+    expect(colour(fixture, 'Pink').checked).toBe(true);
+    expect(colour(fixture, 'Blue').checked).toBe(false);
   });
 
   it('turns the minutes and the sound on and off', async () => {
@@ -369,13 +388,13 @@ describe('ChildTimerPage', () => {
     const fixture = await setup();
     updateTimerPreferences.mockRejectedValueOnce(new Error('offline'));
 
-    await click(fixture, 'Purple');
+    await pickColour(fixture, 'Purple');
     expect(page(fixture).querySelector('[role="alert"]')?.textContent).toContain(
       "Couldn't save that. Try again.",
     );
-    expect(button(fixture, 'Purple')!.getAttribute('aria-checked')).toBe('false');
+    expect(colour(fixture, 'Purple').checked).toBe(false);
 
-    await click(fixture, 'Purple');
+    await pickColour(fixture, 'Purple');
     expect(page(fixture).querySelector('[role="alert"]')).toBeNull();
   });
 
