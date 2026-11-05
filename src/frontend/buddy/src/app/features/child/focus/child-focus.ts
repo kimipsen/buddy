@@ -16,6 +16,7 @@ import { completeChildTask } from '../../../core/child-task-completion';
 import { ChildTimerService } from '../../../core/child-timer.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { keepAwakeWhile } from '../../../core/keep-awake';
+import { TimeUpChimeService } from '../../../core/time-up-chime.service';
 import {
   TaskRun,
   compareOccurrences,
@@ -41,11 +42,14 @@ const NOW_REFRESH_INTERVAL_MS = 60_000;
   selector: 'app-child-focus',
   imports: [Icon, TranslatePipe, RouterLink, ChildPage, LoadingSpinner, VisualTimer],
   templateUrl: './child-focus.html',
+  // Any tap lets the page make sound later (browsers block audio until the user interacts).
+  host: { '(pointerdown)': 'unlockChime()' },
 })
 export class ChildFocus implements OnInit, OnDestroy {
   private readonly calendars = inject(CalendarsService);
   private readonly clock = inject(ChildClockService);
   private readonly childTimer = inject(ChildTimerService);
+  private readonly chime = inject(TimeUpChimeService);
   // Stryker disable next-line StringLiteral: the route always has :itemId, and no run has either fallback as its id
   private readonly itemId = inject(ActivatedRoute).snapshot.paramMap.get('itemId') ?? '';
 
@@ -103,6 +107,20 @@ export class ChildFocus implements OnInit, OnDestroy {
       // Stryker disable next-line ArrowFunction,CallExpression: a leftover timeout only refreshes `now` to the real time
       onCleanup(() => clearTimeout(id));
     });
+
+    // Chime when the step on screen runs out while the child watches (GitHub issue #49), not when
+    // the page opens on a step that was already over, or when the step changes.
+    let previous: { key: string; phase: TimerState['phase'] } | null = null;
+    effect(() => {
+      const state = this.state();
+      const key = state?.current ? occurrenceKey(state.current) : null;
+      const phase = state?.phase;
+
+      if (previous?.key === key && previous.phase === 'running' && phase === 'timesUp') {
+        this.chime.play();
+      }
+      previous = key !== null && phase !== undefined ? { key, phase } : null;
+    });
   }
 
   ngOnInit(): void {
@@ -111,6 +129,10 @@ export class ChildFocus implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     clearInterval(this.nowIntervalId);
+  }
+
+  protected unlockChime(): void {
+    this.chime.unlock();
   }
 
   protected keyFor(task: CalendarOccurrence): string {

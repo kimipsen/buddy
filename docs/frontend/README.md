@@ -258,6 +258,9 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
   re-requested when the page is shown again); pages use it through `keepAwakeWhile` in
   `core/keep-awake.ts`, which also refreshes the token every 4 minutes while a timer runs
   ([design](analysis/keep-screen-awake.md))
+- `TimeUpChimeService` plays the Web Audio chime the focus view sounds when a running step's time
+  runs out; the focus view unlocks it on any tap, since browsers block audio until the user
+  interacts, and it stays silent where Web Audio is missing or still blocked
 - `MealplansService` calls meal-library, meal-plan, rating, group-sharing, iCal
   subscription-token and import (preview, commit, list, undo) endpoints, and the Mealie recipe
   links on library meals (link, unlink, create from a recipe), keeping the shared meal list in step

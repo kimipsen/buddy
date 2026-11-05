@@ -11,6 +11,7 @@ import {
 } from '../../../core/calendars.service';
 import { todayIsoDate } from '../../../core/date-utils';
 import { ScreenWakeLockService } from '../../../core/screen-wake-lock.service';
+import { TimeUpChimeService } from '../../../core/time-up-chime.service';
 import { UsersService } from '../../../core/users.service';
 import { ChildFocus } from './child-focus';
 
@@ -209,6 +210,68 @@ describe('ChildFocus', () => {
     await vi.advanceTimersByTimeAsync(60_000);
     await settleFaked(fixture);
     expect(hold).toHaveBeenCalledTimes(1);
+  });
+
+  it("chimes once when the step's time runs out while the page is open", async () => {
+    const play = vi.spyOn(TimeUpChimeService.prototype, 'play').mockImplementation(() => undefined);
+    fakeAllTimers(NOW);
+    const { fixture } = await setup({ listTodayOccurrences: vi.fn(async () => morning()) });
+    await settleFaked(fixture);
+
+    await vi.advanceTimersByTimeAsync(3 * 60_000 - 1);
+    await settleFaked(fixture);
+    expect(play).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
+    await settleFaked(fixture);
+    expect(play).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    await settleFaked(fixture);
+    expect(play).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not chime for a step whose time was already up when the page opened', async () => {
+    const play = vi.spyOn(TimeUpChimeService.prototype, 'play').mockImplementation(() => undefined);
+    fakeAllTimers(NOW);
+    const { fixture } = await setup({
+      listTodayOccurrences: vi.fn(async () => [subtask('sub-1', 'Get dressed', '11:50', '11:55')]),
+    });
+    await settleFaked(fixture);
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    await settleFaked(fixture);
+    expect(timerLabel(fixture.nativeElement as HTMLElement)).toContain("Time's up");
+    expect(play).not.toHaveBeenCalled();
+  });
+
+  it('does not chime when a running step is marked done and the next one is already over', async () => {
+    const play = vi.spyOn(TimeUpChimeService.prototype, 'play').mockImplementation(() => undefined);
+    const { fixture } = await setup({
+      listTodayOccurrences: vi.fn(async () => [
+        // Same start, so they keep this order: the running step first, then one already over.
+        subtask('sub-1', 'Get dressed', '11:50', '12:05'),
+        subtask('sub-2', 'Eat breakfast', '11:50', '11:55'),
+      ]),
+    });
+    await settle(fixture);
+
+    button(fixture.nativeElement as HTMLElement, "I'm done")!.click();
+    await settle(fixture);
+
+    expect(text(fixture.nativeElement as HTMLElement)).toContain('Eat breakfast');
+    expect(play).not.toHaveBeenCalled();
+  });
+
+  it('unlocks the chime on a tap anywhere on the page', async () => {
+    const unlock = vi.spyOn(TimeUpChimeService.prototype, 'unlock');
+    const { fixture } = await setup({ listTodayOccurrences: vi.fn(async () => morning()) });
+    await settle(fixture);
+    expect(unlock).not.toHaveBeenCalled();
+
+    (fixture.nativeElement as HTMLElement).dispatchEvent(new Event('pointerdown'));
+
+    expect(unlock).toHaveBeenCalledTimes(1);
   });
 
   it('stops the minute refresh on leaving', async () => {
