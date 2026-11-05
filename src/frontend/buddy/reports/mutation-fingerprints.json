@@ -19,7 +19,7 @@
   "src/app/core/print-templates.service.ts": "f84d0e16d832",
   "src/app/core/screen-wake-lock.service.ts": "b814956d867d",
   "src/app/core/session-expired.ts": "d72adeda2d80",
-  "src/app/core/time-up-chime.service.ts": "6d1494ff541b",
+  "src/app/core/time-up-chime.service.ts": "bc9ee96f7116",
   "src/app/core/visible-poll.ts": "fcf2231a328a",
   "src/app/core/work-locations.service.ts": "1a8dcef8e807",
   "src/app/features/child/calendar/meal-visibility-storage.ts": "619b045f2ec5",

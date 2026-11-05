@@ -27,7 +27,7 @@ export class TimeUpChimeService {
 
   play(): void {
     const context = this.audioContext();
-    if (!context || context.state !== 'running') {
+    if (context?.state !== 'running') {
       return;
     }
 
