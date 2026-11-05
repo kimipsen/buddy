@@ -49,7 +49,9 @@ public sealed record UserResponse(
     TimeZoneId TimeZoneId,
     Language Language,
     bool ShowVisualTimers,
-    HomeworkChunks HomeworkChunks)
+    HomeworkChunks HomeworkChunks,
+    TimerPreferences TimerPreferences,
+    bool AllowChime)
 {
     public static UserResponse FromUser(User user) => new(
         user.Id,
@@ -60,5 +62,7 @@ public sealed record UserResponse(
         user.TimeZoneId,
         user.Language,
         user.ShowVisualTimers,
-        user.HomeworkChunks);
+        user.HomeworkChunks,
+        user.TimerPreferences,
+        user.AllowChime);
 };

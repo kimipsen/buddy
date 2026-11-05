@@ -25,6 +25,16 @@ describe('ChildHomework', () => {
     language: 'en',
     showVisualTimers: true,
     homeworkChunks: { focusMinutes: 10, breakMinutes: 2 },
+    timerPreferences: {
+      shape: 'Disc',
+      size: 'Large',
+      color: 'Routine',
+      showMinutes: true,
+      chime: true,
+      chimeSound: 'Bell',
+      chimeOnHome: false,
+    },
+    allowChime: true,
     ...overrides,
   });
 
@@ -55,6 +65,7 @@ describe('ChildHomework', () => {
               return user;
             }),
             timeZoneId: signal('UTC').asReadonly(),
+            currentUser: signal<CurrentUser | null>(null).asReadonly(),
             profileTimeZoneId: signal<string | null>(null).asReadonly(),
           },
         },

@@ -21,7 +21,12 @@ public sealed record User(
     HomeworkChunks? HomeworkChunks = null,
     // Self-managed (UpdateCallingName): what the user's children call them, shown to a child
     // instead of the given name. "" when not set.
-    string? CallingName = null)
+    string? CallingName = null,
+    // Self-managed by the child (UpdateTimerPreferences).
+    TimerPreferences? TimerPreferences = null,
+    // Guardian-managed (UpdateChildChime): false mutes every time's-up chime, whatever the child
+    // picked. Meaningful for children only.
+    bool AllowChime = true)
 {
     // Snapshot rows written before homework chunks have no property; System.Text.Json then passes
     // null. Read that as the default lengths.
@@ -29,6 +34,10 @@ public sealed record User(
 
     // Same for snapshot rows written before calling names: a missing property reads as "".
     public string CallingName { get; init; } = CallingName ?? "";
+
+    // Same for snapshot rows written before timer preferences: a missing property reads as the
+    // default look.
+    public TimerPreferences TimerPreferences { get; init; } = TimerPreferences ?? TimerPreferences.Default;
 
     public static User? Rehydrate(IEnumerable<UserEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
@@ -63,6 +72,8 @@ public sealed record User(
         ShowVisualTimersUpdated visualTimersUpdated => user with { ShowVisualTimers = visualTimersUpdated.After },
         HomeworkChunksUpdated homeworkChunksUpdated => user with { HomeworkChunks = homeworkChunksUpdated.After },
         CallingNameUpdated callingNameUpdated => user with { CallingName = callingNameUpdated.After },
+        TimerPreferencesUpdated timerPreferencesUpdated => user with { TimerPreferences = timerPreferencesUpdated.After },
+        ChimeAllowedUpdated chimeAllowedUpdated => user with { AllowChime = chimeAllowedUpdated.After },
         // A new address is never covered by a verification of the old one, so any
         // pending verification for the old address is cleared here too.
         EmailUpdated emailUpdated => user with { Email = emailUpdated.After, EmailVerification = new EmailVerification.None() },

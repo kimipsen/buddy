@@ -648,6 +648,96 @@
         ]
       }
     },
+    "/users/me/timer-preferences": {
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "UpdateCurrentTimerPreferences",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTimerPreferencesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "not_a_buddy_member",
+              "user_not_provisioned"
+            ]
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
     "/users/me/email/verify/resend": {
       "post": {
         "tags": [
@@ -1902,6 +1992,107 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UpdateChildVisualTimersRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "not_a_buddy_member",
+              "user_not_provisioned"
+            ]
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/users/me/children/{childId}/chime": {
+      "patch": {
+        "tags": [
+          "Guardians"
+        ],
+        "operationId": "UpdateChildChime",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChildChimeRequest"
               }
             }
           },
@@ -26785,7 +26976,9 @@
           "language",
           "timeZoneId",
           "showVisualTimers",
-          "homeworkChunks"
+          "homeworkChunks",
+          "timerPreferences",
+          "allowChime"
         ],
         "type": "object",
         "properties": {
@@ -26812,6 +27005,12 @@
           },
           "homeworkChunks": {
             "$ref": "#/components/schemas/HomeworkChunks"
+          },
+          "timerPreferences": {
+            "$ref": "#/components/schemas/TimerPreferences"
+          },
+          "allowChime": {
+            "type": "boolean"
           }
         }
       },
@@ -26863,6 +27062,14 @@
             }
           }
         }
+      },
+      "ChimeSound": {
+        "enum": [
+          "Bell",
+          "Xylophone",
+          "Gong"
+        ],
+        "type": "string"
       },
       "Color": {
         "type": "string"
@@ -32361,6 +32568,68 @@
           }
         }
       },
+      "TimerColor": {
+        "enum": [
+          "Routine",
+          "Green",
+          "Blue",
+          "Purple",
+          "Pink",
+          "Orange",
+          "Yellow"
+        ],
+        "type": "string"
+      },
+      "TimerPreferences": {
+        "required": [
+          "shape",
+          "size",
+          "color",
+          "showMinutes",
+          "chime",
+          "chimeSound",
+          "chimeOnHome"
+        ],
+        "type": "object",
+        "properties": {
+          "shape": {
+            "$ref": "#/components/schemas/TimerShape"
+          },
+          "size": {
+            "$ref": "#/components/schemas/TimerSize"
+          },
+          "color": {
+            "$ref": "#/components/schemas/TimerColor"
+          },
+          "showMinutes": {
+            "type": "boolean"
+          },
+          "chime": {
+            "type": "boolean"
+          },
+          "chimeSound": {
+            "$ref": "#/components/schemas/ChimeSound"
+          },
+          "chimeOnHome": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TimerShape": {
+        "enum": [
+          "Disc",
+          "Bar"
+        ],
+        "type": "string"
+      },
+      "TimerSize": {
+        "enum": [
+          "Small",
+          "Medium",
+          "Large"
+        ],
+        "type": "string"
+      },
       "TimeZoneId": {
         "type": "string"
       },
@@ -32416,6 +32685,17 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "UpdateChildChimeRequest": {
+        "required": [
+          "allowChime"
+        ],
+        "type": "object",
+        "properties": {
+          "allowChime": {
+            "type": "boolean"
           }
         }
       },
@@ -32764,6 +33044,41 @@
           }
         }
       },
+      "UpdateTimerPreferencesRequest": {
+        "required": [
+          "shape",
+          "size",
+          "color",
+          "showMinutes",
+          "chime",
+          "chimeSound",
+          "chimeOnHome"
+        ],
+        "type": "object",
+        "properties": {
+          "shape": {
+            "$ref": "#/components/schemas/TimerShape"
+          },
+          "size": {
+            "$ref": "#/components/schemas/TimerSize"
+          },
+          "color": {
+            "$ref": "#/components/schemas/TimerColor"
+          },
+          "showMinutes": {
+            "type": "boolean"
+          },
+          "chime": {
+            "type": "boolean"
+          },
+          "chimeSound": {
+            "$ref": "#/components/schemas/ChimeSound"
+          },
+          "chimeOnHome": {
+            "type": "boolean"
+          }
+        }
+      },
       "UpdateTimeZoneRequest": {
         "required": [
           "timeZoneId"
@@ -32789,7 +33104,9 @@
           "timeZoneId",
           "language",
           "showVisualTimers",
-          "homeworkChunks"
+          "homeworkChunks",
+          "timerPreferences",
+          "allowChime"
         ],
         "type": "object",
         "properties": {
@@ -32819,6 +33136,12 @@
           },
           "homeworkChunks": {
             "$ref": "#/components/schemas/HomeworkChunks"
+          },
+          "timerPreferences": {
+            "$ref": "#/components/schemas/TimerPreferences"
+          },
+          "allowChime": {
+            "type": "boolean"
           }
         }
       },

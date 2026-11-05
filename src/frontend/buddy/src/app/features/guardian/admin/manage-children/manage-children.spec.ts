@@ -21,6 +21,16 @@ describe('ManageChildren', () => {
     return {
       showVisualTimers: true,
       homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
+      timerPreferences: {
+        shape: 'Disc',
+        size: 'Large',
+        color: 'Routine',
+        showMinutes: true,
+        chime: true,
+        chimeSound: 'Bell',
+        chimeOnHome: false,
+      },
+      allowChime: true,
       id: 'child-1',
       name: { givenName: 'Sam', familyName: 'Kid' },
       guardianLinkId: 'link-1',
@@ -73,6 +83,9 @@ describe('ManageChildren', () => {
       ),
       updateChildVisualTimers: vi.fn(async (childId: string, showVisualTimers: boolean) =>
         child({ id: childId, showVisualTimers }),
+      ),
+      updateChildChime: vi.fn(async (childId: string, allowChime: boolean) =>
+        child({ id: childId, allowChime }),
       ),
       updateChildHomeworkChunks: vi.fn(
         async (childId: string, homeworkChunks: { focusMinutes: number; breakMinutes: number }) =>
@@ -1294,6 +1307,16 @@ describe('ManageChildren', () => {
             name: { givenName: 'Ada', familyName: 'Kid' },
             showVisualTimers: false,
             homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
+            timerPreferences: {
+              shape: 'Disc',
+              size: 'Large',
+              color: 'Routine',
+              showMinutes: true,
+              chime: true,
+              chimeSound: 'Bell',
+              chimeOnHome: false,
+            },
+            allowChime: true,
           }),
         ]),
       },
@@ -1504,6 +1527,139 @@ describe('ManageChildren', () => {
 
     expect(childRow(compiled, 'Sam Kid').textContent).not.toContain(error);
     expect(timerSwitch(compiled, 'Sam Kid').getAttribute('aria-checked')).toBe('false');
+  });
+
+  function chimeSwitch(compiled: HTMLElement, fullName: string): HTMLButtonElement {
+    return childRow(compiled, fullName).querySelector<HTMLButtonElement>(
+      'button[role="switch"][aria-label="Allow timer sound"]',
+    )!;
+  }
+
+  function timerChoices(compiled: HTMLElement, fullName: string): string | undefined {
+    return childRow(compiled, fullName)
+      .querySelector('[data-testid="timer-choices"]')
+      ?.textContent?.replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  it("shows the child's own timer choices read-only", async () => {
+    const { fixture } = await setup({
+      guardians: {
+        listMyChildren: vi.fn(async () => [
+          child({
+            timerPreferences: {
+              shape: 'Bar',
+              size: 'Medium',
+              color: 'Green',
+              showMinutes: false,
+              chime: true,
+              chimeSound: 'Gong',
+              chimeOnHome: true,
+            },
+          }),
+          child({
+            id: 'child-2',
+            name: { givenName: 'Ada', familyName: 'Kid' },
+            timerPreferences: {
+              shape: 'Disc',
+              size: 'Large',
+              color: 'Routine',
+              showMinutes: true,
+              chime: false,
+              chimeSound: 'Bell',
+              chimeOnHome: false,
+            },
+          }),
+        ]),
+      },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(timerChoices(compiled, 'Sam Kid')).toBe(
+      'Chosen by the child: Bar · Medium · Green · minutes hidden · Gong (also on the day page)',
+    );
+    expect(timerChoices(compiled, 'Ada Kid')).toBe(
+      'Chosen by the child: Circle · Large · Same as the routine · minutes shown',
+    );
+  });
+
+  it('leaves the sound out of the choices while a guardian has muted it', async () => {
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child({ allowChime: false })]) },
+    });
+    await settle(fixture);
+
+    expect(timerChoices(fixture.nativeElement as HTMLElement, 'Sam Kid')).toBe(
+      'Chosen by the child: Circle · Large · Same as the routine · minutes shown',
+    );
+  });
+
+  it('hides the choices and the sound switch while timers are off', async () => {
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child({ showVisualTimers: false })]) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(timerChoices(compiled, 'Sam Kid')).toBeUndefined();
+    expect(chimeSwitch(compiled, 'Sam Kid')).toBeNull();
+  });
+
+  it("mutes a child's timer sound, disabling the switch while it saves", async () => {
+    const { promise, resolve } = deferred<ChildSummary>();
+    const updateChildChime = vi.fn<GuardiansService['updateChildChime']>(() => promise);
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildChime },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(chimeSwitch(compiled, 'Sam Kid').getAttribute('aria-checked')).toBe('true');
+    expect(childRow(compiled, 'Sam Kid').textContent).toContain(
+      "The timer can play a soft sound when time's up. The child picks the sound.",
+    );
+
+    chimeSwitch(compiled, 'Sam Kid').click();
+    fixture.detectChanges();
+    expect(updateChildChime).toHaveBeenCalledWith('child-1', false);
+    expect(chimeSwitch(compiled, 'Sam Kid').disabled).toBe(true);
+
+    resolve(child({ allowChime: false }));
+    await settle(fixture);
+
+    expect(chimeSwitch(compiled, 'Sam Kid').disabled).toBe(false);
+    expect(chimeSwitch(compiled, 'Sam Kid').getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('shows a per-child sound error, cleared by a successful retry', async () => {
+    const children = [
+      child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } }),
+      child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' } }),
+    ];
+    const updateChildChime = vi
+      .fn<GuardiansService['updateChildChime']>()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockImplementation(async (childId, allowChime) => child({ id: childId, allowChime }));
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => children), updateChildChime },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const error = "Unable to update this child's timer sound.";
+    chimeSwitch(compiled, 'Sam Kid').click();
+    await settle(fixture);
+
+    expect(childRow(compiled, 'Sam Kid').textContent).toContain(error);
+    expect(childRow(compiled, 'Ada Kid').textContent).not.toContain(error);
+    expect(chimeSwitch(compiled, 'Sam Kid').getAttribute('aria-checked')).toBe('true');
+
+    chimeSwitch(compiled, 'Sam Kid').click();
+    await settle(fixture);
+
+    expect(childRow(compiled, 'Sam Kid').textContent).not.toContain(error);
+    expect(chimeSwitch(compiled, 'Sam Kid').getAttribute('aria-checked')).toBe('false');
   });
 
   it('ignores an empty time zone selection', async () => {

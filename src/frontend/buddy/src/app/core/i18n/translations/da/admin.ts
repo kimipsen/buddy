@@ -124,6 +124,15 @@ export const admin = {
       label: 'Vis nedtællingsure',
       hint: 'En skive, der bliver mindre, viser hvor lang tid der er tilbage af hvert trin i en rutine.',
       error: 'Kunne ikke opdatere barnets indstilling for nedtællingsure.',
+      choicesLabel: 'Valgt af barnet',
+      minutesShown: 'minutter vises',
+      minutesHidden: 'minutter skjult',
+      soundOnHome: 'også på dagssiden',
+    },
+    chime: {
+      label: 'Tillad lyd på uret',
+      hint: 'Uret kan spille en blød lyd, når tiden er gået. Barnet vælger lyden.',
+      error: 'Kunne ikke opdatere barnets lyd på uret.',
     },
     homework: {
       focusLabel: 'Lektiefokus',

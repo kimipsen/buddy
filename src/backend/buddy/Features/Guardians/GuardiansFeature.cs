@@ -46,6 +46,7 @@ public static class GuardiansFeature
         children.MapUpdateChildLanguage();
         children.MapUpdateChildTimeZone();
         children.MapUpdateChildVisualTimers();
+        children.MapUpdateChildChime();
         // Belongs to the homework splitter: off with it (docs/backend/analysis/feature-flags.md).
         if (features.Homework)
         {

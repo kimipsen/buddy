@@ -1,0 +1,232 @@
+<app-child-page
+  [title]="'childTimer.title' | translate"
+  [backLabel]="'childTimer.back' | translate"
+>
+  <div class="space-y-6">
+    <section
+      class="flex flex-col items-center gap-5 rounded-3xl border-4 border-emerald-200 bg-white p-5 text-center shadow-sm dark:border-emerald-800 dark:bg-slate-900 sm:p-8"
+      aria-labelledby="own-timer-title"
+    >
+      <h2 id="own-timer-title" class="text-2xl font-bold">
+        {{ 'childTimer.start.title' | translate }}
+      </h2>
+
+      @if (timer(); as timer) {
+        @if (state(); as state) {
+          <div class="flex w-full justify-center" data-testid="own-timer">
+            <app-visual-timer
+              size="min(70vw, 50vh)"
+              [large]="true"
+              [state]="state"
+              [color]="ownTimerColor"
+            />
+          </div>
+
+          <div class="flex flex-wrap justify-center gap-3">
+            @if (state.phase === 'running') {
+              <button
+                type="button"
+                class="min-h-14 min-w-14 rounded-2xl border-2 border-slate-300 bg-white px-6 text-xl font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-emerald-700"
+                (click)="pause(timer)"
+              >
+                {{ 'child.home.timer.pause' | translate }}
+              </button>
+            } @else if (state.phase === 'paused') {
+              <button
+                type="button"
+                class="min-h-14 min-w-14 rounded-2xl bg-emerald-500 px-6 text-xl font-bold text-white transition hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:focus:ring-emerald-700"
+                (click)="resume(timer)"
+              >
+                {{ 'child.home.timer.resume' | translate }}
+              </button>
+            }
+            <button
+              type="button"
+              class="min-h-14 min-w-14 rounded-2xl border-2 border-slate-300 bg-white px-6 text-xl font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-emerald-700"
+              (click)="stop()"
+            >
+              {{
+                (state.phase === 'timesUp' ? 'childTimer.newTimer' : 'child.home.timer.stop')
+                  | translate
+              }}
+            </button>
+          </div>
+        }
+      } @else {
+        <ul class="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
+          @for (minutes of presets; track minutes) {
+            <li>
+              <button
+                type="button"
+                class="flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-emerald-300 bg-emerald-50 px-4 py-3 text-xl font-bold text-emerald-900 transition hover:bg-emerald-100 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:border-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20 dark:focus:ring-emerald-700"
+                [attr.aria-label]="'childTimer.start.startLabel' | translate: { count: minutes }"
+                (click)="start(minutes)"
+              >
+                <!-- A wedge as big as the length's share of 15 minutes, for children who don't read numbers. -->
+                <svg aria-hidden="true" viewBox="0 0 36 36" class="size-10">
+                  <circle cx="18" cy="18" r="16" class="fill-slate-200 dark:fill-slate-700" />
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="8"
+                    fill="none"
+                    stroke-width="16"
+                    class="stroke-emerald-500"
+                    transform="rotate(-90 18 18)"
+                    [attr.stroke-dasharray]="(minutes / 15) * 50.27 + ' 50.27'"
+                  />
+                </svg>
+                {{ 'childTimer.start.minutes' | translate: { count: minutes } }}
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section
+      class="space-y-5 rounded-3xl border-4 border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8"
+      aria-labelledby="timer-look-title"
+    >
+      <h2 id="timer-look-title" class="text-2xl font-bold">
+        {{ 'childTimer.look.title' | translate }}
+      </h2>
+
+      @if (!timer()) {
+        <div class="flex justify-center" data-testid="timer-preview">
+          <app-visual-timer
+            size="min(50vw, 14rem)"
+            [large]="true"
+            [state]="preview"
+            [color]="ownTimerColor"
+            [announce]="false"
+          />
+        </div>
+        <p class="sr-only">{{ 'childTimer.look.preview' | translate }}</p>
+      }
+
+      <div class="space-y-2">
+        <p class="text-lg font-semibold">{{ 'childTimer.look.shapeLabel' | translate }}</p>
+        <app-segmented-control
+          [options]="shapeOptions()"
+          [selected]="preferences().shape"
+          [ariaLabel]="'childTimer.look.shapeLabel' | translate"
+          (selectedChange)="change({ shape: $event })"
+        />
+      </div>
+
+      <div class="space-y-2">
+        <p class="text-lg font-semibold">{{ 'childTimer.look.sizeLabel' | translate }}</p>
+        <app-segmented-control
+          [options]="sizeOptions()"
+          [selected]="preferences().size"
+          [ariaLabel]="'childTimer.look.sizeLabel' | translate"
+          (selectedChange)="change({ size: $event })"
+        />
+      </div>
+
+      <div class="space-y-2">
+        <p id="timer-color-label" class="text-lg font-semibold">
+          {{ 'childTimer.look.colorLabel' | translate }}
+        </p>
+        <div class="flex flex-wrap gap-3" role="radiogroup" aria-labelledby="timer-color-label">
+          @for (option of colorOptions; track option.value) {
+            <button
+              type="button"
+              role="radio"
+              class="size-12 rounded-full border-4 transition focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:focus:ring-emerald-700"
+              [class.border-slate-900]="preferences().color === option.value"
+              [class.dark:border-white]="preferences().color === option.value"
+              [class.border-transparent]="preferences().color !== option.value"
+              [attr.aria-checked]="preferences().color === option.value"
+              [attr.aria-label]="option.label | translate"
+              [attr.title]="option.label | translate"
+              [style.background]="
+                option.hex ??
+                'conic-gradient(#10b981, #0ea5e9, #a855f7, #ec4899, #f97316, #f59e0b, #10b981)'
+              "
+              (click)="change({ color: option.value })"
+            ></button>
+          }
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-4">
+        <span class="text-lg font-semibold">{{ 'childTimer.look.showMinutes' | translate }}</span>
+        <app-toggle
+          size="lg"
+          [checked]="preferences().showMinutes"
+          [ariaLabel]="'childTimer.look.showMinutes' | translate"
+          (checkedChange)="change({ showMinutes: $event })"
+        />
+      </div>
+    </section>
+
+    <section
+      class="space-y-5 rounded-3xl border-4 border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8"
+      aria-labelledby="timer-sound-title"
+    >
+      <h2 id="timer-sound-title" class="text-2xl font-bold">
+        {{ 'childTimer.sound.title' | translate }}
+      </h2>
+
+      @if (!chimeAllowed()) {
+        <p class="text-lg text-slate-600 dark:text-slate-300">
+          {{ 'childTimer.sound.mutedByGuardian' | translate }}
+        </p>
+      } @else {
+        <div class="flex items-center justify-between gap-4">
+          <span class="text-lg font-semibold">{{ 'childTimer.sound.chime' | translate }}</span>
+          <app-toggle
+            size="lg"
+            [checked]="preferences().chime"
+            [ariaLabel]="'childTimer.sound.chime' | translate"
+            (checkedChange)="change({ chime: $event })"
+          />
+        </div>
+
+        @if (preferences().chime) {
+          <div class="space-y-2">
+            <p class="text-lg font-semibold">{{ 'childTimer.sound.soundLabel' | translate }}</p>
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="min-w-0 flex-1">
+                <app-segmented-control
+                  [options]="soundOptions()"
+                  [selected]="preferences().chimeSound"
+                  [ariaLabel]="'childTimer.sound.soundLabel' | translate"
+                  (selectedChange)="change({ chimeSound: $event })"
+                />
+              </div>
+              <button
+                type="button"
+                class="min-h-11 rounded-xl border-2 border-slate-300 bg-white px-4 text-base font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-emerald-700"
+                (click)="listen(preferences().chimeSound)"
+              >
+                🔔 {{ 'childTimer.sound.play' | translate }}
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-4">
+            <span class="text-lg font-semibold">{{ 'childTimer.sound.onHome' | translate }}</span>
+            <app-toggle
+              size="lg"
+              [checked]="preferences().chimeOnHome"
+              [ariaLabel]="'childTimer.sound.onHome' | translate"
+              (checkedChange)="change({ chimeOnHome: $event })"
+            />
+          </div>
+        }
+      }
+    </section>
+
+    @if (saveError(); as message) {
+      <p
+        role="alert"
+        class="rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-base font-semibold text-red-700 dark:border-red-800 dark:bg-red-500/10 dark:text-red-400"
+      >
+        {{ message | translate }}
+      </p>
+    }
+  </div>
+</app-child-page>

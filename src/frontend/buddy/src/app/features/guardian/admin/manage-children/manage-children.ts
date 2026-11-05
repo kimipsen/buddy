@@ -23,6 +23,12 @@ import {
   FOCUS_MINUTES_RANGE,
   HomeworkChunks,
 } from '../../../../core/homework-plan';
+import {
+  CHIME_SOUND_LABELS,
+  TIMER_COLOR_LABELS,
+  TIMER_SHAPE_LABELS,
+  TIMER_SIZE_LABELS,
+} from '../../../../core/timer-preferences';
 import { TransitionWarningsService } from '../../../../core/transition-warnings.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 import { Card } from '../../../../shared/card/card';
@@ -113,6 +119,14 @@ export class ManageChildren {
 
   protected readonly savingVisualTimersChildId = signal<string | null>(null);
   protected readonly visualTimersErrorByChildId = signal<Record<string, string>>({});
+  protected readonly savingChimeChildId = signal<string | null>(null);
+  protected readonly chimeErrorByChildId = signal<Record<string, string>>({});
+
+  // The child's own timer choices, shown read-only (docs/frontend/analysis/child-timer-preferences.md).
+  protected readonly shapeLabels = TIMER_SHAPE_LABELS;
+  protected readonly sizeLabels = TIMER_SIZE_LABELS;
+  protected readonly colorLabels = TIMER_COLOR_LABELS;
+  protected readonly soundLabels = CHIME_SOUND_LABELS;
 
   protected readonly savingHomeworkChildId = signal<string | null>(null);
   protected readonly homeworkErrorByChildId = signal<Record<string, string>>({});
@@ -343,6 +357,27 @@ export class ManageChildren {
       }));
     } finally {
       this.savingVisualTimersChildId.set(null);
+    }
+  }
+
+  protected chimeErrorFor(childId: string): string | undefined {
+    return this.chimeErrorByChildId()[childId];
+  }
+
+  protected async changeChime(childId: string, allowChime: boolean): Promise<void> {
+    this.savingChimeChildId.set(childId);
+    this.chimeErrorByChildId.update((byChildId) => withoutKey(byChildId, childId));
+
+    try {
+      const updated = await this.guardians.updateChildChime(childId, allowChime);
+      this.replaceChild(childId, updated);
+    } catch {
+      this.chimeErrorByChildId.update((byChildId) => ({
+        ...byChildId,
+        [childId]: 'admin.manageChildren.chime.error',
+      }));
+    } finally {
+      this.savingChimeChildId.set(null);
     }
   }
 

@@ -124,6 +124,15 @@ export const admin = {
       label: 'Show time-left timers',
       hint: 'A shrinking disc shows how long is left of each step in a routine.',
       error: "Unable to update this child's timer setting.",
+      choicesLabel: 'Chosen by the child',
+      minutesShown: 'minutes shown',
+      minutesHidden: 'minutes hidden',
+      soundOnHome: 'also on the day page',
+    },
+    chime: {
+      label: 'Allow timer sound',
+      hint: "The timer can play a soft sound when time's up. The child picks the sound.",
+      error: "Unable to update this child's timer sound.",
     },
     homework: {
       focusLabel: 'Homework focus',

@@ -12,7 +12,8 @@ import {
 import { todayIsoDate } from '../../../core/date-utils';
 import { ScreenWakeLockService } from '../../../core/screen-wake-lock.service';
 import { TimeUpChimeService } from '../../../core/time-up-chime.service';
-import { UsersService } from '../../../core/users.service';
+import { DEFAULT_TIMER_PREFERENCES } from '../../../core/timer-preferences';
+import { CurrentUser, UsersService } from '../../../core/users.service';
 import { ChildFocus } from './child-focus';
 
 describe('ChildFocus', () => {
@@ -72,7 +73,20 @@ describe('ChildFocus', () => {
     localStorage.clear();
   });
 
-  async function setup(calendars: Partial<CalendarsService>, itemId = 'run-1') {
+  // A signed-in child with the default timer preferences (the bell, allowed).
+  const child = (overrides: Partial<CurrentUser> = {}): CurrentUser =>
+    ({
+      showVisualTimers: true,
+      allowChime: true,
+      timerPreferences: DEFAULT_TIMER_PREFERENCES,
+      ...overrides,
+    }) as CurrentUser;
+
+  async function setup(
+    calendars: Partial<CalendarsService>,
+    itemId = 'run-1',
+    me: CurrentUser = child(),
+  ) {
     const calendarsStub: Partial<CalendarsService> = {
       setTaskCompletion: vi.fn(
         async () => ({ itemId, occurrenceDate: today, isCompleted: true }) as TaskCompletion,
@@ -89,6 +103,7 @@ describe('ChildFocus', () => {
           provide: UsersService,
           useValue: {
             timeZoneId: signal('UTC').asReadonly(),
+            currentUser: signal<CurrentUser | null>(me).asReadonly(),
             profileTimeZoneId: signal<string | null>(null).asReadonly(),
           },
         },
@@ -225,10 +240,50 @@ describe('ChildFocus', () => {
     await vi.advanceTimersByTimeAsync(1);
     await settleFaked(fixture);
     expect(play).toHaveBeenCalledTimes(1);
+    expect(play).toHaveBeenCalledWith('Bell');
 
     await vi.advanceTimersByTimeAsync(60_000);
     await settleFaked(fixture);
     expect(play).toHaveBeenCalledTimes(1);
+  });
+
+  it('plays the sound the child picked', async () => {
+    const play = vi.spyOn(TimeUpChimeService.prototype, 'play').mockImplementation(() => undefined);
+    fakeAllTimers(NOW);
+    const me = child({ timerPreferences: { ...DEFAULT_TIMER_PREFERENCES, chimeSound: 'Gong' } });
+    const { fixture } = await setup(
+      { listTodayOccurrences: vi.fn(async () => morning()) },
+      'run-1',
+      me,
+    );
+    await settleFaked(fixture);
+
+    await vi.advanceTimersByTimeAsync(3 * 60_000);
+    await settleFaked(fixture);
+
+    expect(play).toHaveBeenCalledExactlyOnceWith('Gong');
+  });
+
+  it.each([
+    [
+      'the child turned the sound off',
+      { timerPreferences: { ...DEFAULT_TIMER_PREFERENCES, chime: false } },
+    ],
+    ['a guardian muted it', { allowChime: false }],
+  ])('stays silent when %s', async (_, overrides: Partial<CurrentUser>) => {
+    const play = vi.spyOn(TimeUpChimeService.prototype, 'play').mockImplementation(() => undefined);
+    fakeAllTimers(NOW);
+    const { fixture } = await setup(
+      { listTodayOccurrences: vi.fn(async () => morning()) },
+      'run-1',
+      child(overrides),
+    );
+    await settleFaked(fixture);
+
+    await vi.advanceTimersByTimeAsync(3 * 60_000);
+    await settleFaked(fixture);
+
+    expect(play).not.toHaveBeenCalled();
   });
 
   it('does not chime for a step whose time was already up when the page opened', async () => {

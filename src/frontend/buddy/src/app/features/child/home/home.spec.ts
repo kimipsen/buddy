@@ -11,6 +11,7 @@ import {
 } from '../../../core/calendars.service';
 import { addDaysIso, todayIsoDate } from '../../../core/date-utils';
 import { ScreenWakeLockService } from '../../../core/screen-wake-lock.service';
+import { TimeUpChimeService } from '../../../core/time-up-chime.service';
 import { FeelingsService } from '../../../core/feelings.service';
 import { GuardianSummary, GuardiansService, SiblingSummary } from '../../../core/guardians.service';
 import { ChildRules, HouseRulesService } from '../../../core/house-rules.service';
@@ -31,6 +32,16 @@ describe('ChildHome', () => {
   const currentUser: CurrentUser = {
     showVisualTimers: true,
     homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
+    timerPreferences: {
+      shape: 'Disc',
+      size: 'Large',
+      color: 'Routine',
+      showMinutes: true,
+      chime: true,
+      chimeSound: 'Bell',
+      chimeOnHome: false,
+    },
+    allowChime: true,
     id: 'child-1',
     email: { value: 'kid@buddy.test', isVerified: true },
     userName: 'kid',
@@ -170,6 +181,7 @@ describe('ChildHome', () => {
       ensureCurrentUser: vi.fn(async () => currentUser),
       timeZoneId: signal('UTC').asReadonly(),
       profileTimeZoneId: signal<string | null>(null).asReadonly(),
+      currentUser: signal<CurrentUser | null>(currentUser).asReadonly(),
       ...stubs.users,
     };
     const mealplansStub: Partial<MealplansService> = {
@@ -1744,6 +1756,62 @@ describe('ChildHome', () => {
       } finally {
         hold.mockRestore();
       }
+    });
+
+    describe('chime on home', () => {
+      async function settleFaked(fixture: { detectChanges: () => void }) {
+        for (let round = 0; round < 3; round++) {
+          fixture.detectChanges();
+          await vi.advanceTimersByTimeAsync(0);
+        }
+        fixture.detectChanges();
+      }
+
+      async function runOutTheStep(chimeOnHome: boolean) {
+        const play = vi
+          .spyOn(TimeUpChimeService.prototype, 'play')
+          .mockImplementation(() => undefined);
+        vi.useFakeTimers({
+          toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
+        });
+        vi.setSystemTime(NOW);
+        const me = {
+          ...currentUser,
+          timerPreferences: { ...currentUser.timerPreferences, chimeOnHome, chimeSound: 'Gong' },
+        } as CurrentUser;
+        const { fixture } = await setup({
+          calendars: { listTodayOccurrences: vi.fn(async () => morning()) },
+          users: { currentUser: signal<CurrentUser | null>(me).asReadonly() },
+        });
+        await settleFaked(fixture);
+        // Get dressed ends at 12:03.
+        await vi.advanceTimersByTimeAsync(3 * 60_000);
+        await settleFaked(fixture);
+        return play;
+      }
+
+      it("plays the child's sound when the step runs out, if they turned it on", async () => {
+        const play = await runOutTheStep(true);
+
+        expect(play).toHaveBeenCalledExactlyOnceWith('Gong');
+      });
+
+      it('stays silent by default', async () => {
+        const play = await runOutTheStep(false);
+
+        expect(play).not.toHaveBeenCalled();
+      });
+
+      it('unlocks the chime on a tap anywhere on the page', async () => {
+        const unlock = vi
+          .spyOn(TimeUpChimeService.prototype, 'unlock')
+          .mockImplementation(() => Promise.resolve());
+        const { fixture } = await setup();
+
+        (fixture.nativeElement as HTMLElement).dispatchEvent(new Event('pointerdown'));
+
+        expect(unlock).toHaveBeenCalledTimes(1);
+      });
     });
 
     it('shows no timer when no run is current', async () => {

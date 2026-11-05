@@ -9,10 +9,11 @@ import { ChildMealplan } from './mealplan/child-mealplan';
 import { ChildRewards } from './rewards/child-rewards';
 import { ChildFirstThen } from './first-then/child-first-then';
 import { ChildRules } from './rules/child-rules';
+import { ChildTimerPage } from './timer/child-timer-page';
 import { visualTimersGuard } from './visual-timers.guard';
 
 describe('child routes', () => {
-  it('serves the child home, meal plan, calendar, homework, rewards, rules, First – Then and focus pages', () => {
+  it('serves the child home, meal plan, calendar, homework, rewards, rules, First – Then, focus and timer pages', () => {
     expect(CHILD_ROUTES).toEqual([
       { path: '', component: ChildHome },
       // Behind featureGuard('mealplans') / featureGuard('progress') / featureGuard('houseRules'):
@@ -29,6 +30,8 @@ describe('child routes', () => {
         component: ChildFocus,
         canActivate: [expect.any(Function), visualTimersGuard],
       },
+      // No feature flag: only the per-child visual timer switch.
+      { path: 'timer', component: ChildTimerPage, canActivate: [visualTimersGuard] },
     ]);
   });
 });

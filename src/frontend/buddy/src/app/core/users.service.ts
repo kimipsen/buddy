@@ -7,6 +7,7 @@ import { TranslationService } from './i18n/translation.service';
 import { postIdempotent } from './http-idempotency';
 import type { Schemas } from './api/schemas';
 import { RuntimeConfigService } from './runtime-config.service';
+import type { TimerPreferences } from './timer-preferences';
 
 export type Email = Schemas['Email'];
 
@@ -34,6 +35,11 @@ export class UsersService {
   // signed-in user's own time zone.
   readonly timeZoneId = computed(() => this.timeZoneState() ?? 'UTC');
 
+  // The signed-in user once resolved, kept in step with every PATCH below, so a view can follow a
+  // setting the user changes on another page (the child's timer preferences) without a reload.
+  private readonly currentUserState = signal<CurrentUser | null>(null);
+  readonly currentUser = this.currentUserState.asReadonly();
+
   /**
    * Resolves the authenticated Keycloak subject to a backend user, creating one on first login.
    * Every other endpoint rejects a caller without one (403 user_not_provisioned), so the route
@@ -46,6 +52,7 @@ export class UsersService {
       this.http.get<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me`),
     ).then(
       (user) => {
+        this.currentUserState.set(user);
         this.timeZoneState.set(user.timeZoneId);
         this.i18n.setLanguageFromServer(user.language);
         return user;
@@ -65,7 +72,7 @@ export class UsersService {
         familyName,
       }),
     );
-    this.currentUserPromise = Promise.resolve(updated);
+    this.remember(updated);
     return updated;
   }
 
@@ -75,7 +82,7 @@ export class UsersService {
         callingName,
       }),
     );
-    this.currentUserPromise = Promise.resolve(updated);
+    this.remember(updated);
     return updated;
   }
 
@@ -83,7 +90,7 @@ export class UsersService {
     const updated = await firstValueFrom(
       this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/email`, { email }),
     );
-    this.currentUserPromise = Promise.resolve(updated);
+    this.remember(updated);
     return updated;
   }
 
@@ -95,7 +102,7 @@ export class UsersService {
         { token },
       ),
     );
-    this.currentUserPromise = Promise.resolve(updated);
+    this.remember(updated);
     return updated;
   }
 
@@ -117,7 +124,7 @@ export class UsersService {
         timeZoneId,
       }),
     );
-    this.currentUserPromise = Promise.resolve(updated);
+    this.remember(updated);
     this.timeZoneState.set(updated.timeZoneId);
     return updated;
   }
@@ -128,8 +135,20 @@ export class UsersService {
         language,
       }),
     );
-    this.currentUserPromise = Promise.resolve(updated);
+    this.remember(updated);
     this.i18n.setLanguageFromServer(updated.language);
+    return updated;
+  }
+
+  // The child's own timer look and sound (docs/frontend/analysis/child-timer-preferences.md).
+  async updateTimerPreferences(timerPreferences: TimerPreferences): Promise<CurrentUser> {
+    const updated = await firstValueFrom(
+      this.http.patch<CurrentUser>(
+        `${this.runtimeConfig.apiBaseUrl}/users/me/timer-preferences`,
+        timerPreferences,
+      ),
+    );
+    this.remember(updated);
     return updated;
   }
 
@@ -153,5 +172,11 @@ export class UsersService {
   async deleteCurrentUser(): Promise<void> {
     await firstValueFrom(this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/users/me`));
     this.currentUserPromise = null;
+    this.currentUserState.set(null);
+  }
+
+  private remember(user: CurrentUser): void {
+    this.currentUserPromise = Promise.resolve(user);
+    this.currentUserState.set(user);
   }
 }

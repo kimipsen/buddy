@@ -126,6 +126,10 @@ in real time.
       neither dims the iPad nor signs the child out — see
       [Keep the screen awake](docs/frontend/analysis/keep-screen-awake.md)
 - [x] A soft two-note chime in the focus view when the current step's time runs out (issue #49)
+- [x] The child picks how their timers look and sound (circle or bar, size, colour, minutes on
+      or off, a chime and which sound) and starts a timer of their own on "My timer"; a
+      guardian sees the choices and can mute the sound (issue #50) — see
+      [Child timer preferences](docs/frontend/analysis/child-timer-preferences.md)
 
 ### Platform
 

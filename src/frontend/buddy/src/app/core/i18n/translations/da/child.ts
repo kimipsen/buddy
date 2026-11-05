@@ -38,6 +38,7 @@ export const child = {
     loadError: 'Der gik noget galt. Prøv igen om lidt.',
     menu: {
       openLabel: 'Åbn menu',
+      myTimer: 'Mit ur',
     },
     theme: {
       label: 'Tema',

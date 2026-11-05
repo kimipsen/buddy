@@ -3,25 +3,33 @@ import {
   ElementRef,
   HostListener,
   Injector,
+  computed,
   afterNextRender,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
 
+import { RouterLink } from '@angular/router';
+
 import { AuthService } from '../../../../core/auth.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { THEME_MODES, ThemeMode } from '../../../../core/theme';
 import { ThemeService } from '../../../../core/theme.service';
+import { UsersService } from '../../../../core/users.service';
 
 @Component({
   selector: 'app-child-menu',
-  imports: [TranslatePipe],
+  imports: [RouterLink, TranslatePipe],
   templateUrl: './child-menu.html',
 })
 export class ChildMenu {
   private readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
+  private readonly users = inject(UsersService);
+
+  // "My timer" only while a guardian has timers on (the page's guard says the same).
+  protected readonly timersOn = computed(() => this.users.currentUser()?.showVisualTimers === true);
 
   protected readonly themeModes = THEME_MODES;
 

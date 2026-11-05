@@ -116,6 +116,83 @@ public sealed class UserSnapshotTests(BuddyApiFixture fixture)
         Assert.Equivalent(replayed, snapshot, strict: true);
     }
 
+    [Fact]
+    public async Task The_snapshot_matches_a_full_replay_after_timer_preferences_and_a_muted_chime()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {childToken}");
+            _.Patch.Json(new
+            {
+                Shape = "Bar",
+                Size = "Small",
+                Color = "Blue",
+                ShowMinutes = false,
+                Chime = true,
+                ChimeSound = "Xylophone",
+                ChimeOnHome = true,
+            }).ToUrl("/users/me/timer-preferences");
+            _.StatusCodeShouldBeOk();
+        });
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { AllowChime = false }).ToUrl($"/users/me/children/{child.Id}/chime");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var users = fixture.Host.Services.GetRequiredService<IUserEventStore>();
+        var id = new UserId(child.Id);
+
+        var replayed = User.Rehydrate(await users.ReadAsync(id, CancellationToken.None));
+        var snapshot = await users.FindSnapshotAsync(id, CancellationToken.None);
+
+        Assert.NotNull(snapshot);
+        Assert.Equal(
+            new TimerPreferences(TimerShape.Bar, TimerSize.Small, TimerColor.Blue, ShowMinutes: false, Chime: true, ChimeSound.Xylophone, ChimeOnHome: true),
+            snapshot.TimerPreferences);
+        Assert.False(snapshot.AllowChime);
+        Assert.Equivalent(replayed, snapshot, strict: true);
+    }
+
+    // A snapshot row written before timer preferences existed has neither property; it reads as the
+    // default look with the chime allowed, without a rebuild.
+    [Fact]
+    public async Task A_snapshot_row_without_timer_preferences_reads_as_the_defaults()
+    {
+        var (_, _, userId) = await fixture.CreateAuthenticatedUserAsync();
+        var dataSource = fixture.Host.Services.GetRequiredService<NpgsqlDataSource>();
+
+        await using (var command = dataSource.CreateCommand(
+            "UPDATE snapshots.mt_doc_usersnapshot SET data = data #- '{User,TimerPreferences}' #- '{User,timerPreferences}' "
+            + "#- '{User,AllowChime}' #- '{User,allowChime}' WHERE id = $1"))
+        {
+            command.Parameters.AddWithValue(userId);
+            Assert.Equal(1, await command.ExecuteNonQueryAsync());
+        }
+
+        await using (var check = dataSource.CreateCommand(
+            "SELECT data::text FROM snapshots.mt_doc_usersnapshot WHERE id = $1"))
+        {
+            check.Parameters.AddWithValue(userId);
+            var json = (string?)await check.ExecuteScalarAsync();
+            Assert.DoesNotContain("TimerPreferences", json!, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("AllowChime", json!, StringComparison.OrdinalIgnoreCase);
+        }
+
+        var snapshot = await fixture.Host.Services.GetRequiredService<IUserEventStore>()
+            .FindSnapshotAsync(new UserId(userId), CancellationToken.None);
+
+        Assert.NotNull(snapshot);
+        Assert.Equal(TimerPreferences.Default, snapshot.TimerPreferences);
+        Assert.True(snapshot.AllowChime);
+    }
+
     // A snapshot row written before homework chunks existed has no such property; the constructor
     // gets null and the property reads it as the default lengths, without a rebuild.
     [Fact]

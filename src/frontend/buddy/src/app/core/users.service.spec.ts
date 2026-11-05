@@ -18,6 +18,16 @@ describe('UsersService', () => {
     return {
       showVisualTimers: true,
       homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
+      timerPreferences: {
+        shape: 'Disc',
+        size: 'Large',
+        color: 'Routine',
+        showMinutes: true,
+        chime: true,
+        chimeSound: 'Bell',
+        chimeOnHome: false,
+      },
+      allowChime: true,
       id: 'user-1',
       email: { value: 'user@buddy.test', isVerified: true },
       userName: 'user',
@@ -291,6 +301,74 @@ describe('UsersService', () => {
 
       await expect(promise).rejects.toBeInstanceOf(HttpErrorResponse);
       expect(i18n.setLanguageFromServer).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('currentUser', () => {
+    it('is null until the user resolves, then follows every update', async () => {
+      expect(service.currentUser()).toBeNull();
+
+      const loading = service.ensureCurrentUser();
+      httpMock.expectOne(`${apiBaseUrl}/users/me`).flush(currentUser());
+      await loading;
+      expect(service.currentUser()?.name.givenName).toBe('Uma');
+
+      const renaming = service.updateName('Ida', 'User');
+      httpMock
+        .expectOne(`${apiBaseUrl}/users/me/name`)
+        .flush(currentUser({ name: { givenName: 'Ida', familyName: 'User' } }));
+      await renaming;
+      expect(service.currentUser()?.name.givenName).toBe('Ida');
+    });
+
+    it('is cleared when the account is deleted', async () => {
+      const loading = service.ensureCurrentUser();
+      httpMock.expectOne(`${apiBaseUrl}/users/me`).flush(currentUser());
+      await loading;
+
+      const deleting = service.deleteCurrentUser();
+      httpMock.expectOne(`${apiBaseUrl}/users/me`).flush(null);
+      await deleting;
+
+      expect(service.currentUser()).toBeNull();
+    });
+  });
+
+  describe('updateTimerPreferences', () => {
+    const chosen = {
+      shape: 'Bar',
+      size: 'Medium',
+      color: 'Pink',
+      showMinutes: false,
+      chime: true,
+      chimeSound: 'Gong',
+      chimeOnHome: true,
+    } as const;
+
+    it('PATCHes the whole preference set and re-memoizes the current user', async () => {
+      const updated = currentUser({ timerPreferences: chosen });
+      const promise = service.updateTimerPreferences(chosen);
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/timer-preferences`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual(chosen);
+      req.flush(updated);
+
+      await expect(promise).resolves.toEqual(updated);
+      expect(service.currentUser()).toEqual(updated);
+      await expect(service.ensureCurrentUser()).resolves.toEqual(updated);
+      httpMock.expectNone(`${apiBaseUrl}/users/me`);
+    });
+
+    it('keeps the current user when the request fails', async () => {
+      const promise = service.updateTimerPreferences(chosen);
+
+      httpMock
+        .expectOne(`${apiBaseUrl}/users/me/timer-preferences`)
+        .flush('bad request', { status: 400, statusText: 'Bad Request' });
+
+      await expect(promise).rejects.toBeInstanceOf(HttpErrorResponse);
+      expect(service.currentUser()).toBeNull();
     });
   });
 
