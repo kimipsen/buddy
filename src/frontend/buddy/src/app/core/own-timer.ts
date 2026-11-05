@@ -33,7 +33,10 @@ export function resumeOwnTimer(timer: OwnTimer, nowMs: number): OwnTimer {
 export function ownTimerState(timer: OwnTimer, nowMs: number): TimerState {
   const elapsedMs = (timer.pausedAtMs ?? nowMs) - timer.startedAtMs;
   const remainingMs = Math.min(timer.budgetMs, Math.max(0, timer.budgetMs - elapsedMs));
-  const phase = remainingMs === 0 ? 'timesUp' : timer.pausedAtMs === null ? 'running' : 'paused';
+  let phase: TimerState['phase'] = timer.pausedAtMs === null ? 'running' : 'paused';
+  if (remainingMs === 0) {
+    phase = 'timesUp';
+  }
 
   return {
     current: null,

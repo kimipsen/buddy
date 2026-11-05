@@ -38,13 +38,13 @@ test('a child picks their own timer look and sound, and starts a timer of their 
         res.request().method() === 'PATCH' && res.url().endsWith('/users/me/timer-preferences'),
     );
   await Promise.all([saved(), page.getByRole('radio', { name: 'Bar' }).click()]);
-  await Promise.all([saved(), page.getByRole('radio', { name: 'Purple' }).click()]);
+  await Promise.all([saved(), page.locator('label', { hasText: 'Purple' }).click()]);
   await Promise.all([saved(), page.getByRole('switch', { name: 'Show the minutes' }).click()]);
   await Promise.all([saved(), page.getByRole('radio', { name: 'Gong' }).click()]);
 
   await page.reload();
   await expect(page.getByRole('radio', { name: 'Bar' })).toHaveAttribute('aria-checked', 'true');
-  await expect(page.getByRole('radio', { name: 'Purple' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('radio', { name: 'Purple' })).toBeChecked();
   await expect(page.getByRole('switch', { name: 'Show the minutes' })).toHaveAttribute(
     'aria-checked',
     'false',
@@ -88,5 +88,5 @@ test('a child picks their own timer look and sound, and starts a timer of their 
   await page.goto('/child/timer');
   await expect(page.getByText('A grown-up has turned the sound off.')).toBeVisible();
   await expect(page.getByRole('button', { name: /Listen/ })).toHaveCount(0);
-  await expect(page.getByRole('radio', { name: 'Purple' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('radio', { name: 'Purple' })).toBeChecked();
 });
