@@ -6,7 +6,7 @@
     "watch": "tailwindcss -i ./input.css -o ../login/resources/css/buddy-overrides.css --watch"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.12",
+    "@tailwindcss/cli": "^4.3.4",
     "tailwindcss": "^4.1.12"
   },
   "overrides": {
