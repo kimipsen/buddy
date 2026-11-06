@@ -20,7 +20,7 @@ ARG BUDDY_COMMIT=unknown
 RUN dotnet publish buddy/buddy.csproj -c Release -o /app \
       -p:MinVerVersionOverride="$BUDDY_VERSION" -p:SourceRevisionId="$BUDDY_COMMIT"
 
-FROM mcr.microsoft.com/dotnet/aspnet:11.0.0-rc.3@sha256:bae0269049d5061ab7f49995cc1acebf54b75471c096c4a1f874e27661d44045 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:11.0.0-rc.3@sha256:de8d70c2b944fb4d6e2cbc14c8de808d1ebce348ea5b84b224efd64cd63398f2 AS runtime
 
 # A home directory, because Data Protection (MealplansFeature) keeps its key ring under
 # ~/.aspnet when nothing else is configured; without one the keys would live only in memory.
