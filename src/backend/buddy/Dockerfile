@@ -6,7 +6,7 @@
 # Pinned by tag and digest, so a rebuild of the same commit uses the same SDK and runtime. The SDK
 # tag matches global.json at the repo root (which this build context can't see): bump both together.
 # Dependabot keeps the digests current for security patches.
-FROM mcr.microsoft.com/dotnet/sdk:11.0.100-rc.3@sha256:3a9175b6c54b2f076817af1360f691c9994447b192faa48a1a1f112a516844c7 AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0.100-rc.3@sha256:b55f191e80c1828476d2b080d05d33e1183068f5bcaeee684f28a1d4e31a10ad AS build
 WORKDIR /src
 
 # .editorconfig carries the analyzer exceptions; without it the analyzers (warnings as errors) fail
