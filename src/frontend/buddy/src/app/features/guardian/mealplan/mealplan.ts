@@ -124,11 +124,13 @@ export class GuardianMealplan {
     const current = this.selectedScope();
 
     if (!current) {
+      // Stryker disable next-line BooleanLiteral: the scope buttons only render with a family scope, which selectedScope then defaults to
       return false;
     }
 
     return current.kind === 'family' && scope.kind === 'family'
-      ? current.childId === scope.childId
+      ? // Stryker disable next-line ConditionalExpression: the page has one family scope (the first child's)
+        current.childId === scope.childId
       : current.kind === 'group' && scope.kind === 'group' && current.groupId === scope.groupId;
   }
 

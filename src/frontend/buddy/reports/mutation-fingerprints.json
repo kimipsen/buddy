@@ -38,5 +38,10 @@
   "src/app/features/child/timer/child-timer-page.ts": "ba6ddff5535c",
   "src/app/features/child/transition-warning-banner/transition-warning-banner.ts": "c1bf6f23786a",
   "src/app/features/child/visual-timers.guard.ts": "61929ce05a6d",
-  "src/app/shared/visual-timer/visual-timer.ts": "68a43c9809fc"
+  "src/app/features/guardian/admin/ai-provider-settings/ai-provider-settings.ts": "9ab80c90d650",
+  "src/app/features/guardian/mealplan/import/mealplan-import.ts": "3470e4e4e68c",
+  "src/app/features/guardian/mealplan/manage-meals/manage-meals.ts": "788c75281ac0",
+  "src/app/features/guardian/mealplan/mealie/recipe-panel/mealie-recipe-panel.ts": "c52084d77325",
+  "src/app/features/guardian/mealplan/mealplan.ts": "946acb0dfd66",
+  "src/app/shared/visual-timer/visual-timer.ts": "6422454c0920"
 }

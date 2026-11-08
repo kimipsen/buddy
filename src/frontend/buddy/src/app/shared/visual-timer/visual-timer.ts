@@ -243,6 +243,7 @@ const ANNOUNCEMENTS: Partial<Record<TimerPhase, string>> = {
 // An SVG path for a pie wedge covering `fraction` of the disc, clockwise from 12 o'clock. Empty
 // for nothing left; a full disc is drawn as a circle instead (an arc can't close on itself).
 function wedge(fraction: number): string {
+  // Stryker disable next-line ConditionalExpression,EqualityOperator: the template draws the full circle (isFull) before it ever asks for the wedge
   if (fraction <= 0 || fraction >= 1) {
     return '';
   }
