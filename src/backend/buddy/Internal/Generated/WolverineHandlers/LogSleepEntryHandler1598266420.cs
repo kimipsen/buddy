@@ -30,8 +30,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.SleepDiaries.LogSleepEntryHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.SleepDiaries.LogSleepEntryHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.SleepDiaries.LogSleepEntryHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.SleepDiaries.LogSleepEntryHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.SleepDiaries.LogSleepEntryHandler.Handle(logSleepEntry, logSleepEntryValidator, _sleepDiaryEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);

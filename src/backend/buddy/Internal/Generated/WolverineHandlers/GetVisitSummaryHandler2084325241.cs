@@ -34,8 +34,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.VisitSummaries.GetVisitSummaryHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.VisitSummaries.GetVisitSummaryHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.VisitSummaries.GetVisitSummaryHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.VisitSummaries.GetVisitSummaryHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.VisitSummaries.GetVisitSummaryHandler.Handle(getVisitSummary, _visitSummaryEventStore, _guardianLinkEventStore, _visitSummaryReports, _timeProvider, _loggerForMessage, cancellation).ConfigureAwait(false);

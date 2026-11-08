@@ -26,8 +26,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Progress.RecordStarChangeHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Progress.RecordStarChangeHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Progress.RecordStarChangeHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Progress.RecordStarChangeHandler");
                 
                 // The actual message execution
                 await buddy.Features.Progress.RecordStarChangeHandler.Handle(recordStarChange, _progressEventStore, _timeProvider, cancellation).ConfigureAwait(false);

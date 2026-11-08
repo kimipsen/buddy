@@ -33,8 +33,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.PrintTemplates.UpdatePrintTemplateLayoutHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.PrintTemplates.UpdatePrintTemplateLayoutHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.PrintTemplates.UpdatePrintTemplateLayoutHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.PrintTemplates.UpdatePrintTemplateLayoutHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.PrintTemplates.UpdatePrintTemplateLayoutHandler.Handle(updatePrintTemplateLayout, updatePrintTemplateLayoutValidator, _printTemplateEventStore, _groupEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);

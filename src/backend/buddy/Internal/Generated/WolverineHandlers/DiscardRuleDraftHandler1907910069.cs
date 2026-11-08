@@ -32,8 +32,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.HouseRules.DiscardRuleDraftHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.HouseRules.DiscardRuleDraftHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.HouseRules.DiscardRuleDraftHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.HouseRules.DiscardRuleDraftHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.HouseRules.DiscardRuleDraftHandler.Handle(discardRuleDraft, _ruleBookEventStore, _groupEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);

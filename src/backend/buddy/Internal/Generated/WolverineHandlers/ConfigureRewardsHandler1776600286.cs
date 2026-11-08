@@ -30,8 +30,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Progress.ConfigureRewardsHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Progress.ConfigureRewardsHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Progress.ConfigureRewardsHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Progress.ConfigureRewardsHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Progress.ConfigureRewardsHandler.Handle(configureRewards, configureRewardsValidator, _progressEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);

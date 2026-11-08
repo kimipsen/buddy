@@ -31,8 +31,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Medicines.ListMedicineSchedulesForGroupHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Medicines.ListMedicineSchedulesForGroupHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Medicines.ListMedicineSchedulesForGroupHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Medicines.ListMedicineSchedulesForGroupHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Medicines.ListMedicineSchedulesForGroupHandler.Handle(listMedicineSchedulesForGroup, _medicineEventStore, _medicineSharingEventStore, _groupEventStore, _loggerForMessage, cancellation).ConfigureAwait(false);

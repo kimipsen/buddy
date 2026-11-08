@@ -32,8 +32,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Calendars.DeleteCalendarHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Calendars.DeleteCalendarHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Calendars.DeleteCalendarHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Calendars.DeleteCalendarHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Calendars.DeleteCalendarHandler.Handle(deleteCalendar, _calendarEventStore, _groupEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);

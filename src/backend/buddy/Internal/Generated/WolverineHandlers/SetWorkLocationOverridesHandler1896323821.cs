@@ -30,8 +30,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.WorkLocations.SetWorkLocationOverridesHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.WorkLocations.SetWorkLocationOverridesHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.WorkLocations.SetWorkLocationOverridesHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.WorkLocations.SetWorkLocationOverridesHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.WorkLocations.SetWorkLocationOverridesHandler.Handle(setWorkLocationOverrides, setWorkLocationOverridesValidator, _workLocationScheduleEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);

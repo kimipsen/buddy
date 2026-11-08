@@ -33,8 +33,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.FirstThen.EndFirstThenBoardHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.FirstThen.EndFirstThenBoardHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.FirstThen.EndFirstThenBoardHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.FirstThen.EndFirstThenBoardHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.FirstThen.EndFirstThenBoardHandler.Handle(endFirstThenBoard, endFirstThenBoardValidator, _firstThenBoardEventStore, _guardianLinkEventStore, _userEventStore, _timeProvider, cancellation).ConfigureAwait(false);

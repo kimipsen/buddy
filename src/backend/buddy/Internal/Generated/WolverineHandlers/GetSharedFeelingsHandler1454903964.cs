@@ -35,8 +35,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Feelings.GetSharedFeelingsHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Feelings.GetSharedFeelingsHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Feelings.GetSharedFeelingsHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Feelings.GetSharedFeelingsHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Feelings.GetSharedFeelingsHandler.Handle(getSharedFeelings, getSharedFeelingsValidator, _feelingsShareTokenEventStore, _feelingsJournalEventStore, _userEventStore, _timeProvider, _loggerForMessage, cancellation).ConfigureAwait(false);

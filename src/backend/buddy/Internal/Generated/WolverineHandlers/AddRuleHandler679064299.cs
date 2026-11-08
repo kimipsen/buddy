@@ -33,8 +33,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.HouseRules.AddRuleHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.HouseRules.AddRuleHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.HouseRules.AddRuleHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.HouseRules.AddRuleHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.HouseRules.AddRuleHandler.Handle(addRule, addRuleValidator, _ruleBookEventStore, _groupEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);

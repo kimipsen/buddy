@@ -30,8 +30,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Feelings.SetCheckInPromptTimesHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Feelings.SetCheckInPromptTimesHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Feelings.SetCheckInPromptTimesHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Feelings.SetCheckInPromptTimesHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Feelings.SetCheckInPromptTimesHandler.Handle(setCheckInPromptTimes, setCheckInPromptTimesValidator, _feelingsJournalEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);
