@@ -7,8 +7,8 @@
 
 # web (usr/bin/caddy, from caddy:2-alpine): Go standard library DoS fixes (Go 1.26.9 / 1.27.2), not
 # yet in the upstream image (the api image's pebble has them since the aspnet rc.2 rebuild of
-# 2026-10-25). The binary isn't ours to rebuild; Dependabot's digest bump brings the upstream
-# rebuild. Recheck when this expires.
+# 2026-10-25). The binary isn't ours to rebuild; the next build after the upstream rebuild pulls
+# it. Recheck when this expires.
 CVE-2026-78667 exp:2026-11-15
 CVE-2026-78669 exp:2026-11-15
 CVE-2026-97031 exp:2026-11-15
@@ -20,16 +20,16 @@ CVE-2026-97031 exp:2026-11-15
 CVE-2026-111943 exp:2026-11-19
 
 # web (usr/bin/caddy, from caddy:2-alpine): go-jose v4.1.5 DoS when parsing JWKs with RSA keys,
-# fixed in 4.1.6 but not yet in the upstream image (already on the newest caddy:2-alpine digest).
+# fixed in 4.1.6 but not yet in the upstream image (already on the newest caddy:2-alpine image).
 # The web image's Caddy only serves static files on :80 and does no ACME or JWT handling, so it
-# never parses a JWK. Dependabot's digest bump brings the rebuild. Recheck when this expires.
+# never parses a JWK. The next build after the upstream rebuild pulls it. Recheck when this expires.
 CVE-2026-116587 exp:2026-11-15
 
 # web (usr/bin/caddy, from caddy:2-alpine): golang.org/x/net/html DoS on crafted HTML input, fixed
 # in x/net 0.62.0 but not yet in the upstream image (the newest caddy:2-alpine, v2.11.9, still
 # bundles x/net 0.60.0). The web image's Caddy only serves static files and a fixed JSON response,
-# with no templates or markdown directive, so it never parses HTML. Dependabot's digest bump brings
-# the rebuild. Recheck when this expires.
+# with no templates or markdown directive, so it never parses HTML. The next build after the upstream
+# rebuild pulls it. Recheck when this expires.
 CVE-2026-78661 exp:2026-11-22
 
 # keycloak (guava 33.6.0, bundled by quay.io/keycloak/keycloak:26.8.1, the newest release): Guava

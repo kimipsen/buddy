@@ -76,8 +76,7 @@ there is no build step.
 - **Pass/fail is built in.** `thresholds` (for example `http_req_duration{group:dashboard}: p(95)<300`)
   make k6 exit non-zero, so a CI job fails without any extra tooling.
 - **No new runtime in the devcontainer.** `docker run grafana/k6` is enough. It works the same way
-  locally and on a GitHub runner. The image is pinned by digest, the same way the workflows pin
-  actions by SHA.
+  locally and on a GitHub runner. The image is pinned by version tag.
 - **Its output fits what we already run.** It writes a JSON summary and an HTML web-dashboard
   report, and it can send metrics over OTLP or Prometheus remote-write into the same backend as the
   API's traces (see [Observability during a run](#decision-observability-during-a-run-uses-the-apis-existing-opentelemetry)).

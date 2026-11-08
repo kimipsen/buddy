@@ -37,8 +37,8 @@ What already exists:
   [`src/backend/buddy/Dockerfile`](../../../src/backend/buddy/Dockerfile),
   [`src/frontend/buddy/Dockerfile`](../../../src/frontend/buddy/Dockerfile) and
   [`deploy/azure/keycloak/Dockerfile`](../../../deploy/azure/keycloak/Dockerfile). Every base image
-  is pinned by tag and digest, and [Dependabot](../../../.github/dependabot.yml) keeps the digests
-  current. Each pinned digest is a multi-arch index that includes `linux/amd64` and `linux/arm64`
+  is pinned by version tag, and [Dependabot](../../../.github/dependabot.yml) proposes new tags.
+  Each base image tag is a multi-arch index that includes `linux/amd64` and `linux/arm64`
   (checked with `docker buildx imagetools inspect` on 2026-10-19), so the Dockerfiles build for both
   architectures unchanged.
 - **Versions from git tags.** [`deploy/version.sh`](../../../deploy/version.sh) computes the MinVer

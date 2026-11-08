@@ -442,12 +442,12 @@ After the move:
 
 ## Notes
 
-- Every base image is pinned by tag and digest: the .NET SDK/runtime in
-  `../src/backend/buddy/Dockerfile` (the SDK tag matches `global.json`; bump
-  them together), Node and Caddy in the frontend Dockerfile, and Caddy,
-  Postgres and Keycloak here and in `azure/keycloak/Dockerfile`. A rebuild of
-  the same commit therefore uses the same images. Dependabot refreshes the
-  digests.
+- Every base image is pinned by version tag, the same tags the devcontainer
+  and the integration tests use: the .NET SDK/runtime in `../src/backend/buddy/Dockerfile` (the SDK
+  tag matches `global.json`; bump them together), Node and Caddy in the frontend Dockerfile, and Caddy,
+  Postgres and Keycloak here and in `azure/keycloak/Dockerfile`. A tag such as
+  `postgres:18` or `caddy:2` moves with upstream patch releases, so a rebuild
+  picks those up. Dependabot proposes new tags.
 - Backups: see step 7. (An earlier version of this guide tarred a volume
   named `postgres-data`; the real volume is `deploy_postgres-data`, so that
   command backed up a new, empty volume.)
