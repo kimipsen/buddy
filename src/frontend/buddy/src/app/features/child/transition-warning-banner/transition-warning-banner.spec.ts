@@ -141,7 +141,9 @@ describe('TransitionWarningBanner', () => {
     const { element } = setup([warning()]);
 
     const bar = element.querySelector('[style*="width"]') as HTMLElement;
-    expect(bar.style.width).toBe(`${(10 / 15) * 100}%`);
+    // CSSOM may round percentages when serialising them.
+    expect(bar.style.width).toMatch(/%$/);
+    expect(Number.parseFloat(bar.style.width)).toBeCloseTo((10 / 15) * 100, 3);
   });
 
   it('dismisses the current stage on "Got it"', () => {
