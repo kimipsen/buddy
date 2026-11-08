@@ -25,6 +25,13 @@ CVE-2026-111943 exp:2026-11-19
 # never parses a JWK. Dependabot's digest bump brings the rebuild. Recheck when this expires.
 CVE-2026-116587 exp:2026-11-15
 
+# web (usr/bin/caddy, from caddy:2-alpine): golang.org/x/net/html DoS on crafted HTML input, fixed
+# in x/net 0.62.0 but not yet in the upstream image (the newest caddy:2-alpine, v2.11.9, still
+# bundles x/net 0.60.0). The web image's Caddy only serves static files and a fixed JSON response,
+# with no templates or markdown directive, so it never parses HTML. Dependabot's digest bump brings
+# the rebuild. Recheck when this expires.
+CVE-2026-78661 exp:2026-11-22
+
 # keycloak (guava 33.6.0, bundled by quay.io/keycloak/keycloak:26.8.1, the newest release): Guava
 # DoS, fixed in 33.7.2. Swapping a jar inside Keycloak's distribution isn't supported; the fix
 # arrives with the next Keycloak release. Recheck when this expires.
