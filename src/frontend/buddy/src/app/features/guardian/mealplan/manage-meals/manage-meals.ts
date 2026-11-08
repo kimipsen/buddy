@@ -163,13 +163,14 @@ export class ManageMeals {
   }
 
   protected nextPage(): void {
+    // Stryker disable next-line ArithmeticOperator: Next is disabled on the last page, and page() clamps to it anyway
     this.currentPage.set(Math.min(this.page() + 1, this.totalPages() - 1));
   }
 
   protected async createMeal(): Promise<void> {
     const name = this.newMealName().trim();
     const icon = this.newMealIcon().trim();
-    const color = this.newMealColor().trim();
+    const color = this.newMealColor();
 
     if (!name || !icon || !color) {
       return;
@@ -191,6 +192,7 @@ export class ManageMeals {
         this.newMealColor.set(DEFAULT_COLOR);
         this.newMealEatingOut.set(EATING_OUT_NONE);
         // Jump to the last page so the newly created meal (appended at the end) is visible.
+        // Stryker disable next-line ArithmeticOperator: page() clamps any later page to the last one
         this.currentPage.set(this.totalPages() - 1);
       },
       'mealplan.manageMeals.createError',

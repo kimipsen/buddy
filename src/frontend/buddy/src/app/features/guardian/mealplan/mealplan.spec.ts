@@ -531,6 +531,143 @@ describe('GuardianMealplan', () => {
     expect(compiled.textContent).toContain('Shared with Family Group.');
   });
 
+  describe('group scopes and sharing', () => {
+    const manageEverywhere = vi.fn(async (groupId: string) => groupDetail({ id: groupId }));
+    const twoGroups = vi.fn(async () => [
+      groupSummary({ id: 'group-1', name: 'First Co', role: 'Owner' }),
+      groupSummary({ id: 'group-2', name: 'Second Co', role: 'Owner' }),
+    ]);
+
+    function isSelected(compiled: HTMLElement, text: string): boolean | undefined {
+      return findButtonByText(compiled, text)?.classList.contains('bg-slate-950');
+    }
+
+    function chooseShareTarget(compiled: HTMLElement, groupId: string): void {
+      const select = compiled.querySelector<HTMLSelectElement>(
+        'select[name="shareTargetGroupId"]',
+      )!;
+      select.value = groupId;
+      select.dispatchEvent(new Event('change'));
+    }
+
+    it('marks only the clicked group scope as selected', async () => {
+      const { fixture } = await setup({
+        groups: { listMyGroups: twoGroups, getGroup: manageEverywhere },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, 'First Co')!.click();
+      await settle(fixture);
+
+      expect(isSelected(compiled, 'First Co')).toBe(true);
+      expect(isSelected(compiled, 'Second Co')).toBe(false);
+      expect(isSelected(compiled, 'My family')).toBe(false);
+    });
+
+    it('leaves out a group whose shared-plan status can’t be read', async () => {
+      const { fixture } = await setup({
+        groups: { listMyGroups: twoGroups, getGroup: manageEverywhere },
+        mealplans: {
+          getGroupMealplanStatus: vi.fn(async (groupId: string) =>
+            groupId === 'group-1' ? Promise.reject(new Error('boom')) : { hasSharedPlan: true },
+          ),
+        },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(findButtonByText(compiled, 'First Co')).toBeFalsy();
+      expect(findButtonByText(compiled, 'Second Co')).toBeTruthy();
+    });
+
+    it('shares with the chosen one of several groups, then offers that group as a scope', async () => {
+      const getGroupMealplanStatus = vi.fn<
+        (groupId: string) => Promise<{ hasSharedPlan: boolean }>
+      >(async () => ({ hasSharedPlan: false }));
+      const { fixture } = await setup({
+        groups: { listMyGroups: twoGroups, getGroup: manageEverywhere },
+        mealplans: { getGroupMealplanStatus },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(findButtonByText(compiled, 'Second Co')).toBeFalsy();
+
+      getGroupMealplanStatus.mockImplementation(async (groupId: string) => ({
+        hasSharedPlan: groupId === 'group-2',
+      }));
+      chooseShareTarget(compiled, 'group-2');
+      await settle(fixture);
+      findButtonByText(compiled, 'Share')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain('Shared with Second Co.');
+      expect(findButtonByText(compiled, 'Second Co')).toBeTruthy();
+      expect(findButtonByText(compiled, 'First Co')).toBeFalsy();
+    });
+
+    it('asks for a new share target after stopping a share', async () => {
+      const { fixture } = await setup({
+        groups: { listMyGroups: twoGroups, getGroup: manageEverywhere },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      chooseShareTarget(compiled, 'group-1');
+      await settle(fixture);
+      findButtonByText(compiled, 'Share')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Stop sharing')!.click();
+      await settle(fixture);
+
+      expect(findButtonByText(compiled, 'Share')!.disabled).toBe(true);
+    });
+
+    it('stops offering the group as a scope once its plan is no longer shared', async () => {
+      const getGroupMealplanStatus = vi.fn<
+        (groupId: string) => Promise<{ hasSharedPlan: boolean }>
+      >(async () => ({ hasSharedPlan: true }));
+      const { fixture } = await setup({
+        groups: { listMyGroups: twoGroups, getGroup: manageEverywhere },
+        mealplans: {
+          getGroupMealplanStatus,
+          getSharedGroup: vi.fn(async () => ({ groupId: 'group-1', groupName: 'First Co' })),
+        },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(findButtonByText(compiled, 'First Co')).toBeTruthy();
+
+      getGroupMealplanStatus.mockImplementation(async (groupId: string) => ({
+        hasSharedPlan: groupId !== 'group-1',
+      }));
+      findButtonByText(compiled, 'Stop sharing')!.click();
+      await settle(fixture);
+
+      expect(findButtonByText(compiled, 'First Co')).toBeFalsy();
+      expect(findButtonByText(compiled, 'Second Co')).toBeTruthy();
+    });
+
+    it('keeps another selected group scope when unsharing a different group', async () => {
+      const { fixture } = await setup({
+        groups: { listMyGroups: twoGroups, getGroup: manageEverywhere },
+        mealplans: {
+          getSharedGroup: vi.fn(async () => ({ groupId: 'group-1', groupName: 'First Co' })),
+        },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, 'Second Co')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Stop sharing')!.click();
+      await settle(fixture);
+
+      expect(isSelected(compiled, 'Second Co')).toBe(true);
+      expect(isSelected(compiled, 'My family')).toBe(false);
+    });
+  });
+
   // Holds every call open until released, tracking how many are in flight at once.
   function gatedCalls<T>(valueFor: (id: string) => T) {
     const waiting: (() => void)[] = [];

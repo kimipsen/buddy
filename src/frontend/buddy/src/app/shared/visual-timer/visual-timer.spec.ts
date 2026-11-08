@@ -264,6 +264,136 @@ describe('VisualTimer', () => {
     expect(liveRegion(fixture)).toBe('Timer started for dress.');
   });
 
+  it('announces time’s up without a title when there is no current step', () => {
+    const fixture = setup(running(3 * MINUTE, { current: null }));
+
+    fixture.componentRef.setInput('state', state({ phase: 'timesUp', current: null }));
+    fixture.detectChanges();
+
+    expect(liveRegion(fixture)).toBe("Time's up for .");
+  });
+
+  it('draws a small disc by default', () => {
+    const fixture = setup(running(5 * MINUTE));
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('svg')!.style.width).toBe('28px');
+  });
+
+  it('labels a bar without a title', () => {
+    const fixture = setup(state({ phase: 'paused', runRemainingMs: 15 * MINUTE }), {
+      variant: 'bar',
+    });
+
+    expect(timer(fixture).getAttribute('aria-label')).toBe('15 min left of ');
+  });
+
+  it('works where the browser has no matchMedia', () => {
+    const original = window.matchMedia;
+    Object.defineProperty(window, 'matchMedia', { value: undefined, configurable: true });
+
+    try {
+      const fixture = setup(running(4.5 * MINUTE));
+      expect(timer(fixture).getAttribute('aria-label')).toBe('5 min left');
+    } finally {
+      Object.defineProperty(window, 'matchMedia', { value: original, configurable: true });
+    }
+  });
+
+  it('counts from the current time as soon as a paused timer starts running', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const fixture = setup(state({ phase: 'paused', remainingMs: 3 * MINUTE }));
+
+    vi.setSystemTime(NOW + 10 * MINUTE);
+    fixture.componentRef.setInput('state', running(3 * MINUTE));
+    fixture.detectChanges();
+
+    expect(timer(fixture).getAttribute('aria-label')).toBe('3 min left');
+  });
+
+  it('reads as time is up exactly at the deadline', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const fixture = setup(running(3 * MINUTE, { deadlineMs: NOW }));
+
+    expect(timer(fixture).getAttribute('data-phase')).toBe('timesUp');
+  });
+
+  it('says one minute, not less than a minute, with exactly a minute left', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const fixture = setup(running(MINUTE));
+
+    expect(timer(fixture).getAttribute('aria-label')).toBe('1 min left');
+  });
+
+  it('stays paused past a deadline, and counts the page’s time left rather than the deadline', () => {
+    const past = setup(state({ phase: 'paused', deadlineMs: Date.now() - MINUTE }));
+    expect(timer(past).getAttribute('data-phase')).toBe('paused');
+    expect(timer(past).getAttribute('aria-label')).toBe('Paused');
+    TestBed.resetTestingModule();
+
+    const bar = setup(
+      state({
+        phase: 'paused',
+        remainingMs: 3 * MINUTE,
+        runRemainingMs: 15 * MINUTE,
+        deadlineMs: Date.now() + MINUTE,
+      }),
+      { variant: 'bar', title: 'Morning' },
+    );
+    expect(timer(bar).getAttribute('aria-label')).toBe('15 min left of Morning');
+  });
+
+  it('empties the disc at time’s up even when the page still reports time left', () => {
+    const fixture = setup(state({ phase: 'timesUp', remainingMs: 3 * MINUTE }));
+    const svg = (fixture.nativeElement as HTMLElement).querySelector('svg')!;
+
+    expect(svg.querySelector('path')).toBeNull();
+    expect(svg.querySelector('circle[fill]')).toBeNull();
+  });
+
+  it('keeps counting the run on a bar at time’s up, and before the step starts', () => {
+    const up = setup(state({ phase: 'timesUp', remainingMs: 0, runRemainingMs: 15 * MINUTE }), {
+      variant: 'bar',
+      title: 'Morning',
+    });
+    expect(timer(up).getAttribute('aria-label')).toBe('15 min left of Morning');
+    expect(
+      (up.nativeElement as HTMLElement).querySelector<HTMLElement>('[style*="background-color"]')!
+        .style.width,
+    ).toBe('50%');
+    TestBed.resetTestingModule();
+
+    const upcoming = setup(state({ runRemainingMs: 15 * MINUTE }), {
+      variant: 'bar',
+      title: 'Morning',
+    });
+    expect(timer(upcoming).getAttribute('aria-label')).toBe('15 min left of Morning');
+  });
+
+  it('draws an empty disc for a step without a budget', () => {
+    const fixture = setup(running(5 * MINUTE, { budgetMs: 0 }));
+    const svg = (fixture.nativeElement as HTMLElement).querySelector('svg')!;
+
+    expect(svg.querySelector('path')).toBeNull();
+    expect(svg.querySelector('circle[fill]')).toBeNull();
+  });
+
+  it.each([
+    [2.5, 'M 50 50 L 50 3 A 47 47 0 0 1 97.000 50.000 Z'],
+    [5, 'M 50 50 L 50 3 A 47 47 0 0 1 50.000 97.000 Z'],
+    [7.5, 'M 50 50 L 50 3 A 47 47 0 1 1 3.000 50.000 Z'],
+  ])('draws the wedge for %s of 10 minutes clockwise from 12 o’clock', (minutes, path) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const fixture = setup(running(minutes * MINUTE));
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('path')!.getAttribute('d')).toBe(
+      path,
+    );
+  });
+
   describe("the child's preferences", () => {
     function svg(fixture: ComponentFixture<VisualTimer>): SVGElement | null {
       return (fixture.nativeElement as HTMLElement).querySelector('svg');

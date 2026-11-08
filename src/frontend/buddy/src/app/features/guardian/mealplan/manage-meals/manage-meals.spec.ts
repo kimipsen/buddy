@@ -279,6 +279,117 @@ describe('ManageMeals', () => {
       expect(compiled.textContent).toContain('Page 1 of 2');
       expect(compiled.textContent).toContain('Meal 0');
     });
+
+    it('steps one page at a time through three pages', async () => {
+      const { fixture } = await setup(familyScope, { initialMeals: mealsPage(11) });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, 'Next')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Page 2 of 3');
+
+      findButtonByText(compiled, 'Next')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Page 3 of 3');
+
+      findButtonByText(compiled, 'Previous')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Page 2 of 3');
+      expect(compiled.textContent).toContain('Meal 5');
+    });
+
+    it('falls back to the last remaining page when archiving empties the current one', async () => {
+      const { fixture } = await setup(familyScope, { initialMeals: mealsPage(6) });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, 'Next')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Archive')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Page');
+      expect(compiled.querySelectorAll('li').length).toBe(5);
+      expect(compiled.textContent).toContain('Meal 0');
+    });
+  });
+
+  describe('scope label', () => {
+    function scopeLabel(compiled: HTMLElement): string {
+      return compiled.querySelector('p span.font-semibold')!.textContent!.trim();
+    }
+
+    it('names the family for a family scope', async () => {
+      const { fixture } = await setup(familyScope);
+      await settle(fixture);
+
+      expect(scopeLabel(fixture.nativeElement)).toBe('My family');
+    });
+
+    it('names the group for a group scope', async () => {
+      const { fixture } = await setup(groupManageScope);
+      await settle(fixture);
+
+      expect(scopeLabel(fixture.nativeElement)).toBe('The Fam');
+    });
+  });
+
+  describe('similar meals hint', () => {
+    const library = [
+      meal({ id: 'meal-1', name: 'Pizza night', icon: '🍕' }),
+      meal({ id: 'meal-2', name: 'Pizza bianca', icon: 'pictogram:pizza' }),
+      meal({ id: 'meal-3', name: 'Burger', icon: '🍔' }),
+    ];
+
+    function hint(compiled: HTMLElement): string | null {
+      return compiled.querySelector('p.text-amber-600 span.font-medium')?.textContent ?? null;
+    }
+
+    it('shows no hint until a name is typed', async () => {
+      const { fixture } = await setup(familyScope, { initialMeals: library });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      setInputValue(nameInput(compiled), '   ');
+      fixture.detectChanges();
+
+      expect(compiled.textContent).not.toContain('Similar meals already exist:');
+    });
+
+    it('lists the meals whose name contains the typed text, ignoring case and spaces', async () => {
+      const { fixture } = await setup(familyScope, { initialMeals: library });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      setInputValue(nameInput(compiled), '  PIZZA ');
+      fixture.detectChanges();
+
+      expect(compiled.textContent).toContain('Similar meals already exist:');
+      expect(hint(compiled)).toBe('🍕 Pizza night, Pizza bianca');
+    });
+
+    it('lists a meal whose name the typed text contains', async () => {
+      const { fixture } = await setup(familyScope, { initialMeals: library });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      setInputValue(nameInput(compiled), 'Burger with fries');
+      fixture.detectChanges();
+
+      expect(hint(compiled)).toBe('🍔 Burger');
+    });
+
+    it('shows no hint when nothing is similar', async () => {
+      const { fixture } = await setup(familyScope, { initialMeals: library });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      setInputValue(nameInput(compiled), 'Soup');
+      fixture.detectChanges();
+
+      expect(hint(compiled)).toBeNull();
+    });
   });
 
   describe('create meal form', () => {
@@ -375,6 +486,23 @@ describe('ManageMeals', () => {
       expect(nameInput(compiled).value).toBe('');
       expect(descriptionInput(compiled).value).toBe('');
       expect(compiled.textContent).toContain('Waffles');
+    });
+
+    it('puts the icon and colour back to their defaults after a create', async () => {
+      const { fixture } = await setup(familyScope);
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      setInputValue(nameInput(compiled), 'Waffles');
+      setInputValue(iconInput(compiled), '🧇');
+      colorSwatch(compiled, '#0ea5e9').click();
+      fixture.detectChanges();
+      compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(iconInput(compiled).value).toBe('🍽️');
+      expect(colorSwatch(compiled, '#10b981').getAttribute('aria-checked')).toBe('true');
+      expect(colorSwatch(compiled, '#0ea5e9').getAttribute('aria-checked')).toBe('false');
     });
 
     it('jumps to the newly-added last page once the created meal pushes the count past a page boundary', async () => {
@@ -497,6 +625,24 @@ describe('ManageMeals', () => {
       expect(compiled.textContent).toContain('Unable to archive this meal.');
       expect(compiled.textContent).toContain('Pancakes');
     });
+
+    it('drops an archive error when the scope changes', async () => {
+      const { fixture } = await setup(familyScope, {
+        initialMeals: [meal({ id: 'meal-1', name: 'Pancakes' })],
+        mealplans: { archiveMeal: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Archive')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Unable to archive this meal.');
+
+      fixture.componentRef.setInput('scope', groupManageScope);
+      await settle(fixture);
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Unable to archive this meal.');
+    });
   });
 
   describe('read-only group access', () => {
@@ -604,6 +750,28 @@ describe('ManageMeals', () => {
         color: '#f00',
         eatingOut: 'Restaurant',
       });
+      expect(select.value).toBe('Restaurant');
+    });
+
+    it('drops an update error when the scope changes', async () => {
+      const { fixture } = await setup(familyScope, {
+        initialMeals: [meal({ name: 'Pizza' })],
+        mealplans: { updateMealDetails: vi.fn(async () => Promise.reject(new Error('nope'))) },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      const select = eatingOutSelect(compiled, 'Pizza');
+      select.value = 'Restaurant';
+      select.dispatchEvent(new Event('change'));
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Unable to update this meal.');
+
+      fixture.componentRef.setInput('scope', groupManageScope);
+      await settle(fixture);
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Unable to update this meal.');
     });
 
     it('shows an error when changing the kind fails', async () => {

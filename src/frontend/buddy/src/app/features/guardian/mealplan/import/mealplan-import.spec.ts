@@ -316,6 +316,9 @@ describe('MealplanImport', () => {
 
     type(compiled.querySelector('#import-name-0') as HTMLInputElement, 'Hot dogs');
     await settle(fixture);
+    // Still a new meal while it is being renamed.
+    expect((compiled.querySelector('#import-action-0') as HTMLSelectElement).value).toBe('new');
+    expect((compiled.querySelector('#import-name-0') as HTMLInputElement).value).toBe('Hot dogs');
     button(compiled, 'Import 4 days').click();
     await settle(fixture);
 
@@ -492,6 +495,25 @@ describe('MealplanImport', () => {
       expect(compiled.querySelector('textarea')).toBeNull();
     });
 
+    it('defaults to the Monday to Sunday after this week, counted from today', async () => {
+      // A Wednesday: next week starts five days later.
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 10, 11, 12));
+
+      try {
+        const { compiled } = await mealieSetup('mealie');
+
+        expect(compiled.querySelector<HTMLInputElement>('#mealieImportFrom')!.value).toBe(
+          '2026-11-16',
+        );
+        expect(compiled.querySelector<HTMLInputElement>('#mealieImportTo')!.value).toBe(
+          '2026-11-22',
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     it('switches between the sources', async () => {
       const { fixture, compiled } = await mealieSetup('mealie');
 
@@ -642,6 +664,503 @@ describe('MealplanImport', () => {
       await settle(fixture);
 
       expect(compiled.textContent).toContain('Your Mealie rejected Buddy’s API token.');
+    });
+  });
+
+  describe('review details', () => {
+    async function previewedWith(
+      shown: MealPlanImportPreview,
+      mealplans: Partial<MealplansService> = {},
+    ) {
+      const context = await setup({
+        mealplans: { previewImport: vi.fn(async () => shown), ...mealplans },
+      });
+      await settle(context.fixture);
+      const compiled: HTMLElement = context.fixture.nativeElement;
+
+      type(compiled.querySelector('textarea')!, 'Madplan 2024');
+      await settle(context.fixture);
+      button(compiled, 'Preview import').click();
+      await settle(context.fixture);
+
+      return { ...context, compiled };
+    }
+
+    function counts(compiled: HTMLElement): string[] {
+      return Array.from(compiled.querySelectorAll('dd')).map((d) => d.textContent!.trim());
+    }
+
+    function groupNames(compiled: HTMLElement): string[] {
+      return Array.from(
+        compiled.querySelectorAll('[data-testid="import-group"] p.font-medium'),
+      ).map((p) => p.firstChild!.textContent!.trim());
+    }
+
+    // One new-meal line per name, each its own group.
+    function newMeals(names: string[]): MealPlanImportPreview {
+      return {
+        format: 'weekly-note',
+        lines: names.map((name, i) =>
+          line({
+            lineNumber: i + 1,
+            date: `2024-02-${String(i + 1).padStart(2, '0')}`,
+            key: `k${i}`,
+            mealName: name,
+          }),
+        ),
+        groups: names.map((name, i) => group({ key: `k${i}`, name })),
+        warnings: [],
+        emptyDays: 0,
+      };
+    }
+
+    it('starts with an empty text box and preview disabled until there is text', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+      const compiled: HTMLElement = fixture.nativeElement;
+
+      expect(compiled.querySelector('textarea')!.value).toBe('');
+      expect(button(compiled, 'Preview import').disabled).toBe(true);
+    });
+
+    it('offers every meal slot and sends the chosen one, with the text trimmed', async () => {
+      const { fixture, mealplans } = await setup();
+      await settle(fixture);
+      const compiled: HTMLElement = fixture.nativeElement;
+      const slot = compiled.querySelector<HTMLSelectElement>('#importSlot')!;
+
+      expect(Array.from(slot.options).map((o) => o.textContent!.trim())).toEqual([
+        'Breakfast',
+        'Lunch',
+        'Dinner',
+        'Snack',
+      ]);
+
+      slot.selectedIndex = 1;
+      slot.dispatchEvent(new Event('change'));
+      type(compiled.querySelector('textarea')!, '  Madplan 2024\n');
+      await settle(fixture);
+      button(compiled, 'Preview import').click();
+      await settle(fixture);
+
+      expect(vi.mocked(mealplans.previewImport!).mock.calls[0][1]).toEqual({
+        text: 'Madplan 2024',
+        format: 'auto',
+        weekStart: 'Sunday',
+        slot: 'Lunch',
+      });
+    });
+
+    it('reads a chosen file into the text box', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+      const compiled: HTMLElement = fixture.nativeElement;
+      const input = compiled.querySelector<HTMLInputElement>('#importFile')!;
+
+      Object.defineProperty(input, 'files', {
+        value: [new File(['Madplan 2025\nU1'], 'plan.txt', { type: 'text/plain' })],
+      });
+      input.dispatchEvent(new Event('change'));
+      await settle(fixture);
+
+      expect(compiled.querySelector('textarea')!.value).toBe('Madplan 2025\nU1');
+    });
+
+    it('keeps the text when the file dialog is cancelled', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+      const compiled: HTMLElement = fixture.nativeElement;
+      type(compiled.querySelector('textarea')!, 'typed');
+      await settle(fixture);
+      const input = compiled.querySelector<HTMLInputElement>('#importFile')!;
+
+      Object.defineProperty(input, 'files', { value: [] });
+      input.dispatchEvent(new Event('change'));
+      await settle(fixture);
+
+      expect(compiled.querySelector('textarea')!.value).toBe('typed');
+    });
+
+    it('labels each group with its kind', async () => {
+      const shown: MealPlanImportPreview = {
+        ...newMeals(['A', 'B', 'C', 'D']),
+        groups: [
+          group({ key: 'k0', name: 'A', kind: 'Meal' }),
+          group({ key: 'k1', name: 'B', kind: 'Alternatives' }),
+          group({ key: 'k2', name: 'C', kind: 'Leftovers' }),
+          group({ key: 'k3', name: 'D', kind: 'Away' }),
+        ],
+      };
+      const { compiled } = await previewedWith(shown);
+
+      const kinds = Array.from(
+        compiled.querySelectorAll('[data-testid="import-group"] p.text-xs'),
+      ).map((p) => p.textContent!.split('·')[0].trim());
+      expect(kinds).toEqual(['Meal', 'Either/or', 'Leftovers', 'Not at home']);
+    });
+
+    it('explains every parser warning, and falls back for an unknown one', async () => {
+      const { compiled } = await previewedWith({
+        ...newMeals(['A']),
+        warnings: [
+          { lineNumber: 2, code: 'week_number_inferred', message: '' },
+          { lineNumber: 3, code: 'day_inferred_from_position', message: '' },
+          { lineNumber: 4, code: 'duplicate_day', message: '' },
+          { lineNumber: 5, code: 'unrecognized_line', message: '' },
+          { lineNumber: 6, code: 'something_new', message: '' },
+        ],
+      });
+
+      const warnings = Array.from(compiled.querySelectorAll('details li')).map((li) =>
+        li.textContent!.trim(),
+      );
+      expect(warnings).toEqual([
+        'Line 2: days without a week number were placed in the week before.',
+        'Line 3: no day name, so the day was taken from its position.',
+        'Line 4: the same day appears twice; this line was used.',
+        'Line 5 was not understood and was left out.',
+        'Line 6 needs a look.',
+      ]);
+    });
+
+    it('counts skipped and already planned days', async () => {
+      const { compiled } = await previewed();
+
+      // Importing, new meals, skipped (leftovers + the planned day), already planned.
+      expect(counts(compiled)).toEqual(['4', '2', '2', '1']);
+    });
+
+    it('summarises a preview without any lines', async () => {
+      const { compiled } = await previewedWith({ ...newMeals([]), emptyDays: 3 });
+
+      expect(compiled.textContent).toContain('0 days from  to .');
+      expect(counts(compiled)).toEqual(['0', '0', '0', '0']);
+    });
+
+    it('offers to turn leftovers into a meal only when there are leftovers', async () => {
+      const { compiled } = await previewedWith(newMeals(['A', 'B']));
+
+      expect(compiled.textContent).not.toContain('Import leftovers as one meal');
+    });
+
+    it('turns only the leftovers into the shared meal', async () => {
+      const { fixture, mealplans, compiled } = await previewed();
+
+      button(compiled, 'Import leftovers as one meal').click();
+      await settle(fixture);
+      button(compiled, 'Import 5 days').click();
+      await settle(fixture);
+
+      const request = vi.mocked(mealplans.commitImport!).mock.calls[0][1];
+      expect(request.entries.map((e) => e.newMealName ?? e.mealId)).toEqual([
+        'meal-lasagne',
+        'Hotdogs',
+        'Hotdogs',
+        'Hotdog',
+        'Leftovers',
+      ]);
+    });
+
+    it('shows each group’s current choice in its menu', async () => {
+      const { fixture, compiled } = await previewed();
+      const select = (index: number) =>
+        compiled.querySelector<HTMLSelectElement>(`#import-action-${index}`)!;
+
+      expect(select(0).value).toBe('new');
+      expect(select(1).value).toBe('existing:meal-lasagne');
+      expect(select(3).value).toBe('skip');
+
+      choose(select(2), 'merge:hotdogs');
+      await settle(fixture);
+      expect(select(2).value).toBe('merge:hotdogs');
+    });
+
+    it('creates a new meal for a match the backend didn’t pick by default', async () => {
+      const shown: MealPlanImportPreview = {
+        ...newMeals(['Lasagna']),
+        groups: [
+          group({
+            key: 'k0',
+            name: 'Lasagna',
+            defaultAction: 'New',
+            matchedMealId: 'meal-lasagne',
+            matchedMealName: 'Lasagne',
+          }),
+        ],
+      };
+      const { fixture, mealplans, compiled } = await previewedWith(shown);
+
+      expect(compiled.querySelector<HTMLSelectElement>('#import-action-0')!.value).toBe('new');
+      button(compiled, 'Import 1 days').click();
+      await settle(fixture);
+
+      expect(vi.mocked(mealplans.commitImport!).mock.calls[0][1].entries).toEqual([
+        { date: '2024-02-01', slot: 'Dinner', newMealName: 'Lasagna', notes: '' },
+      ]);
+    });
+
+    it('switches a group back to the existing meal, and imports a skipped group as new', async () => {
+      const { fixture, mealplans, compiled } = await previewed();
+      const select = (index: number) =>
+        compiled.querySelector<HTMLSelectElement>(`#import-action-${index}`)!;
+
+      choose(select(1), 'new');
+      await settle(fixture);
+      choose(select(1), 'existing:meal-lasagne');
+      choose(select(3), 'new');
+      await settle(fixture);
+      expect(select(3).value).toBe('new');
+      expect((compiled.querySelector('#import-name-3') as HTMLInputElement).value).toBe('Rester');
+      button(compiled, 'Import 5 days').click();
+      await settle(fixture);
+
+      const entries = vi.mocked(mealplans.commitImport!).mock.calls[0][1].entries;
+      expect(entries[0]).toEqual({
+        date: '2024-01-14',
+        slot: 'Dinner',
+        mealId: 'meal-lasagne',
+        notes: 'Mor ikke hjemme',
+      });
+      expect(entries[4]).toEqual({
+        date: '2024-01-18',
+        slot: 'Dinner',
+        newMealName: 'Rester',
+        notes: '',
+      });
+    });
+
+    it.each([
+      ['punctuation', 'Hot-dogs', 'Hot dogs', '1'],
+      ['leading and trailing punctuation', '(Hotdogs)', 'Hotdogs', '1'],
+      ['a run of punctuation', 'Hot, dogs', 'Hot dogs', '1'],
+      ['"med" written as "m"', 'Pasta med sovs', 'Pasta m sovs', '1'],
+      ['separate words', 'Hot dogs', 'Hotdogs', '2'],
+      ['lower-casing, not upper-casing (ß)', 'Straße', 'Strasse', '2'],
+    ])('counts new meals that differ only by %s', async (_, first, second, expected) => {
+      const { compiled } = await previewedWith(newMeals([first, second]));
+
+      expect(compiled.querySelector('[data-testid="count-new-meals"]')?.textContent?.trim()).toBe(
+        expected,
+      );
+    });
+
+    it('filters the meals by a search ignoring case and surrounding spaces', async () => {
+      const { fixture, compiled } = await previewed();
+
+      type(compiled.querySelector<HTMLInputElement>('#importSearch')!, '  HOTDOG ');
+      await settle(fixture);
+      expect(groupNames(compiled)).toEqual(['Hotdogs', 'Hotdog']);
+
+      type(compiled.querySelector<HTMLInputElement>('#importSearch')!, 'las');
+      await settle(fixture);
+      expect(groupNames(compiled)).toEqual(['Lasagne']);
+    });
+
+    it('shows the meals 50 at a time', async () => {
+      const names = Array.from({ length: 120 }, (_, i) => `Meal ${i + 1}`);
+      const { fixture, compiled } = await previewedWith(newMeals(names));
+
+      expect(groupNames(compiled).length).toBe(50);
+      button(compiled, 'Show 70 more').click();
+      await settle(fixture);
+      expect(groupNames(compiled).length).toBe(100);
+      button(compiled, 'Show 20 more').click();
+      await settle(fixture);
+      expect(groupNames(compiled).length).toBe(120);
+      expect(compiled.textContent).not.toContain('more');
+    });
+
+    it('starts the next preview with fresh decisions and the first page', async () => {
+      const names = Array.from({ length: 60 }, (_, i) => `Meal ${i + 1}`);
+      const { fixture, compiled } = await previewedWith(newMeals(names));
+
+      choose(compiled.querySelector('#import-action-0') as HTMLSelectElement, 'skip');
+      button(compiled, 'Show 10 more').click();
+      await settle(fixture);
+      button(compiled, 'Edit text').click();
+      await settle(fixture);
+      button(compiled, 'Preview import').click();
+      await settle(fixture);
+
+      expect(compiled.querySelector<HTMLSelectElement>('#import-action-0')!.value).toBe('new');
+      expect(groupNames(compiled).length).toBe(50);
+    });
+
+    it('follows a chain of five “same as” links to the meal at its end', async () => {
+      const names = ['A', 'B', 'C', 'D', 'E', 'F'];
+      const shown: MealPlanImportPreview = {
+        ...newMeals(names),
+        groups: names.map((name, i) =>
+          group({
+            key: `k${i}`,
+            name,
+            suggestedGroupKey: i < 5 ? `k${i + 1}` : '',
+            suggestedName: i < 5 ? names[i + 1] : '',
+          }),
+        ),
+      };
+      const { fixture, mealplans, compiled } = await previewedWith(shown);
+
+      for (let i = 0; i < 5; i++) {
+        choose(
+          compiled.querySelector(`#import-action-${i}`) as HTMLSelectElement,
+          `merge:k${i + 1}`,
+        );
+      }
+      await settle(fixture);
+      button(compiled, 'Import 6 days').click();
+      await settle(fixture);
+
+      const entries = vi.mocked(mealplans.commitImport!).mock.calls[0][1].entries;
+      expect(entries.map((e) => e.newMealName)).toEqual(['F', 'F', 'F', 'F', 'F', 'F']);
+    });
+
+    it('skips groups whose “same as” links go round in a circle', async () => {
+      const shown: MealPlanImportPreview = {
+        ...newMeals(['A', 'B', 'C']),
+        groups: [
+          group({ key: 'k0', name: 'A', suggestedGroupKey: 'k1', suggestedName: 'B' }),
+          group({ key: 'k1', name: 'B', suggestedGroupKey: 'k0', suggestedName: 'A' }),
+          group({ key: 'k2', name: 'C' }),
+        ],
+      };
+      const { fixture, compiled } = await previewedWith(shown);
+
+      choose(compiled.querySelector('#import-action-0') as HTMLSelectElement, 'merge:k1');
+      choose(compiled.querySelector('#import-action-1') as HTMLSelectElement, 'merge:k0');
+      await settle(fixture);
+
+      expect(compiled.querySelector('[data-testid="count-importing"]')?.textContent?.trim()).toBe(
+        '1',
+      );
+    });
+
+    it('commits nothing when every line is skipped', async () => {
+      const { fixture, mealplans, compiled } = await previewedWith(newMeals(['A']));
+
+      choose(compiled.querySelector('#import-action-0') as HTMLSelectElement, 'skip');
+      await settle(fixture);
+      expect(button(compiled, 'Import 0 days').disabled).toBe(true);
+      await (fixture.componentInstance as unknown as { commit(): Promise<void> }).commit();
+
+      expect(mealplans.commitImport).not.toHaveBeenCalled();
+    });
+
+    it('returns to an empty text box after an import, and reloads the history', async () => {
+      const { fixture, mealplans, compiled } = await previewed();
+
+      button(compiled, 'Import 4 days').click();
+      await settle(fixture);
+      expect(mealplans.listImports).toHaveBeenCalledTimes(2);
+      button(compiled, 'Import more').click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Import complete');
+      expect(compiled.textContent).not.toContain('Check before importing');
+      expect(compiled.querySelector('textarea')!.value).toBe('');
+    });
+
+    it('shows a failed import, and clears the error when going back to the text', async () => {
+      const commitImport = vi
+        .fn()
+        .mockRejectedValueOnce(new HttpErrorResponse({ status: 500 }))
+        .mockResolvedValue(result);
+      const { fixture, compiled } = await previewedWith(preview, { commitImport });
+
+      button(compiled, 'Import 4 days').click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain(
+        'The import failed. Nothing was saved; please try again.',
+      );
+
+      button(compiled, 'Edit text').click();
+      await settle(fixture);
+      button(compiled, 'Preview import').click();
+      await settle(fixture);
+      expect(compiled.textContent).not.toContain('The import failed.');
+    });
+
+    it('shows the backend reason only for a validation error that has one', async () => {
+      const previewImport = vi
+        .fn()
+        .mockRejectedValueOnce(
+          new HttpErrorResponse({ status: 400, error: { details: { '': ['Add a year line.'] } } }),
+        )
+        .mockRejectedValueOnce(
+          new HttpErrorResponse({ status: 500, error: { details: { '': ['Server detail.'] } } }),
+        )
+        .mockRejectedValueOnce(new HttpErrorResponse({ status: 400, error: null }));
+      const { fixture } = await setup({ mealplans: { previewImport } });
+      await settle(fixture);
+      const compiled: HTMLElement = fixture.nativeElement;
+      type(compiled.querySelector('textarea')!, 'U2');
+      await settle(fixture);
+      const detail = () => compiled.querySelector('p.text-red-600 span.block');
+
+      button(compiled, 'Preview import').click();
+      await settle(fixture);
+      expect(detail()?.textContent).toBe('Add a year line.');
+
+      button(compiled, 'Preview import').click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('The text could not be read as a meal plan.');
+      expect(detail()).toBeNull();
+
+      button(compiled, 'Preview import').click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('The text could not be read as a meal plan.');
+      expect(detail()).toBeNull();
+    });
+  });
+
+  describe('undoing an import', () => {
+    it('hides the confirmation once the import is undone', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+      const compiled: HTMLElement = fixture.nativeElement;
+
+      button(compiled, 'Undo').click();
+      await settle(fixture);
+      button(compiled, 'Undo import').click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Remove the imported days');
+    });
+
+    it('cancels the confirmation without undoing', async () => {
+      const { fixture, mealplans } = await setup();
+      await settle(fixture);
+      const compiled: HTMLElement = fixture.nativeElement;
+
+      button(compiled, 'Undo').click();
+      await settle(fixture);
+      button(compiled, 'Cancel').click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Remove the imported days');
+      expect(mealplans.revertImport).not.toHaveBeenCalled();
+    });
+
+    it('shows a failed undo, and clears it when asking again', async () => {
+      const { fixture } = await setup({
+        mealplans: {
+          revertImport: vi.fn(async () => Promise.reject(new HttpErrorResponse({ status: 500 }))),
+        },
+      });
+      await settle(fixture);
+      const compiled: HTMLElement = fixture.nativeElement;
+
+      button(compiled, 'Undo').click();
+      await settle(fixture);
+      button(compiled, 'Undo import').click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Unable to undo the import.');
+
+      button(compiled, 'Cancel').click();
+      await settle(fixture);
+      button(compiled, 'Undo').click();
+      await settle(fixture);
+      expect(compiled.textContent).not.toContain('Unable to undo the import.');
     });
   });
 });

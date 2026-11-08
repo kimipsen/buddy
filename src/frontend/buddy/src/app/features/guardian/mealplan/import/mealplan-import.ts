@@ -77,7 +77,7 @@ function nextWeek(today: Date): { from: string; to: string } {
 
 // What the guardian decided for one group of same-named lines.
 export type ImportDecision =
-  | { kind: 'existing'; mealId: string; name: string }
+  | { kind: 'existing'; mealId: string }
   | { kind: 'new'; name: string }
   | { kind: 'skip' }
   // Same meal as another group (a spelling variant), whatever that group resolves to.
@@ -87,7 +87,7 @@ type ResolvedDecision = Exclude<ImportDecision, { kind: 'merge' }>;
 
 function defaultDecision(group: MealPlanImportPreviewGroup): ImportDecision {
   if (group.defaultAction === 'Existing' && group.matchedMealId) {
-    return { kind: 'existing', mealId: group.matchedMealId, name: group.matchedMealName };
+    return { kind: 'existing', mealId: group.matchedMealId };
   }
 
   return group.defaultAction === 'Skip' ? { kind: 'skip' } : { kind: 'new', name: group.name };
@@ -112,7 +112,6 @@ function normalizeKey(name: string): string {
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim()
     .split(' ')
-    .filter((word) => word.length > 0)
     .map((word) => (word === 'med' ? 'm' : word))
     .join(' ');
 }
@@ -158,11 +157,14 @@ export class MealplanImport {
   protected readonly weekStart = signal<ImportWeekStart>('Sunday');
   protected readonly slot = signal<MealSlot>('Dinner');
   protected readonly previewing = createAction();
+  // The detail only shows inside a preview error, and every failed preview sets it first.
+  // Stryker disable next-line StringLiteral: see above
   protected readonly previewDetail = signal('');
 
   protected readonly preview = signal<MealPlanImportPreview | null>(null);
   protected readonly decisions = signal<Record<string, ImportDecision>>({});
   protected readonly archiveSingleUse = signal(true);
+  // Stryker disable next-line StringLiteral: the search only applies to a preview, and showPreview clears it first
   protected readonly search = signal('');
   protected readonly visibleCount = signal(PAGE_SIZE);
   protected readonly committing = createAction();
@@ -247,6 +249,7 @@ export class MealplanImport {
   protected readonly summary = computed(() => {
     const preview = this.preview();
     const entries = this.entries();
+    // Stryker disable next-line ArrayDeclaration: without a preview the summary isn't rendered
     const dates = preview?.lines.map((l) => l.date) ?? [];
     const newNames = new Set(
       entries.flatMap((e) => (e.newMealName ? [normalizeKey(e.newMealName)] : [])),
@@ -258,9 +261,9 @@ export class MealplanImport {
       to: dates[dates.length - 1] ?? '',
       importing: entries.length,
       newMeals: newNames.size,
-      matched: entries.filter((e) => e.mealId).length,
       occupied: preview?.lines.filter((l) => l.occupied).length ?? 0,
       skipped: (preview?.lines.length ?? 0) - entries.length,
+      // Stryker disable next-line BooleanLiteral: without a preview the summary isn't rendered
       hasLeftovers: preview?.groups.some((g) => g.kind === 'Leftovers') ?? false,
     };
   });
@@ -271,14 +274,7 @@ export class MealplanImport {
 
   protected setDecision(group: MealPlanImportPreviewGroup, encoded: string): void {
     const decision: ImportDecision = encoded.startsWith('existing:')
-      ? {
-          kind: 'existing',
-          mealId: encoded.slice('existing:'.length),
-          name:
-            encoded.slice('existing:'.length) === group.matchedMealId
-              ? group.matchedMealName
-              : group.suggestedName,
-        }
+      ? { kind: 'existing', mealId: encoded.slice('existing:'.length) }
       : encoded.startsWith('merge:')
         ? { kind: 'merge', key: encoded.slice('merge:'.length), name: group.suggestedName }
         : encoded === 'skip'
@@ -293,6 +289,7 @@ export class MealplanImport {
   }
 
   protected importLeftoversAsOneMeal(): void {
+    // Stryker disable next-line OptionalChaining,ArrayDeclaration: the button only renders inside a preview
     const leftovers = (this.preview()?.groups ?? []).filter((g) => g.kind === 'Leftovers');
     const name = this.translation.translate('mealplan.import.review.leftoversMealName');
 
@@ -311,6 +308,7 @@ export class MealplanImport {
   }
 
   protected async readFile(event: Event): Promise<void> {
+    // Stryker disable next-line OptionalChaining: a file input's files is never null, only empty
     const file = (event.target as HTMLInputElement).files?.[0];
 
     if (file) {
@@ -326,7 +324,6 @@ export class MealplanImport {
       return;
     }
 
-    this.previewDetail.set('');
     await this.previewing.run(
       true,
       async () => {
@@ -348,8 +345,6 @@ export class MealplanImport {
   protected selectSource(source: ImportSource): void {
     this.requestedSource.set(source);
     this.previewing.reset();
-    // Stryker disable next-line StringLiteral: the detail only shows inside a preview error, which the reset above just cleared
-    this.previewDetail.set('');
   }
 
   protected async runMealiePreview(): Promise<void> {
@@ -361,8 +356,6 @@ export class MealplanImport {
       return;
     }
 
-    // Stryker disable next-line StringLiteral: the detail only shows inside a preview error, and a new error sets it again
-    this.previewDetail.set('');
     await this.previewing.run(
       true,
       async () => {
@@ -388,7 +381,6 @@ export class MealplanImport {
     this.decisions.set({});
     this.search.set('');
     this.visibleCount.set(PAGE_SIZE);
-    this.result.set(null);
   }
 
   protected backToText(): void {
