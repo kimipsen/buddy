@@ -180,6 +180,13 @@ The dev realm isn't automatically ported over. Easiest path:
    access and ID tokens); and every existing guardian in `buddy-guardian` and
    every existing child in `buddy-child` (**Users > user > Groups**). New
    children are put in `buddy-child` by the API.
+   Since Keycloak 26.8.2 the Admin API only accepts tokens meant for it, so
+   `buddy-admin-cli` needs the `kc-admin-api` client scope (**Clients >
+   buddy-admin-cli > Client scopes > Add client scope > kc-admin-api >
+   Default**). Without it every call the API makes to Keycloak gets `401`
+   and creating a child fails with `500`. `buddy-realm.json` ships it, but a
+   realm created by hand, or before 26.8.2 (upgrading Keycloak creates the
+   scope but doesn't add it to the client), needs it added once.
 4. Generate a new secret for `buddy-admin-cli` (Clients > buddy-admin-cli >
    Credentials), put it in `.env` as `KEYCLOAK_ADMIN_CLI_SECRET`, then:
 
