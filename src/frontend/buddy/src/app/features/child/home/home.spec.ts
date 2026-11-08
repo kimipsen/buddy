@@ -1236,13 +1236,13 @@ describe('ChildHome', () => {
       return {
         title: rowText(label),
         isPast: label.classList.contains('line-through'),
-        background: row.style.background,
+        background: row.style.backgroundImage,
       };
     }
 
-    // jsdom normalises the background shorthand, adding commas to rgb() and an explicit background-color.
+    // Check the gradient independently of how the background shorthand serialises its default color.
     const gradient = (percent: number) =>
-      `linear-gradient(to right, rgb(203, 213, 225) ${percent}%, transparent ${percent}%) transparent`;
+      `linear-gradient(to right, rgb(203, 213, 225) ${percent}%, transparent ${percent}%)`;
 
     // An all-day event starts at the day's local midnight, so it sorts ahead of the timed ones.
     it('lists only events, in start order', async () => {
@@ -1385,7 +1385,7 @@ describe('ChildHome', () => {
 
       const compiled = fixture.nativeElement as HTMLElement;
       const row = () => sectionRows(compiled, 'Events today')[0];
-      expect(row().style.background).toBe(gradient(50));
+      expect(row().style.backgroundImage).toBe(gradient(50));
 
       const callIndex = setIntervalSpy.mock.calls.findIndex(([, delay]) => delay === 60_000);
       expect(callIndex).toBeGreaterThanOrEqual(0);
@@ -1395,7 +1395,7 @@ describe('ChildHome', () => {
       vi.mocked(Date.now).mockReturnValue(Date.parse(at('12:30:00')));
       tick();
       fixture.detectChanges();
-      expect(row().style.background).toBe(gradient(75));
+      expect(row().style.backgroundImage).toBe(gradient(75));
 
       vi.mocked(Date.now).mockReturnValue(Date.parse(at('13:00:00')));
       tick();
@@ -1912,9 +1912,9 @@ describe('ChildHome', () => {
       });
       await settle(fixture);
       const compiled = fixture.nativeElement as HTMLElement;
-      const progressFill = () => sectionRows(compiled, 'Events today')[0]!.style.background;
+      const progressFill = () => sectionRows(compiled, 'Events today')[0]!.style.backgroundImage;
       const fill = (percent: number) =>
-        `linear-gradient(to right, rgb(203, 213, 225) ${percent}%, transparent ${percent}%) transparent`;
+        `linear-gradient(to right, rgb(203, 213, 225) ${percent}%, transparent ${percent}%)`;
       const stepLabel = () =>
         compiled.querySelectorAll('[role="timer"]')[1]!.getAttribute('aria-label');
       expect(progressFill()).toBe(fill(60));
