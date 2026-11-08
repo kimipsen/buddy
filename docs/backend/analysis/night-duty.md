@@ -470,8 +470,10 @@ code):
   `child.home.tonight.*` and the print row label ("Night" / "Nat").
 - **Screenshots:** `guardian-night-duty` in `screenshots/pages.ts`, and a Night row and a screen
   night in `demo-family.ts`, so the child home and print sheet screenshots change too. The demo
-  family has one guardian today (Sara, "Mom"). The seed adds a babysitter-covered night and a
-  sleepover so the week isn't all one name; a second demo guardian is an open question below.
+  family gets a second guardian, Jonas Holm (calling name "Dad"), as a co-guardian of Emil and
+  Ida, so the seeded schedule shows the Mom/Dad rhythm of the mockups. The seed also adds a
+  babysitter night and a sleepover. Dad's demo Keycloak user is created the same way as the
+  existing demo users, and the pickup screenshots can use him too.
 
 ## Testing
 
@@ -551,20 +553,22 @@ switch two nights, see the change marked, open the print sheet and see the Night
 | Print                      | `PrintRowKind.NightDuty`, appended last; blank cell for an empty night                                    |
 | Child view                 | A "Tonight" card on the day dashboard; no card for an empty night                                         |
 | Page placement             | Its own page `/guardian/night-duty`, linked from and to the pickup page                                   |
+| Demo data                  | A second demo guardian, Jonas Holm ("Dad"), seeded in `demo-family.ts`                                    |
+| "Tonight" after midnight   | Follows the child's date, so after midnight the card shows the coming evening                             |
+| "Changed by" history       | Stored (`ModifiedBy` on every event) but not shown in v1                                                  |
+| Group visibility           | None in v1: guardians and the child only, as pickups and work locations                                   |
 
 ## Remaining open questions
 
-- **A second demo guardian.** The demo family has only Sara ("Mom"), so the screenshots can't show
-  the Mom/Dad rhythm the mockups use. The lean is to seed a second guardian (Jonas Holm, "Dad")
-  in `demo-family.ts`, which also makes the pickup screenshots more realistic. The alternative is
-  to use Maja (babysitter) and a sleepover as the "other" people, which needs no new Keycloak user.
-- **Showing "the night in progress" after midnight.** The "Tonight" card follows the child's date,
-  so at 02:00 it already shows the coming evening. The lean is that this is fine (children rarely
-  open the app in the night), and an "until noon, show last night" rule is additive later.
-- **Guardian-visible history of changes.** `ModifiedBy` is stored on every event, but v1 doesn't
-  show who changed a night. A "changed by Dad" line in the edit dialog is additive.
-- **Group visibility.** A grandparent in the family group can't see the schedule. As for pickups
-  and work locations, a group View tier is additive if a group-owned print template needs it.
+None for v1. The questions raised in review are settled in the table above. The ones deferred
+there can be added later without a redesign:
+
+- **"Tonight" after midnight.** A rule that shows the previous date's night until a cut-off
+  hour is a change to the child card only.
+- **"Changed by" history.** `ModifiedBy` is already on every event, so showing it means adding a
+  field to `ListNights` and a line in the dialog.
+- **Group visibility.** A View tier for group members goes in `NightDutyAuthorization`, as it
+  would for pickups and work locations.
 
 ## Diagram
 
