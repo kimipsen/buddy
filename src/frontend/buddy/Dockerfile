@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
-# Node's major version matches .nvmrc (which CI reads too); the digest pins the exact image.
-FROM node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS build
+# Node's major version matches .nvmrc (which CI reads too).
+FROM node:24-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json .npmrc .nvmrc ./
@@ -14,7 +14,7 @@ COPY . .
 RUN npm run build -- --configuration production \
     && rm dist/buddy/browser/config/runtime-config.json
 
-FROM caddy:2-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f AS runtime
+FROM caddy:2-alpine AS runtime
 
 # Alpine publishes package fixes (e.g. brotli-libs 1.2.1 for CVE-2026-111497) before the caddy
 # image is rebuilt, so the upgrade picks up what the Trivy gate reports as fixable.

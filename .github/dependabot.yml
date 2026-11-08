@@ -80,7 +80,7 @@ updates:
       cronjob: "0 6 * * 1,5" # Monday and Friday, 06:00
       timezone: "Europe/Copenhagen"
     # A new SDK tag must land together with global.json (and the runtime tag); Dependabot can't
-    # change those in one PR, so it only refreshes the digests of the pinned tags.
+    # change those in one PR, so they're bumped by hand.
     ignore:
       - dependency-name: "dotnet/sdk"
         update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
@@ -98,7 +98,7 @@ updates:
       - dependency-name: "node"
         update-types: ["version-update:semver-major"]
 
-  # Production compose images (Caddy, Postgres) and the Keycloak image, pinned by digest.
+  # Production compose images (Caddy, Postgres) and the Keycloak image, pinned by version tag.
   - package-ecosystem: "docker-compose"
     directory: "/deploy"
     schedule:

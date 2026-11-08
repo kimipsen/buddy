@@ -11,7 +11,7 @@ name: buddy-load
 
 services:
   db:
-    image: postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
+    image: postgres:18
     command: ['postgres', '-c', 'max_connections=200']
     environment:
       POSTGRES_USER: postgres
@@ -107,12 +107,12 @@ services:
 
   lgtm:
     # Grafana, Prometheus, Tempo and Loki in one container, with an OTLP receiver on 4317/4318.
-    image: grafana/otel-lgtm:0.36.0@sha256:57c04cbd8e7022f32bb84c4ac005d79baf8b08e2c5be44facf11f5f1f9944ba2
+    image: grafana/otel-lgtm:0.36.0
     ports:
       - '127.0.0.1:3300:3000'
 
   k6:
-    image: grafana/k6:2.3.0@sha256:9c2dee7f8ed74d317e4027c06a10f169b625638189de8d4555d0b3486a5aeb34
+    image: grafana/k6:2.3.0
     profiles: [k6]
     # Writable results/ on the bind mount: run as the invoking user, not k6's uid 12345.
     user: '${LOAD_UID:-1000}'

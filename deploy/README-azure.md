@@ -436,6 +436,6 @@ and points the realm's clients at the new domains. See
 - **Backups**: unlike the Oracle VM (manual volume snapshots), Flexible
   Server takes automated daily backups with point-in-time restore by default
   — no extra setup needed. See "Rollback" (step 8) for restoring it.
-- Base images are pinned by tag and digest (the .NET tags match
-  `global.json`), so redeploying the same commit rebuilds the same images. See
+- Base images are pinned by version tag (the .NET tags match `global.json`).
+  See
   the Oracle guide's notes.

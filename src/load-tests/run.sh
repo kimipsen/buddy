@@ -14,7 +14,7 @@ cd "$(dirname "$0")"
 PROFILE="${PROFILE:-smoke}"
 TARGET="${TARGET:-stack}"
 # Keep in step with the k6 service in docker-compose.load.yml.
-K6_IMAGE="grafana/k6:2.3.0@sha256:9c2dee7f8ed74d317e4027c06a10f169b625638189de8d4555d0b3486a5aeb34"
+K6_IMAGE="grafana/k6:2.3.0"
 COMPOSE=(docker compose -f docker-compose.load.yml)
 
 if [ ! -f "scenarios/${PROFILE}.ts" ]; then
