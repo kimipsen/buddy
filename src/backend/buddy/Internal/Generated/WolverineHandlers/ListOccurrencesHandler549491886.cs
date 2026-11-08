@@ -35,8 +35,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Calendars.ListOccurrencesHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Calendars.ListOccurrencesHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Calendars.ListOccurrencesHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Calendars.ListOccurrencesHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Calendars.ListOccurrencesHandler.Handle(listOccurrences, listOccurrencesValidator, _calendarEventStore, _calendarItemEventStore, _taskTemplateEventStore, _groupEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);

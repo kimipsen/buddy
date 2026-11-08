@@ -32,8 +32,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Calendars.UpdateItemAlarmsHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Calendars.UpdateItemAlarmsHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Calendars.UpdateItemAlarmsHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Calendars.UpdateItemAlarmsHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Calendars.UpdateItemAlarmsHandler.Handle(updateItemAlarms, updateItemAlarmsValidator, _calendarEventStore, _calendarItemEventStore, _groupEventStore, _timeProvider, cancellation).ConfigureAwait(false);

@@ -29,8 +29,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Feelings.UndoCheckInHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Feelings.UndoCheckInHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Feelings.UndoCheckInHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Feelings.UndoCheckInHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Feelings.UndoCheckInHandler.Handle(undoCheckIn, _feelingsJournalEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);

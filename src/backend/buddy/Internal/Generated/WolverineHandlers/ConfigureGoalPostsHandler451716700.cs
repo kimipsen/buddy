@@ -30,8 +30,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Progress.ConfigureGoalPostsHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Progress.ConfigureGoalPostsHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Progress.ConfigureGoalPostsHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Progress.ConfigureGoalPostsHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Progress.ConfigureGoalPostsHandler.Handle(configureGoalPosts, configureGoalPostsValidator, _progressEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);

@@ -29,8 +29,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Calendars.TransferCalendarToGroupHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Calendars.TransferCalendarToGroupHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Calendars.TransferCalendarToGroupHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Calendars.TransferCalendarToGroupHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Calendars.TransferCalendarToGroupHandler.Handle(transferCalendarToGroup, _calendarEventStore, _groupEventStore, _timeProvider, cancellation).ConfigureAwait(false);

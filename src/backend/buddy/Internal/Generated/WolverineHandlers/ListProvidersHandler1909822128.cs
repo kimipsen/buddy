@@ -26,8 +26,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Mealplans.ListProvidersHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Mealplans.ListProvidersHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Mealplans.ListProvidersHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Mealplans.ListProvidersHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Mealplans.ListProvidersHandler.Handle(listProviders, _aiCredentialEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);

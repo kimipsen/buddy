@@ -27,8 +27,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Users.UpdateLanguageHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Users.UpdateLanguageHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Users.UpdateLanguageHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Users.UpdateLanguageHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Users.UpdateLanguageHandler.Handle(updateLanguage, updateLanguageValidator, _userEventStore, _timeProvider, cancellation).ConfigureAwait(false);

@@ -26,8 +26,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Babysitters.ListChildBabysittersHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Babysitters.ListChildBabysittersHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Babysitters.ListChildBabysittersHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Babysitters.ListChildBabysittersHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Babysitters.ListChildBabysittersHandler.Handle(listChildBabysitters, _babysitterListEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);

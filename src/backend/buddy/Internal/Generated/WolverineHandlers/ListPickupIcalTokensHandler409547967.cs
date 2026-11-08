@@ -26,8 +26,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Pickups.ListPickupIcalTokensHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Pickups.ListPickupIcalTokensHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Pickups.ListPickupIcalTokensHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Pickups.ListPickupIcalTokensHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Pickups.ListPickupIcalTokensHandler.Handle(listPickupIcalTokens, _pickupFeedEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);

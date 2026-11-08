@@ -35,8 +35,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Groups.InviteToGroupHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Groups.InviteToGroupHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Groups.InviteToGroupHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Groups.InviteToGroupHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Groups.InviteToGroupHandler.Handle(inviteToGroup, inviteToGroupValidator, _groupEventStore, _emailSender, _frontendLinks, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);

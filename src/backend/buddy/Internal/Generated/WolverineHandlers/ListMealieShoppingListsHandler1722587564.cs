@@ -35,8 +35,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Mealplans.ListMealieShoppingListsHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Mealplans.ListMealieShoppingListsHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Mealplans.ListMealieShoppingListsHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Mealplans.ListMealieShoppingListsHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Mealplans.ListMealieShoppingListsHandler.Handle(listMealieShoppingLists, _mealieConnectionEventStore, _guardianLinkEventStore, _mealieTokenCipher, mealieClient, cancellation).ConfigureAwait(false);

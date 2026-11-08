@@ -36,8 +36,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.Mealplans.StartAiSessionHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.Mealplans.StartAiSessionHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.Mealplans.StartAiSessionHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.Mealplans.StartAiSessionHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.Mealplans.StartAiSessionHandler.Handle(startAiSession, startAiSessionValidator, _aiSessionEventStore, _aiCredentialEventStore, _mealEventStore, _mealPlanEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);

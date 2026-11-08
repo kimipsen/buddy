@@ -33,8 +33,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.SleepDiaries.CreateSleepDiaryShareLinkHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.SleepDiaries.CreateSleepDiaryShareLinkHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.SleepDiaries.CreateSleepDiaryShareLinkHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.SleepDiaries.CreateSleepDiaryShareLinkHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.SleepDiaries.CreateSleepDiaryShareLinkHandler.Handle(createSleepDiaryShareLink, createSleepDiaryShareLinkValidator, _sleepDiaryShareTokenEventStore, _guardianLinkEventStore, _loggerForMessage, _timeProvider, cancellation).ConfigureAwait(false);

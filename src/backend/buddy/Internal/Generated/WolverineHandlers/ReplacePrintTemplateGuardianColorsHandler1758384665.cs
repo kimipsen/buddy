@@ -39,8 +39,8 @@ namespace Internal.Generated.WolverineHandlers
             using var disposable = buddy.Common.Concurrency.StreamVersionScopeMiddleware.Before();
             try
             {
-                System.Diagnostics.Activity.Current?.SetTag("message.handler", "buddy.Features.PrintTemplates.ReplacePrintTemplateGuardianColorsHandler");
-                System.Diagnostics.Activity.Current?.SetTag("handler.type", "buddy.Features.PrintTemplates.ReplacePrintTemplateGuardianColorsHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("message.handler", "buddy.Features.PrintTemplates.ReplacePrintTemplateGuardianColorsHandler");
+                Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.PrintTemplates.ReplacePrintTemplateGuardianColorsHandler");
                 
                 // The actual message execution
                 var outgoing1 = await buddy.Features.PrintTemplates.ReplacePrintTemplateGuardianColorsHandler.Handle(replacePrintTemplateGuardianColors, replacePrintTemplateGuardianColorsValidator, _printTemplateEventStore, _groupEventStore, _guardianLinkEventStore, _calendarEventStore, _workLocationScheduleEventStore, _timeProvider, cancellation).ConfigureAwait(false);
