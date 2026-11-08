@@ -84,6 +84,7 @@ model or permissions logic.
 - [Skipping single occurrences](analysis/skip-occurrences.md)
 - [Publishing Docker images on GitHub](analysis/publish-docker-images.md)
 - [SBOM generation for builds](analysis/sbom-generation.md)
+- [Night duty](analysis/night-duty.md)
 
 ## Current focus areas
 
