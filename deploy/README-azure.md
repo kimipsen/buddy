@@ -79,7 +79,7 @@ This, in order:
    final FQDNs (`<app-name>.<environment-domain>`) up front — Container Apps
    FQDNs are deterministic, so every app's env vars can reference its peers'
    real URLs on first create, with no create-then-patch step needed.
-6. Builds the Keycloak image (`quay.io/keycloak/keycloak:26.8.1` + the
+6. Builds the Keycloak image (`quay.io/keycloak/keycloak:26.8.2` + the
    `themes/buddy` theme) via `az acr build` — builds happen in Azure, no
    local Docker daemon required — and deploys it. With `BUDDY_IMAGE_VERSION`
    set, steps 6-8 import the published images instead of building them (see
