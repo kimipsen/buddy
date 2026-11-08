@@ -471,6 +471,20 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             new[] { manageUsersRole });
         assignResponse.EnsureSuccessStatusCode();
 
+        // Since 26.8.2 the Admin API only accepts tokens whose audience is the admin endpoint, which
+        // the built-in "kc-admin-api" client scope adds. Keycloak gives it to admin-cli only, so a
+        // service account without it gets 401 on every Admin API call (production's
+        // buddy-admin-cli needs the same scope, see deploy/README.md).
+        var clientScopes = await client.GetFromJsonAsync<JsonElement>("/admin/realms/master/client-scopes");
+        var adminApiScopeId = clientScopes.EnumerateArray()
+            .Where(scope => scope.GetProperty("name").GetString() == "kc-admin-api")
+            .Select(scope => scope.GetProperty("id").GetString())
+            .FirstOrDefault()
+            ?? throw new InvalidOperationException("Keycloak has no 'kc-admin-api' client scope in the master realm.");
+
+        var scopeResponse = await client.PutAsync($"/admin/realms/master/clients/{clientDbId}/default-client-scopes/{adminApiScopeId}", content: null);
+        scopeResponse.EnsureSuccessStatusCode();
+
         return AdminClientSecret;
     }
 
