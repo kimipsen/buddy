@@ -112,8 +112,6 @@ export class NightEditDialog implements OnInit {
       this.note.set(entry.note ?? '');
     } else if (night.status.kind === 1) {
       this.choice.set(CLEARED_CHOICE);
-    } else {
-      this.note.set(scheduledEntry(night)?.note ?? '');
     }
 
     afterNextRender(() => this.whoSelect()?.nativeElement.focus(), { injector: this.injector });
