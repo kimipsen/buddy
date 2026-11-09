@@ -5,6 +5,13 @@
 //
 // Usage:
 //   node scripts/mutation-issue.mjs [report.json] [--out full.md] [--max-chars N]
+//                                   [--stale stale.txt]
+//
+// --stale takes a list of files (one per line, as `scripts/mutation-batch.sh
+// --stale` prints them) whose results are out of date: their source or specs
+// changed after the run that recorded them. Their mutants are left out of the
+// score and the checklist, since the line numbers no longer match the source
+// and the fix may already be in; they're only named, with their old count.
 //
 // Writes the (possibly truncated) body to stdout and, with --out, the full,
 // untruncated body to a file. Exits 0 either way; the body says when there's
@@ -23,7 +30,16 @@ const flag = (name, fallback) => {
 const outFile = flag('--out');
 // GitHub rejects issue bodies over 65536 characters.
 const maxChars = Number(flag('--max-chars', '60000'));
+const staleFile = flag('--stale');
 const reportPath = args[0] ?? 'reports/stryker-incremental.json';
+const stale = new Set(
+  staleFile
+    ? readFileSync(staleFile, 'utf8')
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+    : [],
+);
 
 const report = JSON.parse(readFileSync(reportPath, 'utf8'));
 const {
@@ -36,8 +52,14 @@ const prefix = process.env.REPORT_PATH_PREFIX ?? 'src/frontend/buddy/';
 const FINDINGS = new Set(['Survived', 'NoCoverage']);
 const counts = {};
 const files = [];
+const outdated = [];
 
 for (const [path, file] of Object.entries(report.files).sort(([a], [b]) => a.localeCompare(b))) {
+  if (stale.has(path)) {
+    const old = file.mutants.filter((m) => FINDINGS.has(m.status)).length;
+    if (old > 0) outdated.push({ path, old });
+    continue;
+  }
   const lines = file.source.split('\n');
   const findings = [];
   for (const mutant of file.mutants) {
@@ -92,10 +114,20 @@ const sections = files.map(({ path, findings }) => {
 });
 
 const empty = total === 0 ? 'No surviving or uncovered mutants. 🎉\n' : '';
-const full = `${header}\n${empty}${sections.join('\n')}`;
+// Plain bullets, not checkboxes: the workflow keeps the issue open only while
+// there are checkbox items, and these files are re-run on a later night.
+const outdatedNote =
+  outdated.length > 0
+    ? `> [!NOTE]\n> ${outdated.length} file(s) changed since their last mutation run and are waiting to be re-run, ` +
+      'so their old findings are left out of the score and the list:\n' +
+      outdated.map(({ path, old }) => `> - \`${path}\` (${old} before the change)`).join('\n') +
+      '\n\n'
+    : '';
+const intro = `${header}\n${outdatedNote}${empty}`;
+const full = `${intro}${sections.join('\n')}`;
 if (outFile) writeFileSync(outFile, full);
 
-let body = `${header}\n${empty}`;
+let body = intro;
 let shown = 0;
 for (const section of sections) {
   // Leave room for the truncation note.

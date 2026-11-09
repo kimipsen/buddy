@@ -308,6 +308,15 @@ changed. With no cache (first run, or evicted after 7 days unused), the run
 starts from the committed `stryker-incremental.json` and goes through every
 file again.
 
+The cache restore replaces the committed report, so the workflow first keeps a
+copy and passes it to the batch script as `--baseline`. A file whose hash in
+`reports/mutation-fingerprints.json` (see below) matches its current source and
+specs, while the cached progress has an older hash or none, takes its results
+from the committed report and counts as covered. That way survivors fixed and
+committed with `/mutation-fix` disappear the next night, instead of the
+pre-fix results in the cache being reported again until the batches reach the
+file.
+
 With the command test runner, Stryker stores the whole test output of every
 mutant run as its `statusReason`, which pushed the report past GitHub's 100 MB
 file limit. When the batch script exits, `scripts/mutation-slim-report.mjs`
@@ -350,7 +359,12 @@ testing findings** (label `mutation-testing`), up to date. It lists every
 surviving and uncovered mutant as a checklist grouped by file, with a link to
 the line, the mutator, and the original and replacement code. Each run rewrites
 the issue, so a fixed mutant just drops off the list. The issue is closed once
-nothing is left. If the list is longer than GitHub's issue-body limit, the
+nothing is left. A file whose source or specs changed after its recorded
+results, and which the run didn't reach, is only named in a note with its old
+count (`scripts/mutation-batch.sh --stale` lists them, `mutation-issue.mjs
+--stale` takes that list). Its old line numbers no longer match the source, and
+the change may already have fixed them, so its mutants stay out of the score
+and the checklist until a later night re-runs it. If the list is longer than GitHub's issue-body limit, the
 complete version is in `mutation-findings.md` in the artifact. To generate the
 same list locally from your own baseline, run
 `node scripts/mutation-issue.mjs` in `src/frontend/buddy`.

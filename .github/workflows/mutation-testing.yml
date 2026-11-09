@@ -116,6 +116,12 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
+      # The cache restore below replaces the committed report. Keep a copy: a file whose committed
+      # results are at its current fingerprint (e.g. survivors just fixed with /mutation-fix) takes
+      # them from here rather than from an older cached run (--baseline below).
+      - name: Keep committed mutation report
+        run: cp reports/stryker-incremental.json "$RUNNER_TEMP/stryker-committed.json"
+
       # Restore where the last run got to: the cumulative results and the list of files covered
       # (with a fingerprint of each file and its specs). With no cache (first run, or evicted after
       # 7 days unused) the committed reports/stryker-incremental.json is the starting point and
@@ -137,7 +143,7 @@ jobs:
       # timeoutMS in stryker.conf.json keeps one slow test run from cascading into timeouts.
       - name: Run StrykerJS in batches
         timeout-minutes: 250
-        run: ./scripts/mutation-batch.sh --rerun-changed --max-minutes 230 --batch-size 10 --concurrency "$(nproc)"
+        run: ./scripts/mutation-batch.sh --rerun-changed --baseline "$RUNNER_TEMP/stryker-committed.json" --max-minutes 230 --batch-size 10 --concurrency "$(nproc)"
 
       # The batch script slims the report on exit; this repeats it in case anything wrote the
       # report after that, so the cache and the findings issue never carry an unslimmed one.
@@ -172,8 +178,12 @@ jobs:
 
       # Only after the batch step succeeded, so a crash never rewrites the issue. Until the first
       # pass over all files is done, the issue lists the findings in the files covered so far.
+      # Files whose source or specs changed since their recorded results, and which this run didn't
+      # reach, are only named in the issue: their old line numbers and findings no longer apply.
       - name: Build findings list
-        run: node scripts/mutation-issue.mjs --out reports/mutation-findings.md > reports/mutation-issue.md
+        run: |
+          ./scripts/mutation-batch.sh --stale > reports/mutation-stale.txt
+          node scripts/mutation-issue.mjs --stale reports/mutation-stale.txt --out reports/mutation-findings.md > reports/mutation-issue.md
 
       # One rolling issue, rewritten each run from the default branch: created when there are
       # surviving/uncovered mutants, closed once there are none. Branch runs don't touch it.
