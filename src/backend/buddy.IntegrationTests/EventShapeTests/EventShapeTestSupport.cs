@@ -51,7 +51,7 @@ internal static class EventShapeTestSupport
         var actual = JsonSerializer.Serialize(@event, options);
         var actualFormatted = Reformat(actual, options);
 
-        var goldenPath = Path.Combine(AppContext.BaseDirectory, "EventShapeTests", "GoldenFiles", goldenFileName);
+        var goldenPath = Path.Join(AppContext.BaseDirectory, "EventShapeTests", "GoldenFiles", goldenFileName);
 
         if (!File.Exists(goldenPath))
         {
@@ -70,7 +70,7 @@ internal static class EventShapeTestSupport
     // different value still fails. Only for events whose equality is structural (no collections).
     public static void AssertGoldenFileReadsBackAs<TEvent>(TEvent expected, string goldenFileName)
     {
-        var goldenPath = Path.Combine(AppContext.BaseDirectory, "EventShapeTests", "GoldenFiles", goldenFileName);
+        var goldenPath = Path.Join(AppContext.BaseDirectory, "EventShapeTests", "GoldenFiles", goldenFileName);
         var actual = JsonSerializer.Deserialize<TEvent>(File.ReadAllText(goldenPath), CreateEventSerializerOptions());
 
         Assert.Equal(expected, actual);
@@ -80,7 +80,7 @@ internal static class EventShapeTestSupport
     // what reads back itself.
     public static TEvent ReadGoldenFile<TEvent>(string goldenFileName)
     {
-        var goldenPath = Path.Combine(AppContext.BaseDirectory, "EventShapeTests", "GoldenFiles", goldenFileName);
+        var goldenPath = Path.Join(AppContext.BaseDirectory, "EventShapeTests", "GoldenFiles", goldenFileName);
 
         return JsonSerializer.Deserialize<TEvent>(File.ReadAllText(goldenPath), CreateEventSerializerOptions())
             ?? throw new InvalidOperationException($"Golden file {goldenFileName} deserialized to null.");
