@@ -35,6 +35,7 @@ export const shell = {
       firstThen: 'Først – Så',
       progress: 'Mål',
       babysitters: 'Babysittere',
+      nightDuty: 'Nattevagt',
       workLocations: 'Arbejdssteder',
       print: 'Print ugeplan',
     },

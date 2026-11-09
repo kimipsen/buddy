@@ -28,6 +28,14 @@ describe('cleanRow', () => {
     });
   });
 
+  it('keeps only the child on a night duty row', () => {
+    expect(
+      cleanRow(
+        row(PRINT_ROW_KIND.nightDuty, { label: ' Nat ', childId: 'signe', guardianId: 'dad' }),
+      ),
+    ).toEqual({ ...emptyRow(PRINT_ROW_KIND.nightDuty, 'Nat'), childId: 'signe' });
+  });
+
   it('keeps exactly one meal scope, preferring the group when both are set', () => {
     expect(
       cleanRow(
@@ -100,6 +108,7 @@ describe('missingField', () => {
     [row(PRINT_ROW_KIND.meal, { mealSlot: 'Dinner' }), 'print.editor.missing.mealScope'],
     [row(PRINT_ROW_KIND.meal, { childId: 'signe' }), 'print.editor.missing.mealSlot'],
     [row(PRINT_ROW_KIND.pickup), 'print.editor.missing.child'],
+    [row(PRINT_ROW_KIND.nightDuty), 'print.editor.missing.child'],
     [row(PRINT_ROW_KIND.workLocation), 'print.editor.missing.guardian'],
     [row(PRINT_ROW_KIND.calendarMarker, { calendarIds: [] }), 'print.editor.missing.calendars'],
     [row(PRINT_ROW_KIND.taskChecklist), 'print.editor.missing.calendars'],
@@ -125,6 +134,7 @@ describe('missingField', () => {
       missingField(row(PRINT_ROW_KIND.meal, { mealGroupId: 'fam', mealSlot: 'Breakfast' })),
     ).toBeNull();
     expect(missingField(row(PRINT_ROW_KIND.calendarEvents, { calendarIds: ['a'] }))).toBeNull();
+    expect(missingField(row(PRINT_ROW_KIND.nightDuty, { childId: 'signe' }))).toBeNull();
   });
 });
 

@@ -8,10 +8,11 @@ import {
 } from '../e2e/support/mealie-client';
 import type { DemoFamily } from './pages';
 
-// Seeds the "Holm" demo family that the documentation screenshots show: one guardian (Sara) with
-// two children (Emil, Ida), a family group and calendar, tasks, meals, medicine, pickups, work
-// locations, progress goals and a print template. Everything goes through the real API as Sara,
-// so the screenshots show what a guardian would actually see.
+// Seeds the "Holm" demo family that the documentation screenshots show: two guardians (Sara, and
+// Jonas as the children's other parent) with two children (Emil, Ida), a family group and
+// calendar, tasks, meals, medicine, pickups, night duty, work locations, progress goals and a
+// print template. Everything goes through the real API as Sara (Jonas only joins), so the
+// screenshots show what a guardian would actually see.
 //
 // The demo accounts are fixed usernames (DEMO_USERNAMES) that never collide with the seeded
 // alice/bob/carol accounts the e2e specs rely on. Every run first removes the previous run's demo
@@ -31,6 +32,8 @@ export const DEMO_PASSWORD = 'demo-screenshots-pw';
 
 export const DEMO_USERNAMES = {
   guardian: 'demo.sara',
+  // Emil and Ida's other parent, so night duty and pickups show a Mom/Dad rhythm.
+  coGuardian: 'demo.jonas',
   child: 'demo.emil',
   sibling: 'demo.ida',
 } as const;
@@ -143,15 +146,21 @@ async function findKeycloakUserId(username: string): Promise<string | null> {
   return users[0]?.id ?? null;
 }
 
-async function createGuardianIdentity(): Promise<void> {
+const CO_GUARDIAN_EMAIL = 'jonas.holm@buddy.test';
+
+async function createGuardianIdentity(
+  username: string = DEMO_USERNAMES.guardian,
+  email = 'sara.holm@buddy.test',
+  firstName = 'Sara',
+): Promise<void> {
   const response = await keycloakAdmin('/users', {
     method: 'POST',
     body: JSON.stringify({
-      username: DEMO_USERNAMES.guardian,
-      email: 'sara.holm@buddy.test',
+      username,
+      email,
       emailVerified: true,
       enabled: true,
-      firstName: 'Sara',
+      firstName,
       lastName: 'Holm',
       // Without it Buddy turns the account away (the buddy-guardian Keycloak group).
       groups: ['/buddy-guardian'],
@@ -160,7 +169,7 @@ async function createGuardianIdentity(): Promise<void> {
   });
 
   if (!response.ok) {
-    throw new Error(`Creating Keycloak user ${DEMO_USERNAMES.guardian} failed: ${response.status}`);
+    throw new Error(`Creating Keycloak user ${username} failed: ${response.status}`);
   }
 }
 
@@ -267,9 +276,66 @@ async function deleteMail(to: string): Promise<void> {
 
 // ---- Reset -------------------------------------------------------------------------------------
 
+// Jonas's backend account and his links to the children, best effort.
+async function resetCoGuardian(): Promise<void> {
+  if (!(await findKeycloakUserId(DEMO_USERNAMES.coGuardian))) {
+    return;
+  }
+
+  const api = await Api.as(DEMO_USERNAMES.coGuardian, DEMO_PASSWORD).catch(() => null);
+
+  if (api) {
+    try {
+      for (const child of await api.get<Named[]>('/users/me/children')) {
+        await api.delete(`/users/me/children/${child.id}/guardian-link`).catch(warn);
+      }
+
+      await api.delete('/users/me').catch(warn);
+    } finally {
+      await api.dispose();
+    }
+  }
+}
+
+// Joins Jonas as the children's other parent: an invite per child, accepted from the mail.
+async function addCoGuardian(api: Api, children: Named[]): Promise<Named> {
+  await createGuardianIdentity(DEMO_USERNAMES.coGuardian, CO_GUARDIAN_EMAIL, 'Jonas');
+  const jonas = await Api.as(DEMO_USERNAMES.coGuardian, DEMO_PASSWORD);
+
+  try {
+    const me = await jonas.get<Named>('/users/me');
+    await jonas.patch('/users/me/name', { givenName: 'Jonas', familyName: 'Holm' });
+    await jonas.patch('/users/me/calling-name', { callingName: 'Dad' });
+    await jonas.patch('/users/me/timezone', { timeZoneId: TIME_ZONE });
+    await jonas.patch('/users/me/language', { language: 'en' });
+
+    for (const child of children) {
+      await deleteMail(CO_GUARDIAN_EMAIL);
+      await api.post(`/users/me/children/${child.id}/guardian-invites`, {
+        email: CO_GUARDIAN_EMAIL,
+        kind: 'Parent',
+      });
+      const token = await inviteTokenFromMail(CO_GUARDIAN_EMAIL, 'guardian-invite');
+
+      if (!token) {
+        throw new Error(`No guardian invite mail for ${CO_GUARDIAN_EMAIL}`);
+      }
+
+      await jonas.post(`/guardian-invites/${token}/accept`);
+    }
+
+    await deleteMail(CO_GUARDIAN_EMAIL);
+    return me;
+  } finally {
+    await jonas.dispose();
+  }
+}
+
 // Removes the previous run's demo family: Sara's groups (and with them their calendars), her
-// links to the children, her backend account, and all three Keycloak identities.
+// and Jonas's links to the children, their backend accounts, and all the Keycloak identities.
 export async function resetDemoFamily(): Promise<void> {
+  await resetCoGuardian();
+
   if (await findKeycloakUserId(DEMO_USERNAMES.guardian)) {
     const api = await Api.as(DEMO_USERNAMES.guardian, DEMO_PASSWORD).catch(() => null);
 
@@ -332,6 +398,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       kind: 'Parent',
     });
     await makeChildLoginUsable(DEMO_USERNAMES.child);
+    const jonas = await addCoGuardian(api, [emil, ida]);
 
     for (const child of [emil, ida]) {
       await api.patch(`/users/me/children/${child.id}/timezone`, { timeZoneId: TIME_ZONE });
@@ -1213,6 +1280,51 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     // Sara's own calendar subscription to the slots she does, so the card shows an issued link.
     await api.post('/pickups/me/ical-tokens', {});
 
+    // Night duty: Emil alternates between Mom and Dad over two weeks, with a weekly screen night,
+    // from today on (a schedule can't start in the past). Then two changed nights: the babysitter
+    // tomorrow and a sleepover at Grandma's the night after.
+    const mom = { kind: 0, guardianId: me.id };
+    const dad = { kind: 0, guardianId: jonas.id };
+    const night = (week: number, day: string, responsible: object | null, note = '') => ({
+      week,
+      day,
+      entry: { responsible: responsible ?? { kind: 3 }, note },
+    });
+    await api.put(`/night-duty/children/${emil.id}/pattern`, {
+      cycleWeeks: 2,
+      anchorMonday: mondayIso,
+      days: [
+        night(0, 'Monday', mom),
+        night(0, 'Tuesday', dad),
+        night(0, 'Wednesday', mom),
+        night(0, 'Thursday', mom),
+        night(0, 'Friday', dad, 'Screen night 📱'),
+        night(0, 'Saturday', dad),
+        night(0, 'Sunday', mom),
+        night(1, 'Monday', dad),
+        night(1, 'Tuesday', mom),
+        night(1, 'Wednesday', dad),
+        night(1, 'Thursday', dad),
+        night(1, 'Friday', mom, 'Screen night 📱'),
+        night(1, 'Saturday', mom),
+      ],
+    });
+    await api.put(`/night-duty/children/${emil.id}/overrides`, {
+      nights: [
+        {
+          date: isoDate(addDays(today, 1)),
+          entry: { responsible: { kind: 1, guardianId: me.id, babysitterId: maja.id }, note: '' },
+        },
+        {
+          date: isoDate(addDays(today, 2)),
+          entry: {
+            responsible: { kind: 2, hostName: 'Grandma Lis', location: 'Skovvej 12' },
+            note: '',
+          },
+        },
+      ],
+    });
+
     // Print template ------------------------------------------------------------------------
     const row = (fields: Record<string, unknown>) => ({
       childId: null,
@@ -1243,6 +1355,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
           heightWeight: 2,
         }),
         row({ kind: 'Pickup', label: 'Pickup', childId: emil.id }),
+        row({ kind: 'NightDuty', label: 'Night', childId: emil.id }),
         row({ kind: 'Meal', label: 'Dinner', childId: emil.id, mealSlot: 'Dinner' }),
         row({ kind: 'WorkLocation', label: 'Mom works', guardianId: me.id }),
         row({
@@ -1259,6 +1372,9 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
           heightWeight: 2,
         }),
       ],
+    });
+    await api.put(`/print-templates/${template.id}/colors`, {
+      colors: [{ guardianId: jonas.id, color: '#f97316' }],
     });
     await api.put(`/print-templates/${template.id}/babysitter-colors`, {
       colors: [{ guardianId: me.id, babysitterId: maja.id, color: '#a855f7' }],

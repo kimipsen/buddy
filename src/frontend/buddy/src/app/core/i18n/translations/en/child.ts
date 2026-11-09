@@ -113,6 +113,14 @@ export const child = {
         babysitter: 'Your babysitter',
       },
     },
+    tonight: {
+      title: 'Tonight',
+      guardian: 'puts you to bed tonight',
+      babysitter: 'is with you tonight',
+      sleepover: 'You sleep over at {host}’s',
+      aGuardian: 'A grown-up',
+      aBabysitter: 'Your babysitter',
+    },
   },
   mealplan: {
     back: 'Back',

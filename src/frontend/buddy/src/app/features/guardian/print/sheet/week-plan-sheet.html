@@ -179,6 +179,14 @@
                 }
               </ul>
             }
+            @case ('night') {
+              @if (cell.who; as who) {
+                <p class="font-semibold leading-tight" [style.color]="who.color">{{ who.text }}</p>
+              }
+              @if (cell.note) {
+                <p class="mt-[0.15em] text-[0.9em] leading-tight text-slate-700">{{ cell.note }}</p>
+              }
+            }
             @case ('pickup') {
               <svg
                 class="pointer-events-none absolute inset-0 size-full"

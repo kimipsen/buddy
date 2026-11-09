@@ -121,6 +121,7 @@ export class WeekPlanPrintPage {
           selfEscort: this.translation.translate('print.sheet.selfEscort'),
           playdate: this.translation.translate('print.sheet.playdate'),
           babysitter: this.translation.translate('print.sheet.babysitter'),
+          overnight: this.translation.translate('print.sheet.overnight'),
         },
         includeSubtasks: this.includeSubtasks(),
       });

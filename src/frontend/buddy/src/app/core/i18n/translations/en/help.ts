@@ -434,6 +434,38 @@ export const help = {
         },
       },
     },
+    nightDuty: {
+      title: 'Night duty',
+      sections: {
+        fixedSchedule: {
+          title: 'Set up the fixed schedule',
+          body: 'The fixed schedule says who is on duty each night: who puts the child to bed, gets up in the night, or where the child sleeps. A night runs from the evening into the next morning. If your weeks alternate, for example between two homes, let it repeat every 2 to 4 weeks. A note such as "Screen night" can go on any night, with or without a person.',
+          steps: {
+            s1: 'Pick the child at the top, if you have more than one.',
+            s2: 'Under "Repeats every", choose how many weeks the schedule lasts, and use "This week is" to say which week the current one is.',
+            s3: 'Choose who is on duty each night and type any note.',
+            s4: 'Pick the date it "Applies from" and click "Save schedule".',
+          },
+        },
+        changeANight: {
+          title: 'Change a single night',
+          body: 'Click "Change" on a night to choose someone else, a babysitter, a sleepover, or "Nothing planned". The change wins over the fixed schedule for that night only and is marked "Changed". Click "Undo" or "Back to schedule" to follow the schedule again. Changing the schedule from a date never changes the nights before it.',
+        },
+        switchNights: {
+          title: 'Switch two nights',
+          body: 'When two guardians swap nights, switch them in one go. Each night keeps its own note, so a screen night stays on its day.',
+          steps: {
+            s1: 'Click "Switch two nights".',
+            s2: 'Select the two nights.',
+            s3: 'Click the switch button to save both.',
+          },
+        },
+        whereItShows: {
+          title: 'Where it shows',
+          body: 'Your child sees tonight\'s plan and note on a "Tonight" card in their app. A "Night" row in a print template puts the week\'s nights on the printed week plan. Every guardian of the child sees and can change the schedule.',
+        },
+      },
+    },
     workLocations: {
       title: 'Work locations',
       sections: {

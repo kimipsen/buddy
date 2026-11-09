@@ -144,6 +144,17 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     related: ['pickup', 'print'],
   },
   {
+    id: 'nightDuty',
+    feature: 'nightDuty',
+    sections: [
+      { id: 'fixedSchedule', steps: 4 },
+      { id: 'changeANight' },
+      { id: 'switchNights', steps: 3 },
+      { id: 'whereItShows' },
+    ],
+    related: ['pickup', 'babysitters', 'print'],
+  },
+  {
     id: 'workLocations',
     feature: 'workLocations',
     sections: [

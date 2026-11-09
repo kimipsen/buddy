@@ -1,4 +1,5 @@
 export const pickup = {
+  nightDutyLink: 'Nattevagt',
   backLink: 'Tilbage til oversigt',
   eyebrow: 'Afhentning & aflevering',
   title: 'Planlæg afhentning og aflevering.',

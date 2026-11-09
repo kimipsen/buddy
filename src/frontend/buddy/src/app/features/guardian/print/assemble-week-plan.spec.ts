@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { CalendarItemOccurrence } from '../../../core/calendars.service';
 import { MealPlanEntry } from '../../../core/mealplans.service';
+import { Night } from '../../../core/night-duty.service';
 import { PickupOccurrence } from '../../../core/pickups.service';
 import {
   PRINT_ROW_KIND,
@@ -19,7 +20,13 @@ const OPTIONS = {
   start: '2026-09-28',
   locale: 'en',
   timeZone: TZ,
-  labels: { week: 'Week', selfEscort: 'Alone', playdate: 'Playdate', babysitter: 'Babysitter' },
+  labels: {
+    week: 'Week',
+    selfEscort: 'Alone',
+    playdate: 'Playdate',
+    babysitter: 'Babysitter',
+    overnight: 'Overnight',
+  },
   includeSubtasks: false,
 };
 
@@ -51,6 +58,7 @@ function sources(overrides: Partial<WeekPlanSources> = {}): WeekPlanSources {
     meals: new Map(),
     pickups: new Map(),
     workDays: new Map(),
+    nights: new Map(),
     occurrences: new Map(),
     names: new Map([
       ['dad', 'Far'],
@@ -309,6 +317,89 @@ describe('assembleWeekPlan', () => {
         dropOff: { text: 'Anna', icon: null, color: '#a855f7' },
         pickUp: { text: 'Jonas', icon: null, color: null },
       });
+    });
+  });
+
+  describe('night duty rows', () => {
+    const planned = (date: string, responsible: object, note = ''): Night =>
+      ({
+        date,
+        status: { kind: 2, entry: { responsible, note }, source: 'Pattern', scheduled: null },
+      }) as Night;
+
+    it('prints who is on duty in their color, a babysitter, a sleepover and the note, leaving empty nights blank', () => {
+      const nights = new Map<string, Night[]>([
+        [
+          'signe',
+          [
+            planned('2026-09-28', { kind: 0, guardianId: 'dad' }),
+            planned('2026-09-29', { kind: 0, guardianId: 'mum' }, 'Screen night'),
+            planned('2026-09-30', { kind: 1, guardianId: 'dad', babysitterId: 'b1', name: 'Anna' }),
+            planned('2026-10-01', { kind: 1, guardianId: 'dad', babysitterId: 'b2', name: '' }),
+            planned('2026-10-02', { kind: 2, hostName: 'Grandma Lis', location: '' }),
+            planned('2026-10-03', { kind: 3 }, 'Movie night'),
+            { date: '2026-10-04', status: { kind: 1, scheduled: null } },
+          ],
+        ],
+      ]);
+
+      const model = assembleWeekPlan(
+        template([row(PRINT_ROW_KIND.nightDuty, { childId: 'signe' })], {
+          guardianColors: [{ guardianId: 'dad', color: '#f97316' }],
+          babysitterColors: [{ guardianId: 'dad', babysitterId: 'b1', color: '#a855f7' }],
+        }),
+        sources({ nights }),
+        OPTIONS,
+      );
+
+      expect(model.rows[0].unavailable).toBe(false);
+      expect(model.rows[0].cells).toEqual([
+        { type: 'night', who: { text: 'Far', icon: null, color: '#f97316' }, note: null },
+        { type: 'night', who: { text: 'Mor', icon: null, color: null }, note: 'Screen night' },
+        { type: 'night', who: { text: 'Anna', icon: null, color: '#a855f7' }, note: null },
+        { type: 'night', who: { text: 'Babysitter', icon: null, color: null }, note: null },
+        {
+          type: 'night',
+          who: { text: 'Overnight: Grandma Lis', icon: null, color: null },
+          note: null,
+        },
+        { type: 'night', who: null, note: 'Movie night' },
+        { type: 'blank' },
+      ]);
+    });
+
+    it('prints a guardian it has no name for as empty text, and a missing night blank', () => {
+      const nights = new Map<string, Night[]>([
+        ['signe', [planned('2026-09-28', { kind: 0, guardianId: 'stranger' })]],
+      ]);
+
+      const model = assembleWeekPlan(
+        template([row(PRINT_ROW_KIND.nightDuty, { childId: 'signe' })]),
+        sources({ nights }),
+        OPTIONS,
+      );
+
+      expect(model.rows[0].cells[0]).toEqual({
+        type: 'night',
+        who: { text: '', icon: null, color: null },
+        note: null,
+      });
+      expect(model.rows[0].cells[1]).toEqual({ type: 'blank' });
+    });
+
+    it('prints a row without a child blank and a failed source as unavailable', () => {
+      const model = assembleWeekPlan(
+        template([
+          row(PRINT_ROW_KIND.nightDuty),
+          row(PRINT_ROW_KIND.nightDuty, { childId: 'signe' }),
+        ]),
+        sources({ nights: new Map([['signe', null]]) }),
+        OPTIONS,
+      );
+
+      expect(model.rows[0].unavailable).toBe(false);
+      expect(model.rows[0].cells.every((c) => c.type === 'blank')).toBe(true);
+      expect(model.rows[1].unavailable).toBe(true);
     });
   });
 

@@ -1,0 +1,154 @@
+<div class="fixed inset-0 z-40 flex items-center justify-center px-4">
+  <!-- Pointer-only dismiss target behind the panel; keyboard users close with Escape. -->
+  <div class="absolute inset-0 bg-slate-950/50" aria-hidden="true" (click)="close()"></div>
+
+  <div
+    #panel
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="titleId"
+    tabindex="-1"
+    class="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-slate-200 bg-white p-6 shadow-lg focus:outline-none dark:border-slate-800 dark:bg-slate-900"
+  >
+    <h3 [id]="titleId" class="text-lg font-semibold text-slate-950 dark:text-slate-50">
+      {{ 'nightDuty.edit.title' | translate: { day: dayLabel() } }}
+    </h3>
+    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+      @if (scheduleText(); as who) {
+        {{ 'nightDuty.edit.scheduleSays' | translate: { who } }}
+      } @else {
+        {{ 'nightDuty.edit.scheduleSaysNothing' | translate }}
+      }
+    </p>
+
+    <form class="mt-4 space-y-4" (submit)="$event.preventDefault(); submit()">
+      <div>
+        <label
+          for="night-edit-who"
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+          >{{ 'nightDuty.edit.whoLabel' | translate }}</label
+        >
+        <select
+          #whoSelect
+          id="night-edit-who"
+          name="who"
+          class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+          [ngModel]="choice()"
+          (ngModelChange)="setChoice($event)"
+        >
+          @for (guardian of people().guardians; track guardian.id) {
+            <option [value]="'g:' + guardian.id">
+              👤 {{ guardian.callingName || guardian.name.givenName }}
+            </option>
+          }
+          @for (babysitter of people().babysitters; track babysitter.id) {
+            <option [value]="babysitterChoice(babysitter)">🧑‍🍼 {{ babysitter.name }}</option>
+          }
+          <option [value]="sleepoverChoice">
+            🛏️ {{ 'nightDuty.who.sleepoverOption' | translate }}
+          </option>
+          <option [value]="nobody">{{ 'nightDuty.who.nobody' | translate }}</option>
+          <option [value]="cleared">{{ 'nightDuty.who.nothingPlanned' | translate }}</option>
+        </select>
+      </div>
+
+      @if (choice() === sleepoverChoice) {
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label
+              for="night-edit-host"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              >{{ 'nightDuty.edit.hostLabel' | translate }}</label
+            >
+            <input
+              id="night-edit-host"
+              name="hostName"
+              type="text"
+              maxlength="200"
+              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              [ngModel]="hostName()"
+              (ngModelChange)="hostName.set($event); incomplete.set(false)"
+            />
+          </div>
+          <div>
+            <label
+              for="night-edit-location"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              >{{ 'nightDuty.edit.locationLabel' | translate }}</label
+            >
+            <input
+              id="night-edit-location"
+              name="location"
+              type="text"
+              maxlength="200"
+              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              [ngModel]="location()"
+              (ngModelChange)="location.set($event)"
+            />
+          </div>
+        </div>
+      }
+
+      @if (choice() !== cleared) {
+        <div>
+          <label
+            for="night-edit-note"
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >{{ 'nightDuty.edit.noteLabel' | translate }}</label
+          >
+          <input
+            id="night-edit-note"
+            name="note"
+            type="text"
+            maxlength="60"
+            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            [placeholder]="'nightDuty.edit.notePlaceholder' | translate"
+            [ngModel]="note()"
+            (ngModelChange)="note.set($event); incomplete.set(false)"
+          />
+        </div>
+      }
+
+      @if (incomplete()) {
+        <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+          {{ 'nightDuty.edit.incomplete' | translate }}
+        </p>
+      } @else if (error(); as message) {
+        <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+          {{ message | translate }}
+        </p>
+      }
+
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+        @if (isOverride()) {
+          <button
+            type="button"
+            class="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50"
+            [disabled]="busy()"
+            (click)="backToSchedule.emit()"
+          >
+            {{ 'nightDuty.edit.backToSchedule' | translate }}
+          </button>
+        } @else {
+          <span></span>
+        }
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 dark:hover:bg-slate-800"
+            (click)="close()"
+          >
+            {{ 'nightDuty.edit.cancel' | translate }}
+          </button>
+          <button
+            type="submit"
+            class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
+            [disabled]="busy()"
+          >
+            {{ 'nightDuty.edit.save' | translate }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

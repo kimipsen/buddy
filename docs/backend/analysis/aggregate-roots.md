@@ -34,6 +34,7 @@ flowchart TB
         PickupSchedule["PickupSchedule\nPickupScheduleId(Guid)"]
         PickupFeed["PickupFeed\nPickupFeedId(Guid)"]
         WorkLocationSchedule["WorkLocationSchedule\nWorkLocationScheduleId(Guid)"]
+        NightSchedule["NightSchedule\nNightScheduleId(Guid)"]
         BabysitterList["BabysitterList\nBabysitterListId(Guid)"]
         PrintTemplate["PrintTemplate\nPrintTemplateId(Guid)"]
         TaskTemplate["TaskTemplate\nTaskTemplateId(Guid)"]
@@ -74,6 +75,8 @@ flowchart TB
     PickupFeed -- "guardianId (stored, equals stream id)" --> User
     BabysitterList -- "guardianId (stored, equals stream id)" --> User
     WorkLocationSchedule -- "guardianId (stored, equals stream id)" --> User
+    NightSchedule -- "childId (stored, equals stream id); nights' guardianId / modifiedBy" --> User
+    NightSchedule -- "nights: babysitterId (on guardianId's list)" --> BabysitterList
     PrintTemplate -- "owner (user or group); rows reference children, groups, calendars, work locations" --> User
     PrintTemplate -- "owner group" --> Group
     TaskTemplate -- "createdBy / lastModifiedBy" --> User
@@ -131,6 +134,7 @@ flowchart TB
 | PickupFeed                | `Features/Pickups/Types/PickupFeed.cs`                           | `PickupFeedId(Guid)`, equal to the guardian's `UserId`                          | `guardianId` → User (the feed reads that guardian's children's PickupSchedules through active GuardianLinks)                                                                                                                                                              |
 | BabysitterList            | `Features/Babysitters/Types/BabysitterList.cs`                   | `BabysitterListId(Guid)`, equal to the guardian's `UserId`                      | `guardianId` → User                                                                                                                                                                                                                                                       |
 | WorkLocationSchedule      | `Features/WorkLocations/Types/WorkLocationSchedule.cs`           | `WorkLocationScheduleId(Guid)`, equal to the guardian's `UserId`                | `guardianId` → User                                                                                                                                                                                                                                                       |
+| NightSchedule             | `Features/NightDuty/Types/NightSchedule.cs`                      | `NightScheduleId(Guid)`, equal to the child's `UserId`                          | `childId` → User; pattern days' and overrides' `guardianId` → User; a babysitter entry's `babysitterId` → a BabysitterList entry; events' `modifiedBy` → User                                                                                                             |
 | PrintTemplate             | `Features/PrintTemplates/Types/PrintTemplate.cs`                 | `PrintTemplateId(Guid)`                                                         | `owner` → User or Group; rows' `childId` / `guardianId` / `assignedToId` → User, `mealGroupId` → Group, `calendarIds` → Calendar, `workLocationId` → a WorkLocationSchedule location (references only, never access grants)                                               |
 | TaskTemplate              | `Features/TaskLibrary/Types/TaskTemplate.cs`                     | `TaskTemplateId(Guid)`                                                          | `createdBy` / `lastModifiedBy` → User; owning `childId` lives in `TaskTemplateIndexDocument`, not the aggregate itself                                                                                                                                                    |
 | ChildProgress             | `Features/Progress/Types/ChildProgress.cs`                       | `ProgressId(Guid)`, equal to the child's `UserId`                               | `childId` → User; `awardedOccurrences` → CalendarItem (computed reference, not a foreign-key relationship)                                                                                                                                                                |

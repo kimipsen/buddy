@@ -1,7 +1,8 @@
 # Event-Stream Snapshots
 
-Status: Implemented for all 28 event-sourced aggregates across all 18 modules (the 28th,
-`PickupFeed`, came with docs/backend/analysis/pickup-ical-feed.md). Questions 1-5
+Status: Implemented for all 29 event-sourced aggregates across all 19 modules (the 28th,
+`PickupFeed`, came with docs/backend/analysis/pickup-ical-feed.md, the 29th, `NightSchedule`, with
+docs/backend/analysis/night-duty.md). Questions 1-5
 below are resolved with what was actually built, including several real Marten/serialization
 constraints hit along the way that the original plan only flagged as possibilities — plus two
 more found during the full rollout (a `ValueTuple`-keyed dictionary/set gotcha, and a

@@ -48,6 +48,7 @@ describe('WeekPlanPrintPage', () => {
       meals: new Map(),
       pickups: new Map(),
       workDays: new Map(),
+      nights: new Map(),
       occurrences: new Map(),
       names: new Map(),
     }));

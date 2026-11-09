@@ -362,6 +362,24 @@ A one-off exception for a single date: a different location, or no location at a
 
 Another guardian who holds an active `GuardianLink` to at least one of the same children. Co-guardians can view each other's work locations.
 
+## Night duty domain
+
+### NightSchedule
+
+Who is responsible for a child at night (who puts the child to bed, gets up in the night, and where the child sleeps), plus a short note such as "Screen night". One per child; its id equals the child's `UserId`. Guardians manage it; the child sees tonight's entry.
+
+### NightPattern
+
+One version of the fixed night schedule: from its `EffectiveFrom` date on, a cycle of 1–4 weeks counted from an anchor Monday, like a `WorkPattern`. Saving a version replaces every version that starts on or after its date, and `EffectiveFrom` is never in the past, so earlier nights keep the schedule they had.
+
+### NightEntry / NightResponsible
+
+A night's plan: a responsible person (a guardian, a babysitter, a sleepover host, or nobody) and a note. Nobody without a note is not an entry.
+
+### NightOverride
+
+A one-off change to a single night: a different entry, or `Cleared` ("nothing planned this night"). Overrides beat the fixed schedule; a switch between two guardians is two overrides saved together.
+
 ## Babysitter domain
 
 ### BabysitterList

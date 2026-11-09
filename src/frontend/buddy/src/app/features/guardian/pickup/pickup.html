@@ -6,13 +6,22 @@
       {{ 'pickup.eyebrow' | translate }}
     </p>
     <h2 class="mt-2 text-3xl font-semibold tracking-normal">{{ 'pickup.title' | translate }}</h2>
-    @if (features.enabled('babysitters')) {
-      <a
-        routerLink="/guardian/babysitters"
-        class="mt-2 inline-block text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
-        >{{ 'pickup.assign.manageBabysittersLink' | translate }}</a
-      >
-    }
+    <p class="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+      @if (features.enabled('babysitters')) {
+        <a
+          routerLink="/guardian/babysitters"
+          class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+          >{{ 'pickup.assign.manageBabysittersLink' | translate }}</a
+        >
+      }
+      @if (features.enabled('nightDuty')) {
+        <a
+          routerLink="/guardian/night-duty"
+          class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+          >{{ 'pickup.nightDutyLink' | translate }}</a
+        >
+      }
+    </p>
   </div>
 
   <div class="space-y-6">

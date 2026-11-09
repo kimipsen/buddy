@@ -65,6 +65,7 @@ import { ChildMenu } from './child-menu/child-menu';
 import { ChildSuggestions } from './child-suggestions/child-suggestions';
 import { FeelingsCheckIn } from './feelings-check-in/feelings-check-in';
 import { FirstThenCard } from './first-then-card/first-then-card';
+import { TonightCard } from './tonight-card/tonight-card';
 import { Icon } from '../../../shared/icon/icon';
 
 const EVENT_KIND: CalendarItemKind = 'Event';
@@ -163,6 +164,7 @@ const NOW_REFRESH_INTERVAL_MS = 60_000;
     ChildSuggestions,
     FeelingsCheckIn,
     FirstThenCard,
+    TonightCard,
   ],
   templateUrl: './home.html',
   // Any tap lets the page make sound later (browsers block audio until the user interacts).
