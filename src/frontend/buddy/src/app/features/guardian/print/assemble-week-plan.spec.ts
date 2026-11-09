@@ -321,10 +321,16 @@ describe('assembleWeekPlan', () => {
   });
 
   describe('night duty rows', () => {
+    // An empty note is left out of the entry, as the API may omit it.
     const planned = (date: string, responsible: object, note = ''): Night =>
       ({
         date,
-        status: { kind: 2, entry: { responsible, note }, source: 'Pattern', scheduled: null },
+        status: {
+          kind: 2,
+          entry: note ? { responsible, note } : { responsible },
+          source: 'Pattern',
+          scheduled: null,
+        },
       }) as Night;
 
     it('prints who is on duty in their color, a babysitter, a sleepover and the note, leaving empty nights blank', () => {
@@ -335,7 +341,7 @@ describe('assembleWeekPlan', () => {
             planned('2026-09-28', { kind: 0, guardianId: 'dad' }),
             planned('2026-09-29', { kind: 0, guardianId: 'mum' }, 'Screen night'),
             planned('2026-09-30', { kind: 1, guardianId: 'dad', babysitterId: 'b1', name: 'Anna' }),
-            planned('2026-10-01', { kind: 1, guardianId: 'dad', babysitterId: 'b2', name: '' }),
+            planned('2026-10-01', { kind: 1, guardianId: 'dad', babysitterId: 'b2' }),
             planned('2026-10-02', { kind: 2, hostName: 'Grandma Lis', location: '' }),
             planned('2026-10-03', { kind: 3 }, 'Movie night'),
             { date: '2026-10-04', status: { kind: 1, scheduled: null } },

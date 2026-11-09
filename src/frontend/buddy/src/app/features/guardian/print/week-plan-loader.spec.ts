@@ -128,6 +128,21 @@ describe('WeekPlanLoader', () => {
     ]);
   });
 
+  it('fetches nights only for the children of night duty rows', async () => {
+    const { loader, nightDuty } = setup();
+
+    await loader.load(
+      template([
+        row(PRINT_ROW_KIND.pickup, { childId: 'viggo' }),
+        row(PRINT_ROW_KIND.meal, { childId: 'ida', mealSlot: 'Dinner' }),
+        row(PRINT_ROW_KIND.nightDuty, { childId: 'signe' }),
+      ]),
+      '2026-10-04',
+    );
+
+    expect(nightDuty.listNights.mock.calls).toEqual([['signe', '2026-10-04', '2026-10-10']]);
+  });
+
   it('turns a failed source into null and keeps the others', async () => {
     const { loader } = setup();
 

@@ -78,6 +78,7 @@ export class TonightCard implements OnInit {
   private toView(entry: NightEntry): TonightView {
     const responsible = entry.responsible;
     const note = entry.note ?? '';
+    // Stryker disable next-line StringLiteral: host only fills the sleepover line, which sets its own
     const base = { host: '', nameKey: null, note };
 
     switch (responsible.kind) {
@@ -108,6 +109,7 @@ export class TonightCard implements OnInit {
           lineKey: 'child.home.tonight.sleepover',
         };
       default:
+        // Stryker disable next-line StringLiteral: with no name the card shows no avatar, so the icon is never rendered
         return { ...base, icon: '🌙', name: null, lineKey: null };
     }
   }

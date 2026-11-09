@@ -83,6 +83,7 @@ export class NightWeek {
   protected readonly editing = signal<NightTile | null>(null);
 
   protected readonly switching = signal(false);
+  // Stryker disable next-line ArrayDeclaration: switch mode always starts through toggleSwitching, which resets it
   protected readonly picked = signal<string[]>([]);
   protected readonly pickedTiles = computed(() =>
     this.picked().map((date) => this.tiles().find((tile) => tile.night.date === date)),
@@ -167,11 +168,12 @@ export class NightWeek {
 
     const ok = await this.saveOverrides(
       [swapped(first.night, second.night), swapped(second.night, first.night)],
+      // Stryker disable next-line StringLiteral: an action id for the shared busy/error state; only per-date ids are ever compared
       'switch',
     );
     if (ok) {
+      // Leaving switch mode is enough: turning it on again resets the picks.
       this.switching.set(false);
-      this.picked.set([]);
     }
   }
 
