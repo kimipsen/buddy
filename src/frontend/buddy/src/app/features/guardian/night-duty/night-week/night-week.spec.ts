@@ -255,9 +255,121 @@ describe('NightWeek', () => {
     await settle(fixture);
     button(compiled, 'Next week').click();
     await settle(fixture);
+    // The stub returns the same nights for every week, so one more pick would make a pair if the
+    // first one had been kept.
+    tile(compiled, '2026-11-10').querySelector('button')!.click();
+    await settle(fixture);
+    expect(compiled.textContent).toContain('Select the two nights to switch.');
 
+    button(compiled, 'Previous week').click();
+    await settle(fixture);
+    tile(compiled, '2026-11-11').querySelector('button')!.click();
+    await settle(fixture);
     expect(compiled.textContent).toContain('Select the two nights to switch.');
     expect(setOverrides).not.toHaveBeenCalled();
+  });
+
+  it('closes the dialog on Cancel and after going back to the schedule', async () => {
+    const { fixture, compiled, clearOverrides } = await setup();
+
+    tile(compiled, '2026-11-10')
+      .querySelector<HTMLButtonElement>('[aria-label^="Change"]')!
+      .click();
+    await settle(fixture);
+    button(compiled, 'Cancel').click();
+    await settle(fixture);
+    expect(compiled.querySelector('[role="dialog"]')).toBeNull();
+
+    tile(compiled, '2026-11-10')
+      .querySelector<HTMLButtonElement>('[aria-label^="Change"]')!
+      .click();
+    await settle(fixture);
+    button(compiled, 'Back to schedule').click();
+    await settle(fixture);
+    expect(clearOverrides).toHaveBeenCalledWith('emil', '2026-11-10', '2026-11-10');
+    expect(compiled.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('keeps the dialog open when going back to the schedule fails, and a new dialog starts without the old error', async () => {
+    const { fixture, compiled } = await setup({
+      clearOverrides: vi.fn(async () => {
+        throw new Error('500');
+      }),
+    });
+
+    // Undo straight from the tile: the error shows on the card.
+    tile(compiled, '2026-11-10').querySelector<HTMLButtonElement>('[aria-label^="Undo"]')!.click();
+    await settle(fixture);
+    expect(compiled.querySelector('app-card')?.textContent).toContain('Unable to save the night.');
+
+    tile(compiled, '2026-11-10')
+      .querySelector<HTMLButtonElement>('[aria-label^="Change"]')!
+      .click();
+    await settle(fixture);
+    const dialog = () => compiled.querySelector('[role="dialog"]');
+    expect(dialog()?.textContent).not.toContain('Unable to save the night.');
+
+    button(compiled, 'Back to schedule').click();
+    await settle(fixture);
+    expect(dialog()?.textContent).toContain('Unable to save the night.');
+  });
+
+  it('leaves switch mode after a switch, and stays in it with the error when the switch fails', async () => {
+    const ok = await setup();
+    button(ok.compiled, 'Switch two nights').click();
+    await settle(ok.fixture);
+    tile(ok.compiled, '2026-11-09').querySelector('button')!.click();
+    tile(ok.compiled, '2026-11-11').querySelector('button')!.click();
+    await settle(ok.fixture);
+    button(ok.compiled, 'Switch Mon, Nov 9 and Wed, Nov 11').click();
+    await settle(ok.fixture);
+    expect(button(ok.compiled, 'Switch two nights').getAttribute('aria-pressed')).toBe('false');
+    TestBed.resetTestingModule();
+
+    const failing = await setup({
+      setOverrides: vi.fn(async () => {
+        throw new Error('400');
+      }),
+    });
+    button(failing.compiled, 'Switch two nights').click();
+    await settle(failing.fixture);
+    tile(failing.compiled, '2026-11-09').querySelector('button')!.click();
+    tile(failing.compiled, '2026-11-11').querySelector('button')!.click();
+    await settle(failing.fixture);
+    button(failing.compiled, 'Switch Mon, Nov 9 and Wed, Nov 11').click();
+    await settle(failing.fixture);
+    expect(button(failing.compiled, 'Cancel switch').getAttribute('aria-pressed')).toBe('true');
+    expect(failing.compiled.textContent).toContain('Unable to save the night.');
+  });
+
+  it('names unknown guardians and unnamed babysitters generically', async () => {
+    const { compiled } = await setup({
+      listNights: vi.fn(async (): Promise<Night[]> => [
+        {
+          date: '2026-11-09',
+          status: {
+            kind: 2,
+            entry: { responsible: { kind: 0, guardianId: 'gone' } },
+            source: 'Override',
+            scheduled: { responsible: { kind: 3 } },
+          },
+        },
+        {
+          date: '2026-11-10',
+          status: {
+            kind: 2,
+            entry: { responsible: { kind: 1, guardianId: 'mom', babysitterId: 'b' } },
+            source: 'Pattern',
+            scheduled: null,
+          },
+        },
+      ]),
+    });
+
+    expect(tile(compiled, '2026-11-09').textContent).toContain('A guardian');
+    // The schedule's entry names nobody and has no note: shown as nothing.
+    expect(tile(compiled, '2026-11-09').textContent).toContain('Schedule: nothing');
+    expect(tile(compiled, '2026-11-10').textContent).toContain('Babysitter');
   });
 
   it('shows a load error', async () => {

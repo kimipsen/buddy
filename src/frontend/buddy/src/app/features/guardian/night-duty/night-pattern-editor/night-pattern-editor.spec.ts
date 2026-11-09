@@ -299,4 +299,131 @@ describe('NightPatternEditor', () => {
     expect(compiled.textContent).toContain('Unable to save the schedule.');
     expect(saved).not.toHaveBeenCalled();
   });
+
+  describe('more cases', () => {
+    const radios = (root: HTMLElement, label: string) =>
+      Array.from(root.querySelectorAll<HTMLElement>(`[aria-label="${label}"] [role="radio"]`)).map(
+        (b) => b.textContent?.trim(),
+      );
+
+    it('labels the cycle lengths and lists a multi-week version', async () => {
+      const { compiled } = await setup(schedule([version({ cycleWeeks: 2, status: 'Current' })]));
+
+      expect(radios(compiled, 'Repeats every')).toEqual([
+        '1 week',
+        '2 weeks',
+        '3 weeks',
+        '4 weeks',
+      ]);
+      expect(compiled.textContent).toContain('From Aug 3, 2026: 2 weeks (current)');
+      expect(compiled.textContent).not.toContain('Schedule saved.');
+    });
+
+    it('starts from the current version, not a past one, and reads a day without a note', async () => {
+      const { compiled } = await setup(
+        schedule([
+          version({
+            cycleWeeks: 3,
+            status: 'Past',
+            days: [{ week: 0, day: 'Monday', entry: { responsible: { kind: 3 }, note: 'Old' } }],
+          }),
+          version({
+            effectiveFrom: '2026-11-02',
+            days: [
+              { week: 0, day: 'Monday', entry: { responsible: { kind: 0, guardianId: 'mom' } } },
+            ],
+          }),
+        ]),
+      );
+
+      expect(radio(compiled, '1 week').getAttribute('aria-checked')).toBe('true');
+      expect(byLabel<HTMLSelectElement>(compiled, 'Week A, Monday: who').value).toBe('g:mom');
+      expect(byLabel<HTMLInputElement>(compiled, 'Week A, Monday: note').value).toBe('');
+    });
+
+    it('re-anchors when the guardian says this week is another cycle week', async () => {
+      const { fixture, compiled, replacePattern } = await setup(
+        schedule([version({ cycleWeeks: 2, anchorMonday: '2026-08-03' })]),
+      );
+
+      radio(compiled, 'Week B').click();
+      await settle(fixture);
+      saveButton(compiled).click();
+      await settle(fixture);
+
+      expect(replacePattern).toHaveBeenCalledWith(
+        'emil',
+        expect.objectContaining({ cycleWeeks: 2, anchorMonday: '2026-11-02' }),
+      );
+    });
+
+    it('shortening the cycle moves this week back into it and drops the weeks beyond', async () => {
+      const { fixture, compiled, replacePattern } = await setup(schedule());
+
+      radio(compiled, '2 weeks').click();
+      await settle(fixture);
+      radio(compiled, 'Week B').click();
+      await settle(fixture);
+      choose(byLabel(compiled, 'Week B, Monday: who'), 'g:mom');
+      await settle(fixture);
+      radio(compiled, '1 week').click();
+      await settle(fixture);
+      saveButton(compiled).click();
+      await settle(fixture);
+
+      expect(replacePattern).toHaveBeenCalledWith('emil', {
+        effectiveFrom: today,
+        cycleWeeks: 1,
+        anchorMonday: '2026-11-09',
+        days: [],
+      });
+    });
+
+    it('any edit hides "Schedule saved." and a save error', async () => {
+      const edits: [string, (root: HTMLElement) => void][] = [
+        ['cell', (root) => choose(byLabel(root, 'Week A, Monday: who'), 'g:mom')],
+        ['cycle', (root) => radio(root, '2 weeks').click()],
+        [
+          'date',
+          (root) =>
+            type(
+              root.querySelector<HTMLInputElement>('#night-pattern-effective-from')!,
+              '2026-11-30',
+            ),
+        ],
+      ];
+
+      for (const [name, edit] of edits) {
+        const { fixture, compiled } = await setup(schedule());
+        saveButton(compiled).click();
+        await settle(fixture);
+        expect(compiled.textContent, name).toContain('Schedule saved.');
+        edit(compiled);
+        await settle(fixture);
+        expect(compiled.textContent, name).not.toContain('Schedule saved.');
+        TestBed.resetTestingModule();
+      }
+
+      const { fixture, compiled } = await setup(schedule([version({ cycleWeeks: 2 })]));
+      saveButton(compiled).click();
+      await settle(fixture);
+      radio(compiled, 'Week B').click();
+      await settle(fixture);
+      expect(compiled.textContent).not.toContain('Schedule saved.');
+      TestBed.resetTestingModule();
+
+      const failing = await setup(
+        schedule(),
+        vi.fn(async () => {
+          throw new Error('400');
+        }),
+      );
+      saveButton(failing.compiled).click();
+      await settle(failing.fixture);
+      expect(failing.compiled.textContent).toContain('Unable to save the schedule.');
+      choose(byLabel(failing.compiled, 'Week A, Monday: who'), 'g:mom');
+      await settle(failing.fixture);
+      expect(failing.compiled.textContent).not.toContain('Unable to save the schedule.');
+    });
+  });
 });

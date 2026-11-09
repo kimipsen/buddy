@@ -54,8 +54,13 @@ describe('NightEditDialog', () => {
     fixture.componentRef.setInput('night', night);
     fixture.componentRef.setInput('dayLabel', 'Fri, Nov 13');
     fixture.componentRef.setInput('people', people);
-    fixture.componentRef.setInput('busy', inputs.busy ?? false);
-    fixture.componentRef.setInput('error', inputs.error ?? null);
+    // Left unset unless a test needs them, so the inputs' defaults are what the dialog sees.
+    if (inputs.busy !== undefined) {
+      fixture.componentRef.setInput('busy', inputs.busy);
+    }
+    if (inputs.error !== undefined) {
+      fixture.componentRef.setInput('error', inputs.error);
+    }
     const save = vi.fn();
     const backToSchedule = vi.fn();
     const closed = vi.fn();
@@ -205,5 +210,119 @@ describe('NightEditDialog', () => {
     (compiled.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
     expect(save).not.toHaveBeenCalled();
     expect(closed).not.toHaveBeenCalled();
+  });
+
+  describe('more cases', () => {
+    const mom: NightEntry = { responsible: { kind: 0, guardianId: 'mom' } };
+
+    it('is labelled by its title and focuses the who select', async () => {
+      const { compiled } = await setup(fromSchedule);
+      const dialog = compiled.querySelector('[role="dialog"]')!;
+      const labelledBy = dialog.getAttribute('aria-labelledby');
+
+      expect(labelledBy).toBe('night-edit-title');
+      expect(compiled.querySelector(`#${labelledBy}`)?.textContent).toContain('Fri, Nov 13 night');
+      expect(document.activeElement).toBe(compiled.querySelector('#night-edit-who'));
+    });
+
+    it('keeps Tab inside the dialog', async () => {
+      const { compiled } = await setup(fromSchedule);
+      const saveButton = button(compiled, 'Save night')!;
+      saveButton.focus();
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', cancelable: true }));
+
+      expect(document.activeElement).toBe(compiled.querySelector('#night-edit-who'));
+    });
+
+    it('names what the schedule says for a changed night, not the change itself', async () => {
+      const { compiled } = await setup({
+        date: '2026-11-13',
+        status: { kind: 2, entry: mom, source: 'Override', scheduled: { ...dad, note: '' } },
+      });
+
+      expect(compiled.textContent).toContain('Fixed schedule: Dad. A change applies');
+      expect(button(compiled, 'Back to schedule')).toBeDefined();
+      // The override has no note, so the note starts empty.
+      expect(compiled.querySelector<HTMLInputElement>('#night-edit-note')?.value).toBe('');
+    });
+
+    it('names an unknown guardian, an unnamed babysitter and a sleepover generically', async () => {
+      const cases: [NightEntry, string][] = [
+        [{ responsible: { kind: 0, guardianId: 'gone' } }, 'Fixed schedule: A guardian.'],
+        [
+          { responsible: { kind: 1, guardianId: 'mom', babysitterId: 'x', name: '' } },
+          'Fixed schedule: Babysitter.',
+        ],
+        [{ responsible: { kind: 2, hostName: 'Lis' } }, 'Fixed schedule: Sleepover: Lis.'],
+      ];
+
+      for (const [scheduled, text] of cases) {
+        const { compiled } = await setup({
+          date: '2026-11-13',
+          status: { kind: 1, scheduled },
+        });
+        expect(compiled.textContent).toContain(text);
+        TestBed.resetTestingModule();
+      }
+    });
+
+    it('starts an unplanned night on nobody, and a cleared night keeps an empty note when a person is chosen', async () => {
+      const unplanned = await setup({ date: '2026-11-14', status: { kind: 0 } });
+      expect(unplanned.compiled.querySelector<HTMLSelectElement>('#night-edit-who')?.value).toBe(
+        '',
+      );
+      TestBed.resetTestingModule();
+
+      const { fixture, compiled, save } = await setup({
+        date: '2026-11-14',
+        status: { kind: 1, scheduled: dad },
+      });
+      choose(compiled.querySelector('#night-edit-who')!, 'g:mom');
+      await settle(fixture);
+      button(compiled, 'Save night')!.click();
+
+      expect(save).toHaveBeenCalledWith({ responsible: { kind: 0, guardianId: 'mom' }, note: '' });
+    });
+
+    it('starts a new sleepover with empty fields and trims the note', async () => {
+      const { fixture, compiled, save } = await setup({ date: '2026-11-14', status: { kind: 0 } });
+
+      choose(compiled.querySelector('#night-edit-who')!, 's');
+      await settle(fixture);
+      expect(compiled.querySelector<HTMLInputElement>('#night-edit-host')?.value).toBe('');
+      expect(compiled.querySelector<HTMLInputElement>('#night-edit-location')?.value).toBe('');
+      type(compiled.querySelector('#night-edit-host')!, 'Lis');
+      type(compiled.querySelector('#night-edit-note')!, '  Pyjama party  ');
+      await settle(fixture);
+      button(compiled, 'Save night')!.click();
+
+      expect(save).toHaveBeenCalledWith({
+        responsible: { kind: 2, hostName: 'Lis', location: '', contactInfo: '' },
+        note: 'Pyjama party',
+      });
+    });
+
+    it('hides the "incomplete" message once the choice changes', async () => {
+      const { fixture, compiled } = await setup({ date: '2026-11-14', status: { kind: 0 } });
+
+      button(compiled, 'Save night')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Choose who is on duty');
+
+      choose(compiled.querySelector('#night-edit-who')!, 'g:mom');
+      await settle(fixture);
+      expect(compiled.textContent).not.toContain('Choose who is on duty');
+    });
+
+    it('is not busy unless told so', async () => {
+      const { compiled, save, closed } = await setup(fromSchedule);
+
+      expect(button(compiled, 'Save night')!.disabled).toBe(false);
+      button(compiled, 'Save night')!.click();
+      button(compiled, 'Cancel')!.click();
+      expect(save).toHaveBeenCalledOnce();
+      expect(closed).toHaveBeenCalledOnce();
+    });
   });
 });

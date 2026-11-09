@@ -120,7 +120,6 @@ export class NightPatternEditor {
   );
 
   protected readonly cycleOptions = computed((): SegmentedControlOption<number>[] => {
-    this.translation.language();
     return Array.from({ length: MAX_CYCLE_WEEKS }, (_, i) => i + 1).map((count) => ({
       value: count,
       label:
@@ -165,6 +164,7 @@ export class NightPatternEditor {
   protected cellLabel(key: string, week: number, dayIndex: number): string {
     return this.translation.translate(`nightDuty.pattern.${key}`, {
       week: this.weekLabel(week),
+      // Stryker disable next-line StringLiteral: dayIndex comes from the template's @for over the seven weekdays, so the name always exists
       day: this.dayNames()[dayIndex] ?? '',
     });
   }
@@ -195,6 +195,7 @@ export class NightPatternEditor {
 
   protected setEffectiveFrom(date: string): void {
     // A cleared or earlier date falls back to today: the past is never rewritten.
+    // Stryker disable next-line EqualityOperator: a date equal to today gives today either way
     this.effectiveFrom.set(date && date >= this.today() ? date : this.today());
     this.edited();
   }

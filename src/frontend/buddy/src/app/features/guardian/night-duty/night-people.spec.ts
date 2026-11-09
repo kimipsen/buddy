@@ -54,6 +54,13 @@ describe('night-people', () => {
       responsibleFromChoice('s', { hostName: ' Lis ', location: ' Skovvej ', contactInfo: ' 20 ' }),
     ).toEqual({ kind: 2, hostName: 'Lis', location: 'Skovvej', contactInfo: '20' });
     expect(responsibleFromChoice('', noSleepover)).toEqual({ kind: 3 });
+    // A truncated value reads its missing ids as empty rather than undefined.
+    expect(responsibleFromChoice('g', noSleepover)).toEqual({ kind: 0, guardianId: '' });
+    expect(responsibleFromChoice('b:mom', noSleepover)).toEqual({
+      kind: 1,
+      guardianId: 'mom',
+      babysitterId: '',
+    });
   });
 
   it('reads a sleepover draft back', () => {
@@ -97,6 +104,9 @@ describe('night-people', () => {
     expect(
       responsibleText({ kind: 1, guardianId: 'mom', babysitterId: 'm', name: '' }, people, labels)
         ?.text,
+    ).toBe('Babysitter');
+    expect(
+      responsibleText({ kind: 1, guardianId: 'mom', babysitterId: 'm' }, people, labels)?.text,
     ).toBe('Babysitter');
     expect(responsibleText({ kind: 2, hostName: 'Lis' }, people, labels)).toEqual({
       icon: '🛏️',

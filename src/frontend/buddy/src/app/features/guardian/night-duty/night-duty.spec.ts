@@ -7,6 +7,9 @@ import { FeaturesService } from '../../../core/features.service';
 import { GuardiansService } from '../../../core/guardians.service';
 import { NightDutyService } from '../../../core/night-duty.service';
 import { GuardianNightDuty } from './night-duty';
+import { NightPatternEditor } from './night-pattern-editor/night-pattern-editor';
+import { NightWeek } from './night-week/night-week';
+import { By } from '@angular/platform-browser';
 
 describe('GuardianNightDuty', () => {
   const emil = { id: 'emil', name: { givenName: 'Emil', familyName: 'Holm' } };
@@ -79,6 +82,24 @@ describe('GuardianNightDuty', () => {
       'Pickup & drop-off',
     );
     expect(compiled.querySelector('a[href="/guardian/babysitters"]')).toBeTruthy();
+  });
+
+  it('reloads the schedule and the week after the fixed schedule is saved', async () => {
+    const { fixture, nightDuty } = await setup();
+    const editor = fixture.debugElement.query(By.directive(NightPatternEditor))
+      .componentInstance as NightPatternEditor;
+    const week = () =>
+      fixture.debugElement.query(By.directive(NightWeek)).componentInstance as NightWeek;
+
+    expect(week().revision()).toBe(0);
+    editor.saved.emit();
+    await settle(fixture);
+    editor.saved.emit();
+    await settle(fixture);
+
+    expect(nightDuty.getSchedule).toHaveBeenCalledTimes(3);
+    expect(week().revision()).toBe(2);
+    expect(week().today()).toBe('2026-11-09');
   });
 
   it('switches child', async () => {

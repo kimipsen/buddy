@@ -73,6 +73,30 @@ describe('TonightCard', () => {
     expect(card.textContent).toContain('Screen night 📱');
   });
 
+  it('picks the guardian the night names among several, with a moon avatar, and no note chip without a note', async () => {
+    const mom = { ...dad, id: 'mom', callingName: 'Mom' };
+    const { compiled } = await setup(
+      async () =>
+        [
+          {
+            date: '2026-11-13',
+            status: {
+              kind: 2,
+              entry: { responsible: { kind: 0, guardianId: 'dad' } },
+              source: 'Pattern',
+              scheduled: null,
+            },
+          },
+        ] as Night[],
+      { guardians: async () => [mom, dad] },
+    );
+
+    const card = compiled.querySelector('[data-testid="tonight-card"]')!;
+    expect(card.querySelector('p.text-2xl')?.textContent?.trim()).toBe('Dad');
+    expect(card.querySelector('span.rounded-full')?.textContent?.trim()).toBe('🌙');
+    expect(card.querySelector('p.rounded-2xl')).toBeNull();
+  });
+
   it('falls back to a generic word when the guardian is unknown', async () => {
     const { compiled } = await setup(async () => planned({ kind: 0, guardianId: 'gone' }), {
       guardians: async () => {
@@ -89,6 +113,7 @@ describe('TonightCard', () => {
     );
     expect(babysitter.compiled.textContent).toContain('Maja');
     expect(babysitter.compiled.textContent).toContain('is with you tonight');
+    expect(babysitter.compiled.querySelector('span.rounded-full')?.textContent?.trim()).toBe('🧑‍🍼');
     TestBed.resetTestingModule();
 
     const unnamed = await setup(async () =>
@@ -97,10 +122,19 @@ describe('TonightCard', () => {
     expect(unnamed.compiled.textContent).toContain('Your babysitter');
     TestBed.resetTestingModule();
 
+    const nameless = await setup(async () =>
+      planned({ kind: 1, guardianId: 'mom', babysitterId: 'b' }),
+    );
+    expect(nameless.compiled.querySelector('p.text-2xl')?.textContent?.trim()).toBe(
+      'Your babysitter',
+    );
+    TestBed.resetTestingModule();
+
     const sleepover = await setup(async () =>
       planned({ kind: 2, hostName: 'Grandma Lis', location: '', contactInfo: '' }),
     );
     expect(sleepover.compiled.textContent).toContain('You sleep over at Grandma Lis’s');
+    expect(sleepover.compiled.querySelector('span.rounded-full')?.textContent?.trim()).toBe('🛏️');
   });
 
   it('shows a note on its own without a person', async () => {
