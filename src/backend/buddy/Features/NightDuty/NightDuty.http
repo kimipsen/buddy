@@ -1,0 +1,55 @@
+@buddy_HostAddress = http://localhost:5193
+
+### Save a fixed night schedule from a date (guardian of the child only)
+# A 2-week cycle anchored on a Monday: week A Mom on Mondays, Friday a screen night, week B Saturday
+# a sleepover. Omit effectiveFrom to start today (in the child's time zone); a past date is a 400.
+# responsible.kind: 0 guardian, 1 babysitter, 2 sleepover, 3 unassigned (a note on its own).
+
+PUT {{buddy_HostAddress}}/night-duty/children/{{childId}}/pattern
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "effectiveFrom": "2026-11-16",
+  "cycleWeeks": 2,
+  "anchorMonday": "2026-11-16",
+  "days": [
+    { "week": 0, "day": "Monday", "entry": { "responsible": { "kind": 0, "guardianId": "{{guardianId}}" } } },
+    { "week": 0, "day": "Friday", "entry": { "responsible": { "kind": 3 }, "note": "Screen night 📱" } },
+    { "week": 1, "day": "Saturday", "entry": { "responsible": { "kind": 2, "hostName": "Grandma Lis", "location": "Skovvej 12" } } }
+  ]
+}
+
+###
+
+# Change single nights. A switch is two nights in one request; "entry": null clears a night
+# ("nothing planned"). Returns the resolved nights that were set.
+PUT {{buddy_HostAddress}}/night-duty/children/{{childId}}/overrides
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "nights": [
+    { "date": "2026-11-17", "entry": { "responsible": { "kind": 0, "guardianId": "{{otherGuardianId}}" } } },
+    { "date": "2026-11-19", "entry": { "responsible": { "kind": 0, "guardianId": "{{guardianId}}" } } },
+    { "date": "2026-11-21", "entry": null }
+  ]
+}
+
+###
+
+# Remove overrides in a range; those nights follow the fixed schedule again (idempotent)
+DELETE {{buddy_HostAddress}}/night-duty/children/{{childId}}/overrides?from=2026-11-16&to=2026-11-22
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Every fixed-schedule version, flagged Past / Current / Upcoming (guardian only)
+GET {{buddy_HostAddress}}/night-duty/children/{{childId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Resolved nights (guardian or the child themself), at most 31 days
+GET {{buddy_HostAddress}}/night-duty/children/{{childId}}/nights?from=2026-11-16&to=2026-11-22
+Authorization: Bearer {{guardianToken}}

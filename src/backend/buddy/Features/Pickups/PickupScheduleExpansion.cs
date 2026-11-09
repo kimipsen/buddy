@@ -30,7 +30,7 @@ public static class PickupScheduleExpansion
         }
 
         var inRange = schedule.Assignments.Where(entry => entry.Key.Date >= from && entry.Key.Date <= to).ToList();
-        var babysitterNames = await BabysitterNames.LoadAsync(inRange.Select(entry => entry.Value.Assignee), babysitters, cancellationToken);
+        var babysitterNames = await BabysitterNames.LoadAsync(inRange.Select(entry => entry.Value.Assignee).BabysitterOwners(), babysitters, cancellationToken);
 
         var occurrences = inRange
             .Select(entry => PickupOccurrence.FromAssignment(entry.Key.Date, entry.Key.Slot, entry.Value, babysitterNames))

@@ -67,6 +67,12 @@ public sealed class PrintTemplateRowValidator : AbstractValidator<PrintTemplateR
             .OverridePropertyName("childId")
             .When(r => r.Kind == PrintRowKind.Pickup);
 
+        RuleFor(r => r.ChildId)
+            .NotNull()
+            .WithMessage("A night duty row needs childId.")
+            .OverridePropertyName("childId")
+            .When(r => r.Kind == PrintRowKind.NightDuty);
+
         RuleFor(r => r.GuardianId)
             .NotNull()
             .WithMessage("A work location row needs guardianId.")
@@ -104,6 +110,7 @@ public sealed class PrintTemplateRowValidator : AbstractValidator<PrintTemplateR
         {
             PrintRowKind.Meal => new[] { "childId", "mealGroupId", "mealSlot" },
             PrintRowKind.Pickup => ["childId"],
+            PrintRowKind.NightDuty => ["childId"],
             PrintRowKind.WorkLocation => ["guardianId", "workLocationId"],
             PrintRowKind.CalendarMarker => ["calendarIds", "titleFilter"],
             PrintRowKind.CalendarEvents => ["calendarIds", "assignedToId", "titleFilter", "maxItems", "showTime", "showAssignee"],

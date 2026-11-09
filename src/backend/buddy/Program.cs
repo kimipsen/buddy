@@ -21,6 +21,7 @@ using buddy.Features.Guardians;
 using buddy.Features.HouseRules;
 using buddy.Features.Mealplans;
 using buddy.Features.Medicines;
+using buddy.Features.NightDuty;
 using buddy.Features.Pickups;
 using buddy.Features.Privacy;
 using buddy.Features.PrintTemplates;
@@ -136,6 +137,9 @@ builder.Services.AddMealplansFeature(builder.Configuration);
 builder.Services.AddBabysittersFeature(builder.Configuration);
 builder.Services.AddPickupsFeature(builder.Configuration);
 builder.Services.AddWorkLocationsFeature(builder.Configuration);
+// After Users, Guardians and Babysitters: reads IGuardianLinkEventStore, IBabysitterListEventStore
+// and the child's local clock (IUserEventStore).
+builder.Services.AddNightDutyFeature(builder.Configuration);
 // After Guardians, Groups, Calendars and WorkLocations: its write-time reference checks read their stores.
 builder.Services.AddPrintTemplatesFeature(builder.Configuration);
 builder.Services.AddProgressFeature(builder.Configuration);
@@ -250,6 +254,11 @@ if (features.Pickups)
 if (features.WorkLocations)
 {
     app.MapWorkLocationsFeature();
+}
+
+if (features.NightDuty)
+{
+    app.MapNightDutyFeature();
 }
 
 if (features.Printing)

@@ -31,7 +31,7 @@ public static class LogMedicineEffectNoteHandler
             return access.ToDeniedResult<MedicineEffectNoteResponse>();
         }
 
-        if (await MedicineEffectNotes.ChildTodayAsync(command.ChildId, users, time, cancellationToken) is not { } today)
+        if (await UserLocalDate.TodayAsync(command.ChildId, users, time, cancellationToken) is not { } today)
         {
             return new Result<MedicineEffectNoteResponse>.NotFound();
         }

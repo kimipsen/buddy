@@ -25,6 +25,7 @@ public sealed class FeatureOptions
     public bool Pickups { get; set; } = true;
     public bool Babysitters { get; set; } = true;
     public bool WorkLocations { get; set; } = true;
+    public bool NightDuty { get; set; } = true;
     public bool Printing { get; set; } = true;
     public bool Progress { get; set; } = true;
     public bool TaskLibrary { get; set; } = true;
@@ -55,6 +56,7 @@ public sealed class FeatureOptions
         Pickups,
         Babysitters,
         WorkLocations,
+        NightDuty,
         Printing,
         Progress,
         TaskLibrary,
@@ -105,6 +107,7 @@ public sealed record InstallationFeatures(
     bool Pickups,
     bool Babysitters,
     bool WorkLocations,
+    bool NightDuty,
     bool Printing,
     bool Progress,
     bool TaskLibrary,

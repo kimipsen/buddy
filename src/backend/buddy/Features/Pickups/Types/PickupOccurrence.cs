@@ -1,3 +1,5 @@
+using buddy.Features.Babysitters;
+
 namespace buddy.Features.Pickups;
 
 // The read/wire shape for one assigned slot -- PickupAssignment plus its Date/Slot, with the

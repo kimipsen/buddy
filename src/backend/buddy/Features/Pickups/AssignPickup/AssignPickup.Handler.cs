@@ -72,7 +72,7 @@ public static class AssignPickupHandler
             }
         }
 
-        var babysitterNames = await BabysitterNames.LoadAsync([after.Assignee], babysitters, cancellationToken);
+        var babysitterNames = await BabysitterNames.LoadAsync(new[] { after.Assignee }.BabysitterOwners(), babysitters, cancellationToken);
 
         return new Result<PickupOccurrence>.Success(PickupOccurrence.FromAssignment(command.Date, command.Slot, after, babysitterNames));
     }

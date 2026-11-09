@@ -18044,6 +18044,525 @@
         ]
       }
     },
+    "/night-duty/children/{childId}/pattern": {
+      "put": {
+        "tags": [
+          "NightDuty"
+        ],
+        "operationId": "ReplaceNightPattern",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceNightPatternRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NightScheduleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "not_a_buddy_member",
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/night-duty/children/{childId}/overrides": {
+      "put": {
+        "tags": [
+          "NightDuty"
+        ],
+        "operationId": "SetNightOverrides",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetNightOverridesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Night"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "not_a_buddy_member",
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "NightDuty"
+        ],
+        "operationId": "ClearNightOverrides",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "not_a_buddy_member",
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/night-duty/children/{childId}": {
+      "get": {
+        "tags": [
+          "NightDuty"
+        ],
+        "operationId": "GetNightSchedule",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "An ETag from an earlier 200; when it still matches, the answer is 304 with no body.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "A strong validator: a hash of this body.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-cache (revalidate with If-None-Match before reuse).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NightScheduleResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "not_a_buddy_member",
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/night-duty/children/{childId}/nights": {
+      "get": {
+        "tags": [
+          "NightDuty"
+        ],
+        "operationId": "ListNights",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "An ETag from an earlier 200; when it still matches, the answer is 304 with no body.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "A strong validator: a hash of this body.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-cache (revalidate with If-None-Match before reuse).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Night"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "not_a_buddy_member",
+              "user_not_provisioned"
+            ]
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
     "/print-templates": {
       "post": {
         "tags": [
@@ -26381,6 +26900,38 @@
         "type": "string",
         "format": "uuid"
       },
+      "BabysitterNightResponsibleDto": {
+        "required": [
+          "guardianId",
+          "babysitterId",
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "guardianId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "babysitterId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "enum": [
+              1
+            ],
+            "type": "integer",
+            "description": "BabysitterNightResponsibleDto",
+            "format": "int32"
+          }
+        }
+      },
       "BabysitterRequest": {
         "required": [
           "name"
@@ -28507,6 +29058,27 @@
         "type": "string",
         "format": "uuid"
       },
+      "GuardianNightResponsibleDto": {
+        "required": [
+          "guardianId",
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "guardianId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "enum": [
+              0
+            ],
+            "type": "integer",
+            "description": "GuardianNightResponsibleDto",
+            "format": "int32"
+          }
+        }
+      },
       "GuardianSummary": {
         "required": [
           "id",
@@ -28653,6 +29225,7 @@
           "pickups",
           "babysitters",
           "workLocations",
+          "nightDuty",
           "printing",
           "progress",
           "taskLibrary",
@@ -28693,6 +29266,9 @@
             "type": "boolean"
           },
           "workLocations": {
+            "type": "boolean"
+          },
+          "nightDuty": {
             "type": "boolean"
           },
           "printing": {
@@ -30110,6 +30686,282 @@
           }
         }
       },
+      "Night": {
+        "required": [
+          "date",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/NightStatus"
+          }
+        }
+      },
+      "NightCleared": {
+        "required": [
+          "scheduled",
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "scheduled": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NightEntryDto"
+              }
+            ]
+          },
+          "kind": {
+            "enum": [
+              1
+            ],
+            "type": "integer",
+            "description": "NightCleared",
+            "format": "int32"
+          }
+        }
+      },
+      "NightEntryDto": {
+        "required": [
+          "responsible"
+        ],
+        "type": "object",
+        "properties": {
+          "responsible": {
+            "$ref": "#/components/schemas/NightResponsibleDto"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "NightOverrideRequest": {
+        "required": [
+          "date"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "entry": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NightEntryDto"
+              }
+            ]
+          }
+        }
+      },
+      "NightPatternDayDto": {
+        "required": [
+          "week",
+          "day",
+          "entry"
+        ],
+        "type": "object",
+        "properties": {
+          "week": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "day": {
+            "$ref": "#/components/schemas/DayOfWeek"
+          },
+          "entry": {
+            "$ref": "#/components/schemas/NightEntryDto"
+          }
+        }
+      },
+      "NightPatternDayRequest": {
+        "required": [
+          "week",
+          "day",
+          "entry"
+        ],
+        "type": "object",
+        "properties": {
+          "week": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "day": {
+            "$ref": "#/components/schemas/DayOfWeek"
+          },
+          "entry": {
+            "$ref": "#/components/schemas/NightEntryDto"
+          }
+        }
+      },
+      "NightPatternResponse": {
+        "required": [
+          "effectiveFrom",
+          "cycleWeeks",
+          "anchorMonday",
+          "days",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "cycleWeeks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "anchorMonday": {
+            "type": "string",
+            "format": "date"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NightPatternDayDto"
+            }
+          },
+          "status": {
+            "$ref": "#/components/schemas/NightPatternStatus"
+          }
+        }
+      },
+      "NightPatternStatus": {
+        "enum": [
+          "Past",
+          "Current",
+          "Upcoming"
+        ],
+        "type": "string"
+      },
+      "NightPlanned": {
+        "required": [
+          "entry",
+          "source",
+          "scheduled",
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/NightEntryDto"
+          },
+          "source": {
+            "$ref": "#/components/schemas/NightSource"
+          },
+          "scheduled": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NightEntryDto"
+              }
+            ]
+          },
+          "kind": {
+            "enum": [
+              2
+            ],
+            "type": "integer",
+            "description": "NightPlanned",
+            "format": "int32"
+          }
+        }
+      },
+      "NightResponsibleDto": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/GuardianNightResponsibleDto"
+          },
+          {
+            "$ref": "#/components/schemas/BabysitterNightResponsibleDto"
+          },
+          {
+            "$ref": "#/components/schemas/SleepoverNightResponsibleDto"
+          },
+          {
+            "$ref": "#/components/schemas/UnassignedNightResponsibleDto"
+          }
+        ],
+        "description": "One of 4 cases, picked by the numeric \u0022kind\u0022: 0 = GuardianNightResponsibleDto, 1 = BabysitterNightResponsibleDto, 2 = SleepoverNightResponsibleDto, 3 = UnassignedNightResponsibleDto."
+      },
+      "NightScheduleResponse": {
+        "required": [
+          "childId",
+          "today",
+          "patterns"
+        ],
+        "type": "object",
+        "properties": {
+          "childId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "today": {
+            "type": "string",
+            "format": "date"
+          },
+          "patterns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NightPatternResponse"
+            }
+          }
+        }
+      },
+      "NightSource": {
+        "enum": [
+          "Pattern",
+          "Override"
+        ],
+        "type": "string"
+      },
+      "NightStatus": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/NightUnplanned"
+          },
+          {
+            "$ref": "#/components/schemas/NightCleared"
+          },
+          {
+            "$ref": "#/components/schemas/NightPlanned"
+          }
+        ],
+        "description": "One of 3 cases, picked by the numeric \u0022kind\u0022: 0 = NightUnplanned, 1 = NightCleared, 2 = NightPlanned."
+      },
+      "NightUnplanned": {
+        "required": [
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "enum": [
+              0
+            ],
+            "type": "integer",
+            "description": "NightUnplanned",
+            "format": "int32"
+          }
+        }
+      },
       "OccurrenceSkipResponse": {
         "required": [
           "itemId",
@@ -30456,7 +31308,8 @@
           "CalendarEvents",
           "TaskChecklist",
           "Blank",
-          "CalendarAgenda"
+          "CalendarAgenda",
+          "NightDuty"
         ],
         "type": "string"
       },
@@ -30913,6 +31766,37 @@
               "type": "string",
               "format": "uuid"
             }
+          }
+        }
+      },
+      "ReplaceNightPatternRequest": {
+        "required": [
+          "cycleWeeks",
+          "anchorMonday",
+          "days"
+        ],
+        "type": "object",
+        "properties": {
+          "cycleWeeks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "anchorMonday": {
+            "type": "string",
+            "format": "date"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NightPatternDayRequest"
+            }
+          },
+          "effectiveFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         }
       },
@@ -31584,6 +32468,20 @@
           }
         }
       },
+      "SetNightOverridesRequest": {
+        "required": [
+          "nights"
+        ],
+        "type": "object",
+        "properties": {
+          "nights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NightOverrideRequest"
+            }
+          }
+        }
+      },
       "SetOccurrenceSkipRequest": {
         "required": [
           "date",
@@ -32064,6 +32962,38 @@
           },
           "durationMinutes": {
             "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SleepoverNightResponsibleDto": {
+        "required": [
+          "hostName",
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "hostName": {
+            "type": "string"
+          },
+          "location": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactInfo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "enum": [
+              2
+            ],
+            "type": "integer",
+            "description": "SleepoverNightResponsibleDto",
             "format": "int32"
           }
         }
@@ -32632,6 +33562,22 @@
       },
       "TimeZoneId": {
         "type": "string"
+      },
+      "UnassignedNightResponsibleDto": {
+        "required": [
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "enum": [
+              3
+            ],
+            "type": "integer",
+            "description": "UnassignedNightResponsibleDto",
+            "format": "int32"
+          }
+        }
       },
       "Unplanned": {
         "required": [
@@ -33744,6 +34690,9 @@
     },
     {
       "name": "Medicines"
+    },
+    {
+      "name": "NightDuty"
     },
     {
       "name": "Pickups"

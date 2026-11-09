@@ -14,5 +14,8 @@ public enum PrintRowKind
     TaskChecklist,
     Blank,
     // Tasks (tick boxes) and events (a clock) of the same calendars, together in one cell.
-    CalendarAgenda
+    CalendarAgenda,
+    // Who is on duty each night, with any note (docs/backend/analysis/night-duty.md, Question 7).
+    // Appended last: the ordinal is the wire value.
+    NightDuty
 }
