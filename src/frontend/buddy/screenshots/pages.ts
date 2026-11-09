@@ -270,6 +270,15 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     route: '/guardian/pickup',
   },
   {
+    name: 'guardian-night-duty',
+    title: 'Night duty',
+    description:
+      'Who is on duty each night: the week ahead with changed nights marked, and the fixed schedule they come from.',
+    as: 'guardian',
+    route: '/guardian/night-duty',
+    waitFor: 'Grandma Lis',
+  },
+  {
     name: 'guardian-babysitters',
     title: 'Babysitters',
     description:

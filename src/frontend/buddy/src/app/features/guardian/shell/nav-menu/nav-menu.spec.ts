@@ -91,7 +91,7 @@ describe('NavMenu', () => {
       },
       {
         heading: 'Family & helpers',
-        links: ['Babysitters', 'Work locations', 'Print week plan'],
+        links: ['Babysitters', 'Night duty', 'Work locations', 'Print week plan'],
       },
     ]);
   });

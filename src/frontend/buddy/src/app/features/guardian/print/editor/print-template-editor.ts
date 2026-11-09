@@ -102,6 +102,7 @@ const KIND_LABELS: Record<PrintRowKind, string> = {
   Meal: 'print.editor.kinds.meal',
   Pickup: 'print.editor.kinds.pickup',
   WorkLocation: 'print.editor.kinds.workLocation',
+  NightDuty: 'print.editor.kinds.nightDuty',
   CalendarMarker: 'print.editor.kinds.calendarMarker',
   CalendarEvents: 'print.editor.kinds.calendarEvents',
   TaskChecklist: 'print.editor.kinds.taskChecklist',
@@ -144,6 +145,7 @@ const EMPTY_SOURCES: WeekPlanSources = {
   meals: new Map(),
   pickups: new Map(),
   workDays: new Map(),
+  nights: new Map(),
   occurrences: new Map(),
   names: new Map(),
 };
@@ -350,6 +352,7 @@ export class PrintTemplateEditor {
             selfEscort: this.translation.translate('print.sheet.selfEscort'),
             playdate: this.translation.translate('print.sheet.playdate'),
             babysitter: this.translation.translate('print.sheet.babysitter'),
+            overnight: this.translation.translate('print.sheet.overnight'),
           },
           includeSubtasks: false,
         })

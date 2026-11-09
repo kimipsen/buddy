@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { CalendarsService } from '../../../core/calendars.service';
 import { GuardiansService } from '../../../core/guardians.service';
 import { MealplansService } from '../../../core/mealplans.service';
+import { NightDutyService } from '../../../core/night-duty.service';
 import { PickupsService } from '../../../core/pickups.service';
 import {
   PRINT_ROW_KIND,
@@ -47,6 +48,11 @@ describe('WeekPlanLoader', () => {
     const mealplans = { listMealPlan: vi.fn(async () => []) };
     const pickups = { listSchedule: vi.fn(async () => []) };
     const workLocations = { listWorkDays: vi.fn(async () => []) };
+    const nightDuty = {
+      listNights: vi.fn(async (id: string) =>
+        id === 'ida' ? Promise.reject(new Error('404')) : [],
+      ),
+    };
     const guardians = {
       listMyChildren: vi.fn(async () => [
         { id: 'signe', name: { givenName: 'Signe', familyName: 'X' } },
@@ -63,6 +69,7 @@ describe('WeekPlanLoader', () => {
         { provide: MealplansService, useValue: mealplans },
         { provide: PickupsService, useValue: pickups },
         { provide: WorkLocationsService, useValue: workLocations },
+        { provide: NightDutyService, useValue: nightDuty },
         { provide: GuardiansService, useValue: guardians },
       ],
     });
@@ -73,14 +80,15 @@ describe('WeekPlanLoader', () => {
       mealplans,
       pickups,
       workLocations,
+      nightDuty,
       guardians,
     };
   }
 
   it('fetches each source once for the seven-day range, however many rows name it', async () => {
-    const { loader, calendars, mealplans, pickups, workLocations } = setup();
+    const { loader, calendars, mealplans, pickups, workLocations, nightDuty } = setup();
 
-    await loader.load(
+    const sources = await loader.load(
       template([
         row(PRINT_ROW_KIND.calendarMarker, { calendarIds: ['family'] }),
         row(PRINT_ROW_KIND.calendarEvents, { calendarIds: ['family', 'school'] }),
@@ -92,6 +100,10 @@ describe('WeekPlanLoader', () => {
         row(PRINT_ROW_KIND.meal, { childId: 'signe', mealSlot: 'Dinner' }),
         row(PRINT_ROW_KIND.meal, { childId: 'signe', mealSlot: 'Lunch' }),
         row(PRINT_ROW_KIND.meal, { mealGroupId: 'fam', mealSlot: 'Dinner' }),
+        row(PRINT_ROW_KIND.nightDuty, { childId: 'signe' }),
+        row(PRINT_ROW_KIND.nightDuty, { childId: 'signe' }),
+        row(PRINT_ROW_KIND.nightDuty, { childId: 'ida' }),
+        row(PRINT_ROW_KIND.nightDuty, {}),
         row(PRINT_ROW_KIND.blank, {}),
       ]),
       '2026-10-04',
@@ -104,6 +116,12 @@ describe('WeekPlanLoader', () => {
     expect(pickups.listSchedule).toHaveBeenCalledTimes(1);
     expect(pickups.listSchedule).toHaveBeenCalledWith('signe', '2026-10-04', '2026-10-10');
     expect(workLocations.listWorkDays).toHaveBeenCalledTimes(1);
+    expect(nightDuty.listNights.mock.calls).toEqual([
+      ['signe', '2026-10-04', '2026-10-10'],
+      ['ida', '2026-10-04', '2026-10-10'],
+    ]);
+    expect(sources.nights.get('signe')).toEqual([]);
+    expect(sources.nights.get('ida')).toBeNull();
     expect(mealplans.listMealPlan.mock.calls).toEqual([
       [{ kind: 'family', childId: 'signe' }, '2026-10-04', '2026-10-10'],
       [expect.objectContaining({ kind: 'group', groupId: 'fam' }), '2026-10-04', '2026-10-10'],
@@ -144,18 +162,21 @@ describe('WeekPlanLoader', () => {
   });
 
   it("prints a disabled feature's rows from an empty source instead of fetching them", async () => {
-    disableFeatures('mealplans', 'pickups', 'workLocations');
-    const { loader, mealplans, pickups, workLocations } = setup();
+    disableFeatures('mealplans', 'pickups', 'workLocations', 'nightDuty');
+    const { loader, mealplans, pickups, workLocations, nightDuty } = setup();
 
     const sources = await loader.load(
       template([
         row(PRINT_ROW_KIND.meal, { childId: 'signe', mealSlot: 'Dinner' }),
         row(PRINT_ROW_KIND.pickup, { childId: 'signe' }),
         row(PRINT_ROW_KIND.workLocation, { guardianId: 'dad' }),
+        row(PRINT_ROW_KIND.nightDuty, { childId: 'signe' }),
       ]),
       '2026-10-04',
     );
 
+    expect(nightDuty.listNights).not.toHaveBeenCalled();
+    expect(sources.nights.get('signe')).toEqual([]);
     expect(mealplans.listMealPlan).not.toHaveBeenCalled();
     expect(pickups.listSchedule).not.toHaveBeenCalled();
     expect(workLocations.listWorkDays).not.toHaveBeenCalled();

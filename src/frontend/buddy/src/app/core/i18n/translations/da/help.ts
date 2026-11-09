@@ -435,6 +435,38 @@ export const help = {
         },
       },
     },
+    nightDuty: {
+      title: 'Nattevagt',
+      sections: {
+        fixedSchedule: {
+          title: 'Lav den faste plan',
+          body: 'Den faste plan siger, hvem der har hver nat: hvem der putter barnet, står op i nattens løb, eller hvor barnet sover. En nat går fra aftenen til næste morgen. Hvis jeres uger skifter, fx mellem to hjem, så lad planen gentage sig hver 2. til 4. uge. En note som "Skærmaften" kan stå på enhver nat, med eller uden en person.',
+          steps: {
+            s1: 'Vælg barnet øverst, hvis du har flere.',
+            s2: 'Under "Gentages hver" vælger du, hvor mange uger planen varer, og med "Denne uge er" siger du, hvilken uge det er nu.',
+            s3: 'Vælg hvem der har hver nat, og skriv eventuelle noter.',
+            s4: 'Vælg datoen under "Gælder fra", og klik på "Gem plan".',
+          },
+        },
+        changeANight: {
+          title: 'Ændr en enkelt nat',
+          body: 'Klik på "Ændr" ved en nat for at vælge en anden, en babysitter, en overnatning eller "Intet planlagt". Ændringen går forud for den faste plan, kun for den nat, og er markeret "Ændret". Klik på "Fortryd" eller "Tilbage til den faste plan" for at følge planen igen. En ny fast plan fra en dato ændrer aldrig nætterne før den.',
+        },
+        switchNights: {
+          title: 'Byt to nætter',
+          body: 'Når to voksne bytter nætter, så byt dem på én gang. Hver nat beholder sin egen note, så en skærmaften bliver på sin dag.',
+          steps: {
+            s1: 'Klik på "Byt to nætter".',
+            s2: 'Vælg de to nætter.',
+            s3: 'Klik på byt-knappen for at gemme begge.',
+          },
+        },
+        whereItShows: {
+          title: 'Hvor det vises',
+          body: 'Dit barn ser aftenens plan og note på et "I nat"-kort i sin app. En "Nattevagt"-række i en printskabelon sætter ugens nætter på den printede ugeplan. Alle barnets voksne kan se og ændre planen.',
+        },
+      },
+    },
     workLocations: {
       title: 'Arbejdssteder',
       sections: {

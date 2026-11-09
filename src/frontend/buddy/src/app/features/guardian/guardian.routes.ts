@@ -30,6 +30,7 @@ import { GuardianVisitSummaries } from './visit-summaries/visit-summaries';
 import { VisitSummaryPrintPage } from './visit-summaries/print/visit-summary-print-page';
 import { VisitSummaryPage } from './visit-summaries/summary/visit-summary-page';
 import { GuardianWorkLocations } from './work-locations/work-locations';
+import { GuardianNightDuty } from './night-duty/night-duty';
 
 export const GUARDIAN_ROUTES: Routes = [
   // Outside GuardianShell on purpose: no navigation, header or padding may end up on paper. Listed
@@ -167,6 +168,12 @@ export const GUARDIAN_ROUTES: Routes = [
         canActivate: [featureGuard('workLocations')],
         component: GuardianWorkLocations,
         data: { helpTopic: 'workLocations' },
+      },
+      {
+        path: 'night-duty',
+        canActivate: [featureGuard('nightDuty')],
+        component: GuardianNightDuty,
+        data: { helpTopic: 'nightDuty' },
       },
       {
         path: 'print',

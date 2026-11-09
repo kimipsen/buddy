@@ -9,6 +9,7 @@ import {
   mapWithConcurrency,
 } from '../../../core/map-with-concurrency';
 import { MealplanScope, MealplansService } from '../../../core/mealplans.service';
+import { NightDutyService } from '../../../core/night-duty.service';
 import { PickupsService } from '../../../core/pickups.service';
 import { PRINT_ROW_KIND, PrintRowKind, PrintTemplate } from '../../../core/print-templates.service';
 import { WorkLocationsService } from '../../../core/work-locations.service';
@@ -27,6 +28,7 @@ export class WeekPlanLoader {
   private readonly mealplans = inject(MealplansService);
   private readonly pickups = inject(PickupsService);
   private readonly workLocations = inject(WorkLocationsService);
+  private readonly nightDuty = inject(NightDutyService);
   private readonly features = inject(FeaturesService);
 
   async load(template: PrintTemplate, start: string): Promise<WeekPlanSources> {
@@ -48,6 +50,9 @@ export class WeekPlanLoader {
     const childIds = unique(
       rows.filter((r) => r.kind === PRINT_ROW_KIND.pickup).map((r) => r.childId),
     );
+    const nightChildIds = unique(
+      rows.filter((r) => r.kind === PRINT_ROW_KIND.nightDuty).map((r) => r.childId),
+    );
     const guardianIds = unique(
       rows.filter((r) => r.kind === PRINT_ROW_KIND.workLocation).map((r) => r.guardianId),
     );
@@ -59,6 +64,7 @@ export class WeekPlanLoader {
       meals: new Map(),
       pickups: new Map(),
       workDays: new Map(),
+      nights: new Map(),
       occurrences: new Map(),
       names: new Map<string, string>(),
     } satisfies WeekPlanSources;
@@ -79,6 +85,13 @@ export class WeekPlanLoader {
           settle(
             this.unlessOff(PRINT_ROW_KIND.pickup, () => this.pickups.listSchedule(id, from, to)),
             (v) => result.pickups.set(id, v),
+          ),
+      ),
+      ...nightChildIds.map(
+        (id) => () =>
+          settle(
+            this.unlessOff(PRINT_ROW_KIND.nightDuty, () => this.nightDuty.listNights(id, from, to)),
+            (v) => result.nights.set(id, v),
           ),
       ),
       ...guardianIds.map(

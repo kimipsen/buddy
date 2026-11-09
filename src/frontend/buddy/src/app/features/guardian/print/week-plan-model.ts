@@ -1,5 +1,6 @@
 import { CalendarItemOccurrence } from '../../../core/calendars.service';
 import { MealPlanEntry } from '../../../core/mealplans.service';
+import { Night } from '../../../core/night-duty.service';
 import { PickupOccurrence } from '../../../core/pickups.service';
 import { PaperSize, PrintRowKind } from '../../../core/print-templates.service';
 import { WorkDay } from '../../../core/work-locations.service';
@@ -49,7 +50,9 @@ export type WeekPlanCell =
   | { type: 'list'; items: WeekPlanItem[]; overflow: number }
   | { type: 'checklist'; items: WeekPlanCheckItem[]; overflow: number }
   | { type: 'agenda'; items: WeekPlanAgendaItem[]; overflow: number }
-  | { type: 'pickup'; dropOff: WeekPlanText | null; pickUp: WeekPlanText | null };
+  | { type: 'pickup'; dropOff: WeekPlanText | null; pickUp: WeekPlanText | null }
+  // Who is on duty that night (null for a note on its own) and the night's note.
+  | { type: 'night'; who: WeekPlanText | null; note: string | null };
 
 export interface WeekPlanRow {
   kind: PrintRowKind;
@@ -73,6 +76,8 @@ export interface WeekPlanSources {
   meals: ReadonlyMap<string, MealPlanEntry[] | null>;
   pickups: ReadonlyMap<string, PickupOccurrence[] | null>;
   workDays: ReadonlyMap<string, WorkDay[] | null>;
+  // Keyed by child id.
+  nights: ReadonlyMap<string, Night[] | null>;
   occurrences: ReadonlyMap<string, CalendarItemOccurrence[] | null>;
   // Given names of children and guardians, for pickup cells and assignees.
   names: ReadonlyMap<string, string>;
@@ -89,6 +94,8 @@ export interface WeekPlanLabels {
   playdate: string;
   // Printed for a babysitter whose name no longer resolves.
   babysitter: string;
+  // "Overnight" before a sleepover host's name.
+  overnight: string;
 }
 
 export interface WeekPlanOptions {

@@ -33,6 +33,7 @@ const ROW_KIND_FEATURES: Partial<Record<PrintRowKind, FeatureName>> = {
   [PRINT_ROW_KIND.meal]: 'mealplans',
   [PRINT_ROW_KIND.pickup]: 'pickups',
   [PRINT_ROW_KIND.workLocation]: 'workLocations',
+  [PRINT_ROW_KIND.nightDuty]: 'nightDuty',
 };
 
 export function rowKindFeature(kind: PrintRowKind): FeatureName | undefined {
@@ -54,6 +55,7 @@ export function cleanRow(row: PrintTemplateRow): PrintTemplateRow {
         mealSlot: row.mealSlot,
       };
     case PRINT_ROW_KIND.pickup:
+    case PRINT_ROW_KIND.nightDuty:
       return { ...clean, childId: row.childId };
     case PRINT_ROW_KIND.workLocation:
       return { ...clean, guardianId: row.guardianId, workLocationId: row.workLocationId };
@@ -102,6 +104,7 @@ export function missingField(row: PrintTemplateRow): string | null {
           ? 'print.editor.missing.mealSlot'
           : null;
     case PRINT_ROW_KIND.pickup:
+    case PRINT_ROW_KIND.nightDuty:
       return row.childId ? null : 'print.editor.missing.child';
     case PRINT_ROW_KIND.workLocation:
       return row.guardianId ? null : 'print.editor.missing.guardian';

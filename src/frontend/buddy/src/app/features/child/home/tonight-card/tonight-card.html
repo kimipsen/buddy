@@ -1,0 +1,39 @@
+@if (view(); as tonight) {
+  <section
+    data-testid="tonight-card"
+    aria-labelledby="tonight-title"
+    class="mt-6 block rounded-3xl border-4 border-indigo-200 dark:border-indigo-800 bg-gradient-to-b from-indigo-50 to-white dark:from-indigo-950 dark:to-slate-900 p-5 sm:p-8 shadow-sm"
+  >
+    <h2 id="tonight-title" class="flex items-center gap-2 text-2xl font-bold tracking-normal">
+      <span aria-hidden="true">🌙</span>{{ 'child.home.tonight.title' | translate }}
+    </h2>
+
+    @if (tonight.name || tonight.nameKey) {
+      <div class="mt-4 flex items-center gap-4">
+        <span
+          aria-hidden="true"
+          class="flex size-16 shrink-0 items-center justify-center rounded-full border-4 border-orange-300 dark:border-orange-700 bg-orange-100 dark:bg-orange-500/20 text-3xl"
+          >{{ tonight.icon }}</span
+        >
+        <div>
+          <p class="text-2xl font-extrabold text-slate-950 dark:text-slate-50">
+            {{ tonight.name ?? (tonight.nameKey ?? '' | translate) }}
+          </p>
+          @if (tonight.lineKey; as lineKey) {
+            <p class="text-base text-slate-600 dark:text-slate-300">
+              {{ lineKey | translate: { host: tonight.host } }}
+            </p>
+          }
+        </div>
+      </div>
+    }
+
+    @if (tonight.note) {
+      <p
+        class="mt-4 rounded-2xl bg-indigo-100 dark:bg-indigo-500/20 px-4 py-3 text-xl font-bold text-indigo-900 dark:text-indigo-100"
+      >
+        {{ tonight.note }}
+      </p>
+    }
+  </section>
+}

@@ -84,6 +84,7 @@ describe('PrintTemplateEditor', () => {
         meals: new Map(),
         pickups: new Map(),
         workDays: new Map(),
+        nights: new Map(),
         occurrences: new Map(),
         names: new Map(),
       })),
@@ -488,7 +489,7 @@ describe('PrintTemplateEditor', () => {
   });
 
   it('offers no rows from features that are turned off, and does not look their data up', async () => {
-    disableFeatures('mealplans', 'pickups', 'workLocations', 'babysitters');
+    disableFeatures('mealplans', 'pickups', 'workLocations', 'nightDuty', 'babysitters');
     const { fixture, root } = await setup();
 
     const kinds = Array.from(root.querySelectorAll<HTMLOptionElement>('#new-row-kind option')).map(

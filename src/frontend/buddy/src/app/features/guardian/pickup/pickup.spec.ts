@@ -65,4 +65,23 @@ describe('GuardianPickup', () => {
       ),
     ).toBeNull();
   });
+
+  it('links to night duty only while night duty is turned on', async () => {
+    const { fixture } = await setup();
+    fixture.detectChanges();
+    const link = (fixture.nativeElement as HTMLElement).querySelector(
+      'a[href="/guardian/night-duty"]',
+    );
+    expect(link?.textContent?.trim()).toBe('Night duty');
+
+    TestBed.resetTestingModule();
+    disableFeatures('nightDuty');
+    const { fixture: withoutNightDuty } = await setup();
+    withoutNightDuty.detectChanges();
+    expect(
+      (withoutNightDuty.nativeElement as HTMLElement).querySelector(
+        'a[href="/guardian/night-duty"]',
+      ),
+    ).toBeNull();
+  });
 });

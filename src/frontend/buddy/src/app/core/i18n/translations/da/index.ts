@@ -16,6 +16,7 @@ import { mealie } from './mealie';
 import { mealplan } from './mealplan';
 import { onboarding } from './onboarding';
 import { medicine } from './medicine';
+import { nightDuty } from './night-duty';
 import { pickup } from './pickup';
 import { pictograms } from './pictograms';
 import { print } from './print';
@@ -48,6 +49,7 @@ export const da = {
   mealplan,
   onboarding,
   medicine,
+  nightDuty,
   pickup,
   pictograms,
   print,

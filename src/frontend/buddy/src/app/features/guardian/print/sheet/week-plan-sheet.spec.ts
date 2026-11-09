@@ -124,6 +124,38 @@ describe('WeekPlanSheet', () => {
     expect(cells[10].textContent).toContain('Stil');
   });
 
+  it('prints a night with who is on duty in their color and the note on a second line', async () => {
+    const root = await render(
+      model({
+        rows: [
+          {
+            kind: 'NightDuty',
+            label: 'Night',
+            heightWeight: 1,
+            unavailable: false,
+            cells: [
+              {
+                type: 'night',
+                who: { text: 'Dad', icon: null, color: '#f97316' },
+                note: 'Screen night',
+              },
+              { type: 'night', who: null, note: 'Movie night' },
+              ...Array(5).fill({ type: 'blank' }),
+            ],
+          },
+        ],
+      }),
+    );
+    const cells = root.querySelectorAll('[role="cell"]');
+    const lines = cells[0].querySelectorAll('p');
+
+    expect(lines[0].textContent?.trim()).toBe('Dad');
+    expect((lines[0] as HTMLElement).style.color).toBe('rgb(249, 115, 22)');
+    expect(lines[1].textContent?.trim()).toBe('Screen night');
+    expect(cells[1].querySelectorAll('p')).toHaveLength(1);
+    expect(cells[1].textContent).toContain('Movie night');
+  });
+
   it('prints a routine’s subtasks nested under its parent, with their own tick boxes', async () => {
     const activities = model().rows[1];
     const root = await render(

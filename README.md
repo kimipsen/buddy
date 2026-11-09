@@ -25,8 +25,8 @@ in real time.
 
 - [ ] Night duty: a fixed (1–4 week) schedule of who is responsible for a child at night, with
       per-night overrides, switches and free-text notes such as a weekly screen night, shown on
-      the printed week plan and as a "Tonight" card for the child (backend implemented, frontend not yet —
-      see [Night duty](docs/backend/analysis/night-duty.md))
+      the printed week plan and as a "Tonight" card for the child (implemented; e2e run and docs
+      screenshots pending — see [Night duty](docs/backend/analysis/night-duty.md))
 - [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
       child for something new such as the dentist or a trip (proposed, not yet implemented — see
       [Social stories](docs/backend/analysis/social-stories.md))

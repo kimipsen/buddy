@@ -1,6 +1,11 @@
 # Night Duty
 
-Status: Backend implemented (see [flow](../night-duty/flow.md)); frontend not yet implemented
+Status: Implemented. `Features/NightDuty` ships the `NightSchedule` aggregate (schema `nightduty`,
+inline snapshot, golden files), the five slices and routes below, `PrintRowKind.NightDuty` and the
+`nightDuty` feature flag; the frontend ships `NightDutyService`, `/guardian/night-duty` (week view
+with change, switch and undo, and the fixed-schedule editor), the child's "Tonight" card and the
+Night print row. See [the flow doc](../night-duty/flow.md) and "Implementation notes" near the end
+for where the code differs from this design.
 
 ## Context
 
@@ -286,8 +291,7 @@ A mockup of the printed week plan with a Night row (demo data, not a screenshot 
 
 - A "Tonight" card on the child's day dashboard (`features/child/home/home.html`), below the
   "Today's pickup & drop-off" card, reading `ListNights(me, today, today)` with the child's own View
-  access. "Today" comes from the child's time zone on the server, so the card doesn't depend on the
-  device clock.
+  access. "Today" comes from the app's child clock, like every other card on the dashboard.
 - It shows the responsible person large (the guardian's calling name and avatar, a babysitter's
   name, or the sleepover host) and the note as its own chip ("📱 Screen night!"). An empty night
   shows no card, as an empty pickup day shows none.
@@ -527,6 +531,27 @@ switch two nights, see the change marked, open the print sheet and see the Night
 | Child opens the app after midnight                       | "Tonight" is the night of the child's current date, i.e. the coming evening, not the night in progress |
 | Week 53 years                                            | No effect; cycle weeks count from the anchor                                                           |
 | Concurrent saves by two guardians                        | Expected-version append; the loser gets `409 concurrency_conflict` and reloads                         |
+
+## Implementation notes
+
+Where the built code differs from the design above:
+
+- **Status case names.** The wire cases of `NightStatus` are `NightUnplanned`, `NightCleared` and
+  `NightPlanned`: the OpenAPI schema ids are the bare type names, and `Unplanned` already belongs to
+  `WorkDayStatus`.
+- **The week view starts tonight**, like the pickup planner, not on a Monday. A schedule can't start
+  in the past, so a Monday-first week would open on blank nights before today.
+- **Switching is inline.** "Switch two nights" turns the tiles' buttons into pickers and shows a
+  confirm button for the two picked nights, rather than a separate dialog. Switching a night with a
+  note-only or empty night moves only the person; a side left with neither person nor note becomes
+  a cleared night.
+- **The "Tonight" card** is a self-contained component placed after the day's sections (so below
+  the pickup card), and takes "today" from the app's child clock like the other cards.
+- **Shared helpers**, as the "Refactors" section planned: `Common/WeekCycle`,
+  `Features/Babysitters/BabysitterNames`, and `Features/Users/UserLocalDate` (the child's today,
+  taken out of `MedicineEffectNotes`).
+- **Print row label.** The editor calls the kind "Night duty" ("Nattevagt"); the demo template's
+  row is labelled "Night".
 
 ## Estimate
 

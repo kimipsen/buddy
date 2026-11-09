@@ -24,6 +24,7 @@ describe('FeaturesService', () => {
     pickups: true,
     babysitters: true,
     workLocations: true,
+    nightDuty: true,
     printing: true,
     progress: true,
     taskLibrary: true,

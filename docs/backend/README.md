@@ -13,6 +13,7 @@ Backend documentation for the Buddy API.
 - [Pickups flow](pickups/flow.md)
 - [Babysitters flow](babysitters/flow.md)
 - [Work locations flow](work-locations/flow.md)
+- [Night duty flow](night-duty/flow.md)
 - [Print templates flow](print-templates/flow.md)
 - [Task Library flow](task-library/flow.md)
 - [Progress flow](progress/flow.md)

@@ -90,6 +90,11 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         feature: 'babysitters',
       },
       {
+        link: '/guardian/night-duty',
+        label: 'shell.nav.items.nightDuty',
+        feature: 'nightDuty',
+      },
+      {
         link: '/guardian/work-locations',
         label: 'shell.nav.items.workLocations',
         feature: 'workLocations',

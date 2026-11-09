@@ -117,6 +117,13 @@ classDiagram
         +DateOverrides Overrides
     }
 
+    class NightSchedule {
+        +NightScheduleId Id
+        +UserId ChildId
+        +NightPattern[] Patterns
+        +DateOverrides Overrides
+    }
+
     class BabysitterList {
         +BabysitterListId Id
         +UserId GuardianId
@@ -232,6 +239,7 @@ classDiagram
     MedicineEffectLog --> User : childId
     MedicineEffectLog ..> MedicineSchedule : regimen
     PickupSchedule --> User : childId, assignments
+    NightSchedule --> User : childId, nights
     PickupFeed --> User : guardianId
     WorkLocationSchedule --> User : guardianId
     BabysitterList --> User : guardianId

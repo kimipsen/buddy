@@ -16,6 +16,7 @@ import {
   PrintTemplateRow,
 } from '../../../core/print-templates.service';
 import { compareOccurrences } from '../../../core/task-run';
+import { NIGHT_RESPONSIBLE, nightEntry } from '../../../core/night-duty.service';
 import { workDayLocation } from '../../../core/work-locations.service';
 import {
   WeekPlanAgendaItem,
@@ -123,6 +124,8 @@ function assembleCells(row: PrintTemplateRow, context: RowContext): WeekPlanCell
       return pickupCells(row, context);
     case PRINT_ROW_KIND.workLocation:
       return workLocationCells(row, context);
+    case PRINT_ROW_KIND.nightDuty:
+      return nightCells(row, context);
     case PRINT_ROW_KIND.calendarMarker:
     case PRINT_ROW_KIND.calendarEvents:
     case PRINT_ROW_KIND.taskChecklist:
@@ -215,6 +218,56 @@ function pickupLabel(
           null,
       };
   }
+}
+
+// Who is on duty each night, with the night's note on a second line. An empty night stays blank so
+// it can be filled in by hand (docs/backend/analysis/night-duty.md, Question 7).
+function nightCells(row: PrintTemplateRow, context: RowContext): WeekPlanCell[] | null {
+  if (!row.childId) {
+    return blankRow(context.dates);
+  }
+  const nights = context.sources.nights.get(row.childId);
+  if (!nights) {
+    return null;
+  }
+
+  return context.dates.map((date) => {
+    const night = nights.find((n) => n.date === date);
+    const entry = night ? nightEntry(night) : null;
+    if (!entry) {
+      return BLANK;
+    }
+
+    const { names } = context.sources;
+    const { labels } = context.options;
+    const responsible = entry.responsible;
+    let who: WeekPlanText | null = null;
+
+    switch (responsible.kind) {
+      case NIGHT_RESPONSIBLE.guardian:
+        who = {
+          text: names.get(responsible.guardianId) ?? '',
+          icon: null,
+          color: context.colors.get(responsible.guardianId) ?? null,
+        };
+        break;
+      case NIGHT_RESPONSIBLE.babysitter:
+        who = {
+          text: (responsible.name ?? '') || labels.babysitter,
+          icon: null,
+          color:
+            context.babysitterColors.get(
+              babysitterKey(responsible.guardianId, responsible.babysitterId),
+            ) ?? null,
+        };
+        break;
+      case NIGHT_RESPONSIBLE.sleepover:
+        who = { text: `${labels.overnight}: ${responsible.hostName}`, icon: null, color: null };
+        break;
+    }
+
+    return { type: 'night', who, note: (entry.note ?? '') || null };
+  });
 }
 
 function workLocationCells(row: PrintTemplateRow, context: RowContext): WeekPlanCell[] | null {

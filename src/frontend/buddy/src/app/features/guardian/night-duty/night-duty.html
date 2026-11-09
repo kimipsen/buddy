@@ -1,0 +1,87 @@
+<app-page backLink="/guardian" [backLabel]="'nightDuty.backLink' | translate">
+  <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p
+        class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400"
+      >
+        {{ 'nightDuty.eyebrow' | translate }}
+      </p>
+      <h2 class="mt-2 text-3xl font-semibold tracking-normal">
+        {{ 'nightDuty.title' | translate }}
+      </h2>
+      <p class="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
+        @if (selectedChild(); as child) {
+          {{ 'nightDuty.intro' | translate: { child: child.name.givenName } }}
+        } @else {
+          {{ 'nightDuty.introNoChild' | translate }}
+        }
+      </p>
+      <p class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+        @if (features.enabled('pickups')) {
+          <a
+            routerLink="/guardian/pickup"
+            class="text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+            >{{ 'nightDuty.pickupLink' | translate }}</a
+          >
+        }
+        @if (features.enabled('babysitters')) {
+          <a
+            routerLink="/guardian/babysitters"
+            class="text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+            >{{ 'nightDuty.babysittersLink' | translate }}</a
+          >
+        }
+      </p>
+    </div>
+
+    @if (childList().length > 1) {
+      <div>
+        <label
+          for="night-duty-child"
+          class="block text-xs font-medium text-slate-600 dark:text-slate-400"
+          >{{ 'nightDuty.childLabel' | translate }}</label
+        >
+        <select
+          id="night-duty-child"
+          class="mt-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          [ngModel]="selectedChildId()"
+          (ngModelChange)="selectedChildId.set($event)"
+        >
+          @for (child of childList(); track child.id) {
+            <option [value]="child.id">{{ child.name.givenName }}</option>
+          }
+        </select>
+      </div>
+    }
+  </div>
+
+  @if (children.hasValue() && childList().length === 0) {
+    <p class="text-sm text-slate-600 dark:text-slate-400">
+      {{ 'nightDuty.noChildren' | translate }}
+    </p>
+  } @else if (data.hasValue() && selectedChildId(); as childId) {
+    @let loaded = data.value();
+    <div class="space-y-6">
+      <app-night-week
+        class="block"
+        [childId]="childId"
+        [people]="loaded.people"
+        [revision]="revision()"
+        [today]="loaded.schedule.today"
+      />
+      <app-night-pattern-editor
+        class="block"
+        [childId]="childId"
+        [schedule]="loaded.schedule"
+        [people]="loaded.people"
+        (saved)="scheduleSaved()"
+      />
+    </div>
+  } @else if (data.error() || children.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+      {{ 'nightDuty.loadError' | translate }}
+    </p>
+  } @else {
+    <app-loading-spinner [label]="'nightDuty.loading' | translate" />
+  }
+</app-page>

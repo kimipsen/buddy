@@ -1,0 +1,159 @@
+<app-card>
+  <h3 class="text-lg font-semibold">{{ 'nightDuty.pattern.title' | translate }}</h3>
+  <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+    {{ 'nightDuty.pattern.description' | translate }}
+  </p>
+
+  <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+    <div class="flex items-center gap-3">
+      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{{
+        'nightDuty.pattern.cycleLabel' | translate
+      }}</span>
+      <app-segmented-control
+        [options]="cycleOptions()"
+        [selected]="cycleWeeks()"
+        [ariaLabel]="'nightDuty.pattern.cycleLabel' | translate"
+        (selectedChange)="setCycleWeeks($event)"
+      />
+    </div>
+
+    @if (cycleWeeks() > 1) {
+      <div class="flex items-center gap-3">
+        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{{
+          'nightDuty.pattern.currentWeekLabel' | translate
+        }}</span>
+        <app-segmented-control
+          [options]="currentWeekOptions()"
+          [selected]="currentWeek()"
+          [ariaLabel]="'nightDuty.pattern.currentWeekLabel' | translate"
+          (selectedChange)="setCurrentWeek($event)"
+        />
+      </div>
+    }
+
+    <div class="flex items-center gap-3">
+      <label
+        for="night-pattern-effective-from"
+        class="text-sm font-medium text-slate-700 dark:text-slate-300"
+        >{{ 'nightDuty.pattern.effectiveFromLabel' | translate }}</label
+      >
+      <input
+        id="night-pattern-effective-from"
+        type="date"
+        class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        [min]="minDate()"
+        [ngModel]="effectiveFrom()"
+        (ngModelChange)="setEffectiveFrom($event)"
+      />
+    </div>
+  </div>
+
+  <div class="mt-4 space-y-4">
+    @for (week of weeks(); track week) {
+      <div
+        class="rounded-lg border border-slate-200 dark:border-slate-700 p-3"
+        role="group"
+        [attr.aria-label]="weekLabel(week)"
+      >
+        <h4 class="text-xs font-medium uppercase text-slate-600 dark:text-slate-300">
+          {{ weekLabel(week) }}
+        </h4>
+        <ul class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-7">
+          @for (day of weekdays; track day; let i = $index) {
+            @let draft = cell(week, day);
+            <li class="flex flex-col gap-1">
+              <span class="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">{{
+                dayNames()[i]
+              }}</span>
+              <select
+                class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                [attr.aria-label]="cellLabel('whoLabel', week, i)"
+                [ngModel]="draft.choice"
+                (ngModelChange)="setCell(week, day, { choice: $event })"
+              >
+                <option [value]="nobody">{{ 'nightDuty.pattern.none' | translate }}</option>
+                @for (guardian of people().guardians; track guardian.id) {
+                  <option [value]="'g:' + guardian.id">
+                    👤 {{ guardian.callingName || guardian.name.givenName }}
+                  </option>
+                }
+                @for (babysitter of people().babysitters; track babysitter.id) {
+                  <option [value]="babysitterChoice(babysitter)">🧑‍🍼 {{ babysitter.name }}</option>
+                }
+                <option [value]="sleepoverChoice">
+                  🛏️ {{ 'nightDuty.who.sleepoverOption' | translate }}
+                </option>
+              </select>
+              @if (draft.choice === sleepoverChoice) {
+                <input
+                  type="text"
+                  maxlength="200"
+                  class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  [placeholder]="'nightDuty.pattern.hostPlaceholder' | translate"
+                  [attr.aria-label]="cellLabel('hostLabel', week, i)"
+                  [ngModel]="draft.hostName"
+                  (ngModelChange)="setCell(week, day, { hostName: $event })"
+                />
+              }
+              <input
+                type="text"
+                maxlength="60"
+                class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                [placeholder]="'nightDuty.pattern.notePlaceholder' | translate"
+                [attr.aria-label]="cellLabel('noteLabel', week, i)"
+                [ngModel]="draft.note"
+                (ngModelChange)="setCell(week, day, { note: $event })"
+              />
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+
+  <div class="mt-4 flex flex-wrap items-center gap-3">
+    <button
+      type="button"
+      class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
+      [disabled]="saving.busy()"
+      (click)="save()"
+    >
+      {{ 'nightDuty.pattern.save' | translate }}
+    </button>
+    @if (justSaved()) {
+      <p class="text-sm text-emerald-700 dark:text-emerald-400" role="status">
+        {{ 'nightDuty.pattern.saved' | translate }}
+      </p>
+    } @else if (saving.state(); as state) {
+      @if (state.status === 'error') {
+        <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+          {{ state.message | translate }}
+        </p>
+      } @else {
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          {{ 'nightDuty.pattern.replaceHint' | translate: { date: effectiveFromLabel() } }}
+        </p>
+      }
+    }
+  </div>
+
+  <div class="mt-5 border-t border-slate-200 dark:border-slate-800 pt-4">
+    <h4 class="text-sm font-semibold">{{ 'nightDuty.pattern.versionsTitle' | translate }}</h4>
+    @if (versions().length === 0) {
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        {{ 'nightDuty.pattern.noVersions' | translate }}
+      </p>
+    } @else {
+      <ul class="mt-1 list-disc space-y-1 pl-5 text-sm text-slate-700 dark:text-slate-300">
+        @for (version of versions(); track version.key) {
+          <li>
+            {{
+              'nightDuty.pattern.version' | translate: { date: version.date, cycle: version.cycle }
+            }}
+            ({{ 'nightDuty.pattern.status.' + version.status | translate }})
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</app-card>

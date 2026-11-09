@@ -153,6 +153,9 @@ The guardian routes currently include:
 - `/guardian/house-rules/print/children/:childId`, `/guardian/house-rules/print/groups/:groupId` — A4 portrait printouts for the fridge, outside the shell like the week-plan sheet
 - `/guardian/babysitters` — the guardian's saved babysitters and nannies, which any of a child's
   guardians can pick in the pickup planner
+- `/guardian/night-duty` — who is on duty each night for a child: the week ahead from tonight, where a
+  night is changed or two nights are switched, and the fixed 1–4 week schedule versioned from a
+  date (shown to the child as a "Tonight" card and printable as a Night row)
 - `/guardian/work-locations` — the guardian's own work locations, alternating weekly pattern, and
   per-day exceptions (used by the printable week plan; never shown to children)
 - `/guardian/print` — quick print: pick a template and a start date, preview, print; create templates
@@ -313,6 +316,8 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
   guardians can pick for that child
 - `PrintTemplatesService` manages print templates (layout, rows, guardian name colors); the
   `WeekPlanLoader` in `features/guardian/print` composes a week from the existing services
+- `NightDutyService` saves a child's fixed night schedule, sets, switches and clears single nights,
+  and lists resolved nights (also for the child's own "Tonight" card)
 - `WorkLocationsService` manages the guardian's work locations, pattern, and exceptions, and lists
   resolved work days for the guardian or a co-guardian
 - `TaskLibraryService` manages per-child task templates and subtasks (routines and packing lists,
