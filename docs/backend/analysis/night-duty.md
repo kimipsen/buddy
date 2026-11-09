@@ -1,6 +1,6 @@
 # Night Duty
 
-Status: Proposed (not yet implemented)
+Status: Backend implemented (see [flow](../night-duty/flow.md)); frontend not yet implemented
 
 ## Context
 
