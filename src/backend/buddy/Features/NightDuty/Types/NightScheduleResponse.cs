@@ -24,8 +24,18 @@ public sealed record NightScheduleResponse(Guid ChildId, DateOnly Today, IReadOn
             today,
             [.. schedule.Patterns.Select(p => NightPatternResponse.From(
                 p,
-                p.EffectiveFrom > today ? NightPatternStatus.Upcoming : p == current ? NightPatternStatus.Current : NightPatternStatus.Past,
+                StatusOf(p, current, today),
                 babysitterNames))]);
+    }
+
+    private static NightPatternStatus StatusOf(NightPattern pattern, NightPattern? current, DateOnly today)
+    {
+        if (pattern.EffectiveFrom > today)
+        {
+            return NightPatternStatus.Upcoming;
+        }
+
+        return pattern == current ? NightPatternStatus.Current : NightPatternStatus.Past;
     }
 }
 

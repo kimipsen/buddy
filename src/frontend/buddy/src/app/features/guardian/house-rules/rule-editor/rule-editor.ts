@@ -17,6 +17,7 @@ import { Rule, RuleContent, workingContent } from '../../../../core/house-rules.
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MarkdownEditor } from '../../../../shared/markdown-editor/markdown-editor';
 import { Toggle } from '../../../../shared/toggle/toggle';
+import { keepTabInside } from '../../../../shared/focus-trap/focus-trap';
 
 export const MAX_TITLE_LENGTH = 100;
 export const MAX_BODY_LENGTH = 4000;
@@ -109,25 +110,6 @@ export class RuleEditor implements OnInit {
   @HostListener('document:keydown.tab', ['$event'])
   @HostListener('document:keydown.shift.tab', ['$event'])
   protected onTab(event: Event): void {
-    const panel = this.panel()?.nativeElement;
-
-    if (!panel || !(event instanceof KeyboardEvent)) {
-      return;
-    }
-
-    const focusable: HTMLElement[] = Array.from(
-      panel.querySelectorAll<HTMLElement>(
-        'input:not(:disabled), textarea:not(:disabled), button:not(:disabled)',
-      ),
-    );
-    const first = focusable.at(0) ?? panel;
-    const last = focusable.at(-1) ?? panel;
-    const active = document.activeElement as HTMLElement | null;
-    const inside = active !== null && focusable.includes(active);
-
-    if (!inside || active === (event.shiftKey ? first : last)) {
-      event.preventDefault();
-      (event.shiftKey ? last : first).focus();
-    }
+    keepTabInside(this.panel()?.nativeElement, event);
   }
 }

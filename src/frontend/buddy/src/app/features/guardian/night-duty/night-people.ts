@@ -10,14 +10,14 @@ export interface NightPeople {
 
 export const NO_PEOPLE: NightPeople = { guardians: [], babysitters: [] };
 
-// A responsible person as one <select> value: 'g:<guardianId>', 'b:<guardianId>:<babysitterId>',
-// 's' (a sleepover; its host is typed separately) or '' (nobody named, a note on its own).
-export type ResponsibleChoice = string;
+// A responsible person travels through the <select>s as one string value ("choice"):
+// 'g:<guardianId>', 'b:<guardianId>:<babysitterId>', 's' (a sleepover; its host is typed
+// separately) or '' (nobody named, a note on its own).
 
 export const SLEEPOVER_CHOICE = 's';
 export const NOBODY_CHOICE = '';
 
-export function choiceOf(responsible: NightResponsible): ResponsibleChoice {
+export function choiceOf(responsible: NightResponsible): string {
   switch (responsible.kind) {
     case NIGHT_RESPONSIBLE.guardian:
       return `g:${responsible.guardianId}`;
@@ -48,10 +48,7 @@ export function sleepoverOf(responsible: NightResponsible | null): SleepoverDraf
     : { hostName: '', location: '', contactInfo: '' };
 }
 
-export function responsibleFromChoice(
-  choice: ResponsibleChoice,
-  sleepover: SleepoverDraft,
-): NightResponsible {
+export function responsibleFromChoice(choice: string, sleepover: SleepoverDraft): NightResponsible {
   const [kind, first = '', second = ''] = choice.split(':');
 
   if (kind === 'g') {
@@ -83,7 +80,7 @@ export function isCompleteEntry(entry: NightEntry): boolean {
   return responsible.kind !== NIGHT_RESPONSIBLE.unassigned || note.length > 0;
 }
 
-export function babysitterChoice(babysitter: ChildBabysitter): ResponsibleChoice {
+export function babysitterChoice(babysitter: ChildBabysitter): string {
   return `b:${babysitter.guardianId}:${babysitter.id}`;
 }
 

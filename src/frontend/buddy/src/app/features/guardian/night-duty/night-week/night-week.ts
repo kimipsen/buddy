@@ -16,7 +16,7 @@ import {
 import { createAction } from '../../../../shared/action-state/action-state';
 import { Card } from '../../../../shared/card/card';
 import { NightEditDialog } from '../night-edit-dialog/night-edit-dialog';
-import { NightPeople, ResponsibleText, responsibleText } from '../night-people';
+import { NightPeople, ResponsibleLabels, ResponsibleText, responsibleText } from '../night-people';
 
 const DAYS = 7;
 
@@ -138,13 +138,13 @@ export class NightWeek {
   }
 
   private togglePick(date: string): void {
-    this.picked.update((picked) =>
-      picked.includes(date)
-        ? picked.filter((d) => d !== date)
-        : picked.length < 2
-          ? [...picked, date]
-          : picked,
-    );
+    this.picked.update((picked) => {
+      if (picked.includes(date)) {
+        return picked.filter((d) => d !== date);
+      }
+      // A third pick is ignored until one is deselected.
+      return picked.length < 2 ? [...picked, date] : picked;
+    });
   }
 
   // Swaps the responsible persons of the two picked nights; each keeps its own note. A night with
@@ -158,13 +158,11 @@ export class NightWeek {
     const swapped = (night: Night, other: Night): NightOverride => {
       const otherResponsible = nightEntry(other)?.responsible;
       const note = nightEntry(night)?.note ?? '';
-      const entry: NightEntry | null =
-        otherResponsible && otherResponsible.kind !== NIGHT_RESPONSIBLE.unassigned
-          ? { responsible: otherResponsible, note }
-          : note
-            ? { responsible: { kind: NIGHT_RESPONSIBLE.unassigned }, note }
-            : null;
-      return { date: night.date, entry };
+      if (otherResponsible && otherResponsible.kind !== NIGHT_RESPONSIBLE.unassigned) {
+        return { date: night.date, entry: { responsible: otherResponsible, note } };
+      }
+      const noteOnly: NightEntry = { responsible: { kind: NIGHT_RESPONSIBLE.unassigned }, note };
+      return { date: night.date, entry: note ? noteOnly : null };
     };
 
     const ok = await this.saveOverrides(
@@ -212,11 +210,19 @@ export class NightWeek {
       who: entry ? responsibleText(entry.responsible, people, labels) : null,
       note: entry?.note ?? '',
       changed,
-      scheduledWho: changed
-        ? scheduled
-          ? (responsibleText(scheduled.responsible, people, labels)?.text ?? scheduled.note ?? '')
-          : ''
-        : null,
+      scheduledWho: changed ? this.scheduledText(scheduled, people, labels) : null,
     };
+  }
+
+  // What the fixed schedule says for a changed night: its person, else its note; '' for nothing.
+  private scheduledText(
+    scheduled: NightEntry | null,
+    people: NightPeople,
+    labels: ResponsibleLabels,
+  ): string {
+    if (!scheduled) {
+      return '';
+    }
+    return responsibleText(scheduled.responsible, people, labels)?.text ?? scheduled.note ?? '';
   }
 }

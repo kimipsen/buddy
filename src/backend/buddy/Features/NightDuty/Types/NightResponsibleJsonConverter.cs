@@ -12,18 +12,26 @@ namespace buddy.Features.NightDuty;
 // PickupAssigneeJsonConverter.
 public sealed class NightResponsibleJsonConverter : JsonConverter<NightResponsible>
 {
+    // Property names of the persisted shape -- part of the stored event contract (golden files).
+    private const string KindProperty = "Kind";
+    private const string GuardianIdProperty = "GuardianId";
+    private const string BabysitterIdProperty = "BabysitterId";
+    private const string HostNameProperty = "HostName";
+    private const string LocationProperty = "Location";
+    private const string ContactInfoProperty = "ContactInfo";
+
     public override NightResponsible Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         using var document = JsonDocument.ParseValue(ref reader);
         var root = document.RootElement;
-        var kind = String(root, "Kind");
+        var kind = String(root, KindProperty);
 
         return kind switch
         {
-            nameof(NightResponsible.Guardian) => new NightResponsible.Guardian(new UserId(Required(root, "GuardianId").GetGuid())),
+            nameof(NightResponsible.Guardian) => new NightResponsible.Guardian(new UserId(Required(root, GuardianIdProperty).GetGuid())),
             nameof(NightResponsible.Babysitter) => new NightResponsible.Babysitter(
-                new UserId(Required(root, "GuardianId").GetGuid()), new BabysitterId(Required(root, "BabysitterId").GetGuid())),
-            nameof(NightResponsible.Sleepover) => new NightResponsible.Sleepover(String(root, "HostName"), String(root, "Location"), String(root, "ContactInfo")),
+                new UserId(Required(root, GuardianIdProperty).GetGuid()), new BabysitterId(Required(root, BabysitterIdProperty).GetGuid())),
+            nameof(NightResponsible.Sleepover) => new NightResponsible.Sleepover(String(root, HostNameProperty), String(root, LocationProperty), String(root, ContactInfoProperty)),
             nameof(NightResponsible.Unassigned) => new NightResponsible.Unassigned(),
             _ => throw new JsonException($"Unknown NightResponsible Kind discriminator: '{kind}'.")
         };
@@ -36,25 +44,25 @@ public sealed class NightResponsibleJsonConverter : JsonConverter<NightResponsib
         switch (value)
         {
             case NightResponsible.Guardian guardian:
-                writer.WriteString("Kind", nameof(NightResponsible.Guardian));
-                writer.WriteString("GuardianId", guardian.GuardianId.Value);
+                writer.WriteString(KindProperty, nameof(NightResponsible.Guardian));
+                writer.WriteString(GuardianIdProperty, guardian.GuardianId.Value);
                 break;
 
             case NightResponsible.Babysitter babysitter:
-                writer.WriteString("Kind", nameof(NightResponsible.Babysitter));
-                writer.WriteString("GuardianId", babysitter.GuardianId.Value);
-                writer.WriteString("BabysitterId", babysitter.BabysitterId.Value);
+                writer.WriteString(KindProperty, nameof(NightResponsible.Babysitter));
+                writer.WriteString(GuardianIdProperty, babysitter.GuardianId.Value);
+                writer.WriteString(BabysitterIdProperty, babysitter.BabysitterId.Value);
                 break;
 
             case NightResponsible.Sleepover sleepover:
-                writer.WriteString("Kind", nameof(NightResponsible.Sleepover));
-                writer.WriteString("HostName", sleepover.HostName);
-                writer.WriteString("Location", sleepover.Location);
-                writer.WriteString("ContactInfo", sleepover.ContactInfo);
+                writer.WriteString(KindProperty, nameof(NightResponsible.Sleepover));
+                writer.WriteString(HostNameProperty, sleepover.HostName);
+                writer.WriteString(LocationProperty, sleepover.Location);
+                writer.WriteString(ContactInfoProperty, sleepover.ContactInfo);
                 break;
 
             case NightResponsible.Unassigned:
-                writer.WriteString("Kind", nameof(NightResponsible.Unassigned));
+                writer.WriteString(KindProperty, nameof(NightResponsible.Unassigned));
                 break;
 
             // A default(NightResponsible) holds no case: refuse it here rather than persisting an

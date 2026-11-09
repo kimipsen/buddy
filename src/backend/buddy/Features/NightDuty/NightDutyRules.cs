@@ -41,25 +41,42 @@ internal static class NightDutyRules
 
         foreach (var responsible in responsibles)
         {
-            var problem = responsible switch
-            {
-                NightResponsible.Guardian guardian =>
-                    await guardians.FindActiveLinkAsync(childId, guardian.GuardianId, cancellationToken) is null
-                        ? ValidationProblem.Of("guardianId is not an active guardian of this child.")
-                        : null,
-                NightResponsible.Babysitter babysitter =>
-                    await guardians.FindActiveLinkAsync(childId, babysitter.GuardianId, cancellationToken) is null
-                        ? ValidationProblem.Of("guardianId is not an active guardian of this child.")
-                        : await IsActiveBabysitterAsync(babysitter, babysitters, cancellationToken)
-                            ? null
-                            : ValidationProblem.Of("babysitterId is not an active babysitter of that guardian."),
-                NightResponsible.Sleepover or NightResponsible.Unassigned => null,
-            };
-
-            if (problem is not null)
+            if (await CheckRelationshipAsync(childId, responsible, guardians, babysitters, cancellationToken) is { } problem)
             {
                 return problem;
             }
+        }
+
+        return null;
+    }
+
+    private static async Task<ValidationProblem?> CheckRelationshipAsync(
+        UserId childId,
+        NightResponsible responsible,
+        IGuardianLinkEventStore guardians,
+        IBabysitterListEventStore babysitters,
+        CancellationToken cancellationToken)
+    {
+        var guardianId = responsible switch
+        {
+            NightResponsible.Guardian guardian => guardian.GuardianId,
+            NightResponsible.Babysitter babysitter => babysitter.GuardianId,
+            NightResponsible.Sleepover or NightResponsible.Unassigned => null,
+        };
+
+        if (guardianId is null)
+        {
+            return null;
+        }
+
+        if (await guardians.FindActiveLinkAsync(childId, guardianId, cancellationToken) is null)
+        {
+            return ValidationProblem.Of("guardianId is not an active guardian of this child.");
+        }
+
+        if (responsible is NightResponsible.Babysitter named && !await IsActiveBabysitterAsync(named, babysitters, cancellationToken))
+        {
+            return ValidationProblem.Of("babysitterId is not an active babysitter of that guardian.");
         }
 
         return null;

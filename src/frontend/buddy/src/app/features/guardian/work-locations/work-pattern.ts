@@ -1,4 +1,4 @@
-import { addDaysIso, parseIsoDate, startOfWeekIso } from '../../../core/date-utils';
+import { addDaysIso, dayOfWeekIndex, parseIsoDate, startOfWeekIso } from '../../../core/date-utils';
 import { Weekday } from '../../../core/work-locations.service';
 
 export const MAX_CYCLE_WEEKS = 4;
@@ -39,4 +39,21 @@ export function anchorForCurrentWeek(todayIso: string, currentWeek: number): str
 
 export function patternKey(week: number, day: Weekday): string {
   return `${week}|${day}`;
+}
+
+// Sunday 2026-10-04 + n days walks Sunday..Saturday, matching Date.getDay().
+const A_SUNDAY = new Date(2026, 9, 4);
+
+// A weekday's name in the given locale ("Tue" / "Tuesday"), for the pattern editors' columns and
+// labels (work locations and night duty).
+export function weekdayName(
+  day: Weekday,
+  locale: string,
+  weekday: 'short' | 'long' = 'short',
+): string {
+  return new Date(
+    A_SUNDAY.getFullYear(),
+    A_SUNDAY.getMonth(),
+    A_SUNDAY.getDate() + dayOfWeekIndex(day),
+  ).toLocaleDateString(locale, { weekday });
 }
