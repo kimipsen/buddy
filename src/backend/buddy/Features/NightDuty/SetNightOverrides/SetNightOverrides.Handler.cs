@@ -53,8 +53,8 @@ public static class SetNightOverridesHandler
         // One event per date that actually changes, in date order; dates already holding this
         // override emit nothing.
         List<NightDutyEvent> events = [.. command.Nights
-            .OrderBy(n => n.Date)
             .Where(n => !schedule.Overrides.TryGetValue(n.Date, out var existing) || !existing.Equals(n.Override))
+            .OrderBy(n => n.Date)
             .Select(n => (NightDutyEvent)new NightOverridden(schedule.Id, n.Date, n.Override, command.UserId, now))];
 
         schedule = await NightScheduleWriter.SaveAsync(store, loaded, events, now, cancellationToken);

@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { dayOfWeekIndex, parseIsoDate } from '../../../../core/date-utils';
+import { parseIsoDate } from '../../../../core/date-utils';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import {
@@ -23,11 +23,11 @@ import {
   cycleWeekOf,
   patternKey,
   weekName,
+  weekdayName,
 } from '../../work-locations/work-pattern';
 import {
   NOBODY_CHOICE,
   NightPeople,
-  ResponsibleChoice,
   SLEEPOVER_CHOICE,
   babysitterChoice,
   choiceOf,
@@ -37,20 +37,9 @@ import {
 } from '../night-people';
 import { Weekday } from '../../../../core/work-locations.service';
 
-// Sunday 2026-10-04 + n days walks Sunday..Saturday, matching Date.getDay().
-const A_SUNDAY = new Date(2026, 9, 4);
-
-function dayName(day: Weekday, locale: string, weekday: 'short' | 'long' = 'short'): string {
-  return new Date(
-    A_SUNDAY.getFullYear(),
-    A_SUNDAY.getMonth(),
-    A_SUNDAY.getDate() + dayOfWeekIndex(day),
-  ).toLocaleDateString(locale, { weekday });
-}
-
 // location and contactInfo aren't edited here but are carried through, so a save keeps them.
 interface CellDraft {
-  choice: ResponsibleChoice;
+  choice: string;
   hostName: string;
   location: string;
   contactInfo: string;
@@ -147,7 +136,7 @@ export class NightPatternEditor {
 
   protected readonly dayNames = computed(() => {
     const locale = this.translation.language();
-    return WEEKDAYS_MONDAY_FIRST.map((day) => dayName(day, locale, 'long'));
+    return WEEKDAYS_MONDAY_FIRST.map((day) => weekdayName(day, locale, 'long'));
   });
 
   protected readonly versions = computed(() => {

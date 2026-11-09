@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { dayOfWeekIndex, todayIsoDate } from '../../../../core/date-utils';
+import { todayIsoDate } from '../../../../core/date-utils';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import {
@@ -22,21 +22,10 @@ import {
   cycleWeekOf,
   patternKey,
   weekName,
+  weekdayName,
 } from '../work-pattern';
 import { Card } from '../../../../shared/card/card';
 import { IconTextPipe } from '../../../../shared/icon/icon-text.pipe';
-
-// Sunday 2026-10-04 + n days walks Sunday..Saturday, matching Date.getDay().
-const A_SUNDAY = new Date(2026, 9, 4);
-
-function dayName(day: Weekday, locale: string, weekday: 'short' | 'long' = 'short'): string {
-  const date = new Date(
-    A_SUNDAY.getFullYear(),
-    A_SUNDAY.getMonth(),
-    A_SUNDAY.getDate() + dayOfWeekIndex(day),
-  );
-  return date.toLocaleDateString(locale, { weekday });
-}
 
 // Draft of the cycle length, "which week is this week" and the week x weekday grid. The draft
 // resets whenever the page reloads the schedule; nothing is sent until Save.
@@ -99,12 +88,12 @@ export class WorkPatternEditor {
 
   protected readonly dayNames = computed(() => {
     const locale = this.translation.language();
-    return WEEKDAYS_MONDAY_FIRST.map((day) => dayName(day, locale));
+    return WEEKDAYS_MONDAY_FIRST.map((day) => weekdayName(day, locale));
   });
 
   protected readonly dayLongNames = computed(() => {
     const locale = this.translation.language();
-    return WEEKDAYS_MONDAY_FIRST.map((day) => dayName(day, locale, 'long'));
+    return WEEKDAYS_MONDAY_FIRST.map((day) => weekdayName(day, locale, 'long'));
   });
 
   // Ids for the phone list only; the table's selects are named by aria-label and carry no id.
@@ -125,7 +114,7 @@ export class WorkPatternEditor {
   protected cellLabel(week: number, day: Weekday): string {
     return this.translation.translate('workLocations.pattern.dayLabel', {
       week: this.weekLabel(week),
-      day: dayName(day, this.translation.language()),
+      day: weekdayName(day, this.translation.language()),
     });
   }
 

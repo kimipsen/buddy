@@ -20,7 +20,6 @@ import { Night, NightEntry, nightEntry, scheduledEntry } from '../../../../core/
 import {
   NOBODY_CHOICE,
   NightPeople,
-  ResponsibleChoice,
   SLEEPOVER_CHOICE,
   babysitterChoice,
   choiceOf,
@@ -29,6 +28,7 @@ import {
   responsibleText,
   sleepoverOf,
 } from '../night-people';
+import { keepTabInside } from '../../../../shared/focus-trap/focus-trap';
 
 // The <select> value for "nothing planned this night" (a cleared night).
 export const CLEARED_CHOICE = 'cleared';
@@ -66,7 +66,7 @@ export class NightEditDialog implements OnInit {
   protected readonly sleepoverChoice = SLEEPOVER_CHOICE;
   protected readonly babysitterChoice = babysitterChoice;
 
-  protected readonly choice = signal<ResponsibleChoice>(NOBODY_CHOICE);
+  protected readonly choice = signal<string>(NOBODY_CHOICE);
   protected readonly hostName = signal('');
   protected readonly location = signal('');
   // Not shown, but kept so a save doesn't wipe a stored contact.
@@ -119,7 +119,7 @@ export class NightEditDialog implements OnInit {
     afterNextRender(() => this.whoSelect()?.nativeElement.focus(), { injector: this.injector });
   }
 
-  protected setChoice(choice: ResponsibleChoice): void {
+  protected setChoice(choice: string): void {
     this.choice.set(choice);
     this.incomplete.set(false);
   }
@@ -164,25 +164,6 @@ export class NightEditDialog implements OnInit {
   @HostListener('document:keydown.tab', ['$event'])
   @HostListener('document:keydown.shift.tab', ['$event'])
   protected onTab(event: Event): void {
-    const panel = this.panel()?.nativeElement;
-
-    if (!panel || !(event instanceof KeyboardEvent)) {
-      return;
-    }
-
-    const focusable: HTMLElement[] = Array.from(
-      panel.querySelectorAll<HTMLElement>(
-        'select:not(:disabled), input:not(:disabled), button:not(:disabled)',
-      ),
-    );
-    const first = focusable.at(0) ?? panel;
-    const last = focusable.at(-1) ?? panel;
-    const active = document.activeElement as HTMLElement | null;
-    const inside = active !== null && focusable.includes(active);
-
-    if (!inside || active === (event.shiftKey ? first : last)) {
-      event.preventDefault();
-      (event.shiftKey ? last : first).focus();
-    }
+    keepTabInside(this.panel()?.nativeElement, event);
   }
 }
