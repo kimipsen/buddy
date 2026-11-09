@@ -23,8 +23,10 @@
 #
 # Usage:
 #   scripts/mutation-batch.sh [--batch-size N] [--concurrency N] [--max-minutes N]
-#                             [--rerun-changed] [--status] [--reset] [--dry-run]
+#                             [--rerun-changed] [--baseline FILE]
+#                             [--status] [--reset] [--dry-run]
 #   scripts/mutation-batch.sh --record FILE...
+#   scripts/mutation-batch.sh --stale
 #
 #   --max-minutes N   Keep running batches until N minutes have passed. A batch
 #                     still running at the deadline is stopped and not recorded,
@@ -33,9 +35,20 @@
 #   --rerun-changed   Also re-run files whose source or specs changed since
 #                     they were last covered (CI's nightly mode). Without it a
 #                     covered file stays covered until --reset.
+#   --baseline FILE   A report whose results match reports/mutation-fingerprints.json
+#                     (CI passes the committed report, saved before its cache
+#                     restore replaces it). A file whose recorded fingerprint
+#                     there is its current one, but whose progress line has
+#                     another or none, takes its results from FILE and counts as
+#                     covered, so a fix committed with /mutation-fix isn't
+#                     shadowed by older cached results.
 #   --record FILE...  Records the files as covered at their current fingerprint,
 #                     after re-running Stryker on them yourself (e.g. with
 #                     --force once their specs are fixed).
+#   --stale           Prints the files whose results in the report are out of
+#                     date: recorded at a fingerprint (the progress line's, else
+#                     the committed one) other than their current one. Files
+#                     with no recorded fingerprint count as up to date.
 #
 # Env vars (overridden by flags): BATCH_SIZE, CONCURRENCY
 set -euo pipefail
@@ -49,6 +62,7 @@ RERUN_CHANGED=0
 PROGRESS_FILE=".mutation-batch-progress"
 INCREMENTAL_FILE="reports/stryker-incremental.json"
 FINGERPRINT_FILE="reports/mutation-fingerprints.json"
+BASELINE_FILE=""
 MODE="run"
 
 while [[ $# -gt 0 ]]; do
@@ -69,8 +83,16 @@ while [[ $# -gt 0 ]]; do
       RERUN_CHANGED=1
       shift
       ;;
+    --baseline)
+      BASELINE_FILE="$2"
+      shift 2
+      ;;
     --status)
       MODE="status"
+      shift
+      ;;
+    --stale)
+      MODE="stale"
       shift
       ;;
     --reset)
@@ -228,6 +250,70 @@ clean_and_unchanged() {
   ' "$INCREMENTAL_FILE" "$FINGERPRINT_FILE" "${pairs[@]}"
 }
 
+# Takes results from $BASELINE_FILE for the files it holds at their current
+# fingerprint (per $FINGERPRINT_FILE) while the progress file has another
+# fingerprint or none for them, and records those files as covered. Prints
+# the files it took (in a subshell; the caller reloads the progress).
+adopt_baseline() {
+  [[ -f "$BASELINE_FILE" && -f "$FINGERPRINT_FILE" ]] || return 0
+  local f current pairs=()
+  for f in "${all_files[@]}"; do
+    current="$(fingerprint "$f")"
+    [[ "${done_hash[$f]:-}" == "$current" ]] || pairs+=("$f=$current")
+  done
+  [[ "${#pairs[@]}" -gt 0 ]] || return 0
+  local adopted=()
+  mapfile -t adopted < <(node -e '
+    const fs = require("node:fs");
+    const [baselinePath, reportPath, fingerprintPath, ...pairs] = process.argv.slice(1);
+    const baseline = JSON.parse(fs.readFileSync(baselinePath, "utf8"));
+    const recorded = JSON.parse(fs.readFileSync(fingerprintPath, "utf8"));
+    const report = fs.existsSync(reportPath)
+      ? JSON.parse(fs.readFileSync(reportPath, "utf8"))
+      : { ...baseline, files: {} };
+    const adopted = [];
+    for (const pair of pairs) {
+      const i = pair.lastIndexOf("=");
+      const [file, hash] = [pair.slice(0, i), pair.slice(i + 1)];
+      if (recorded[file] === hash && baseline.files[file] !== undefined) {
+        report.files[file] = baseline.files[file];
+        adopted.push(file);
+      }
+    }
+    if (adopted.length > 0) fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+    for (const file of adopted) console.log(file);
+  ' "$BASELINE_FILE" "$INCREMENTAL_FILE" "$FINGERPRINT_FILE" "${pairs[@]}")
+  [[ "${#adopted[@]}" -gt 0 ]] || return 0
+  record_progress "${adopted[@]}"
+  printf '%s\n' "${adopted[@]}"
+}
+
+# Prints the files in the report whose results were recorded at a fingerprint
+# other than their current one: the progress line's, or else the one in
+# $FINGERPRINT_FILE. A file with neither counts as up to date.
+stale_files() {
+  [[ -f "$INCREMENTAL_FILE" ]] || return 0
+  local f pairs=()
+  for f in "${all_files[@]}"; do
+    pairs+=("$f=$(fingerprint "$f")=${done_hash[$f]:--}")
+  done
+  node -e '
+    const fs = require("node:fs");
+    const [reportPath, fingerprintPath, ...pairs] = process.argv.slice(1);
+    const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+    const committed = fs.existsSync(fingerprintPath)
+      ? JSON.parse(fs.readFileSync(fingerprintPath, "utf8"))
+      : {};
+    for (const pair of pairs) {
+      const [progress, current, ...rest] = pair.split("=").reverse();
+      const file = rest.reverse().join("=");
+      if (report.files[file] === undefined) continue;
+      const recorded = progress !== "-" ? progress : committed[file];
+      if (recorded !== undefined && recorded !== current) console.log(file);
+    }
+  ' "$INCREMENTAL_FILE" "$FINGERPRINT_FILE" "${pairs[@]}"
+}
+
 compute_remaining() {
   remaining=()
   local f
@@ -280,6 +366,22 @@ forget_results() {
 }
 
 load_progress
+
+if [[ "$MODE" == "stale" ]]; then
+  stale_files
+  exit 0
+fi
+
+if [[ "$MODE" == "run" && -n "$BASELINE_FILE" ]]; then
+  # Run in a subshell, so reload the progress it recorded.
+  mapfile -t adopted < <(adopt_baseline)
+  load_progress
+  if [[ "${#adopted[@]}" -gt 0 ]]; then
+    echo "Took ${#adopted[@]} file(s) from $BASELINE_FILE, whose results there are current:"
+    printf '  %s\n' "${adopted[@]}"
+  fi
+fi
+
 compute_remaining
 
 if [[ "$MODE" == "status" ]]; then
