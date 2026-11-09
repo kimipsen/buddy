@@ -35,7 +35,7 @@ public abstract record PickupAssigneeDto
         PickupAssignee.Sibling sibling => new SiblingAssigneeDto(sibling.SiblingChildId.Value),
         PickupAssignee.Playdate playdate => new PlaydateAssigneeDto(playdate.HostName, playdate.Location, playdate.ContactInfo),
         PickupAssignee.Babysitter babysitter => new BabysitterAssigneeDto(
-            babysitter.GuardianId.Value, babysitter.BabysitterId.Value, babysitterNames.NameOf(babysitter)),
+            babysitter.GuardianId.Value, babysitter.BabysitterId.Value, babysitterNames.NameOf(babysitter.BabysitterId)),
     };
 }
 

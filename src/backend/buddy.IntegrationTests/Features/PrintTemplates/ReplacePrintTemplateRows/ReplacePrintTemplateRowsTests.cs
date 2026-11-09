@@ -41,12 +41,13 @@ public sealed class ReplacePrintTemplateRowsTests(BuddyApiFixture fixture)
             new { Kind = CalendarMarker, Label = "Affald der tømmes", HeightWeight = 1, CalendarIds = new[] { calendarId }, TitleFilter = "Skrald" },
             new { Kind = Blank, Label = "Aftaler / Andet", HeightWeight = 3 },
             new { Kind = CalendarAgenda, Label = "Viggos uge", HeightWeight = 2, CalendarIds = new[] { calendarId }, AssignedToId = child, MaxItems = 5 },
+            new { Kind = NightDutyRow, Label = "Nat", HeightWeight = 1, ChildId = child },
         ]);
 
         var read = await GetAsync(fixture, family.FirstToken, template.Id);
 
         Assert.Equal(
-            [Meal, Pickup, WorkLocation, WorkLocation, CalendarEvents, TaskChecklist, CalendarMarker, Blank, CalendarAgenda],
+            [Meal, Pickup, WorkLocation, WorkLocation, CalendarEvents, TaskChecklist, CalendarMarker, Blank, CalendarAgenda, NightDutyRow],
             read.Rows.Select(r => r.Kind));
         Assert.Equal("Aftensmad", read.Rows[0].Label);
         Assert.Equal(Dinner, read.Rows[0].MealSlot);
@@ -56,6 +57,7 @@ public sealed class ReplacePrintTemplateRowsTests(BuddyApiFixture fixture)
         Assert.Equal(3, read.Rows[7].HeightWeight);
         Assert.Equal(child, read.Rows[8].AssignedToId);
         Assert.Equal(5, read.Rows[8].MaxItems);
+        Assert.Equal(child, read.Rows[9].ChildId);
     }
 
     [Fact]
@@ -87,6 +89,8 @@ public sealed class ReplacePrintTemplateRowsTests(BuddyApiFixture fixture)
         { "rows[0].mealSlot", [new { Kind = Meal, Label = "Mad", HeightWeight = 1, ChildId = Guid.NewGuid() }] },
         { "rows[0].childId", [new { Kind = Pickup, Label = "Hente", HeightWeight = 1 }] },
         { "rows[0].guardianId", [new { Kind = WorkLocation, Label = "Far", HeightWeight = 1 }] },
+        { "rows[0].childId", [new { Kind = NightDutyRow, Label = "Nat", HeightWeight = 1 }] },
+        { "rows[0].kind", [new { Kind = NightDutyRow, Label = "Nat", HeightWeight = 1, ChildId = Guid.NewGuid(), GuardianId = Guid.NewGuid() }] },
         { "rows[0].calendarIds", [new { Kind = CalendarEvents, Label = "Ting", HeightWeight = 1, CalendarIds = Array.Empty<Guid>() }] },
         { "rows[0].calendarIds", [new { Kind = CalendarMarker, Label = "X", HeightWeight = 1, CalendarIds = new[] { Guid.Empty, Guid.Empty } }] },
         { "rows[0].calendarIds", [new { Kind = CalendarMarker, Label = "X", HeightWeight = 1, CalendarIds = new Guid?[] { null } }] },

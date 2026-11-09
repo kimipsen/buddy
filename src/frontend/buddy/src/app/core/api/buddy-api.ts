@@ -2324,6 +2324,70 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/night-duty/children/{childId}/pattern': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['ReplaceNightPattern'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/night-duty/children/{childId}/overrides': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['SetNightOverrides'];
+    post?: never;
+    delete: operations['ClearNightOverrides'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/night-duty/children/{childId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['GetNightSchedule'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/night-duty/children/{childId}/nights': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ListNights'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/print-templates': {
     parameters: {
       query?: never;
@@ -3469,6 +3533,19 @@ export interface components {
     };
     /** Format: uuid */
     BabysitterId: string;
+    BabysitterNightResponsibleDto: {
+      /** Format: uuid */
+      guardianId: string;
+      /** Format: uuid */
+      babysitterId: string;
+      name?: null | string;
+      /**
+       * Format: int32
+       * @description BabysitterNightResponsibleDto
+       * @enum {integer}
+       */
+      kind: 1;
+    };
     BabysitterRequest: {
       name: string;
       contactInfo?: null | string;
@@ -4074,6 +4151,16 @@ export interface components {
     GuardianKind: 'Parent' | 'Guardian';
     /** Format: uuid */
     GuardianLinkId: string;
+    GuardianNightResponsibleDto: {
+      /** Format: uuid */
+      guardianId: string;
+      /**
+       * Format: int32
+       * @description GuardianNightResponsibleDto
+       * @enum {integer}
+       */
+      kind: 0;
+    };
     GuardianSummary: {
       id: components['schemas']['UserId'];
       name: components['schemas']['Name'];
@@ -4124,6 +4211,7 @@ export interface components {
       pickups: boolean;
       babysitters: boolean;
       workLocations: boolean;
+      nightDuty: boolean;
       printing: boolean;
       progress: boolean;
       taskLibrary: boolean;
@@ -4496,6 +4584,92 @@ export interface components {
       givenName: string;
       familyName: string;
     };
+    Night: {
+      /** Format: date */
+      date: string;
+      status: components['schemas']['NightStatus'];
+    };
+    NightCleared: {
+      scheduled: null | components['schemas']['NightEntryDto'];
+      /**
+       * Format: int32
+       * @description NightCleared
+       * @enum {integer}
+       */
+      kind: 1;
+    };
+    NightEntryDto: {
+      responsible: components['schemas']['NightResponsibleDto'];
+      note?: null | string;
+    };
+    NightOverrideRequest: {
+      /** Format: date */
+      date: string;
+      entry?: null | components['schemas']['NightEntryDto'];
+    };
+    NightPatternDayDto: {
+      /** Format: int32 */
+      week: number;
+      day: components['schemas']['DayOfWeek'];
+      entry: components['schemas']['NightEntryDto'];
+    };
+    NightPatternDayRequest: {
+      /** Format: int32 */
+      week: number;
+      day: components['schemas']['DayOfWeek'];
+      entry: components['schemas']['NightEntryDto'];
+    };
+    NightPatternResponse: {
+      /** Format: date */
+      effectiveFrom: string;
+      /** Format: int32 */
+      cycleWeeks: number;
+      /** Format: date */
+      anchorMonday: string;
+      days: components['schemas']['NightPatternDayDto'][];
+      status: components['schemas']['NightPatternStatus'];
+    };
+    /** @enum {string} */
+    NightPatternStatus: 'Past' | 'Current' | 'Upcoming';
+    NightPlanned: {
+      entry: components['schemas']['NightEntryDto'];
+      source: components['schemas']['NightSource'];
+      scheduled: null | components['schemas']['NightEntryDto'];
+      /**
+       * Format: int32
+       * @description NightPlanned
+       * @enum {integer}
+       */
+      kind: 2;
+    };
+    /** @description One of 4 cases, picked by the numeric "kind": 0 = GuardianNightResponsibleDto, 1 = BabysitterNightResponsibleDto, 2 = SleepoverNightResponsibleDto, 3 = UnassignedNightResponsibleDto. */
+    NightResponsibleDto:
+      | components['schemas']['GuardianNightResponsibleDto']
+      | components['schemas']['BabysitterNightResponsibleDto']
+      | components['schemas']['SleepoverNightResponsibleDto']
+      | components['schemas']['UnassignedNightResponsibleDto'];
+    NightScheduleResponse: {
+      /** Format: uuid */
+      childId: string;
+      /** Format: date */
+      today: string;
+      patterns: components['schemas']['NightPatternResponse'][];
+    };
+    /** @enum {string} */
+    NightSource: 'Pattern' | 'Override';
+    /** @description One of 3 cases, picked by the numeric "kind": 0 = NightUnplanned, 1 = NightCleared, 2 = NightPlanned. */
+    NightStatus:
+      | components['schemas']['NightUnplanned']
+      | components['schemas']['NightCleared']
+      | components['schemas']['NightPlanned'];
+    NightUnplanned: {
+      /**
+       * Format: int32
+       * @description NightUnplanned
+       * @enum {integer}
+       */
+      kind: 0;
+    };
     OccurrenceSkipResponse: {
       itemId: components['schemas']['CalendarItemId'];
       /** Format: date */
@@ -4605,7 +4779,8 @@ export interface components {
       | 'CalendarEvents'
       | 'TaskChecklist'
       | 'Blank'
-      | 'CalendarAgenda';
+      | 'CalendarAgenda'
+      | 'NightDuty';
     PrintTemplateResponse: {
       /** Format: uuid */
       id: string;
@@ -4722,6 +4897,15 @@ export interface components {
     };
     ReorderSubtasksRequest: {
       newOrder: string[];
+    };
+    ReplaceNightPatternRequest: {
+      /** Format: int32 */
+      cycleWeeks: number;
+      /** Format: date */
+      anchorMonday: string;
+      days: components['schemas']['NightPatternDayRequest'][];
+      /** Format: date */
+      effectiveFrom?: null | string;
     };
     ReplacePrintTemplateBabysitterColorsRequest: {
       colors: components['schemas']['BabysitterColorRequest'][];
@@ -4906,6 +5090,9 @@ export interface components {
     SetMemberRoleRequest: {
       role: components['schemas']['CalendarRole'];
     };
+    SetNightOverridesRequest: {
+      nights: components['schemas']['NightOverrideRequest'][];
+    };
     SetOccurrenceSkipRequest: {
       /** Format: date */
       date: string;
@@ -5053,6 +5240,17 @@ export interface components {
       startTime: string;
       /** Format: int32 */
       durationMinutes: number;
+    };
+    SleepoverNightResponsibleDto: {
+      hostName: string;
+      location?: null | string;
+      contactInfo?: null | string;
+      /**
+       * Format: int32
+       * @description SleepoverNightResponsibleDto
+       * @enum {integer}
+       */
+      kind: 2;
     };
     StartAiSessionRequest: {
       /** Format: date */
@@ -5219,6 +5417,14 @@ export interface components {
     /** @enum {string} */
     TimerSize: 'Small' | 'Medium' | 'Large';
     TimeZoneId: string;
+    UnassignedNightResponsibleDto: {
+      /**
+       * Format: int32
+       * @description UnassignedNightResponsibleDto
+       * @enum {integer}
+       */
+      kind: 3;
+    };
     Unplanned: {
       /**
        * Format: int32
@@ -16170,6 +16376,307 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['WorkDay'][];
+        };
+      };
+      304: components['responses']['NotModified'];
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ReplaceNightPattern: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReplaceNightPatternRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NightScheduleResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  SetNightOverrides: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetNightOverridesRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Night'][];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ClearNightOverrides: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+      };
+      header?: never;
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  GetNightSchedule: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NightScheduleResponse'];
+        };
+      };
+      304: components['responses']['NotModified'];
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ListNights: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+      };
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Night'][];
         };
       };
       304: components['responses']['NotModified'];

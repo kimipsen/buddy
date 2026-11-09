@@ -1,28 +1,22 @@
+using buddy.Common;
+
 namespace buddy.Features.WorkLocations;
 
-// A repeating cycle of CycleWeeks weeks, counted from AnchorMonday (cycle week 0). Anchored rather
-// than based on ISO week parity because ISO parity drifts across 53-week years (2026 has a week
-// 53, followed by an odd week 1) -- see docs/backend/analysis/work-locations.md, Question 4.
+// A repeating cycle of CycleWeeks weeks, counted from AnchorMonday (cycle week 0); the cycle
+// arithmetic is the shared WeekCycle, which NightPattern uses too.
 //
 // Days is a flat list rather than a nested dictionary so it serializes predictably inside a
 // persisted event; days not listed have no location. Always kept sorted by (Week, Day) via
 // Normalized(), so two patterns with the same content compare equal with IsSameAs.
 public sealed record WorkPattern(int CycleWeeks, DateOnly AnchorMonday, IReadOnlyList<WorkPatternDay> Days)
 {
-    public const int MaxCycleWeeks = 4;
+    public const int MaxCycleWeeks = WeekCycle.MaxCycleWeeks;
 
     public static WorkPattern Empty(DateOnly today) => new(1, MondayOnOrBefore(today), []);
 
-    public static DateOnly MondayOnOrBefore(DateOnly date) =>
-        date.AddDays(-(((int)date.DayOfWeek + 6) % 7));
+    public static DateOnly MondayOnOrBefore(DateOnly date) => WeekCycle.MondayOnOrBefore(date);
 
-    public int CycleWeekOf(DateOnly date)
-    {
-        var weeks = (MondayOnOrBefore(date).DayNumber - AnchorMonday.DayNumber) / 7;
-
-        // Floored modulo, so dates before the anchor still land in the right cycle week.
-        return ((weeks % CycleWeeks) + CycleWeeks) % CycleWeeks;
-    }
+    public int CycleWeekOf(DateOnly date) => WeekCycle.CycleWeekOf(AnchorMonday, CycleWeeks, date);
 
     public WorkLocationId? LocationFor(DateOnly date)
     {
@@ -38,7 +32,7 @@ public sealed record WorkPattern(int CycleWeeks, DateOnly AnchorMonday, IReadOnl
         this with { Days = [.. Days.Where(d => d.LocationId != locationId)] };
 
     public WorkPattern Normalized() =>
-        this with { Days = [.. Days.OrderBy(d => d.Week).ThenBy(d => ((int)d.Day + 6) % 7)] };
+        this with { Days = [.. Days.OrderBy(d => d.Week).ThenBy(d => WeekCycle.MondayFirstIndex(d.Day))] };
 
     // Records compare IReadOnlyList members by reference, so content equality is spelled out.
     public bool IsSameAs(WorkPattern other) =>

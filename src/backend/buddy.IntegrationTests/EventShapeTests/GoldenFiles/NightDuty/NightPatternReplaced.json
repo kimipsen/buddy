@@ -1,0 +1,58 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000002",
+  "Pattern": {
+    "EffectiveFrom": "2025-06-02",
+    "CycleWeeks": 2,
+    "AnchorMonday": "2024-12-30",
+    "Days": [
+      {
+        "Week": 0,
+        "Day": "Monday",
+        "Entry": {
+          "Responsible": {
+            "Kind": "Guardian",
+            "GuardianId": "00000000-0000-0000-0000-000000000001"
+          },
+          "Note": ""
+        }
+      },
+      {
+        "Week": 0,
+        "Day": "Tuesday",
+        "Entry": {
+          "Responsible": {
+            "Kind": "Babysitter",
+            "GuardianId": "00000000-0000-0000-0000-000000000001",
+            "BabysitterId": "00000000-0000-0000-0000-000000000090"
+          },
+          "Note": ""
+        }
+      },
+      {
+        "Week": 0,
+        "Day": "Friday",
+        "Entry": {
+          "Responsible": {
+            "Kind": "Unassigned"
+          },
+          "Note": "Screen night \uD83D\uDCF1"
+        }
+      },
+      {
+        "Week": 1,
+        "Day": "Saturday",
+        "Entry": {
+          "Responsible": {
+            "Kind": "Sleepover",
+            "HostName": "Grandma Lis",
+            "Location": "Skovvej 12",
+            "ContactInfo": "20 12 34 56"
+          },
+          "Note": ""
+        }
+      }
+    ]
+  },
+  "ModifiedBy": "00000000-0000-0000-0000-000000000001",
+  "OccurredAt": "2025-01-01T12:00:00\u002B00:00"
+}

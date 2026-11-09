@@ -20,7 +20,7 @@ public sealed class PickupsPersonalDataExporter(IPickupScheduleEventStore schedu
                 ? await schedules.FindSnapshotAsync(id, cancellationToken)
                 : null;
             var assignments = schedule?.Assignments.OrderBy(a => a.Key.Date).ThenBy(a => a.Key.Slot).ToArray() ?? [];
-            var names = await BabysitterNames.LoadAsync(assignments.Select(a => a.Value.Assignee), babysitters, cancellationToken);
+            var names = await BabysitterNames.LoadAsync(assignments.Select(a => a.Value.Assignee).BabysitterOwners(), babysitters, cancellationToken);
 
             children.Add(new ExportedPickupSchedule(
                 childId.Value,

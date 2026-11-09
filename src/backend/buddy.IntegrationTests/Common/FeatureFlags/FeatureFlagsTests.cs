@@ -38,6 +38,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
             ["Features:Pickups"] = "false",
             ["Features:Babysitters"] = "false",
             ["Features:WorkLocations"] = "false",
+            ["Features:NightDuty"] = "false",
             ["Features:Printing"] = "false",
             ["Features:Progress"] = "false",
             ["Features:TaskLibrary"] = "false",
@@ -63,7 +64,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
     {
         var flags = await GetFeaturesAsync(fixture.Host);
 
-        Assert.Equal(new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true), flags);
+        Assert.Equal(new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true), flags);
     }
 
     [Fact]
@@ -71,9 +72,9 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
     {
         var flags = await GetFeaturesAsync(await AllOffAsync());
 
-        Assert.Equal(new InstallationFeatures(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false), flags);
+        Assert.Equal(new InstallationFeatures(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false), flags);
         Assert.Equal(
-            new InstallationFeatures(true, false, false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true),
+            new InstallationFeatures(true, false, false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true),
             await GetFeaturesAsync(await MealplanExtrasOffAsync()));
     }
 
@@ -95,6 +96,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
         Assert.True(json.RootElement.GetProperty("firstThen").GetBoolean());
         Assert.True(json.RootElement.GetProperty("visitSummaries").GetBoolean());
         Assert.True(json.RootElement.GetProperty("homework").GetBoolean());
+        Assert.True(json.RootElement.GetProperty("nightDuty").GetBoolean());
     }
 
     [Fact]
@@ -114,6 +116,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
             $"/pickups/children/{child.Id}/schedule?from=2026-03-02&to=2026-03-08",
             "/babysitters/me",
             $"/work-locations/guardians/{guardianId}",
+            $"/night-duty/children/{child.Id}",
             "/print-templates/",
             $"/progress/children/{child.Id}",
             $"/task-templates/children/{child.Id}",

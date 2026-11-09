@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using buddy.Features.Calendars;
+using buddy.Features.NightDuty;
 using buddy.Features.Pickups;
 using buddy.Features.Users;
 using buddy.Features.WorkLocations;
@@ -23,7 +24,8 @@ internal static class EventShapeTestSupport
     // options.UseSystemTextJsonForSerialization(enumStorage: EnumStorage.AsString, ...) for their
     // Marten stores -- enums as their name, strongly-typed ids unwrapped to their raw value, and
     // the union of the extra converters individual stores register: ValueTuples (Medicines,
-    // Mealplans, Pickups), PickupAssignee (Pickups), CompletionTarget (Calendars, Progress), Recurrence (Calendars) EmailVerification (Users, snapshot only) and WorkDayOverride (WorkLocations).
+    // Mealplans, Pickups), PickupAssignee (Pickups), CompletionTarget (Calendars, Progress), Recurrence (Calendars) EmailVerification (Users, snapshot only), WorkDayOverride (WorkLocations), and NightResponsible
+    // and NightOverride (NightDuty).
     // Each extra converter only handles its own type, so registering all of them here can't change
     // the shape of an event from a store that doesn't register it.
     public static JsonSerializerOptions CreateEventSerializerOptions() => new()
@@ -37,7 +39,9 @@ internal static class EventShapeTestSupport
             new CompletionTargetJsonConverter(),
             new RecurrenceJsonConverter(),
             new EmailVerificationJsonConverter(),
-            new WorkDayOverrideJsonConverter()
+            new WorkDayOverrideJsonConverter(),
+            new NightResponsibleJsonConverter(),
+            new NightOverrideJsonConverter()
         }
     };
 
@@ -70,6 +74,16 @@ internal static class EventShapeTestSupport
         var actual = JsonSerializer.Deserialize<TEvent>(File.ReadAllText(goldenPath), CreateEventSerializerOptions());
 
         Assert.Equal(expected, actual);
+    }
+
+    // For events holding collections (records compare those by reference): the test asserts on
+    // what reads back itself.
+    public static TEvent ReadGoldenFile<TEvent>(string goldenFileName)
+    {
+        var goldenPath = Path.Combine(AppContext.BaseDirectory, "EventShapeTests", "GoldenFiles", goldenFileName);
+
+        return JsonSerializer.Deserialize<TEvent>(File.ReadAllText(goldenPath), CreateEventSerializerOptions())
+            ?? throw new InvalidOperationException($"Golden file {goldenFileName} deserialized to null.");
     }
 
     private static string Reformat(string json, JsonSerializerOptions options)
