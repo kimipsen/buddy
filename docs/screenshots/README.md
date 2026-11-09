@@ -238,6 +238,16 @@ Who takes and fetches the child each day, and a private calendar link with the s
 
 <img src="mobile/guardian-pickup.png" alt="Pickup & drop-off on a phone" width="320">
 
+## Night duty
+
+Who is on duty each night: the week ahead with changed nights marked, and the fixed schedule they come from.
+
+![Night duty](guardian-night-duty.png)
+
+<img src="tablet/guardian-night-duty.png" alt="Night duty on a tablet" width="384">
+
+<img src="mobile/guardian-night-duty.png" alt="Night duty on a phone" width="320">
+
 ## Babysitters
 
 Saved babysitters and nannies that any of a child’s guardians can plan for a pickup or drop-off.
