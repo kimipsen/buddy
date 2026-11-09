@@ -46,20 +46,30 @@ public static class ReplaceNightPatternHandler
             return new Result<NightScheduleResponse>.Validation(ValidationProblem.Of("effectiveFrom can't be in the past."));
         }
 
+        var now = time.GetUtcNow();
+        var loaded = await NightScheduleWriter.LoadAsync(store, command.ChildId, cancellationToken);
+        var schedule = loaded.Schedule;
+
+        // People already on the versions this save replaces (the one in effect on effectiveFrom and
+        // any later one) aren't checked again.
+        var replaced = schedule.Patterns
+            .Where(p => p.EffectiveFrom >= effectiveFrom || p == schedule.PatternFor(effectiveFrom))
+            .SelectMany(p => p.Days.Select(d => d.Entry));
+
         if (await NightDutyRules.CheckRelationshipsAsync(
-                command.ChildId, command.Days.Select(d => d.Entry), guardians, babysitters, cancellationToken) is { } relationshipProblem)
+                command.ChildId, command.Days.Select(d => d.Entry), replaced, guardians, babysitters, cancellationToken) is { } relationshipProblem)
         {
             return new Result<NightScheduleResponse>.Validation(relationshipProblem);
         }
 
-        var now = time.GetUtcNow();
-        var loaded = await NightScheduleWriter.LoadAsync(store, command.ChildId, cancellationToken);
-        var schedule = loaded.Schedule;
         var pattern = new NightPattern(effectiveFrom, command.CycleWeeks, command.AnchorMonday, command.Days).Normalized();
 
-        // A no-op only when this exact version is already the last one: saving it again would
-        // neither change it nor drop a later version.
-        var unchanged = schedule.Patterns.Count > 0 && schedule.Patterns[^1].IsSameAs(pattern);
+        // A no-op when the version in effect on that date is the last one and already says the same:
+        // saving it again would neither change a night nor drop a later version.
+        var inEffect = schedule.PatternFor(effectiveFrom);
+        var unchanged = inEffect is not null
+            && ReferenceEquals(inEffect, schedule.Patterns[^1])
+            && inEffect.IsSameAs(pattern with { EffectiveFrom = inEffect.EffectiveFrom });
 
         if (!unchanged)
         {
