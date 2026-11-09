@@ -1,6 +1,7 @@
 using buddy.Common;
 using buddy.Features.NightDuty;
 using buddy.Features.Users;
+using buddy.IntegrationTests.Features.Babysitters;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Features.WorkLocations;
 using buddy.IntegrationTests.Fixtures;
@@ -140,6 +141,40 @@ public sealed class SetNightOverridesTests(BuddyApiFixture fixture)
         await SetOverridesExpectingAsync(fixture, token, child.Id, 400, Override(date, NoteOnly(new string('x', 61))));
         await SetOverridesExpectingAsync(fixture, token, child.Id, 400, Override(date, NoteOnly("")));
         await SetOverridesExpectingAsync(fixture, token, child.Id, 400, Override(date, Guardian(strangerId)));
+    }
+
+    [Fact]
+    public async Task Nights_more_than_31_days_apart_are_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, token);
+        var date = FutureMonday();
+
+        var response = await SetOverridesExpectingAsync(fixture, token, child.Id, 400,
+            Override(date, NoteOnly("a")), Override(date.AddDays(32), NoteOnly("b")));
+
+        Assert.Contains("nights", response.ReadAsJson<ErrorEnvelope>().Details.Keys);
+        await SetOverridesExpectingAsync(fixture, token, child.Id, 200,
+            Override(date, NoteOnly("a")), Override(date.AddDays(31), NoteOnly("b")));
+    }
+
+    [Fact]
+    public async Task A_switch_can_move_a_babysitter_archived_since_but_not_pick_a_new_archived_one()
+    {
+        var (_, token, guardianId) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, token);
+        var anna = await BabysitterTestHelpers.AddAsync(fixture, token, "Anna");
+        var freja = await BabysitterTestHelpers.AddAsync(fixture, token, "Freja");
+        var date = FutureMonday();
+        await SetOverridesAsync(fixture, token, child.Id, Override(date, Babysitter(guardianId, anna.Id)), Override(date.AddDays(1), Guardian(guardianId)));
+        await BabysitterTestHelpers.ArchiveAsync(fixture, token, anna.Id);
+        await BabysitterTestHelpers.ArchiveAsync(fixture, token, freja.Id);
+
+        var switched = await SetOverridesAsync(fixture, token, child.Id,
+            Override(date, Guardian(guardianId)), Override(date.AddDays(1), Babysitter(guardianId, anna.Id)));
+
+        Assert.Equal("Anna", switched.Single(n => n.Date == date.AddDays(1)).Status.Entry!.Responsible.Name);
+        await SetOverridesExpectingAsync(fixture, token, child.Id, 400, Override(date.AddDays(2), Babysitter(guardianId, freja.Id)));
     }
 
     [Fact]

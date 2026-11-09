@@ -135,6 +135,37 @@ public sealed class ReplaceNightPatternTests(BuddyApiFixture fixture)
         Assert.Equal(before, (await store.ReadAsync(id, CancellationToken.None)).Count);
     }
 
+    [Fact]
+    public async Task Re_saving_the_version_in_effect_with_the_same_content_adds_no_version()
+    {
+        var (_, token, guardianId) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, token);
+        var monday = FutureMonday();
+        await ReplacePatternAsync(fixture, token, child.Id, monday, 1, monday, Day(0, DayOfWeek.Monday, Guardian(guardianId)));
+
+        var schedule = await ReplacePatternAsync(fixture, token, child.Id, monday.AddDays(7), 1, monday, Day(0, DayOfWeek.Monday, Guardian(guardianId)));
+
+        Assert.Equal(monday, Assert.Single(schedule.Patterns).EffectiveFrom);
+    }
+
+    [Fact]
+    public async Task A_babysitter_archived_since_the_version_was_saved_does_not_block_re_saving_it()
+    {
+        var (_, token, guardianId) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, token);
+        var anna = await BabysitterTestHelpers.AddAsync(fixture, token, "Anna");
+        var monday = FutureMonday();
+        await ReplacePatternAsync(fixture, token, child.Id, monday, 1, monday, Day(0, DayOfWeek.Tuesday, Babysitter(guardianId, anna.Id)));
+        await BabysitterTestHelpers.ArchiveAsync(fixture, token, anna.Id);
+
+        var schedule = await ReplacePatternAsync(fixture, token, child.Id, monday, 1, monday,
+            Day(0, DayOfWeek.Tuesday, Babysitter(guardianId, anna.Id)),
+            Day(0, DayOfWeek.Friday, NoteOnly("Screen night")));
+
+        Assert.Equal(2, Assert.Single(schedule.Patterns).Days.Count);
+        Assert.Equal("Anna", schedule.Patterns[0].Days[0].Entry.Responsible.Name);
+    }
+
     [Theory]
     [InlineData(5, 0, "Monday", "ok")]
     [InlineData(2, 2, "Monday", "ok")]

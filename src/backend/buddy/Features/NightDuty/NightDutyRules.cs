@@ -23,15 +23,21 @@ internal static class NightDutyRules
 
     // Checks the people an entry names, against the child's current guardian links and the
     // babysitter lists -- the AssignPickup relationship checks. Each distinct responsible person is
-    // checked once. Returns a validation problem, or null when every entry is acceptable.
+    // checked once, and only if the nights being replaced don't already name them (`unchanged`): a
+    // night that names a since archived babysitter (or a removed guardian) keeps resolving, so
+    // re-saving it -- or switching it -- must not be refused
+    // (docs/backend/analysis/babysitters.md, Question 3). Returns a validation problem, or null
+    // when every entry is acceptable.
     public static async Task<ValidationProblem?> CheckRelationshipsAsync(
         UserId childId,
         IEnumerable<NightEntry> entries,
+        IEnumerable<NightEntry> unchanged,
         IGuardianLinkEventStore guardians,
         IBabysitterListEventStore babysitters,
         CancellationToken cancellationToken)
     {
-        var responsibles = entries.Select(e => e.Responsible).Distinct().ToList();
+        var known = unchanged.Select(e => e.Responsible).ToHashSet();
+        var responsibles = entries.Select(e => e.Responsible).Distinct().Where(r => !known.Contains(r)).ToList();
 
         foreach (var responsible in responsibles)
         {
