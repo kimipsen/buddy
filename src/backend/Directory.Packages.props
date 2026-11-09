@@ -21,8 +21,8 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.2" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.20.2" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.20.1" />
-    <PackageVersion Include="WolverineFx" Version="6.62.0" />
-    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.62.0" />
+    <PackageVersion Include="WolverineFx" Version="6.63.0" />
+    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.63.0" />
   </ItemGroup>
   <ItemGroup Label="Transitive security pins">
     <!-- MailKit -> MimeKit pulls in 10.0.0: CVE-2026-84008 and CVE-2026-70162 (GHSA-846f-f764-76mx,
