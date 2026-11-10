@@ -60,12 +60,17 @@
               <span class="sr-only">{{ 'print.sheet.mark' | translate }}</span>
             }
             @case ('text') {
-              <span [style.color]="cell.value.color">
-                @if (cell.value.icon) {
-                  <app-icon [value]="cell.value.icon" />
-                }
-                {{ cell.value.text }}
-              </span>
+              <div class="flex h-full items-center justify-center">
+                <span
+                  class="block text-center [overflow-wrap:anywhere]"
+                  [style.color]="cell.value.color"
+                >
+                  @if (cell.value.icon) {
+                    <app-icon [value]="cell.value.icon" />
+                  }
+                  {{ cell.value.text }}
+                </span>
+              </div>
             }
             @case ('list') {
               <ul class="space-y-[0.15em]">
@@ -180,12 +185,23 @@
               </ul>
             }
             @case ('night') {
-              @if (cell.who; as who) {
-                <p class="font-semibold leading-tight" [style.color]="who.color">{{ who.text }}</p>
-              }
-              @if (cell.note) {
-                <p class="mt-[0.15em] text-[0.9em] leading-tight text-slate-700">{{ cell.note }}</p>
-              }
+              <div class="flex h-full flex-col justify-center">
+                @if (cell.who; as who) {
+                  <p
+                    class="text-center font-semibold leading-tight [overflow-wrap:anywhere]"
+                    [style.color]="who.color"
+                  >
+                    {{ who.text }}
+                  </p>
+                }
+                @if (cell.note) {
+                  <p
+                    class="mt-[0.15em] text-center text-[0.9em] leading-tight text-slate-700 [overflow-wrap:anywhere]"
+                  >
+                    {{ cell.note }}
+                  </p>
+                }
+              </div>
             }
             @case ('pickup') {
               <svg
