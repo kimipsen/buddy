@@ -1,5 +1,6 @@
 <nav
   class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] sm:hidden print:hidden dark:border-slate-800 dark:bg-slate-900"
+  [class.pointer-coarse:hidden]="typing()"
   [attr.aria-label]="'shell.tabs.label' | translate"
 >
   <ul class="flex">

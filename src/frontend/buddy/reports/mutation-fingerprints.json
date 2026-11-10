@@ -50,6 +50,7 @@
   "src/app/features/guardian/night-duty/night-pattern-editor/night-pattern-editor.ts": "248beb55ad42",
   "src/app/features/guardian/night-duty/night-people.ts": "83b46c9050c4",
   "src/app/features/guardian/night-duty/night-week/night-week.ts": "b422f8717273",
+  "src/app/features/guardian/shell/tab-bar/tab-bar.ts": "cc2752bd6321",
   "src/app/shared/focus-trap/focus-trap.ts": "d68946dd6545",
   "src/app/shared/visual-timer/visual-timer.ts": "6422454c0920"
 }
