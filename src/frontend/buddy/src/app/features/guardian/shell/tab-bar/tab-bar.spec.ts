@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { TabBar } from './tab-bar';
 import { disableFeatures } from '../../../../../testing/features-fixture';
@@ -156,5 +156,105 @@ describe('TabBar', () => {
       expect(icon.getAttribute('stroke')).toBe('currentColor');
       expect(icon.querySelector('path')?.namespaceURI).toBe('http://www.w3.org/2000/svg');
     }
+  });
+
+  describe('while the guardian types', () => {
+    const hosts: HTMLElement[] = [];
+    afterEach(() => hosts.splice(0).forEach((host) => host.remove()));
+
+    function field(html: string): HTMLElement {
+      const host = document.createElement('div');
+      host.innerHTML = html;
+      document.body.appendChild(host);
+      hosts.push(host);
+      return host.firstElementChild as HTMLElement;
+    }
+
+    function focusIn(target: Element) {
+      target.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    }
+
+    function focusOut(target: Element, next: Element | null) {
+      target.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: next }));
+    }
+
+    async function hidden(harness: RouterTestingHarness, root: () => HTMLElement) {
+      await harness.fixture.whenStable();
+      return root().querySelector('nav')!.classList.contains('pointer-coarse:hidden');
+    }
+
+    it('is shown on touch screens until a field has focus', async () => {
+      const { harness, root } = await setup();
+
+      expect(await hidden(harness, root)).toBe(false);
+    });
+
+    for (const html of [
+      '<input type="text" />',
+      '<input />',
+      '<input type="time" />',
+      '<textarea></textarea>',
+      '<select></select>',
+    ]) {
+      it(`hides on touch screens while ${html} has the keyboard up`, async () => {
+        const { harness, root } = await setup();
+        const input = field(html);
+
+        focusIn(input);
+
+        expect(await hidden(harness, root)).toBe(true);
+      });
+    }
+
+    for (const html of [
+      '<input type="checkbox" />',
+      '<input type="radio" />',
+      '<input type="range" />',
+      '<input type="color" />',
+      '<input type="file" />',
+      '<input type="button" />',
+      '<input type="submit" />',
+      '<input type="reset" />',
+      '<input type="image" />',
+      '<button type="button"></button>',
+    ]) {
+      it(`stays when ${html}, which brings up no keyboard, has focus`, async () => {
+        const { harness, root } = await setup();
+
+        focusIn(field(html));
+
+        expect(await hidden(harness, root)).toBe(false);
+      });
+    }
+
+    it('comes back when focus leaves the field', async () => {
+      const { harness, root } = await setup();
+      const input = field('<input type="text" />');
+      focusIn(input);
+
+      focusOut(input, null);
+
+      expect(await hidden(harness, root)).toBe(false);
+    });
+
+    it('comes back when focus moves on to a button', async () => {
+      const { harness, root } = await setup();
+      const input = field('<input type="text" />');
+      focusIn(input);
+
+      focusOut(input, field('<button type="button"></button>'));
+
+      expect(await hidden(harness, root)).toBe(false);
+    });
+
+    it('stays away while focus moves from one field to the next', async () => {
+      const { harness, root } = await setup();
+      const first = field('<input type="text" />');
+      focusIn(first);
+
+      focusOut(first, field('<textarea></textarea>'));
+
+      expect(await hidden(harness, root)).toBe(true);
+    });
   });
 });
