@@ -411,7 +411,12 @@ On phones the guardian shell adds a bottom tab bar
 ([`shell/tab-bar`](../../src/frontend/buddy/src/app/features/guardian/shell/tab-bar/tab-bar.ts))
 with the `nav-items.ts` pages that have a `tab`: Today, Calendar, Meals and Sleep (the last two
 follow their feature flags). It is hidden from `sm` up, when printing and on onboarding
-(`data: { hideTabBar: true }`).
+(`data: { hideTabBar: true }`). On touch screens it also hides while a typing field (text input,
+select, textarea) has focus, because iOS Safari doesn't shrink the layout viewport for the
+keyboard and the fixed bar would float over the page. For the same reason `styles.css` gives form
+fields at least 16px text on touch screens (iOS zooms in on smaller text and doesn't zoom back),
+and `index.html` sets `viewport-fit=cover` so `env(safe-area-inset-bottom)` clears the home
+indicator; the body pads for the landscape notch.
 
 The dashboard's "Packing for tomorrow" card (`packing-tomorrow/`, behind `taskLibrary`) only
 renders from a packing list's evening time until midnight while a child's list for tomorrow isn't
