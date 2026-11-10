@@ -69,4 +69,4 @@ EOF
 ## 4. Report
 
 List each file (as a link), what it shows, and show the user the contact sheet path. Mention any
-interpretation Codex chose. Don't commit; landing is `rebase-commit`.
+interpretation Codex chose. Don't commit; landing (a PR) is `rebase-commit`.

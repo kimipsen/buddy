@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
-# Lands the current branch on a target branch with "rebase + merge --ff-only"
-# (Bitbucket's "Rebase and fast-forward"): every commit is replayed onto the
-# target as a new non-merge commit, and the target only ever fast-forwards.
+# Lands the current branch on a target branch through a GitHub pull request:
+# rebase it onto the freshly fetched origin/<target>, push it, open a PR (with
+# gh, see SKILL.md), and once the PR is merged on GitHub, sync the local target
+# and remove the branch and its worktree.
 #
-#   land.sh rebase [target]   rebase the current branch onto target
-#   land.sh finish [target]   fast-forward target to the current branch
+#   land.sh rebase [target]   fetch origin, rebase the current branch onto
+#                             origin/<target>
+#   land.sh push [target]     push the current branch to origin (with
+#                             --force-with-lease, since a rebase rewrites it)
 #   land.sh cleanup [target] [branch]
-#                             once branch (default: the current one) is on
-#                             target, remove its worktree and delete it
+#                             once branch (default: the current one) is merged
+#                             on GitHub, fast-forward the local target, remove
+#                             the branch's worktree and delete the branch
 #
-# target defaults to master. Run rebase and finish from the worktree that has
-# the source branch checked out; cleanup runs from anywhere. Nothing is pushed.
+# target defaults to master. Run rebase and push from the worktree that has
+# the work branch checked out; cleanup runs from anywhere.
 #
 # Exit codes: 0 done, 1 refused (nothing changed), 2 rebase stopped on a
 # conflict (the rebase is left in progress for you to resolve or abort).
@@ -20,22 +24,28 @@ set -euo pipefail
 # (.devcontainer/git-hooks/post-commit) from firing once per picked commit.
 export SKIP_DOC_AGENT=1
 
+remote=origin
+
 die() {
   echo "land.sh: $*" >&2
   exit 1
 }
 
 usage() {
-  sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
   exit 1
 }
 
 cmd="${1:-}"
 target="${2:-master}"
-[[ "$cmd" == "rebase" || "$cmd" == "finish" || "$cmd" == "cleanup" ]] || usage
+[[ "$cmd" == "rebase" || "$cmd" == "push" || "$cmd" == "cleanup" ]] || usage
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "not inside a git work tree"
-git show-ref --verify --quiet "refs/heads/$target" || die "target branch '$target' does not exist locally"
+
+fetch_target() {
+  git fetch --quiet "$remote" "$target" || die "could not fetch '$target' from $remote"
+  git show-ref --verify --quiet "refs/remotes/$remote/$target" || die "no remote branch '$remote/$target'"
+}
 
 # Prints the work tree that has the given branch checked out, if any.
 worktree_of() {
@@ -68,12 +78,49 @@ if [[ "$cmd" == "cleanup" ]]; then
   [[ -n "$branch" ]] || die "HEAD is detached; name the branch: land.sh cleanup $target <branch>"
   [[ "$branch" != "$target" ]] || die "refusing to clean up '$target' itself"
   git show-ref --verify --quiet "refs/heads/$branch" || die "no local branch '$branch'"
-  git merge-base --is-ancestor "refs/heads/$branch" "$target" ||
-    die "'$branch' has commits that are not on '$target'; land it first (land.sh rebase/finish), or ask the user before throwing it away"
+  fetch_target
 
   main_wt="$(git worktree list --porcelain | awk '/^worktree / { print substr($0, 10); exit }')"
-  wt="$(worktree_of "$branch")"
+  tip="$(git rev-parse "refs/heads/$branch")"
 
+  # Safe to delete when every commit is on origin/<target> (a fast-forward or a
+  # plain rebase merge), or when GitHub says the PR from this branch was merged
+  # with exactly this tip as its head (a squash merge or a rebase merge that
+  # rewrote the commits). Either way no local-only work is lost.
+  merged=""
+  if git merge-base --is-ancestor "$tip" "refs/remotes/$remote/$target"; then
+    merged="its commits are on $remote/$target"
+  elif command -v gh >/dev/null 2>&1; then
+    pr="$(gh pr list --head "$branch" --base "$target" --state merged --limit 1 \
+      --json number,headRefOid --jq '.[0] | select(. != null) | "\(.number) \(.headRefOid)"' 2>/dev/null || true)"
+    if [[ -n "$pr" ]]; then
+      [[ "${pr#* }" == "$tip" ]] ||
+        die "PR #${pr%% *} from '$branch' was merged, but the local branch has commits that weren't in it ($tip vs ${pr#* }); push them in a new PR or ask the user"
+      merged="PR #${pr%% *} is merged"
+    fi
+  fi
+  [[ -n "$merged" ]] ||
+    die "'$branch' is not merged into $remote/$target yet (no merged PR from it either); wait for the PR to be merged, or ask the user before throwing it away"
+  echo "'$branch' is landed: $merged."
+
+  # Bring the local target up to date, but never over someone's uncommitted work.
+  target_wt="$(worktree_of "$target")"
+  if [[ -z "$target_wt" ]]; then
+    if git merge-base --is-ancestor "refs/heads/$target" "refs/remotes/$remote/$target"; then
+      git update-ref -m "land.sh: sync $target with $remote/$target" \
+        "refs/heads/$target" "$(git rev-parse "refs/remotes/$remote/$target")"
+    else
+      echo "land.sh: local '$target' has commits that aren't on $remote/$target; left it alone." >&2
+    fi
+  elif [[ -n "$(git -C "$target_wt" status --porcelain --untracked-files=no)" ]]; then
+    echo "land.sh: '$target' in $target_wt has uncommitted changes; didn't fast-forward it to $remote/$target." >&2
+  elif ! git -C "$target_wt" merge --ff-only --quiet "refs/remotes/$remote/$target"; then
+    echo "land.sh: local '$target' has diverged from $remote/$target; left it alone. Ask the user." >&2
+  else
+    echo "Fast-forwarded '$target' in $target_wt to $remote/$target."
+  fi
+
+  wt="$(worktree_of "$branch")"
   if [[ -n "$wt" && "$wt" == "$main_wt" ]]; then
     # A work branch created in the main checkout (agent/<topic>): go back to the target.
     [[ -z "$(git -C "$wt" status --porcelain --untracked-files=no)" ]] ||
@@ -82,6 +129,7 @@ if [[ "$cmd" == "cleanup" ]]; then
     [[ -z "$other" ]] ||
       die "'$target' is checked out in $other, so $wt can't switch to it; switch $wt to another branch yourself, then delete '$branch'"
     git -C "$wt" switch "$target"
+    git -C "$wt" merge --ff-only --quiet "refs/remotes/$remote/$target" || true
   elif [[ -n "$wt" ]]; then
     dirty="$(git -C "$wt" status --porcelain)"
     if [[ -n "$dirty" ]]; then
@@ -100,8 +148,11 @@ if [[ "$cmd" == "cleanup" ]]; then
     [[ "$PWD/" != "$wt/"* ]] || echo "Your shell was inside it; continue from $main_wt."
   fi
 
-  # -d, not -D: git checks again that the branch is merged into HEAD there.
-  git -C "$main_wt" branch -d "$branch"
+  # -D because a squash or rewriting rebase merge leaves the local commits
+  # unmerged as far as git can tell; the checks above proved they are landed.
+  git -C "$main_wt" branch -D "$branch"
+  # GitHub deletes the head branch on merge; drop our stale tracking ref too.
+  git -C "$main_wt" fetch --quiet --prune "$remote" || true
   exit 0
 fi
 
@@ -119,14 +170,17 @@ if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
   die "uncommitted changes to tracked files on '$source_branch'; commit or drop them first"
 fi
 
+fetch_target
+upstream="refs/remotes/$remote/$target"
+
 case "$cmd" in
   rebase)
-    old_base="$(git merge-base "$target" HEAD)"
-    if [[ "$old_base" == "$(git rev-parse "$target")" ]]; then
-      echo "'$source_branch' is already based on the tip of '$target'; nothing to rebase."
+    old_base="$(git merge-base "$upstream" HEAD)"
+    if [[ "$old_base" == "$(git rev-parse "$upstream")" ]]; then
+      echo "'$source_branch' is already based on the tip of $remote/$target; nothing to rebase."
     else
-      echo "Rebasing '$source_branch' onto '$target' ($(git rev-list --count "$old_base..$target") new commit(s) on '$target')..."
-      if ! git rebase "$target"; then
+      echo "Rebasing '$source_branch' onto $remote/$target ($(git rev-list --count "$old_base..$upstream") new commit(s) there)..."
+      if ! git rebase "$upstream"; then
         echo >&2
         echo "land.sh: the rebase stopped on a conflict. Conflicted files:" >&2
         git diff --name-only --diff-filter=U >&2 || true
@@ -134,39 +188,28 @@ case "$cmd" in
         echo "Or give up and restore the branch: git rebase --abort" >&2
         exit 2
       fi
-      echo "TARGET_MOVED: '$target' had new commits; re-run the tests for what you touched before 'finish'."
+      echo "TARGET_MOVED: $remote/$target had new commits; re-run the tests for what you touched before 'push'."
     fi
     ;;
 
-  finish)
-    git merge-base --is-ancestor "$target" HEAD ||
-      die "'$source_branch' is not based on the tip of '$target' (it moved, or you never rebased); run 'land.sh rebase $target' first"
+  push)
+    git merge-base --is-ancestor "$upstream" HEAD ||
+      die "'$source_branch' is not based on the tip of $remote/$target (it moved, or you never rebased); run 'land.sh rebase $target' first"
 
-    merges="$(git rev-list --merges "$target..HEAD")"
-    [[ -z "$merges" ]] || die "merge commits between '$target' and '$source_branch' ($merges); rebase again to linearize"
+    merges="$(git rev-list --merges "$upstream..HEAD")"
+    [[ -z "$merges" ]] || die "merge commits between $remote/$target and '$source_branch' ($merges); rebase again to linearize"
 
-    count="$(git rev-list --count "$target..HEAD")"
-    if [[ "$count" == "0" ]]; then
-      echo "'$target' already contains '$source_branch'; nothing to land."
-      exit 0
-    fi
-    new_tip="$(git rev-parse HEAD)"
-    old_tip="$(git rev-parse "$target")"
+    count="$(git rev-list --count "$upstream..HEAD")"
+    [[ "$count" != "0" ]] || die "$remote/$target already contains '$source_branch'; nothing to push"
 
-    target_wt="$(worktree_of "$target")"
-    if [[ -z "$target_wt" ]]; then
-      # Not checked out anywhere: move the ref, but only from the tip we checked.
-      git update-ref -m "land.sh: fast-forward $target to $source_branch" \
-        "refs/heads/$target" "$new_tip" "$old_tip"
-    else
-      if [[ -n "$(git -C "$target_wt" status --porcelain --untracked-files=no)" ]]; then
-        git -C "$target_wt" status --short --untracked-files=no >&2
-        die "'$target' is checked out in $target_wt with uncommitted changes; not touching someone else's work tree. Ask the user."
-      fi
-      git -C "$target_wt" merge --ff-only "$new_tip"
-    fi
-
-    echo "Landed $count commit(s) from '$source_branch' on '$target':"
-    git log --oneline "$old_tip..$new_tip"
+    # --force-with-lease: a rebase rewrites the branch, but never overwrite
+    # commits someone else pushed to it since our last fetch of it. Pin the
+    # expected value (empty: the branch must not exist yet) before pushing:
+    # origin has two push URLs, and after the first one git updates the
+    # tracking ref, so an unpinned lease would reject the second as stale.
+    expected="$(git rev-parse --verify --quiet "refs/remotes/$remote/$source_branch" || true)"
+    git push --force-with-lease="$source_branch:$expected" -u "$remote" "$source_branch"
+    echo "Pushed $count commit(s) from '$source_branch' (base: $remote/$target):"
+    git log --oneline "$upstream..HEAD"
     ;;
 esac
