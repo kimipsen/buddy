@@ -87,6 +87,7 @@ model or permissions logic.
 - [SBOM generation for builds](analysis/sbom-generation.md)
 - [Night duty](analysis/night-duty.md)
 - [Night duty iCal feed](analysis/night-duty-ical-feed.md)
+- [MCP server](analysis/mcp-server.md)
 
 ## Current focus areas
 
