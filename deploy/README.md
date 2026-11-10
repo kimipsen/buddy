@@ -229,6 +229,46 @@ curl -fsS  https://auth.yourdomain.com/realms/buddy/.well-known/openid-configura
   point at the VM yet, so Caddy couldn't get a certificate.
 - Finally log into the app as a guardian.
 
+### Checking and pinning the release images
+
+`task deploy:pull` pulls by tag (`1.5.3`), and a tag can be moved. Every
+release lists the digest of each of its images
+([docs/versioning.md](../docs/versioning.md#image-digests)), so you can check
+that the VM runs exactly those. From `deploy/`, after `task deploy:pull`:
+
+```bash
+v=1.5.3
+curl -fsSL "https://github.com/kimipsen/buddy/releases/download/v$v/image-digests.txt" |
+  while read -r ref; do
+    docker image inspect --format '{{join .RepoDigests "\n"}}' "${ref%@*}" |
+      grep -qxF "${ref%%:*}@${ref#*@}" && echo "OK        ${ref%@*}" || echo "MISMATCH  ${ref%@*}"
+  done
+```
+
+`RepoDigests` holds the multi-arch index digest the image was pulled by, the
+same digest the release lists, although the VM only has the `arm64` image. A
+fork downloads from its own repository's release.
+
+To run the listed digests instead of whatever the tags point at, start the
+stack with a compose override that names each image by digest. Run
+`./preflight.sh` first, as `task deploy:pull` would:
+
+```bash
+v=1.5.3
+./preflight.sh
+curl -fsSL "https://github.com/kimipsen/buddy/releases/download/v$v/image-digests.json" \
+  | jq -r '"services:", (.images[] | "  \(.name | ltrimstr("buddy-")):\n    image: \(.reference)")' \
+  > "$HOME/buddy-$v-digests.yml"
+cat "$HOME/buddy-$v-digests.yml"
+grep -o 'ghcr\.io/[^ ]*' "$HOME/buddy-$v-digests.yml" | xargs -n1 docker pull
+docker compose -f docker-compose.prod.yml -f "$HOME/buddy-$v-digests.yml" up -d --no-build --wait --wait-timeout 600
+```
+
+A `name:tag@digest` reference pulls by the digest; the tag is only a label.
+Keep the override file: a later `docker compose ... up` without the same two
+`-f` options recreates the containers from the tags. The next
+`task deploy:pull` goes back to tags.
+
 ## 7. Backups and restore
 
 Postgres holds both the app database (`POSTGRES_DB`) and Keycloak's

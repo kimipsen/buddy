@@ -121,6 +121,41 @@ its env vars come from the checkout, so it warns when HEAD isn't on
 unreleased changes. A fork that publishes its own images sets
 `BUDDY_IMAGE_REGISTRY=ghcr.io/<owner>`.
 
+### Checking the deployed digests
+
+`az acr import` copies the multi-arch image unchanged, so its digest in your
+ACR is the one the release lists
+([docs/versioning.md](../docs/versioning.md#image-digests)), and `deploy.sh`
+already pins each app to that digest (`<acr>.azurecr.io/buddy-api@sha256:…`).
+The import itself goes by tag, though, and a tag can be moved. After
+`./deploy.sh`, check that every app runs the release's digest:
+
+```bash
+cd deploy/azure && set -a; source .env; set +a
+v=1.5.3
+curl -fsSL "https://github.com/kimipsen/buddy/releases/download/v$v/image-digests.txt" |
+  while read -r ref; do
+    app=${ref%%:*}; app=${app##*/buddy-}
+    image=$(az containerapp show -n "$app" -g "$RESOURCE_GROUP" \
+      --query 'properties.template.containers[0].image' -o tsv)
+    [[ "${image#*@}" == "${ref#*@}" ]] && echo "OK        $app" || echo "MISMATCH  $app: $image"
+  done
+```
+
+On a mismatch, pin the app to the release's digest by importing that exact
+image and pointing the app at it, the same way as a
+[rollback to an image digest](#roll-an-app-back-to-its-previous-revision):
+
+```bash
+APP=api DIGEST=sha256:<digest from image-digests.txt>
+az acr import --name "$ACR_NAME" --source "ghcr.io/kimipsen/buddy-$APP@$DIGEST" \
+  --image "buddy-$APP:$v" --force -o none
+az containerapp update -n "$APP" -g "$RESOURCE_GROUP" \
+  --image "$ACR_NAME.azurecr.io/buddy-$APP@$DIGEST"
+```
+
+The next `./deploy.sh` imports by tag again.
+
 ## 4. Configure the realm
 
 Same manual step as the Oracle deployment — the dev realm isn't ported
