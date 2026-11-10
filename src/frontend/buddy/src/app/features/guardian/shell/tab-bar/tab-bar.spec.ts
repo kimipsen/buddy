@@ -133,6 +133,8 @@ describe('TabBar', () => {
       'bg-white',
       'dark:bg-slate-900',
       'pb-[env(safe-area-inset-bottom)]',
+      'pl-[env(safe-area-inset-left)]',
+      'pr-[env(safe-area-inset-right)]',
     ]) {
       expect(nav.classList, name).toContain(name);
     }
@@ -226,6 +228,22 @@ describe('TabBar', () => {
         expect(await hidden(harness, root)).toBe(false);
       });
     }
+
+    it('starts hidden when a field already has focus as the bar appears', async () => {
+      field('<input type="text" />').focus();
+
+      const { harness, root } = await setup();
+
+      expect(await hidden(harness, root)).toBe(true);
+    });
+
+    it('starts shown when the focused element brings up no keyboard', async () => {
+      field('<button type="button"></button>').focus();
+
+      const { harness, root } = await setup();
+
+      expect(await hidden(harness, root)).toBe(false);
+    });
 
     it('comes back when focus leaves the field', async () => {
       const { harness, root } = await setup();

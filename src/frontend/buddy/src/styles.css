@@ -61,10 +61,21 @@ body {
    back out when the keyboard closes. The zoomed page leaves position: fixed elements (the guardian
    tab bar) floating in the wrong place (issue #84). Every form field on a touch screen gets at
    least 16px text, whatever its text-xs/text-sm utility says: this rule is unlayered, so it wins
-   over Tailwind's utilities layer. Fields that ask for 16px or more keep their own size. */
+   over Tailwind's utilities layer. Fields that ask for 16px or more keep their own size. The input
+   types left out are the ones without a keyboard, the same list as TYPING_FIELD in tab-bar.ts. */
 @media (pointer: coarse) {
   :is(
-    input:not([type='checkbox'], [type='radio'], [type='range'], [type='color'], [type='file']),
+    input:not(
+      [type='checkbox'],
+      [type='radio'],
+      [type='range'],
+      [type='color'],
+      [type='file'],
+      [type='button'],
+      [type='submit'],
+      [type='reset'],
+      [type='image']
+    ),
     select,
     textarea
   ):not(.text-base, .text-lg, .text-xl, .text-2xl, .text-3xl, .text-4xl) {

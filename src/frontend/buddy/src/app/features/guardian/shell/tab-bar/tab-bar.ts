@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import { Component, computed, HostListener, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
@@ -5,7 +6,8 @@ import { FeaturesService } from '../../../../core/features.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { visibleNavGroups } from '../nav-items';
 
-// Form controls that bring up the on-screen keyboard (or the iOS picker wheel for a select).
+// Form controls that bring up the on-screen keyboard (or the iOS picker wheel for a select). The
+// 16px rule in styles.css leaves out the same input types.
 const TYPING_FIELD =
   'textarea, select, input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"], [type="button"], [type="submit"], [type="reset"], [type="image"])';
 
@@ -35,8 +37,9 @@ export class TabBar {
 
   // While a field has focus, a touch screen shows its keyboard. iOS Safari doesn't shrink the
   // layout viewport for it, so a fixed bar ends up floating over the page or the keyboard
-  // (issue #84); the template hides the bar on touch screens until the field loses focus.
-  protected readonly typing = signal(false);
+  // (issue #84); the template hides the bar on touch screens until the field loses focus. A field
+  // that already has focus when the bar is created counts too.
+  protected readonly typing = signal(isTypingField(inject(DOCUMENT).activeElement));
 
   @HostListener('document:focusin', ['$event'])
   protected onFocusIn(event: FocusEvent): void {
