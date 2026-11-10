@@ -21,15 +21,8 @@ public sealed record NightFeed(
     {
         var submittedBytes = Encoding.UTF8.GetBytes(submittedTokenHash);
 
-        foreach (var info in Tokens.Values)
-        {
-            if (CryptographicOperations.FixedTimeEquals(submittedBytes, Encoding.UTF8.GetBytes(info.Hash)))
-            {
-                return info;
-            }
-        }
-
-        return null;
+        return Tokens.Values.FirstOrDefault(
+            info => CryptographicOperations.FixedTimeEquals(submittedBytes, Encoding.UTF8.GetBytes(info.Hash)));
     }
 
     public static NightFeed? Rehydrate(IEnumerable<NightFeedEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
