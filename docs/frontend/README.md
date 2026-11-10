@@ -132,7 +132,8 @@ The guardian routes currently include:
   leave medicines such as vitamin D out of it
 - `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner, plus the
   "My pickups in my calendar" iCal subscription card (`PickupIcal`)
-- `/guardian/sleep-diary` — log a night, review 14 nights at a time, hygiene notes and share links
+- `/guardian/sleep-diary` — log a night, review 14 nights at a time (each logged night with who was
+  on duty, from `NightDutyService`, when the night-duty feature is on), hygiene notes and share links
 - `/guardian/feelings` — a child's feelings check-ins: the 14-day grid (`shared/feelings-trend`,
   with the night before's sleep and taken doses, each left out when its feature is off; doses at
   the same time share one marker: a guide line and a square per medicine in its own colour) or the

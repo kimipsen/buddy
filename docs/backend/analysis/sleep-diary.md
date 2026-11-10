@@ -3,7 +3,7 @@
 Status: Implemented. `Features/SleepDiaries` ships the `SleepDiary` and
 `SleepDiaryShareToken` aggregates (schema `sleepdiaries`, inline snapshots), the seven slices
 below plus `ListSleepDiaryShareLinks`, the guardian page `/guardian/sleep-diary` (day-entry form,
-14-night history, hygiene notes, share links) and the public, printable share view
+14-night history with who was on duty each night, hygiene notes, share links) and the public, printable share view
 `/shared/sleep-diary/:token`. See [the flow doc](../sleep-diary/flow.md) and "Implementation
 notes" near the end for where the code differs from this design.
 
@@ -464,7 +464,23 @@ not the API route.
   in this codebase generally prefer local duplication over a new
   cross-feature dependency. Worth deciding at implementation time, not here.
 
-## Implementation notes
+## Night duty in the history
+
+GitHub issue #68, built on [night duty](night-duty.md). Each logged night in the guardian's history
+shows who was on duty that night (a guardian, a babysitter or a sleepover host) and the night's
+note, so guardians can spot patterns such as worse sleep after nights in one home.
+
+- **Read only, frontend only.** The page calls the existing `ListNights` for the same 14-night
+  window as the diary, plus the child's guardians for their names. Nothing is copied into the
+  diary's events and no endpoint changed. A sleep diary date and a night-duty date both name the
+  evening the night starts, so they match one to one.
+- **History stays accurate.** Night duty never lets a schedule save reach before today, so a past
+  night keeps the entry it had (night-duty.md, Question 4).
+- **Never breaks the diary.** With the `nightDuty` feature off, or when `ListNights` fails, the
+  column isn't shown at all; if only the guardian names fail, a guardian's night reads "A
+  guardian". A logged night with nothing planned has an empty cell, and a night that isn't logged
+  shows nothing extra. The shared (no-login) view doesn't show night duty: a share link reads the
+  diary only.
 
 Where the code differs from the text above:
 

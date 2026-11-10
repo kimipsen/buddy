@@ -1326,6 +1326,22 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     });
     // Sara's calendar subscription to Emil's nights, so the night duty page shows an issued link.
     await api.post(`/night-duty/children/${emil.id}/ical-tokens`, {});
+    // The schedule only starts today, so the logged sleep-diary nights get their night duty from
+    // one-off past nights: Mom and Dad alternating every two nights, Friday a screen night. The
+    // sleep diary shows them next to each night.
+    await api.put(`/night-duty/children/${emil.id}/overrides`, {
+      nights: Array.from({ length: 10 }, (_, index) => {
+        const back = index + 1;
+        const date = addDays(today, -back);
+        return {
+          date: isoDate(date),
+          entry: {
+            responsible: Math.floor(back / 2) % 2 === 0 ? mom : dad,
+            note: date.getDay() === 5 ? 'Screen night 📱' : '',
+          },
+        };
+      }),
+    });
 
     // Print template ------------------------------------------------------------------------
     const row = (fields: Record<string, unknown>) => ({

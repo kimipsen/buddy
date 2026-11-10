@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, input, output } from '@angular/core';
 
 import { parseIsoDate } from '../../../../core/date-utils';
@@ -7,19 +8,28 @@ import { SleepEntry } from '../../../../core/sleep-diary.service';
 import { TimeOfDayPipe } from '../../../../core/time-of-day.pipe';
 import { splitMinutes } from '../sleep-entry-draft';
 import { Card } from '../../../../shared/card/card';
+import { ResponsibleText } from '../../night-duty/night-people';
+
+// Who was on duty a night (night duty, GitHub issue #68): the person, or null for a note on its own.
+export interface NightDutyCell {
+  who: ResponsibleText | null;
+  note: string;
+}
 
 interface HistoryRow {
   date: string;
   label: string;
   isWeekend: boolean;
   entry: SleepEntry | undefined;
+  // Only on a logged night; undefined when night duty has nothing planned for it.
+  nightDuty: NightDutyCell | undefined;
 }
 
 // Every night in the shown range, newest first, with blanks for nights not logged -- the same
 // "empty cell" the paper form shows. Choosing a night hands it to the entry form.
 @Component({
   selector: 'app-sleep-history',
-  imports: [TimeOfDayPipe, TranslatePipe, Card],
+  imports: [NgTemplateOutlet, TimeOfDayPipe, TranslatePipe, Card],
   templateUrl: './sleep-history.html',
 })
 export class SleepHistory {
@@ -28,12 +38,15 @@ export class SleepHistory {
   readonly days = input.required<string[]>();
   readonly entries = input.required<Partial<Record<string, SleepEntry>>>();
   readonly selectedDate = input<string>('');
+  // Night duty per date; null hides the column (feature off, or night duty couldn't be read).
+  readonly nightDuty = input<Partial<Record<string, NightDutyCell>> | null>(null);
 
   readonly selectDate = output<string>();
 
   protected readonly rows = computed((): HistoryRow[] => {
     const locale = this.translation.language();
     const entries = this.entries();
+    const nightDuty = this.nightDuty() ?? {};
 
     return [...this.days()].reverse().map((date) => {
       const day = parseIsoDate(date);
@@ -43,6 +56,7 @@ export class SleepHistory {
         label: day.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' }),
         isWeekend: day.getDay() === 0 || day.getDay() === 6,
         entry: entries[date],
+        nightDuty: entries[date] ? nightDuty[date] : undefined,
       };
     });
   });

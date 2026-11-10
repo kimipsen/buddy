@@ -95,6 +95,8 @@ in real time.
 - [x] Private iCal subscription link to a child's night duty, one all-day event per planned
       night such as "Night: Dad · Screen night", following overrides as they are saved (see
       [Night duty iCal feed](docs/backend/analysis/night-duty-ical-feed.md))
+- [x] Night duty in the sleep diary: each logged night shows who was on duty and the night's
+      note, as night duty planned it, so guardians can spot patterns across homes
 
 ### Child
 

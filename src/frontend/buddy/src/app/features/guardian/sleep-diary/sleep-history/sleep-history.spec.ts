@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SleepEntry } from '../../../../core/sleep-diary.service';
-import { SleepHistory } from './sleep-history';
+import { NightDutyCell, SleepHistory } from './sleep-history';
 
 async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
   fixture.detectChanges();
@@ -31,13 +31,14 @@ const entry: SleepEntry = {
 };
 
 describe('SleepHistory', () => {
-  async function setup() {
+  async function setup(nightDuty: Partial<Record<string, NightDutyCell>> | null = null) {
     await TestBed.configureTestingModule({ imports: [SleepHistory] }).compileComponents();
 
     const fixture = TestBed.createComponent(SleepHistory);
     fixture.componentRef.setInput('days', ['2026-03-02', '2026-03-03']);
     fixture.componentRef.setInput('entries', { '2026-03-03': entry });
     fixture.componentRef.setInput('selectedDate', '2026-03-03');
+    fixture.componentRef.setInput('nightDuty', nightDuty);
     const selectDate = vi.fn();
     fixture.componentInstance.selectDate.subscribe(selectDate);
     await settle(fixture);
@@ -139,5 +140,52 @@ describe('SleepHistory', () => {
 
     expect(selectDate).toHaveBeenCalledOnce();
     expect(selectDate).toHaveBeenCalledWith('2026-03-02');
+  });
+
+  describe('night duty', () => {
+    const duty: Partial<Record<string, NightDutyCell>> = {
+      '2026-03-03': { who: { icon: '🛏️', text: 'Sleepover: Grandma' }, note: 'Screen night' },
+      '2026-03-02': { who: { icon: '👤', text: 'Dad' }, note: '' },
+    };
+
+    it('has no night duty column without night duty', async () => {
+      const { host, rows, nights } = await setup();
+
+      expect(host.querySelector('thead')?.textContent).not.toContain('On duty');
+      expect(rows[0].querySelectorAll('td')).toHaveLength(8);
+      expect(rows[1].querySelector('td')?.getAttribute('colspan')).toBe('7');
+      expect(nights[0].querySelector('[data-testid="night-duty-line"]')).toBeNull();
+    });
+
+    it('shows the person and the note on a logged night only', async () => {
+      const { host, rows, nights } = await setup(duty);
+
+      const headers = Array.from(host.querySelectorAll('thead th')).map((th) =>
+        th.textContent?.trim(),
+      );
+      expect(headers[1]).toBe('On duty');
+      const cell = rows[0].querySelector('[data-testid="night-duty-cell"]')!;
+      expect(cell.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+        '🛏️ Sleepover: Grandma Screen night',
+      );
+      expect(cell.querySelector('[aria-hidden="true"]')?.textContent).toBe('🛏️');
+      // 2 March isn't logged: one "Not logged" cell across the extra column, no duty.
+      expect(rows[1].textContent).not.toContain('Dad');
+      expect(rows[1].querySelector('td')?.getAttribute('colspan')).toBe('8');
+
+      const line = nights[0].querySelector('[data-testid="night-duty-line"]')!;
+      expect(line.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+        'On duty:🛏️ Sleepover: Grandma Screen night',
+      );
+      expect(nights[1].querySelector('[data-testid="night-duty-line"]')).toBeNull();
+    });
+
+    it('shows a note on its own without a person', async () => {
+      const { rows } = await setup({ '2026-03-03': { who: null, note: 'Screen night' } });
+
+      expect(rows[0].querySelector('[data-testid="night-duty-cell"]')?.textContent?.trim()).toBe(
+        'Screen night',
+      );
+    });
   });
 });
