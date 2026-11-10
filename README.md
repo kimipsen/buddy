@@ -156,6 +156,8 @@ in real time.
       Registry on every release
 - [x] Software bills of materials (SBOMs) for the backend, frontend and every published image,
       attested in GHCR and attached to each GitHub release
+- [x] Image digests (`sha256`) on every GitHub release, as assets and in the notes, to pin and
+      verify the exact images a release built
 
 ## Repository structure
 

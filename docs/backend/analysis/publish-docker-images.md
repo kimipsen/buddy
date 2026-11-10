@@ -8,7 +8,10 @@ published images on the Oracle VM, and `BUDDY_IMAGE_VERSION` makes `deploy/azure
 `az acr import` them. Details that changed from the proposal: Trivy scans each architecture's
 digest in its build job; the compose image names take a `BUDDY_IMAGE_PREFIX` set only by
 `deploy:pull`, so `task deploy` keeps its local names; and there is no retention job yet (see
-[Retention](#retention)), which is still open in `TODO.md`.
+[Retention](#retention)), which is still open in `TODO.md`. Since issue #76 every release also
+lists its image digests (`image-digests.txt`, `image-digests.json`, `SHA256SUMS` and a section in
+the notes; see
+[the decision below](#decision-publish-the-image-digests-with-each-release)).
 
 ## Context
 
@@ -174,6 +177,55 @@ when every build job has passed.**
   cosign can be added later without changing anything else.
 - Untagged digests from failed scans are removed by the clean-up job below.
 
+## Decision: publish the image digests with each release
+
+Issue #76. A tag (`1.5.3`, `latest`) can be moved to another image; a digest can't. Until now the
+`publish` job computed each multi-arch index digest only to attest it, and the release got SBOMs
+but no digests, so a deployer had no record of which images a release built.
+
+**Decision: the `publish` job writes each image's digests to a small workflow artifact, and the
+tag-only `release-assets` job turns them into release assets and a section of the release notes.**
+
+- **Per image, in `publish`.** After `imagetools create`, the job reads the index with
+  `imagetools inspect --format '{{json .Manifest}}'` and writes `buddy-<image>.json`: repository,
+  tag, the index digest and each architecture's manifest digest. The index also lists the
+  attestation manifests as platform `unknown/unknown`; those are left out, and the job fails unless
+  exactly `linux/amd64` and `linux/arm64` remain. It's uploaded as the `image-digest-<image>`
+  artifact, because job outputs don't work across a matrix.
+- **Per release, in `release-assets`.**
+  [`.github/scripts/release-digests.sh`](../../../.github/scripts/release-digests.sh) joins the
+  three files into `image-digests.json` (version, commit, and per image the pinned `reference`,
+  index digest and platform digests) and `image-digests.txt`
+  (`ghcr.io/kimipsen/buddy-api:1.5.3@sha256:…`, one per line). It fails unless all three images
+  are there and each digest still matches `imagetools inspect <image>:<version>`, so a release
+  never lists a digest its tag doesn't point at.
+- **`SHA256SUMS`** covers the SBOMs and the two digest files. It only detects damaged downloads,
+  since it comes from the same release; the signed check is `gh attestation verify` on the digest.
+- **Release notes.** The script appends a "Container images" section (a table of references and
+  the verify commands) between `<!-- image-digests:start -->` / `<!-- image-digests:end -->`
+  markers. A re-run replaces only that section, so hand-written or generated notes stay; bodies
+  edited on github.com come back with CRLF line endings, which the script handles.
+- Every upload uses `--clobber`, so a re-run replaces the assets instead of adding copies.
+- Tag pushes only, like the SBOM assets: `master` and manual runs have no release to attach to.
+
+Verification and pinning for operators: [docs/versioning.md](../../versioning.md#image-digests),
+[deploy/README.md](../../../deploy/README.md#checking-and-pinning-the-release-images) (a compose
+override that names each image by digest) and
+[deploy/README-azure.md](../../../deploy/README-azure.md#checking-the-deployed-digests).
+
+Considered and rejected:
+
+- **Job outputs from the matrix.** A matrix job's outputs keep only one leg's value per name, so
+  each image would need its own output name and the `needs` context would have to be stitched
+  together; an artifact per image is simpler and is already the pattern for the build digests.
+- **Only the index digests.** The issue asks for the per-architecture digests too: they name the
+  one-architecture image a host actually runs (arm64 on the VM, amd64 on Azure), so they go in the
+  JSON. The text file and the notes keep to the index digest, which is the one to pin and the one
+  `docker image inspect`'s `RepoDigests` shows after a pull.
+- **Pinning by digest inside `task deploy:pull` and `deploy.sh`.** They would have to download
+  the release's JSON from GitHub, which the VM and Azure deploys don't do today. Documented as a
+  manual step for now; it can move into the scripts if it turns out to be used.
+
 ## Decision: deployments switch to pulling in a second step
 
 **Decision: phase 1 only publishes. Phase 2 changes `task deploy` and `deploy/azure/deploy.sh` to
@@ -215,6 +267,10 @@ package. Digests from builds that failed the scan stay behind untagged until the
 | Single developer | 1.5-2 days for phase 1, plus 1 day for phase 2                                                                                |
 | AI agent         | 1-2 hours for phase 1 plus CI round-trips, and about 1 hour of human review (package visibility, first release run)           |
 
+The release digests (issue #76) are Low complexity: two workflow steps, one script and docs. About
+half a day for a single developer; about 1 hour for an AI agent, plus checking the first release
+run.
+
 ## Decisions made
 
 | Question      | Decision                                                                                      |
@@ -226,6 +282,7 @@ package. Digests from builds that failed the scan stay behind untagged until the
 | Tags          | SemVer from release tags plus `latest`; `edge` and `sha-*` from `master`                      |
 | Gate          | Trivy on the pushed digest before tagging, same rules as security-scan                        |
 | Supply chain  | GitHub build provenance and SBOMs ([sbom-generation.md](sbom-generation.md)); cosign deferred |
+| Digests       | Each release lists every image's index and platform digests, as assets and in the notes       |
 | Deploys       | Phase 2, after publishing has worked for a release or two                                     |
 
 ## Remaining open questions

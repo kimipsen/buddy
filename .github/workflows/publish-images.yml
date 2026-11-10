@@ -9,6 +9,9 @@ name: Publish images
 # SBOMs: each image carries BuildKit's SPDX SBOM per architecture, the api and frontend images also
 # a signed CycloneDX SBOM of their NuGet and npm packages, and a release gets all of them as assets.
 # Design: docs/backend/analysis/sbom-generation.md.
+#
+# Digests: a release also lists each image's sha256 digests (image-digests.txt / .json, SHA256SUMS
+# and a "Container images" section in the notes), so a deployer can pin and verify the images.
 
 on:
   push:
@@ -284,13 +287,42 @@ jobs:
             $(jq -cr '.tags | map("--tag " + .) | join(" ")' <<<"$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf "$IMAGE@sha256:%s " *)
 
+      # The index digest, plus each architecture's manifest digest (the index also lists the
+      # attestation manifests, as platform unknown/unknown, which are left out). release-assets
+      # publishes the file with a release; job outputs don't work across a matrix.
       - name: Image digest
         id: digest
         env:
           TAG: ${{ steps.meta.outputs.version }}
+          NAME: ${{ matrix.image }}
         run: |
           docker buildx imagetools inspect "$IMAGE:$TAG"
-          echo "digest=$(docker buildx imagetools inspect "$IMAGE:$TAG" --format '{{json .Manifest}}' | jq -r .digest)" >> "$GITHUB_OUTPUT"
+          docker buildx imagetools inspect "$IMAGE:$TAG" --format '{{json .Manifest}}' > "$RUNNER_TEMP/manifest.json"
+          digest=$(jq -er .digest "$RUNNER_TEMP/manifest.json")
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          mkdir -p "$RUNNER_TEMP/image-digest"
+          jq -e --arg name "buddy-$NAME" --arg repository "$IMAGE" --arg tag "$TAG" '
+            {
+              name: $name,
+              repository: $repository,
+              tag: $tag,
+              digest: .digest,
+              platforms: (
+                [.manifests[]
+                  | select(.platform.os != "unknown")
+                  | {key: ([.platform.os, .platform.architecture, .platform.variant] | map(select(.)) | join("/")),
+                     value: .digest}]
+                | from_entries)
+            }
+            | if (.platforms | keys) == ["linux/amd64", "linux/arm64"] then . else error("unexpected platforms: \(.platforms | keys)") end
+          ' "$RUNNER_TEMP/manifest.json" | tee "$RUNNER_TEMP/image-digest/buddy-$NAME.json"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: image-digest-${{ matrix.image }}
+          path: ${{ runner.temp }}/image-digest/*.json
+          if-no-files-found: error
+          retention-days: 7
 
       # Verifiable with: gh attestation verify oci://<image>:<tag> --repo kimipsen/buddy
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
@@ -316,9 +348,12 @@ jobs:
           sbom-path: ${{ runner.temp }}/sbom/buddy-${{ matrix.image }}.cdx.json
           push-to-registry: true
 
-  # A release gets every SBOM as an asset: the two CycloneDX files and each image's BuildKit SPDX
-  # SBOM per architecture. Releases are usually created by hand after `task release`; when this job
-  # gets there first, it creates the release with generated notes, which can still be edited.
+  # A release gets every SBOM as an asset (the two CycloneDX files and each image's BuildKit SPDX
+  # SBOM per architecture), the images' digests (image-digests.txt / .json, and a "Container
+  # images" section in the notes) and SHA256SUMS of all of them. Releases are usually created by
+  # hand after `task release`; when this job gets there first, it creates the release with
+  # generated notes, which can still be edited. Design:
+  # docs/backend/analysis/publish-docker-images.md#decision-publish-the-image-digests-with-each-release.
   release-assets:
     if: github.ref_type == 'tag'
     needs: [version, publish]
@@ -329,11 +364,24 @@ jobs:
     env:
       REGISTRY: ${{ needs.version.outputs.registry }}
       VERSION: ${{ needs.version.outputs.version }}
+      COMMIT: ${{ needs.version.outputs.commit }}
     steps:
+      # Only the script; the release is about the tag's images, not its files.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/scripts
+          path: src
+
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: sbom
           path: sbom
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: ${{ runner.temp }}/image-digest
+          pattern: image-digest-*
+          merge-multiple: true
 
       - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
@@ -353,6 +401,19 @@ jobs:
           done
           ls -l sbom
 
+      # Fails unless each digest still matches `imagetools inspect <image>:<version>`.
+      - name: Image digests
+        run: |
+          src/.github/scripts/release-digests.sh assets "$RUNNER_TEMP/image-digest" digests
+          cat digests/image-digests.txt
+
+      - name: Checksums
+        run: |
+          mkdir -p checksums
+          (cd sbom && sha256sum -- *) > checksums/SHA256SUMS
+          (cd digests && sha256sum -- *) >> checksums/SHA256SUMS
+          cat checksums/SHA256SUMS
+
       # --verify-tag: never create a tag, only a release for the one that triggered the run.
       # A pre-release version (1.7.0-rc.1) gets a pre-release, as it gets no `latest` image tag.
       # --clobber lets a re-run replace the files.
@@ -367,4 +428,17 @@ jobs:
             [[ "$VERSION" == *-* ]] && prerelease=(--prerelease)
             gh release create "$TAG" --verify-tag --generate-notes "${prerelease[@]}"
           fi
-          gh release upload "$TAG" sbom/* --clobber
+          gh release upload "$TAG" sbom/* digests/* checksums/SHA256SUMS --clobber
+
+      # Adds the "Container images" section to the notes, or replaces the one an earlier run added;
+      # the rest of the notes stays as it is.
+      - name: Add the digests to the release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" --json body --jq .body > "$RUNNER_TEMP/body.md"
+          src/.github/scripts/release-digests.sh notes digests/image-digests.json "$RUNNER_TEMP/body.md" \
+            > "$RUNNER_TEMP/notes.md"
+          gh release edit "$TAG" --notes-file "$RUNNER_TEMP/notes.md"

@@ -61,7 +61,8 @@ Registry as `ghcr.io/kimipsen/buddy-api`, `buddy-frontend` and `buddy-keycloak`:
 `sha-` is `sha-` plus the first 12 characters of the commit, the same as the image tags
 `task deploy` gives its local builds. Each image is scanned with Trivy before it is tagged (the
 same gate as `security-scan.yml`) and carries build provenance and an SBOM; check one with
-`gh attestation verify oci://ghcr.io/kimipsen/buddy-api:1.5.3 --repo kimipsen/buddy`.
+`gh attestation verify oci://ghcr.io/kimipsen/buddy-api:1.5.3 --repo kimipsen/buddy`, or by the
+digest the release lists (see [Image digests](#image-digests)).
 
 Every published build also has software bills of materials (SBOMs;
 [design](backend/analysis/sbom-generation.md)):
@@ -75,6 +76,48 @@ Every published build also has software bills of materials (SBOMs;
 - A release gets all eight files as assets. If the GitHub release doesn't exist yet when the
   workflow gets there, the workflow creates it with generated notes; edit the notes afterwards
   as usual.
+
+### Image digests
+
+A tag like `1.5.3` or `latest` can be moved to another image; a digest (`sha256:…`) can't. Every
+`vX.Y.Z` release therefore lists the digest of each image it built
+([design](backend/analysis/publish-docker-images.md#decision-publish-the-image-digests-with-each-release)):
+
+- `image-digests.txt`: one pinned reference per image,
+  `ghcr.io/kimipsen/buddy-api:1.5.3@sha256:<index digest>`. The index digest names the multi-arch
+  image, so the same reference works on the arm64 VM and on amd64 Azure.
+- `image-digests.json`: the same for scripts, plus each architecture's manifest digest
+  (`linux/amd64`, `linux/arm64`), the version and the commit.
+- `SHA256SUMS`: `sha256sum` checksums of the SBOMs and the two digest files.
+- A "Container images" section at the end of the release notes, with the three references. A
+  re-run of the workflow replaces that section (and the assets) and leaves the rest of the notes,
+  hand-written or generated, as it is.
+
+To check a release's images (with `docker`, `gh` and `curl`):
+
+```bash
+v=1.5.3
+curl -fsSLO "https://github.com/kimipsen/buddy/releases/download/v$v/SHA256SUMS"
+curl -fsSLO "https://github.com/kimipsen/buddy/releases/download/v$v/image-digests.txt"
+sha256sum --check --ignore-missing SHA256SUMS
+while read -r ref; do
+  # The registry's digest for the tag must be the one the release lists...
+  [[ "$(docker buildx imagetools inspect "${ref%@*}" --format '{{json .Manifest}}' | jq -r .digest)" == "${ref#*@}" ]] \
+    && echo "tag matches: ${ref%@*}" || echo "TAG MOVED: ${ref%@*}"
+  # ...and that digest must carry this repository's build provenance.
+  gh attestation verify "oci://${ref%%:*}@${ref#*@}" --repo kimipsen/buddy > /dev/null \
+    && echo "provenance verified: ${ref%%:*}@${ref#*@}"
+done < image-digests.txt
+```
+
+`sha256sum --check` only shows that the files weren't damaged on the way: the checksums come from
+the same release. The attestation is the check that GitHub signed. Add
+`--predicate-type https://cyclonedx.org/bom` to `gh attestation verify` to check the CycloneDX SBOM
+of the api and frontend images instead of the provenance.
+
+Pinning a deployment to these digests is described for each deploy path:
+[`task deploy:pull`](../deploy/README.md#checking-and-pinning-the-release-images) and
+[`deploy/azure/deploy.sh`](../deploy/README-azure.md#checking-the-deployed-digests).
 
 The frontend image works for any deployment: it reads `API_BASE_URL`, `KEYCLOAK_AUTHORITY` and
 the optional `REPOSITORY_URL` from its environment when it starts.
