@@ -74,4 +74,22 @@ public sealed class NightDutyEventShapeTests
     public void NightOverrideCleared() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new NightOverrideCleared(FixedScheduleId, FixedDate, new NightOverride.Planned(GuardianEntry), FixedGuardianId, FixedInstant),
         "NightDuty/NightOverrideCleared.json");
+
+    private static readonly NightFeedId FixedFeedId = NightFeedId.ForGuardian(FixedGuardianId);
+    private static readonly IcalTokenId FixedTokenId = new(Guid.Parse("00000000-0000-0000-0000-000000000071"));
+
+    [Fact]
+    public void NightFeedStarted() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new NightFeedStarted(FixedFeedId, FixedGuardianId, FixedInstant),
+        "NightDuty/NightFeedStarted.json");
+
+    [Fact]
+    public void NightIcalTokenIssued() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new NightIcalTokenIssued(FixedFeedId, FixedTokenId, FixedChildId, "ABCDEF0123456789", FixedInstant),
+        "NightDuty/NightIcalTokenIssued.json");
+
+    [Fact]
+    public void NightIcalTokenRevoked() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new NightIcalTokenRevoked(FixedFeedId, FixedTokenId, FixedInstant),
+        "NightDuty/NightIcalTokenRevoked.json");
 }

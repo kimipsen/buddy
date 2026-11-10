@@ -90,4 +90,24 @@ export const nightDuty = {
       Upcoming: 'upcoming',
     },
   },
+  ical: {
+    title: "{child}'s nights in my calendar",
+    description:
+      "A private link that puts {child}'s night duty into your own calendar app, changes and all, so you can see who has which night.",
+    allDay:
+      'Each planned night is an all-day event, such as "Night: Dad · Screen night". Nights with nothing planned are left out.',
+    oneChild: 'One link per child. Pick another child above to subscribe to their nights too.',
+    loading: 'Loading subscription links…',
+    empty: 'No subscription links yet.',
+    issuedOn: 'Issued',
+    createButton: 'Create subscription link',
+    creating: 'Creating…',
+    createError: 'Unable to create a subscription link.',
+    revokeButton: 'Revoke',
+    revokeError: 'Unable to revoke that subscription link.',
+    loadError: 'Unable to load subscription links.',
+    newUrlHint: 'Copy this link into your calendar app now -- it will not be shown again.',
+    copyButton: 'Copy link',
+    copiedButton: 'Copied!',
+  },
 };

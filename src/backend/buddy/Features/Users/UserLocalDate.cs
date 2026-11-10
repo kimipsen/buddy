@@ -15,6 +15,12 @@ public static class UserLocalDate
             return null;
         }
 
+        return Today(user, time);
+    }
+
+    // For a caller that already holds the user's snapshot.
+    public static DateOnly Today(User user, TimeProvider time)
+    {
         var local = TimeZoneInfo.ConvertTime(time.GetUtcNow(), TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId.Value));
 
         return DateOnly.FromDateTime(local.DateTime);

@@ -124,6 +124,12 @@ classDiagram
         +DateOverrides Overrides
     }
 
+    class NightFeed {
+        +NightFeedId Id
+        +UserId GuardianId
+        +IcalTokens Tokens
+    }
+
     class BabysitterList {
         +BabysitterListId Id
         +UserId GuardianId
@@ -240,6 +246,7 @@ classDiagram
     MedicineEffectLog ..> MedicineSchedule : regimen
     PickupSchedule --> User : childId, assignments
     NightSchedule --> User : childId, nights
+    NightFeed --> User : guardianId, tokens' childId
     PickupFeed --> User : guardianId
     WorkLocationSchedule --> User : guardianId
     BabysitterList --> User : guardianId

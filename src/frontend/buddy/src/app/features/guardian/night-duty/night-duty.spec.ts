@@ -42,6 +42,7 @@ describe('GuardianNightDuty', () => {
           (async () => ({ childId: 'emil', today: '2026-11-09', patterns: [] })),
       ),
       listNights: vi.fn(async () => []),
+      listIcalTokens: vi.fn(async () => []),
     };
 
     await TestBed.configureTestingModule({
@@ -75,6 +76,8 @@ describe('GuardianNightDuty', () => {
     expect(nightDuty.getSchedule).toHaveBeenCalledWith('emil');
     expect(compiled.querySelector('app-night-week')).toBeTruthy();
     expect(compiled.querySelector('app-night-pattern-editor')).toBeTruthy();
+    expect(nightDuty.listIcalTokens).toHaveBeenCalledWith('emil');
+    expect(compiled.textContent).toContain("Emil's nights in my calendar");
     expect(compiled.querySelector('a[href="/guardian/pickup"]')?.textContent).toContain(
       'Pickup & drop-off',
     );
@@ -91,6 +94,8 @@ describe('GuardianNightDuty', () => {
 
     expect(nightDuty.getSchedule).toHaveBeenLastCalledWith('ida');
     expect(compiled.textContent).toContain('Who puts Ida to bed');
+    expect(nightDuty.listIcalTokens).toHaveBeenLastCalledWith('ida');
+    expect(compiled.textContent).toContain("Ida's nights in my calendar");
   });
 
   it('hides the child picker and the links of turned-off features', async () => {

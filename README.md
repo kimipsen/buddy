@@ -92,6 +92,9 @@ in real time.
 - [x] Night duty: a fixed (1–4 week) schedule of who is responsible for a child at night, with
       per-night overrides, switches and free-text notes such as a weekly screen night, shown on
       the printed week plan and as a "Tonight" card for the child
+- [x] Private iCal subscription link to a child's night duty, one all-day event per planned
+      night such as "Night: Dad · Screen night", following overrides as they are saved (see
+      [Night duty iCal feed](docs/backend/analysis/night-duty-ical-feed.md))
 
 ### Child
 
@@ -273,6 +276,7 @@ deploy/      Production Docker Compose and Caddy deployment
 - [Mealie integration](docs/backend/analysis/mealie-integration.md)
 - [Pickup and drop-off schedules](docs/backend/analysis/pickup-schedules.md)
 - [Pickup iCal feed](docs/backend/analysis/pickup-ical-feed.md)
+- [Night duty iCal feed](docs/backend/analysis/night-duty-ical-feed.md)
 - [Babysitters](docs/backend/analysis/babysitters.md)
 - [Gamified progress](docs/backend/analysis/gamified-progress.md)
 

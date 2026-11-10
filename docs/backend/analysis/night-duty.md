@@ -33,7 +33,7 @@ Requirements settled in the issue:
    Night row in a week plan print template.
 6. **Dates only.** There are no bedtime or handover times in v1. A time can go in the note.
 
-Out of scope, with their own issues: an iCal feed of night duty (#67), showing the responsible
+Out of scope, with their own issues: an iCal feed of night duty (#67, since built: [night-duty-ical-feed.md](night-duty-ical-feed.md)), showing the responsible
 guardian next to a logged night in the sleep diary (#68), and bedtime and handover times (#69).
 
 Nothing like this exists in Buddy today. The closest precedents are:

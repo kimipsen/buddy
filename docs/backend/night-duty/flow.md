@@ -4,8 +4,10 @@ The night duty feature records who is responsible for a child at night (who puts
 bed, gets up when they wake, and where they sleep), plus an optional short note such as a weekly
 screen night. Guardians set a fixed schedule once (a cycle of 1–4 weeks), versioned from a date
 so earlier nights keep the schedule they had, and override single nights. The child sees
-tonight's entry on their day dashboard, and a print template can include a Night row. The design
-is in [night-duty.md](../analysis/night-duty.md).
+tonight's entry on their day dashboard, and a print template can include a Night row. A guardian
+can also subscribe to a child's nights in their own calendar app through a private iCal link. The
+design is in [night-duty.md](../analysis/night-duty.md) and
+[night-duty-ical-feed.md](../analysis/night-duty-ical-feed.md).
 
 ```mermaid
 sequenceDiagram
@@ -40,6 +42,19 @@ sequenceDiagram
     ND->>Store: Read snapshot, resolve override -> version in effect -> nothing
     ND->>Sitters: Resolve babysitter names
     API-->>App: 200 OK (Night[])
+
+    Guardian->>App: Create a calendar link for the child
+    App->>API: POST /night-duty/children/{childId}/ical-tokens
+    ND->>Guardians: Caller is an active guardian of the child?
+    ND->>Store: Start the guardian's NightFeed lazily, append NightIcalTokenIssued
+    API-->>App: 200 OK (token shown once, subscriptionPath)
+
+    participant Cal as Calendar app
+    Cal->>API: GET /night-duty/feeds/{guardianId}/ical/{token} (anonymous)
+    ND->>Store: Match the token hash, read the token's child
+    ND->>Guardians: Guardian still an active guardian of that child? else 404
+    ND->>Store: Resolve the nights, 14 days back to 60 ahead
+    API-->>Cal: 200 text/calendar (one all-day VEVENT per planned night)
 ```
 
 ## Endpoints
@@ -51,6 +66,10 @@ sequenceDiagram
 | `DELETE` | `/night-duty/children/{childId}/overrides?from=...&to=...` | Removes overrides in the range so those nights follow the fixed schedule again. Idempotent.                                                                                                                                                                                                                                   |
 | `GET`    | `/night-duty/children/{childId}`                           | The child's `today` and every version, oldest first, with `status` `Past`, `Current` or `Upcoming`. Guardians only. No stream yet reads as no versions.                                                                                                                                                                       |
 | `GET`    | `/night-duty/children/{childId}/nights?from=...&to=...`    | One `Night` per date with a `status`: `{ kind: 0 }` unplanned, `{ kind: 1, scheduled }` cleared by an override, or `{ kind: 2, entry, source, scheduled }` planned, with `source` `Pattern` or `Override`. `scheduled` is what the fixed schedule says for an overridden night. Guardians and the child themself.             |
+| `POST`   | `/night-duty/children/{childId}/ical-tokens`               | Issues an iCal subscription link to the child's nights for the caller. Returns `tokenId`, the plaintext `token` (only here), `subscriptionPath` and `issuedAt`. Guardians only.                                                                                                                                               |
+| `GET`    | `/night-duty/children/{childId}/ical-tokens`               | The caller's own links for the child (`tokenId`, `issuedAt`), newest first. Guardians only.                                                                                                                                                                                                                                   |
+| `DELETE` | `/night-duty/children/{childId}/ical-tokens/{tokenId}`     | Revokes one of the caller's links for the child. Idempotent. Guardians only.                                                                                                                                                                                                                                                  |
+| `GET`    | `/night-duty/feeds/{guardianId}/ical/{token}`              | Anonymous; the token is the credential. `text/calendar` with one all-day event per planned night, 14 days back to 60 ahead, titled in the guardian's language ("Night: Dad · Screen night"). `404` for a wrong or revoked token, or once the guardian is no longer a guardian of the child.                                   |
 
 An `entry` is `{ responsible, note }`. `responsible` is `{ kind: 0, guardianId }` (a guardian),
 `{ kind: 1, guardianId, babysitterId, name }` (a babysitter on that guardian's list; `name` is
@@ -87,7 +106,8 @@ that can't be bound is rejected before these rules run, with the same envelope.
 
 ## Authorization model
 
-- **Manage** is any active guardian of the child: every write and `GET /night-duty/children/{childId}`.
+- **Manage** is any active guardian of the child: every write, `GET /night-duty/children/{childId}`
+  and the iCal link routes (each guardian sees and revokes only their own links).
   The child calling one of these gets `403`.
 - **View** is the child themself: `ListNights` only, the "Tonight" card.
 - Everyone else gets `404`. Access is computed on every request, so revoking a `GuardianLink`
@@ -97,5 +117,6 @@ that can't be bound is rejected before these rules run, with the same envelope.
 
 Erasing the child deletes the stream and its snapshot (sleepover hosts' details are the child's
 data). Erasing a guardian leaves the child's schedule in place; nights naming them stop
-resolving a name. The `nightDuty` section of the personal-data export holds each child's
-versions and overrides.
+resolving a name, and their own `NightFeed` (their iCal links) is deleted, so every link stops
+working. The `nightDuty` section of the personal-data export holds each child's
+versions and overrides, but never iCal tokens.

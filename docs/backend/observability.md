@@ -119,6 +119,7 @@ message text.
 | 11001–11004 | `Features/Feelings/FeelingsLog.cs`             | Feelings share links created or revoked, every view of shared check-ins, and every read of a child's check-ins with the reader and the access path (guardian or the child themself)          |
 | 12001–12004 | `Features/VisitSummaries/VisitSummariesLog.cs` | Visit summary share links created or revoked, every view of a shared report, and every read of a report by a guardian                                                                        |
 | 13001–13002 | `Features/Pickups/PickupsLog.cs`               | Pickup iCal feed tokens issued or revoked                                                                                                                                                    |
+| 14001–14002 | `Features/NightDuty/NightDutyLog.cs`           | Night duty iCal feed tokens issued or revoked                                                                                                                                                |
 
 Existing framework-adjacent logs: unbindable requests (`RequestBindingFailureMiddleware`),
 concurrency conflicts (`ConcurrencyConflictMiddleware`), rate-limit rejections

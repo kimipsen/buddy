@@ -1324,6 +1324,8 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         },
       ],
     });
+    // Sara's calendar subscription to Emil's nights, so the night duty page shows an issued link.
+    await api.post(`/night-duty/children/${emil.id}/ical-tokens`, {});
 
     // Print template ------------------------------------------------------------------------
     const row = (fields: Record<string, unknown>) => ({

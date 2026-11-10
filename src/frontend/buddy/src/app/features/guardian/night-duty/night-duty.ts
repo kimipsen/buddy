@@ -9,6 +9,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { NightDutyService } from '../../../core/night-duty.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { Page } from '../../../shared/page/page';
+import { NightIcal } from './night-ical/night-ical';
 import { NightPatternEditor } from './night-pattern-editor/night-pattern-editor';
 import { NightPeople } from './night-people';
 import { NightWeek } from './night-week/night-week';
@@ -26,6 +27,7 @@ import { NightWeek } from './night-week/night-week';
     Page,
     NightWeek,
     NightPatternEditor,
+    NightIcal,
   ],
   templateUrl: './night-duty.html',
 })

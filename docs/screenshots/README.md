@@ -240,7 +240,7 @@ Who takes and fetches the child each day, and a private calendar link with the s
 
 ## Night duty
 
-Who is on duty each night: the week ahead with changed nights marked, and the fixed schedule they come from.
+Who is on duty each night: the week ahead with changed nights marked, the fixed schedule they come from, and a private calendar link to the child’s nights.
 
 ![Night duty](guardian-night-duty.png)
 
