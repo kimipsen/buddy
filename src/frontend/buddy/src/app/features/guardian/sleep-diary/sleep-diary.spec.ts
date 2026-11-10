@@ -2,7 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { FeaturesService } from '../../../core/features.service';
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
+import { Night, NightDutyService } from '../../../core/night-duty.service';
 import { SleepDiaryService, SleepEntry } from '../../../core/sleep-diary.service';
 import { GuardianSleepDiary } from './sleep-diary';
 
@@ -44,13 +46,31 @@ function entry(date: string, bedTime: string): SleepEntry {
   };
 }
 
+function plannedNight(date: string, guardianId: string, note = ''): Night {
+  return {
+    date,
+    status: {
+      kind: 2,
+      entry: { responsible: { kind: 0, guardianId }, note },
+      source: 'Pattern',
+      scheduled: null,
+    },
+  } as Night;
+}
+
 describe('GuardianSleepDiary', () => {
   afterEach(() => {
     vi.useRealTimers();
   });
 
   async function setup(
-    options: { children?: ChildSummary[]; sleepDiary?: Partial<SleepDiaryService> } = {},
+    options: {
+      children?: ChildSummary[];
+      sleepDiary?: Partial<SleepDiaryService>;
+      nightDuty?: Partial<NightDutyService>;
+      nightDutyEnabled?: boolean;
+      listChildGuardians?: GuardiansService['listChildGuardians'];
+    } = {},
   ) {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 2, 15, 9, 0));
@@ -59,6 +79,20 @@ describe('GuardianSleepDiary', () => {
       listMyChildren: vi.fn(
         async () => options.children ?? [child('c1', 'Alex'), child('c2', 'Sam')],
       ),
+      listChildGuardians: vi.fn(
+        options.listChildGuardians ??
+          (async () =>
+            [{ id: 'g-mom', name: { givenName: 'Mona', familyName: 'Anderson' } }] as Awaited<
+              ReturnType<GuardiansService['listChildGuardians']>
+            >),
+      ),
+    };
+    const nightDuty: Partial<NightDutyService> = {
+      listNights: vi.fn(async () => []),
+      ...options.nightDuty,
+    };
+    const features: Partial<FeaturesService> = {
+      enabled: vi.fn(() => options.nightDutyEnabled ?? true),
     };
     const sleepDiary: Partial<SleepDiaryService> = {
       listEntries: vi.fn(async () => ({
@@ -76,13 +110,21 @@ describe('GuardianSleepDiary', () => {
         provideRouter([]),
         { provide: GuardiansService, useValue: guardians },
         { provide: SleepDiaryService, useValue: sleepDiary },
+        { provide: NightDutyService, useValue: nightDuty },
+        { provide: FeaturesService, useValue: features },
       ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(GuardianSleepDiary);
     await settle(fixture);
 
-    return { fixture, compiled: fixture.nativeElement as HTMLElement, sleepDiary };
+    return {
+      fixture,
+      compiled: fixture.nativeElement as HTMLElement,
+      sleepDiary,
+      nightDuty,
+      guardians,
+    };
   }
 
   function bedTimeInput(compiled: HTMLElement): HTMLInputElement {
@@ -209,5 +251,107 @@ describe('GuardianSleepDiary', () => {
     // A blank form here would let one Save overwrite a night the guardian can't see.
     expect(compiled.querySelector('app-sleep-entry-form')).toBeNull();
     expect(compiled.querySelector('app-hygiene-notes')).toBeNull();
+  });
+
+  describe('night duty', () => {
+    function headers(compiled: HTMLElement): string[] {
+      return Array.from(compiled.querySelectorAll('app-sleep-history thead th')).map(
+        (th) => th.textContent?.trim() ?? '',
+      );
+    }
+
+    it('shows who was on duty and the note next to each logged night', async () => {
+      const { compiled, nightDuty, guardians } = await setup({
+        nightDuty: {
+          listNights: vi.fn(async () => [
+            plannedNight('2026-03-15', 'g-mom', 'Screen night'),
+            plannedNight('2026-03-14', 'g-gone'),
+            // Not logged in the diary: nothing extra on that row.
+            plannedNight('2026-03-13', 'g-mom', 'Unlogged note'),
+          ]),
+        },
+      });
+
+      expect(nightDuty.listNights).toHaveBeenCalledWith('c1', '2026-03-02', '2026-03-15');
+      expect(guardians.listChildGuardians).toHaveBeenCalledWith('c1');
+      expect(headers(compiled)).toContain('On duty');
+      const rows = compiled.querySelectorAll('app-sleep-history tbody tr');
+      const cell = (row: number) =>
+        rows[row]
+          .querySelector('[data-testid="night-duty-cell"]')
+          ?.textContent?.replace(/\s+/g, ' ')
+          .trim();
+      expect(cell(0)).toBe('👤 Mona Screen night');
+      // A guardian whose name can't be resolved any more.
+      expect(cell(1)).toBe('👤 A guardian');
+      expect(rows[2].textContent).not.toContain('Unlogged note');
+      expect(rows[2].querySelector('td')?.getAttribute('colspan')).toBe('8');
+    });
+
+    it('names an unnamed babysitter and a sleepover host, and a night without a note', async () => {
+      const night = (date: string, responsible: object): Night =>
+        ({
+          date,
+          status: { kind: 2, entry: { responsible }, source: 'Override', scheduled: null },
+        }) as Night;
+      const { compiled } = await setup({
+        nightDuty: {
+          listNights: vi.fn(async () => [
+            night('2026-03-15', { kind: 1, guardianId: 'g-mom', babysitterId: 'b1' }),
+            night('2026-03-14', { kind: 2, hostName: 'Grandma', location: '', contactInfo: '' }),
+          ]),
+        },
+      });
+
+      const cells = compiled.querySelectorAll('[data-testid="night-duty-cell"]');
+      expect(cells[0].textContent?.replace(/\s+/g, ' ').trim()).toBe('🧑‍🍼 Babysitter');
+      expect(cells[1].textContent?.replace(/\s+/g, ' ').trim()).toBe('🛏️ Sleepover: Grandma');
+    });
+
+    it('leaves a logged night without a night entry blank', async () => {
+      const { compiled } = await setup({
+        nightDuty: { listNights: vi.fn(async () => [plannedNight('2026-03-15', 'g-mom')]) },
+      });
+
+      const rows = compiled.querySelectorAll('app-sleep-history tbody tr');
+      expect(rows[1].querySelector('[data-testid="night-duty-cell"]')?.textContent?.trim()).toBe(
+        '',
+      );
+    });
+
+    it('still names nobody when the guardian names fail to load', async () => {
+      const { compiled } = await setup({
+        listChildGuardians: async () => {
+          throw new Error('boom');
+        },
+        nightDuty: { listNights: vi.fn(async () => [plannedNight('2026-03-15', 'g-mom')]) },
+      });
+
+      expect(
+        compiled.querySelector('[data-testid="night-duty-cell"]')?.textContent?.trim(),
+      ).toContain('A guardian');
+    });
+
+    it('hides the column, and keeps the diary, when night duty can’t be read', async () => {
+      const { compiled } = await setup({
+        nightDuty: {
+          listNights: vi.fn(async () => {
+            throw new Error('404');
+          }),
+        },
+      });
+
+      expect(headers(compiled)).not.toContain('On duty');
+      expect(compiled.querySelector('[data-testid="night-duty-cell"]')).toBeNull();
+      expect(compiled.textContent).not.toContain('Unable to load the sleep diary.');
+      expect(compiled.querySelectorAll('app-sleep-history tbody tr')).toHaveLength(14);
+    });
+
+    it('doesn’t ask for night duty when the feature is off', async () => {
+      const { compiled, nightDuty } = await setup({ nightDutyEnabled: false });
+
+      expect(nightDuty.listNights).not.toHaveBeenCalled();
+      expect(headers(compiled)).not.toContain('On duty');
+    });
   });
 });

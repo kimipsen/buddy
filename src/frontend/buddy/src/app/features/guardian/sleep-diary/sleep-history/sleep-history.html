@@ -18,6 +18,9 @@
           class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
         >
           <th scope="col" class="py-2 pr-3">{{ 'sleepDiary.history.date' | translate }}</th>
+          @if (nightDuty()) {
+            <th scope="col" class="py-2 pr-3">{{ 'sleepDiary.history.nightDuty' | translate }}</th>
+          }
           <th scope="col" class="py-2 pr-3">{{ 'sleepDiary.history.bedTime' | translate }}</th>
           <th scope="col" class="py-2 pr-3">{{ 'sleepDiary.history.fellAsleep' | translate }}</th>
           <th scope="col" class="py-2 pr-3">{{ 'sleepDiary.history.wakeUps' | translate }}</th>
@@ -47,6 +50,16 @@
               {{ row.label }}
             </th>
             @if (row.entry; as entry) {
+              @if (nightDuty()) {
+                <td class="py-2 pr-3" data-testid="night-duty-cell">
+                  @if (row.nightDuty; as duty) {
+                    <ng-container
+                      [ngTemplateOutlet]="nightDutyTemplate"
+                      [ngTemplateOutletContext]="{ $implicit: duty }"
+                    />
+                  }
+                </td>
+              }
               <td class="py-2 pr-3">{{ entry.bedTime | timeOfDay }}</td>
               <td class="py-2 pr-3">{{ entry.fellAsleepTime | timeOfDay }}</td>
               <td class="py-2 pr-3">{{ entry.nightWakeUps.length || '' }}</td>
@@ -64,7 +77,10 @@
                 }
               </td>
             } @else {
-              <td colspan="7" class="py-2 pr-3 text-slate-400 dark:text-slate-500">
+              <td
+                [attr.colspan]="nightDuty() ? 8 : 7"
+                class="py-2 pr-3 text-slate-400 dark:text-slate-500"
+              >
                 {{ 'sleepDiary.history.notLogged' | translate }}
               </td>
             }
@@ -126,6 +142,15 @@
             {{ 'sleepDiary.history.edit' | translate }}
           </button>
         </div>
+        @if (row.nightDuty; as duty) {
+          <p class="mt-1 text-sm" data-testid="night-duty-line">
+            <span class="sr-only">{{ 'sleepDiary.history.nightDuty' | translate }}:</span>
+            <ng-container
+              [ngTemplateOutlet]="nightDutyTemplate"
+              [ngTemplateOutletContext]="{ $implicit: duty }"
+            />
+          </p>
+        }
         @if (row.entry; as entry) {
           <dl class="mt-1 grid grid-cols-3 gap-x-3 gap-y-1 text-sm">
             <div>
@@ -175,3 +200,20 @@
     }
   </ul>
 </app-card>
+
+<!-- Who was on duty, and the night's note as a chip, read-only from night duty. -->
+<ng-template #nightDutyTemplate let-duty>
+  <span class="inline-flex flex-wrap items-center gap-1.5">
+    @if (duty.who; as who) {
+      <span class="whitespace-nowrap">
+        <span aria-hidden="true">{{ who.icon }}</span> {{ who.text }}
+      </span>
+    }
+    @if (duty.note) {
+      <span
+        class="rounded-full bg-indigo-50 dark:bg-indigo-500/20 px-2 py-0.5 text-xs font-medium text-indigo-900 dark:text-indigo-100"
+        >{{ duty.note }}</span
+      >
+    }
+  </span>
+</ng-template>

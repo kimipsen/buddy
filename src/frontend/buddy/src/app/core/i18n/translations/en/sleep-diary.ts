@@ -46,6 +46,7 @@ export const sleepDiary = {
   history: {
     title: 'Nights',
     date: 'Night',
+    nightDuty: 'On duty',
     bedTime: 'Lies down',
     fellAsleep: 'Falls asleep',
     wakeUps: 'Wake-ups',
