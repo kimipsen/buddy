@@ -141,6 +141,9 @@ in real time.
 
 ### Platform
 
+- [ ] MCP server so a guardian can read and manage family data from an LLM client (Claude,
+      VS Code, ChatGPT) with their own Keycloak sign-in (proposed, not yet implemented — see
+      [MCP server](docs/backend/analysis/mcp-server.md))
 - [x] Keycloak authentication, token lifecycle, and role-based routing by Keycloak group: only
       `buddy-guardian` members see the guardian pages and only `buddy-child` members the child
       board; an account in neither group can't use Buddy
