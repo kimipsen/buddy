@@ -90,4 +90,24 @@ export const nightDuty = {
       Upcoming: 'kommende',
     },
   },
+  ical: {
+    title: '{child}s nætter i min kalender',
+    description:
+      'Et privat link, der lægger {child}s nattevagter ind i din egen kalenderapp, med ændringer og det hele, så du kan se, hvem der har hvilken nat.',
+    allDay:
+      'Hver planlagt nat er en heldagsbegivenhed, fx "Nat: Far · Skærmaften". Nætter uden plan er udeladt.',
+    oneChild: 'Ét link pr. barn. Vælg et andet barn ovenfor for også at abonnere på dets nætter.',
+    loading: 'Indlæser abonnementslinks…',
+    empty: 'Ingen abonnementslinks endnu.',
+    issuedOn: 'Udstedt',
+    createButton: 'Opret abonnementslink',
+    creating: 'Opretter…',
+    createError: 'Kunne ikke oprette et abonnementslink.',
+    revokeButton: 'Tilbagekald',
+    revokeError: 'Kunne ikke tilbagekalde det abonnementslink.',
+    loadError: 'Kunne ikke indlæse abonnementslinks.',
+    newUrlHint: 'Kopiér dette link til din kalenderapp nu -- det vises ikke igen.',
+    copyButton: 'Kopiér link',
+    copiedButton: 'Kopieret!',
+  },
 };

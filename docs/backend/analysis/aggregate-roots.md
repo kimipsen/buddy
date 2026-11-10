@@ -35,6 +35,7 @@ flowchart TB
         PickupFeed["PickupFeed\nPickupFeedId(Guid)"]
         WorkLocationSchedule["WorkLocationSchedule\nWorkLocationScheduleId(Guid)"]
         NightSchedule["NightSchedule\nNightScheduleId(Guid)"]
+        NightFeed["NightFeed\nNightFeedId(Guid)"]
         BabysitterList["BabysitterList\nBabysitterListId(Guid)"]
         PrintTemplate["PrintTemplate\nPrintTemplateId(Guid)"]
         TaskTemplate["TaskTemplate\nTaskTemplateId(Guid)"]
@@ -77,6 +78,7 @@ flowchart TB
     WorkLocationSchedule -- "guardianId (stored, equals stream id)" --> User
     NightSchedule -- "childId (stored, equals stream id); nights' guardianId / modifiedBy" --> User
     NightSchedule -- "nights: babysitterId (on guardianId's list)" --> BabysitterList
+    NightFeed -- "guardianId (stored, equals stream id); tokens' childId" --> User
     PrintTemplate -- "owner (user or group); rows reference children, groups, calendars, work locations" --> User
     PrintTemplate -- "owner group" --> Group
     TaskTemplate -- "createdBy / lastModifiedBy" --> User
@@ -135,6 +137,7 @@ flowchart TB
 | BabysitterList            | `Features/Babysitters/Types/BabysitterList.cs`                   | `BabysitterListId(Guid)`, equal to the guardian's `UserId`                      | `guardianId` → User                                                                                                                                                                                                                                                       |
 | WorkLocationSchedule      | `Features/WorkLocations/Types/WorkLocationSchedule.cs`           | `WorkLocationScheduleId(Guid)`, equal to the guardian's `UserId`                | `guardianId` → User                                                                                                                                                                                                                                                       |
 | NightSchedule             | `Features/NightDuty/Types/NightSchedule.cs`                      | `NightScheduleId(Guid)`, equal to the child's `UserId`                          | `childId` → User; pattern days' and overrides' `guardianId` → User; a babysitter entry's `babysitterId` → a BabysitterList entry; events' `modifiedBy` → User                                                                                                             |
+| NightFeed                 | `Features/NightDuty/Types/NightFeed.cs`                          | `NightFeedId(Guid)`, equal to the guardian's `UserId`                           | `guardianId` → User; each token's `childId` → User (the feed reads that child's NightSchedule while the guardian holds an active GuardianLink)                                                                                                                            |
 | PrintTemplate             | `Features/PrintTemplates/Types/PrintTemplate.cs`                 | `PrintTemplateId(Guid)`                                                         | `owner` → User or Group; rows' `childId` / `guardianId` / `assignedToId` → User, `mealGroupId` → Group, `calendarIds` → Calendar, `workLocationId` → a WorkLocationSchedule location (references only, never access grants)                                               |
 | TaskTemplate              | `Features/TaskLibrary/Types/TaskTemplate.cs`                     | `TaskTemplateId(Guid)`                                                          | `createdBy` / `lastModifiedBy` → User; owning `childId` lives in `TaskTemplateIndexDocument`, not the aggregate itself                                                                                                                                                    |
 | ChildProgress             | `Features/Progress/Types/ChildProgress.cs`                       | `ProgressId(Guid)`, equal to the child's `UserId`                               | `childId` → User; `awardedOccurrences` → CalendarItem (computed reference, not a foreign-key relationship)                                                                                                                                                                |

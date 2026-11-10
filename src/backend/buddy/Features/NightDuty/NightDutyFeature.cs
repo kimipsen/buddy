@@ -24,7 +24,10 @@ public static class NightDutyFeature
         typeof(NightScheduleStarted),
         typeof(NightPatternReplaced),
         typeof(NightOverridden),
-        typeof(NightOverrideCleared)
+        typeof(NightOverrideCleared),
+        typeof(NightFeedStarted),
+        typeof(NightIcalTokenIssued),
+        typeof(NightIcalTokenRevoked)
     ];
 
     // Depends on IGuardianLinkEventStore (authorization, guardian checks), IBabysitterListEventStore
@@ -65,10 +68,16 @@ public static class NightDutyFeature
             options.Projections.Register(new NightScheduleSnapshotProjection(), ProjectionLifecycle.Inline);
             options.Schema.For<NightScheduleSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
+            // The guardian's iCal tokens (docs/backend/analysis/night-duty-ical-feed.md): a second
+            // stream type in the same store, as Pickups holds PickupSchedule and PickupFeed.
+            options.Projections.Register(new NightFeedSnapshotProjection(), ProjectionLifecycle.Inline);
+            options.Schema.For<NightFeedSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
+
             return options;
         });
 
         services.AddSingleton<INightScheduleEventStore, MartenNightScheduleEventStore>();
+        services.AddSingleton<INightFeedEventStore, MartenNightFeedEventStore>();
 
         return services;
     }
@@ -86,6 +95,10 @@ public static class NightDutyFeature
         nightDuty.MapClearNightOverrides();
         nightDuty.MapGetNightSchedule();
         nightDuty.MapListNights();
+        nightDuty.MapCreateNightIcalToken();
+        nightDuty.MapListNightIcalTokens();
+        nightDuty.MapRevokeNightIcalToken();
+        nightDuty.MapGetNightIcalFeed();
 
         return endpoints;
     }

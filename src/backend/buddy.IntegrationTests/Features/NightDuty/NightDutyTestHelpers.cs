@@ -22,8 +22,62 @@ internal sealed record NightPatternTestDto(DateOnly EffectiveFrom, int CycleWeek
 
 internal sealed record NightScheduleTestDto(Guid ChildId, DateOnly Today, List<NightPatternTestDto> Patterns);
 
+internal sealed record NightIcalTokenTestDto(Guid TokenId, string Token, string SubscriptionPath, DateTimeOffset IssuedAt);
+
+internal sealed record NightIcalTokenSummaryTestDto(Guid TokenId, DateTimeOffset IssuedAt);
+
 internal static class NightDutyTestHelpers
 {
+    public static async Task<NightIcalTokenTestDto> CreateIcalTokenAsync(BuddyApiFixture fixture, string token, Guid childId)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Post.Url($"/night-duty/children/{childId}/ical-tokens");
+            _.StatusCodeShouldBeOk();
+        });
+
+        return response.ReadAsJson<NightIcalTokenTestDto>();
+    }
+
+    public static async Task<List<NightIcalTokenSummaryTestDto>> ListIcalTokensAsync(BuddyApiFixture fixture, string token, Guid childId)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Get.Url($"/night-duty/children/{childId}/ical-tokens");
+            _.StatusCodeShouldBeOk();
+        });
+
+        return response.ReadAsJson<List<NightIcalTokenSummaryTestDto>>();
+    }
+
+    public static async Task RevokeIcalTokenAsync(BuddyApiFixture fixture, string token, Guid childId, Guid tokenId, int status = 204) =>
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Delete.Url($"/night-duty/children/{childId}/ical-tokens/{tokenId}");
+            _.StatusCodeShouldBe(status);
+        });
+
+    public static async Task<string> ReadFeedAsync(BuddyApiFixture fixture, string subscriptionPath)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.Get.Url(subscriptionPath);
+            _.StatusCodeShouldBeOk();
+        });
+
+        return response.ReadAsText();
+    }
+
+    public static async Task FeedShouldBeNotFoundAsync(BuddyApiFixture fixture, string subscriptionPath) =>
+        await fixture.Host.Scenario(_ =>
+        {
+            _.Get.Url(subscriptionPath);
+            _.StatusCodeShouldBe(404);
+        });
+
     public const int KindUnplanned = 0;
     public const int KindCleared = 1;
     public const int KindPlanned = 2;

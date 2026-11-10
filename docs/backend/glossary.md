@@ -380,6 +380,10 @@ A night's plan: a responsible person (a guardian, a babysitter, a sleepover host
 
 A one-off change to a single night: a different entry, or `Cleared` ("nothing planned this night"). Overrides beat the fixed schedule; a switch between two guardians is two overrides saved together.
 
+### NightFeed
+
+A guardian's iCal subscription tokens for their children's night duty (`Features/NightDuty`). One per guardian; its id equals the guardian's `UserId`. Each token names one child, and only its hash is stored; the anonymous feed at `/night-duty/feeds/{guardianId}/ical/{token}` is rendered from that child's `NightSchedule` on every request, while the guardian still holds an active `GuardianLink` to the child. See [Night duty iCal feed](analysis/night-duty-ical-feed.md).
+
 ## Babysitter domain
 
 ### BabysitterList

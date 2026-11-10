@@ -109,6 +109,57 @@ describe('NightDutyService', () => {
     await promise;
   });
 
+  describe('iCal subscription links', () => {
+    const tokensUrl = `${base}/ical-tokens`;
+
+    it('GETs the caller’s links for the child', async () => {
+      const tokens = [{ tokenId: 't-1', issuedAt: '2026-11-01T00:00:00Z' }];
+
+      const promise = service.listIcalTokens('c-1');
+
+      const req = httpMock.expectOne(tokensUrl);
+      expect(req.request.method).toBe('GET');
+      req.flush(tokens);
+
+      await expect(promise).resolves.toEqual(tokens);
+    });
+
+    it('POSTs an empty body with an idempotency key and resolves with the issued token', async () => {
+      const issued = {
+        tokenId: 't-1',
+        token: 'secret',
+        subscriptionPath: '/night-duty/feeds/g-1/ical/secret',
+        issuedAt: '2026-11-01T00:00:00Z',
+      };
+
+      const promise = service.createIcalToken('c-1');
+
+      const req = httpMock.expectOne(tokensUrl);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({});
+      expect(req.request.headers.get('Idempotency-Key')).toBeTruthy();
+      req.flush(issued);
+
+      await expect(promise).resolves.toEqual(issued);
+    });
+
+    it('DELETEs one link by id', async () => {
+      const promise = service.revokeIcalToken('c-1', 't-1');
+
+      const req = httpMock.expectOne(`${tokensUrl}/t-1`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+
+      await promise;
+    });
+
+    it('prefixes a subscription path with the API base URL', () => {
+      expect(service.icalFeedUrl('/night-duty/feeds/g-1/ical/secret')).toBe(
+        `${apiBaseUrl}/night-duty/feeds/g-1/ical/secret`,
+      );
+    });
+  });
+
   describe('night helpers', () => {
     const planned = (source: 'Pattern' | 'Override'): Night => ({
       date: '2026-11-10',

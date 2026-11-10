@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import type { Schemas } from './api/schemas';
+import { postIdempotent } from './http-idempotency';
 import { RuntimeConfigService } from './runtime-config.service';
 
 // Who is on duty at night for a child (docs/backend/analysis/night-duty.md).
@@ -29,6 +30,11 @@ export type ReplaceNightPatternRequest = Schemas['ReplaceNightPatternRequest'];
 // entry null = "nothing planned this night" (a cleared night). To follow the fixed schedule
 // again, clear the override instead.
 export type NightOverride = Schemas['NightOverrideRequest'];
+
+// The caller's own iCal subscription links to one child's nights
+// (docs/backend/analysis/night-duty-ical-feed.md). The plaintext token is only in the create response.
+export type NightIcalTokenSummary = Schemas['NightIcalTokenSummary'];
+export type IssuedNightIcalToken = Schemas['NightIcalTokenResponse'];
 
 export const NIGHT_RESPONSIBLE = {
   guardian: 0,
@@ -93,5 +99,25 @@ export class NightDutyService {
     return firstValueFrom(
       this.http.delete<void>(this.url(childId, '/overrides'), { params: { from, to } }),
     );
+  }
+
+  listIcalTokens(childId: string): Promise<NightIcalTokenSummary[]> {
+    return firstValueFrom(
+      this.http.get<NightIcalTokenSummary[]>(this.url(childId, '/ical-tokens')),
+    );
+  }
+
+  createIcalToken(childId: string): Promise<IssuedNightIcalToken> {
+    return firstValueFrom(
+      postIdempotent<IssuedNightIcalToken>(this.http, this.url(childId, '/ical-tokens'), {}),
+    );
+  }
+
+  revokeIcalToken(childId: string, tokenId: string): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(this.url(childId, `/ical-tokens/${tokenId}`)));
+  }
+
+  icalFeedUrl(subscriptionPath: string): string {
+    return `${this.runtimeConfig.apiBaseUrl}${subscriptionPath}`;
   }
 }

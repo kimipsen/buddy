@@ -53,3 +53,28 @@ Authorization: Bearer {{guardianToken}}
 # Resolved nights (guardian or the child themself), at most 31 days
 GET {{buddy_HostAddress}}/night-duty/children/{{childId}}/nights?from=2026-11-16&to=2026-11-22
 Authorization: Bearer {{guardianToken}}
+
+###
+
+# Create a subscription link to this child's nights (guardian of the child only). The token is
+# shown once; subscriptionPath is the feed URL path.
+POST {{buddy_HostAddress}}/night-duty/children/{{childId}}/ical-tokens
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# List the caller's own subscription links for this child (no secrets)
+GET {{buddy_HostAddress}}/night-duty/children/{{childId}}/ical-tokens
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Revoke a subscription link
+DELETE {{buddy_HostAddress}}/night-duty/children/{{childId}}/ical-tokens/{{icalTokenId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# The feed itself: anonymous, the token is the credential. One all-day event per planned night,
+# 14 days back to 60 days ahead. 404 once the guardian is no longer a guardian of the child.
+GET {{buddy_HostAddress}}/night-duty/feeds/{{guardianId}}/ical/{{icalToken}}
