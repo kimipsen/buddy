@@ -124,6 +124,23 @@ describe('WeekPlanSheet', () => {
     expect(cells[10].textContent).toContain('Stil');
   });
 
+  it('centres a text cell (a meal, a work location) both ways and wraps long words', async () => {
+    const root = await render(model());
+    const cell = root.querySelectorAll('[role="cell"]')[10];
+    const wrapper = cell.firstElementChild!;
+    const text = cell.querySelector('span')!;
+
+    expect(wrapper.tagName).toBe('DIV');
+    for (const name of ['flex', 'h-full', 'items-center', 'justify-center']) {
+      expect(wrapper.classList).toContain(name);
+    }
+    expect(text.parentElement).toBe(wrapper);
+
+    expect(text.classList).toContain('block');
+    expect(text.classList).toContain('text-center');
+    expect(text.classList).toContain('[overflow-wrap:anywhere]');
+  });
+
   it('prints a night with who is on duty in their color and the note on a second line', async () => {
     const root = await render(
       model({
@@ -154,6 +171,17 @@ describe('WeekPlanSheet', () => {
     expect(lines[1].textContent?.trim()).toBe('Screen night');
     expect(cells[1].querySelectorAll('p')).toHaveLength(1);
     expect(cells[1].textContent).toContain('Movie night');
+    for (const cell of [cells[0], cells[1]]) {
+      const wrapper = cell.firstElementChild!;
+      for (const name of ['flex', 'h-full', 'flex-col', 'justify-center']) {
+        expect(wrapper.classList).toContain(name);
+      }
+      expect(cell.querySelector('p')!.parentElement).toBe(wrapper);
+    }
+    for (const line of [...Array.from(lines), cells[1].querySelector('p')!]) {
+      expect(line.classList).toContain('text-center');
+      expect(line.classList).toContain('[overflow-wrap:anywhere]');
+    }
   });
 
   it('prints a routine’s subtasks nested under its parent, with their own tick boxes', async () => {
