@@ -48,4 +48,5 @@ copies aligned when a convention changes.
 - [`deploy/`](deploy/README.md) — deploy to the Oracle VM or Azure Container
   Apps, with pre-flight checks and verification.
 - [`rebase-commit/`](rebase-commit/README.md) — commit finished work and land
-  it on master with rebase + fast-forward (no merge commits, no push).
+  it on master through a GitHub pull request (rebase, push, `gh pr create`,
+  clean up once merged).

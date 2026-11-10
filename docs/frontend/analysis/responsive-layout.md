@@ -305,7 +305,7 @@ overflow-y-auto`, `max-w-[calc(100vw-2rem)]`, and the missing Pickup link. Make 
 
 ## Plan
 
-Each phase is one worktree branch, landed with `rebase-commit`, ending with `task test` and
+Each phase is one worktree branch, landed through a PR with `rebase-commit`, ending with `task test` and
 `task docs:screenshots`. Each phase also updates the PNGs it changed.
 
 ### Phase 0 -- guardrail and tablet screenshots

@@ -25,22 +25,22 @@ Buddy is a family coordination app for guardians of children with ADHD; see [REA
 
 Use the matching skill instead of improvising. Each one holds the verified conventions for its area.
 
-| Area                                                                            | Skill                                             |
-| ------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Backend conventions                                                             | `claude-backend`                                  |
-| New endpoint / use case / aggregate                                             | `backend-feature`                                 |
-| Angular components, services, specs                                             | `buddy-frontend`                                  |
-| UI strings (en + da)                                                            | `i18n`                                            |
-| Playwright e2e                                                                  | `e2e-test`                                        |
-| Run / screenshot the app                                                        | `run-buddy`                                       |
-| Docs screenshots of every page (`task docs:screenshots`)                        | `doc-screenshots`                                 |
-| Pictograms (SVG, drawn by Codex's `.agents/skills/pictogram`)                   | `codex-pictogram`                                 |
-| Full feature from a design doc                                                  | `feature-from-analysis`                           |
-| Review a diff                                                                   | `backend-aware-review`                            |
-| Mutation testing                                                                | `mutation-fix` (frontend), `mutation-fix-backend` |
-| SonarCloud findings                                                             | `sonar-triage`                                    |
-| Commit and land work (rebase + fast-forward, no push), then remove the worktree | `rebase-commit`                                   |
-| Production deploy (always confirm first)                                        | `deploy`                                          |
+| Area                                                                               | Skill                                             |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Backend conventions                                                                | `claude-backend`                                  |
+| New endpoint / use case / aggregate                                                | `backend-feature`                                 |
+| Angular components, services, specs                                                | `buddy-frontend`                                  |
+| UI strings (en + da)                                                               | `i18n`                                            |
+| Playwright e2e                                                                     | `e2e-test`                                        |
+| Run / screenshot the app                                                           | `run-buddy`                                       |
+| Docs screenshots of every page (`task docs:screenshots`)                           | `doc-screenshots`                                 |
+| Pictograms (SVG, drawn by Codex's `.agents/skills/pictogram`)                      | `codex-pictogram`                                 |
+| Full feature from a design doc                                                     | `feature-from-analysis`                           |
+| Review a diff                                                                      | `backend-aware-review`                            |
+| Mutation testing                                                                   | `mutation-fix` (frontend), `mutation-fix-backend` |
+| SonarCloud findings                                                                | `sonar-triage`                                    |
+| Commit, open a GitHub PR to land on master, then clean up the worktree once merged | `rebase-commit`                                   |
+| Production deploy (always confirm first)                                           | `deploy`                                          |
 
 `agents/` holds Codex/Copilot packages; Claude Code doesn't load them. `.agents/skills/` holds skills the Codex CLI loads (e.g. `pictogram`).
 
@@ -50,11 +50,11 @@ After adding a skill or changing a skill's `description`, check that it still tr
 
 Several features are developed at once, each in its own git worktree, so they don't touch each other's files.
 
-- Start a session for each feature with `claude --worktree <feature>` (`-w`). The worktree is created in `.claude/worktrees/<feature>` on the branch `worktree-<feature>`. It branches from the local HEAD (`worktree.baseRef: "head"` in `.claude/settings.json`), because `origin/master` falls behind local master. So keep the main checkout on `master`.
+- Start a session for each feature with `claude --worktree <feature>` (`-w`). The worktree is created in `.claude/worktrees/<feature>` on the branch `worktree-<feature>`. It branches from the local HEAD (`worktree.baseRef: "head"` in `.claude/settings.json`). So keep the main checkout on `master`, synced with `origin/master` (`rebase-commit` fast-forwards it after each merged PR; otherwise `git pull --ff-only`).
 - Every Agent call that may edit files passes `isolation: "worktree"`. This includes implementation, fixes, tests, mutation runs and doc generation. Read-only agents (Explore, Plan, claude-code-guide, reviews) are the exception.
 - `.worktreeinclude` copies the git-ignored local files (`taskfile.yml`, `appsettings.Development.json`, `.env`) into each new worktree. Run `npm ci` in `src/frontend/buddy` before the first frontend command in a fresh worktree.
 - Worktrees share the dev ports (4300, 5193, 7076), the database and Keycloak. Only one worktree at a time may run the dev servers, e2e tests or `task docs:screenshots`. Unit specs and backend integration tests can run in parallel, because Testcontainers gives each run its own database.
-- Land a worktree branch with `rebase-commit`. It fast-forwards `master` in the main checkout, then removes the landed worktree and its branch.
+- Code lands on `master` only through a GitHub pull request (`kimipsen/buddy`); never commit or push to `master` directly. `rebase-commit` rebases the worktree branch onto `origin/master`, pushes it and opens the PR. The user merges it; after that, `rebase-commit` fast-forwards the local `master` and removes the worktree and its branch.
 
 ## Conventions
 
