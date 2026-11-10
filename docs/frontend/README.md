@@ -413,10 +413,13 @@ with the `nav-items.ts` pages that have a `tab`: Today, Calendar, Meals and Slee
 follow their feature flags). It is hidden from `sm` up, when printing and on onboarding
 (`data: { hideTabBar: true }`). On touch screens it also hides while a typing field (text input,
 select, textarea) has focus, because iOS Safari doesn't shrink the layout viewport for the
-keyboard and the fixed bar would float over the page. For the same reason `styles.css` gives form
-fields at least 16px text on touch screens (iOS zooms in on smaller text and doesn't zoom back),
-and `index.html` sets `viewport-fit=cover` so `env(safe-area-inset-bottom)` clears the home
-indicator; the body pads for the landscape notch.
+keyboard and the fixed bar would float over the page. The bar starts hidden when a typing field
+already has focus as it is created. For the same reason `styles.css` gives form
+fields at least 16px text on touch screens (iOS zooms in on smaller text and doesn't zoom back);
+button, submit, reset and image inputs are left out, as they are in the tab bar's typing-field
+check. `index.html` sets `viewport-fit=cover` so `env(safe-area-inset-bottom)` clears the home
+indicator; the body pads for the landscape notch, and the tab bar pads itself by the left and
+right insets because the body padding doesn't reach a fixed full-width bar.
 
 The dashboard's "Packing for tomorrow" card (`packing-tomorrow/`, behind `taskLibrary`) only
 renders from a packing list's evening time until midnight while a child's list for tomorrow isn't
