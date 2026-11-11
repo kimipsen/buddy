@@ -330,16 +330,49 @@ MCP clients have no client id for a self-hosted Buddy until they register.
     client callback hosts (`claude.ai`, `vscode.dev`, `chatgpt.com`). The operator can extend the
     list in the setup guide. A registration with any other redirect URI is refused, so a phishing
     client can't send the authorization code to its own server.
-  - **Max clients:** 50 (Keycloak's default is 200). A family needs a handful.
+  - **Max clients:** the realm's existing clients plus 50. Keycloak's policy counts _every_
+    client in the realm, not only registered ones: the built-in clients Keycloak creates in each
+    realm (`account`, `account-console`, `admin-cli`, `broker`, `realm-management`,
+    `security-admin-console`) and Buddy's own `buddy-frontend`, `buddy-admin-cli` and
+    `buddy-mcp`. A plain 50 would leave room for about 41 registrations, and every client Buddy
+    adds later would shrink that silently. So the setting is written as the current count plus
+    50, and a `KeycloakParityTests` case recounts the realm's non-registered clients and fails
+    when the setting no longer equals that count plus 50.
+  - **Custom-scheme redirect URIs are out of scope for DCR.** Some desktop clients (Cursor's
+    `cursor://...`, for example) redirect to a custom URI scheme with no host, so the
+    trusted-hosts policy refuses their registration. Allowing hostless schemes would also allow
+    any app that claims the scheme on the guardian's machine to receive the code. Such a client
+    is supported the manual way: the operator adds its redirect URI to the pre-registered
+    `buddy-mcp` client (or a client of its own) in the admin console, and the guardian enters
+    that client id in the MCP client. The setup guide has the steps. Clients that use loopback
+    or a web callback, which covers Claude, VS Code and ChatGPT, need none of this.
 - **When the cap is hit,** Keycloak refuses new registrations, so filling the cap with junk
   clients locks out real ones. That is a denial of service, not a data exposure, since a junk
   client still needs a guardian to sign in and consent. Two things keep it in check:
   - **Cleanup.** A daily `McpClientCleanupService` in the API, the same shape as
     [`IdempotencyCleanupService`](../../../src/backend/buddy/Common/Idempotency/IdempotencyCleanupService.cs),
-    uses `IKeycloakAdminClient` to delete dynamically registered clients that no user has
-    consented to within 24 hours of registering. A family has few users, so checking their
-    consents is a handful of admin calls. Clients a guardian uses survive; abandoned and junk
-    registrations don't pile up.
+    uses `IKeycloakAdminClient` to delete dynamically registered clients that nobody has
+    consented to within **7 days** of registering:
+    - _Which clients are registered ones._ In OIDC dynamic registration the server assigns the
+      `client_id`, and Keycloak makes it a UUID. Every client created by hand has a readable id:
+      Keycloak's built-ins, Buddy's own, and any the operator adds for a custom-scheme client,
+      which the setup guide says to name `buddy-...`. So a client is a cleanup candidate only when
+      its `clientId` parses as a UUID, and never when it is on the exclude list (`buddy-*` and
+      Keycloak's built-in clients). A test checks that the pre-registered clients survive a run.
+    - _How consents are read._ Keycloak stores consents per user, not per client, so the job
+      lists the realm's users and calls `GET /admin/realms/buddy/users/{id}/consents` for each.
+      A family has a handful of users, so that is a handful of calls a day.
+    - _A deleted user's consents go with the account._ So a client whose only consenting
+      guardian was deleted has no consents left and is removed once it is past the grace period.
+    - _Why 7 days, not 24 hours._ A client may register and then wait for the guardian to finish
+      signing in, or be set up on one day and used the next. Many clients cache the `client_id`
+      and don't register again when it later fails with `invalid_client`, which would leave the
+      guardian stuck. A week covers ordinary delays, and the cap still holds. The setup guide's
+      troubleshooting section names the recovery: remove the Buddy connector or server in the
+      client and add it again, which makes it register a fresh client.
+
+    Clients a guardian uses survive; abandoned and junk registrations don't pile up.
+
   - **Monitoring.** The cleanup logs how many it deleted. A spike tells the operator someone is
     filling the endpoint, and the setup guide says to turn anonymous DCR off again and use the
     pre-registered client meanwhile.
@@ -356,7 +389,20 @@ MCP clients have no client id for a self-hosted Buddy until they register.
 - **The pre-registered public `buddy-mcp` client** (PKCE, loopback redirect URIs) serves
   CLI/IDE clients that accept a configured client id, and the integration tests.
 
-All three realm files change together, and
+The realm changes:
+
+- client scopes `buddy-mcp:read` (and, in phase 2, `buddy-mcp:write`), each with an audience
+  mapper for `buddy-mcp`, the `groups` mapper (as on `buddy-frontend`) and a consent-screen
+  description;
+- the public `buddy-mcp` client (PKCE S256, loopback redirect URIs, `buddy-mcp:read` as its only
+  optional scope, consent required);
+- the anonymous client-registration policies above (allowed scopes, full scope disallowed,
+  allowed protocol mappers, trusted hosts, max clients, consent required), with anonymous
+  registration itself left off until the operator turns it on (Question 1).
+
+`KeycloakParityTests` gets a case for each: both scopes exist with the same mappers in every
+realm file, the `buddy-mcp` client matches, and the max-clients count is right. All three realm
+files change together, and
 [`KeycloakParityTests`](../../../src/backend/buddy.IntegrationTests/Meta/KeycloakParityTests.cs)
 keeps them in step:
 
@@ -376,9 +422,10 @@ Considered and rejected:
 
 ## Question 5: who may use it?
 
-**Decision: guardians only. The guardian check is a small `McpGuardianOnly` endpoint filter on
-`/mcp`, not an authorization policy. A child account gets `403 not_a_buddy_guardian` before any
-tool runs.**
+**Decision: guardians only. The guardian check is a small `McpGuardianMiddleware`, applied with
+`UseWhen` to paths under `/mcp` right after `UseProvisionedUsers`, not an authorization policy
+and not an endpoint filter. A child account gets `403 not_a_buddy_guardian` before any tool
+runs.**
 
 Where the check sits decides which error a caller sees. In
 [Program.cs](../../../src/backend/buddy/Program.cs) the order is `UseAuthorization`, then
@@ -389,12 +436,30 @@ bare 403 and no `ErrorEnvelope`. So:
 - the `/mcp` policy only requires an authenticated user (Question 4);
 - `UseBuddyMembers` then turns away an account in neither group with `403 not_a_buddy_member`,
   and `UseProvisionedUsers` handles a not-yet-provisioned guardian, exactly as for the app;
-- the endpoint filter runs last, after provisioning, and answers a `buddy-child` member with
+- `McpGuardianMiddleware` runs next, and answers a `buddy-child` member with
   `403 not_a_buddy_guardian` as an `ErrorEnvelope`. That is a new error code, so it goes into
   [http-status-codes.md](../http-status-codes.md).
 
-Both middlewares see the MCP principal, because the default policy scheme authenticated it in
-`UseAuthentication` (Question 4). An integration test covers each of the three outcomes.
+```csharp
+app.UseBuddyMembers();
+app.UseProvisionedUsers();
+app.UseWhen(context => context.Request.Path.StartsWithSegments("/mcp"),
+    mcp => mcp.UseMiddleware<McpGuardianMiddleware>());   // new: 403 not_a_buddy_guardian
+app.UseConcurrencyConflicts();
+// ...
+```
+
+Why not an endpoint filter: `AddEndpointFilter` only runs on minimal-API route handlers that
+`RequestDelegateFactory` builds from a lambda. `MapMcp` maps the SDK's own `RequestDelegate`
+endpoints, so a filter on it would never run, and a child's call would reach the tools
+unchecked. A middleware runs whatever the endpoint is. `initialize`, `tools/list` and
+`tools/call` are all `POST /mcp`, so it covers every request. The metadata route lives under
+`/.well-known/`, so it stays anonymous.
+
+All three middlewares see the MCP principal, because the default policy scheme authenticated it
+in `UseAuthentication` (Question 4). An integration test covers each of the three outcomes:
+a child token is refused on `initialize` _and_ on `tools/call`, so the check can't be bypassed by
+skipping the handshake.
 
 - Child accounts belong to children with ADHD, often young. The child UI is deliberately reduced
   ([child-day-dashboard.md](../../frontend/analysis/child-day-dashboard.md)). An LLM that can list
@@ -612,8 +677,9 @@ with tokens from the `buddy-mcp` test client:
 - **Pipeline order:** with a `buddy-mcp` token, a burst on `/mcp` exhausts the caller's
   _authenticated_ bucket, not the anonymous bucket of the test's IP (Question 4), and
   `GetRequiredUserId()` resolves in a tool.
-- **Role:** a child token gets `403 not_a_buddy_guardian`, an account in neither group
-  `403 not_a_buddy_member`, both as an `ErrorEnvelope` (Question 5).
+- **Role:** a child token gets `403 not_a_buddy_guardian` on `initialize` and on a direct
+  `tools/call` (`list_night_duty` for their own id), and no handler runs. An account in neither
+  group gets `403 not_a_buddy_member`. Both come back as an `ErrorEnvelope` (Question 5).
 - **Scopes (phase 2):** a write tool called with a read-only token gets 403 with
   `error="insufficient_scope"`, and `tools/list` for that token has no write tools.
 - **Read:** `list_night_duty` for the caller's child returns the nights. For a child they aren't
@@ -627,8 +693,13 @@ with tokens from the `buddy-mcp` test client:
 - **Golden file:** a `tools/list` snapshot, including the server `instructions` (Question 8).
 - **Result shaping:** a calendar title longer than the cap comes back truncated with
   `truncated: true`.
-- **Client cleanup:** `McpClientCleanupService` deletes a registered client nobody consented to
-  within 24 hours and keeps one a guardian consented to (against the real Keycloak container).
+- **Client cleanup** (against the real Keycloak container, with a fake clock):
+  `McpClientCleanupService` deletes a registered client nobody consented to after 7 days, keeps
+  one a guardian consented to, keeps a 6-day-old one, deletes one whose only consenting user was
+  deleted, and never touches `buddy-mcp`, `buddy-frontend`, `buddy-admin-cli` or the built-in
+  clients.
+- **Realm parity:** `KeycloakParityTests` checks the `buddy-mcp:*` scopes, the `buddy-mcp`
+  client and the max-clients count in every realm file.
 
 The issue's acceptance criteria map one to one onto these: connect, authenticate and list tools;
 family-scoped reads; guardian-only idempotent writes; at least one read and one write tested; a
@@ -636,28 +707,30 @@ setup doc.
 
 ## Failure and edge-case behavior
 
-| Case                                                  | Behavior                                                                                         |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `Features:Mcp` off                                    | `/mcp` and the metadata route are not mapped and return 404                                      |
-| No or expired token                                   | 401 with `WWW-Authenticate: Bearer resource_metadata=...`; the client refreshes or re-authorizes |
-| Token for `buddy-api`                                 | 401 (wrong audience)                                                                             |
-| Child account                                         | 403 `not_a_buddy_guardian` (`ErrorEnvelope`); no tool runs                                       |
-| Account in neither Keycloak group                     | 403 `not_a_buddy_member`, from `UseBuddyMembers` as for the app                                  |
-| Write tool with a read-only token                     | 403 `insufficient_scope`; the client asks the guardian to consent to `buddy-mcp:write`           |
-| Anonymous DCR cap reached                             | Keycloak refuses new registrations; the daily cleanup frees unconsented ones                     |
-| Registration with an unknown redirect URI             | Refused by the trusted-hosts policy                                                              |
-| Tool call dies mid-way with an `idempotencyKey`       | Key blocked as `idempotency_key_in_progress` for up to 5 minutes, then reusable                  |
-| Same `idempotencyKey` reused after 24 hours           | Treated as new: the completed record has expired                                                 |
-| Injected instructions in a calendar title or note     | Returned as data in a labelled, capped field; any write still needs scope and client approval    |
-| Child or calendar not linked to the caller            | Tool result `isError`, "not found": the same `NotFound` collapse as the endpoint                 |
-| Guardian's `GuardianLink` revoked mid-conversation    | The next call returns not found; nothing is cached                                               |
-| Validator failure                                     | `isError` with the `ErrorEnvelope` code and field errors, so the model can correct and retry     |
-| Concurrency conflict                                  | `isError` `concurrency_conflict`; the model can re-read and retry                                |
-| Feature turned off after a client cached `tools/list` | The tool is no longer registered, and the call returns the JSON-RPC "unknown tool" error         |
-| Rate limited                                          | HTTP 429 with `Retry-After`, as for every endpoint                                               |
-| Retried create with the same `idempotencyKey`         | First result replayed; nothing created twice                                                     |
-| Same key, different arguments                         | `isError` `idempotency_key_reused`                                                               |
-| Account erased                                        | The token's subject no longer resolves, and `UseProvisionedUsers` rejects it as for the app      |
+| Case                                                          | Behavior                                                                                             |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `Features:Mcp` off                                            | `/mcp` and the metadata route are not mapped and return 404                                          |
+| No or expired token                                           | 401 with `WWW-Authenticate: Bearer resource_metadata=...`; the client refreshes or re-authorizes     |
+| Token for `buddy-api`                                         | 401 (wrong audience)                                                                                 |
+| Child account                                                 | 403 `not_a_buddy_guardian` (`ErrorEnvelope`); no tool runs                                           |
+| Account in neither Keycloak group                             | 403 `not_a_buddy_member`, from `UseBuddyMembers` as for the app                                      |
+| Write tool with a read-only token                             | 403 `insufficient_scope`; the client asks the guardian to consent to `buddy-mcp:write`               |
+| Anonymous DCR cap reached                                     | Keycloak refuses new registrations; the daily cleanup frees unconsented ones                         |
+| Client used after its unconsented registration was cleaned up | `invalid_client`; the guardian removes and re-adds the connector so it registers again (setup guide) |
+| Client with a custom-scheme redirect URI (`cursor://`)        | DCR refused; the operator adds the URI to a pre-registered client (setup guide)                      |
+| Registration with an unknown redirect URI                     | Refused by the trusted-hosts policy                                                                  |
+| Tool call dies mid-way with an `idempotencyKey`               | Key blocked as `idempotency_key_in_progress` for up to 5 minutes, then reusable                      |
+| Same `idempotencyKey` reused after 24 hours                   | Treated as new: the completed record has expired                                                     |
+| Injected instructions in a calendar title or note             | Returned as data in a labelled, capped field; any write still needs scope and client approval        |
+| Child or calendar not linked to the caller                    | Tool result `isError`, "not found": the same `NotFound` collapse as the endpoint                     |
+| Guardian's `GuardianLink` revoked mid-conversation            | The next call returns not found; nothing is cached                                                   |
+| Validator failure                                             | `isError` with the `ErrorEnvelope` code and field errors, so the model can correct and retry         |
+| Concurrency conflict                                          | `isError` `concurrency_conflict`; the model can re-read and retry                                    |
+| Feature turned off after a client cached `tools/list`         | The tool is no longer registered, and the call returns the JSON-RPC "unknown tool" error             |
+| Rate limited                                                  | HTTP 429 with `Retry-After`, as for every endpoint                                                   |
+| Retried create with the same `idempotencyKey`                 | First result replayed; nothing created twice                                                         |
+| Same key, different arguments                                 | `isError` `idempotency_key_reused`                                                                   |
+| Account erased                                                | The token's subject no longer resolves, and `UseProvisionedUsers` rejects it as for the app          |
 
 ## Estimate
 
@@ -669,18 +742,18 @@ setup doc.
 
 ## Decisions made
 
-| Question            | Decision                                                                                                                                                                                                                                                                        |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Where it runs       | In the API process, `Features/Mcp`, stateless streamable HTTP at `/mcp`, behind `Features:Mcp` (default off)                                                                                                                                                                    |
-| What a tool calls   | The slice's command/query via `IMessageBus`, reusing validation, authorization, audit logs and `Result<T>`                                                                                                                                                                      |
-| Tool catalogue      | Hand-written and curated (~15 read tools), with golden-file and feature-flag tests; not generated from 253 endpoints                                                                                                                                                            |
-| Authentication      | Keycloak OAuth 2.1 + PKCE, RFC 9728 metadata, dedicated `buddy-mcp` audience and JwtBearer scheme, chosen for `/mcp` by a default policy scheme so the rate limiter and membership middlewares see the caller                                                                   |
-| Scopes              | `buddy-mcp:read` in v1, `buddy-mcp:write` added in phase 2 and checked per tool, with step-up consent                                                                                                                                                                           |
-| Client registration | Anonymous DCR limited by allowed scopes, PKCE public clients, consent, trusted redirect hosts and a 50-client cap; a daily cleanup of unconsented clients; plus a pre-registered client                                                                                         |
-| Who                 | Guardians only, checked by an endpoint filter after provisioning; children get `403 not_a_buddy_guardian`                                                                                                                                                                       |
-| Writes              | Read-only v1; phase 2 allowlist with MCP annotations and `idempotencyKey` through `IdempotencyKeyRepository` (existing 24 h / 5 min retention); `set_task_completion` left out because it moves a child's stars; destructive, secret-minting and medicine actions never exposed |
-| Privacy             | Disclosure in the setup guide, PRIVACY.md and a new gdpr-data-protection.md section; per-call log without argument values; `mcp` rate-limit policy; health tools limited to the sleep diary                                                                                     |
-| Prompt injection    | Structured, labelled and length-capped text fields, server instructions, and narrow scoped writes; no filtering of family data                                                                                                                                                  |
+| Question            | Decision                                                                                                                                                                                                                                                                                                                     |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Where it runs       | In the API process, `Features/Mcp`, stateless streamable HTTP at `/mcp`, behind `Features:Mcp` (default off)                                                                                                                                                                                                                 |
+| What a tool calls   | The slice's command/query via `IMessageBus`, reusing validation, authorization, audit logs and `Result<T>`                                                                                                                                                                                                                   |
+| Tool catalogue      | Hand-written and curated (~15 read tools), with golden-file and feature-flag tests; not generated from 253 endpoints                                                                                                                                                                                                         |
+| Authentication      | Keycloak OAuth 2.1 + PKCE, RFC 9728 metadata, dedicated `buddy-mcp` audience and JwtBearer scheme, chosen for `/mcp` by a default policy scheme so the rate limiter and membership middlewares see the caller                                                                                                                |
+| Scopes              | `buddy-mcp:read` in v1, `buddy-mcp:write` added in phase 2 and checked per tool, with step-up consent                                                                                                                                                                                                                        |
+| Client registration | Anonymous DCR limited by allowed scopes, PKCE public clients, consent, trusted redirect hosts and a cap of existing clients + 50; a daily cleanup of registered (UUID id, `buddy-mcp:*` scopes) clients unconsented after 7 days; custom-scheme redirects only through a pre-registered client; plus a pre-registered client |
+| Who                 | Guardians only, checked by a `/mcp` middleware after provisioning; children get `403 not_a_buddy_guardian`                                                                                                                                                                                                                   |
+| Writes              | Read-only v1; phase 2 allowlist with MCP annotations and `idempotencyKey` through `IdempotencyKeyRepository` (existing 24 h / 5 min retention); `set_task_completion` left out because it moves a child's stars; destructive, secret-minting and medicine actions never exposed                                              |
+| Privacy             | Disclosure in the setup guide, PRIVACY.md and a new gdpr-data-protection.md section; per-call log without argument values; `mcp` rate-limit policy; health tools limited to the sleep diary                                                                                                                                  |
+| Prompt injection    | Structured, labelled and length-capped text fields, server instructions, and narrow scoped writes; no filtering of family data                                                                                                                                                                                               |
 
 ## Remaining open questions
 
@@ -700,7 +773,7 @@ setup doc.
   possible later addition.
 - **A rate limit in front of Keycloak's registration endpoint?** Lean: not in v1. It needs a
   custom Caddy build (`caddy-ratelimit`) or Azure Front Door, which every installation would have
-  to adopt. The 50-client cap, the trusted-hosts policy and the daily cleanup bound the damage,
+  to adopt. The client cap, the trusted-hosts policy and the daily cleanup bound the damage,
   and the setup guide says how to turn anonymous DCR off when the cleanup log shows a spike.
 - **The known callback hosts for DCR.** Lean: `claude.ai`, `vscode.dev` and `chatgpt.com` plus
   loopback, extendable by the operator. The list will need upkeep as clients change their
@@ -717,7 +790,7 @@ setup doc.
 flowchart TB
     Client["LLM client\n(Claude, VS Code, ChatGPT)"]
     subgraph KC["Keycloak realm buddy"]
-        DCR["DCR + policies\n(buddy-mcp:read/write, PKCE, consent,\ntrusted hosts, max 50)"]
+        DCR["DCR + policies\n(buddy-mcp:read/write, PKCE, consent,\ntrusted hosts, cap)"]
         Token["Token aud=buddy-mcp"]
     end
     subgraph Api["Buddy API (one process)"]
