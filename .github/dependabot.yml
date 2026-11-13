@@ -72,6 +72,10 @@ updates:
       interval: "cron"
       cronjob: "0 6 * * 1,5" # Monday and Friday, 06:00
       timezone: "Europe/Copenhagen"
+    # The SDK tag must match global.json; bumped by hand with it (see /src/backend/buddy below).
+    ignore:
+      - dependency-name: "dotnet/sdk"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
 
   - package-ecosystem: "docker"
     directory: "/src/backend/buddy"
