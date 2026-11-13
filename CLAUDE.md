@@ -4,7 +4,7 @@ Buddy is a family coordination app for guardians of children with ADHD; see [REA
 
 ## Stack
 
-- **Backend** (`src/backend`): .NET 11 preview, vertical slices in `buddy/Features/<Domain>/<UseCase>/`, Marten event sourcing with inline snapshot projections, WolverineFx, FluentValidation, minimal APIs, `Result<T>` union. Integration tests in `buddy.IntegrationTests` (xunit, Alba, Testcontainers; needs Docker).
+- **Backend** (`src/backend`): .NET 11 (C# `LangVersion preview` for unions), vertical slices in `buddy/Features/<Domain>/<UseCase>/`, Marten event sourcing with inline snapshot projections, WolverineFx, FluentValidation, minimal APIs, `Result<T>` union. Integration tests in `buddy.IntegrationTests` (xunit, Alba, Testcontainers; needs Docker).
 - **Frontend** (`src/frontend/buddy`): Angular 22, zoneless, standalone, signals, Tailwind 4, Vitest unit specs, Playwright e2e. UI strings are typed English/Danish dictionaries in `src/app/core/i18n`.
 - **Services** (devcontainer): Postgres `db:5432`, Keycloak `http://keycloak:8080` (realm `buddy`), Mailpit `http://mailpit:8025`. From inside the container, use these hostnames, not `localhost:9080`/`9025`; those reach a different nested stack.
 - **Ports**: API `http://localhost:5193` / `https://localhost:7076`; frontend `http://localhost:4300`.
