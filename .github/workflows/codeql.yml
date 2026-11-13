@@ -38,7 +38,7 @@ jobs:
       matrix:
         include:
           # Built for real (manual build mode), so the extractor sees the same compilation as the
-          # SDK pinned in global.json -- .NET 11 preview with C# preview features.
+          # SDK pinned in global.json -- .NET 11 with C# preview features (unions).
           # The excluded queries misread that preview code: they flag nearly every local that is
           # read on the next line (`var command = ...; await bus.InvokeAsync(command)`) and
           # implicit conversions to union types, ~1000 false positives with no real hit among them.

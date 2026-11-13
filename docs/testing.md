@@ -236,7 +236,7 @@ and the design in
   (TypeScript, no build) for changes under `src/`, and weekly. Findings appear
   under the repository's Security → Code scanning alerts. The backend config
   excludes `cs/useless-assignment-to-local`, `cs/useless-upcast` and
-  `cs/useless-cast-to-self`, which misread the .NET 11 preview code (about
+  `cs/useless-cast-to-self`, which misread the C# preview (union) code (about
   1000 false positives, none real). Results in source-generator output under
   `obj/` (Marten/JasperFx evolvers) and in the committed Wolverine code in
   `Internal/Generated` are filtered out of the SARIF with `jq` before it is

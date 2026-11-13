@@ -5,7 +5,7 @@
 
 # Pinned by version tag. The SDK tag matches global.json at the repo root (which this build context
 # can't see): bump both together, and the runtime tag with them.
-FROM mcr.microsoft.com/dotnet/sdk:11.0.100-rc.3 AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0.100 AS build
 WORKDIR /src
 
 # .editorconfig carries the analyzer exceptions; without it the analyzers (warnings as errors) fail
@@ -19,18 +19,13 @@ ARG BUDDY_COMMIT=unknown
 RUN dotnet publish buddy/buddy.csproj -c Release -o /app \
       -p:MinVerVersionOverride="$BUDDY_VERSION" -p:SourceRevisionId="$BUDDY_COMMIT"
 
-FROM mcr.microsoft.com/dotnet/aspnet:11.0.0-rc.3 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:11.0.0 AS runtime
 
 # A home directory, because Data Protection (MealplansFeature) keeps its key ring under
 # ~/.aspnet when nothing else is configured; without one the keys would live only in memory.
-# CVE-2026-109518 (apt, fixed in 3.2.1ubuntu0.1) isn't in the rc.3 image yet: drop the apt upgrade
-# once an aspnet rebuild with the fixed apt is published under the rc.3 tag.
 RUN if ! id -u aspnet >/dev/null 2>&1; then \
 			groupadd --system aspnet && useradd --system --gid aspnet --create-home aspnet; \
-		fi \
-	&& apt-get update \
-	&& DEBIAN_FRONTEND=noninteractive apt-get install --only-upgrade -y --no-install-recommends apt libapt-pkg7.0 \
-	&& rm -rf /var/lib/apt/lists/*
+		fi
 
 WORKDIR /app
 COPY --from=build /app .
