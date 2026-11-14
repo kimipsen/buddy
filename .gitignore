@@ -515,3 +515,5 @@ StrykerOutput/
 # Gas City
 .beads/*
 !.beads/identity.toml
+
+.gc/
