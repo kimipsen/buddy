@@ -33,6 +33,7 @@ export class MonthGrid {
     const days = this.days();
     const weeks: MonthGridWeek[] = [];
 
+    // Stryker disable next-line EqualityOperator: `<=` only adds an empty last week, and the grid renders cells, not weeks
     for (let index = 0; index < days.length; index += 7) {
       weeks.push({ days: days.slice(index, index + 7) });
     }

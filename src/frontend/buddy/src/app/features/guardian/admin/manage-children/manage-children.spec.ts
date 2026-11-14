@@ -1445,6 +1445,70 @@ describe('ManageChildren', () => {
     });
   });
 
+  it("puts back only the changed child's homework lengths when the change fails", async () => {
+    const updateChildHomeworkChunks = vi
+      .fn<GuardiansService['updateChildHomeworkChunks']>()
+      .mockRejectedValueOnce(new Error('boom'));
+    const { fixture } = await setup({
+      guardians: {
+        listMyChildren: vi.fn(async () => [
+          child({
+            id: 'child-1',
+            name: { givenName: 'Sam', familyName: 'Kid' },
+            homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
+          }),
+          child({
+            id: 'child-2',
+            name: { givenName: 'Ada', familyName: 'Kid' },
+            homeworkChunks: { focusMinutes: 20, breakMinutes: 3 },
+          }),
+        ]),
+        updateChildHomeworkChunks,
+      },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    choose(homeworkSelects(compiled, 'Ada Kid')[0], '10 min');
+    await settle(fixture);
+
+    const [adaFocus, adaBreak] = homeworkSelects(compiled, 'Ada Kid');
+    expect(adaFocus.selectedOptions[0]?.textContent?.trim()).toBe('20 min');
+    expect(adaBreak.selectedOptions[0]?.textContent?.trim()).toBe('3 min');
+    expect(childRow(compiled, 'Ada Kid').textContent).toContain(
+      "Unable to update this child's homework lengths.",
+    );
+    const [samFocus, samBreak] = homeworkSelects(compiled, 'Sam Kid');
+    expect(samFocus.selectedOptions[0]?.textContent?.trim()).toBe('15 min');
+    expect(samBreak.selectedOptions[0]?.textContent?.trim()).toBe('5 min');
+  });
+
+  it('shows the lengths the server saved, not the ones picked', async () => {
+    const updateChildHomeworkChunks = vi.fn<GuardiansService['updateChildHomeworkChunks']>(
+      async (childId, homeworkChunks) =>
+        child({ id: childId, homeworkChunks: { ...homeworkChunks, focusMinutes: 25 } }),
+    );
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildHomeworkChunks },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    choose(homeworkSelects(compiled, 'Sam Kid')[0], '20 min');
+    await settle(fixture);
+
+    expect(homeworkSelects(compiled, 'Sam Kid')[0].selectedOptions[0]?.textContent?.trim()).toBe(
+      '25 min',
+    );
+
+    choose(homeworkSelects(compiled, 'Sam Kid')[1], '2 min');
+    await settle(fixture);
+    expect(updateChildHomeworkChunks).toHaveBeenLastCalledWith('child-1', {
+      focusMinutes: 25,
+      breakMinutes: 2,
+    });
+  });
+
   it('disables the homework selects while a change is in flight', async () => {
     const { promise, resolve } = deferred<ChildSummary>();
     const { fixture } = await setup({
@@ -2209,6 +2273,48 @@ describe('ManageChildren', () => {
 
     resolve(undefined);
     await settle(fixture);
+  });
+
+  // The error from cancelling an invite belongs to the panel it was shown in.
+  async function showCancelError(sendInvite = vi.fn(async () => invite())) {
+    const pendingInvite = invite({ id: 'invite-9', email: 'pending@buddy.test' });
+    const { fixture, guardians } = await setup({
+      guardians: {
+        listMyChildren: vi.fn(async () => [child()]),
+        listGuardianInvites: vi.fn(async () => [pendingInvite]),
+        revokeGuardianInvite: vi.fn(async () => Promise.reject(new Error('boom'))),
+        inviteGuardian: sendInvite,
+      },
+    });
+    await settle(fixture);
+
+    const compiled = await openInvitePanel(fixture);
+    findButtonByText(inviteRow(compiled, 'pending@buddy.test'), 'Cancel')!.click();
+    await settle(fixture);
+    expect(compiled.textContent).toContain('Unable to cancel the invite.');
+
+    return { fixture, guardians, compiled };
+  }
+
+  it('clears a cancel-invite error when the invite panel is closed and reopened', async () => {
+    const { fixture, compiled } = await showCancelError();
+
+    await closeInvitePanel(fixture);
+    await openInvitePanel(fixture);
+
+    expect(compiled.textContent).not.toContain('Unable to cancel the invite.');
+  });
+
+  it('clears a cancel-invite error when an invite is sent', async () => {
+    const { fixture, guardians, compiled } = await showCancelError();
+
+    setInputValue(inviteEmailInput(compiled)!, 'friend@buddy.test');
+    await settle(fixture);
+    inviteForm(compiled)!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(guardians.inviteGuardian).toHaveBeenCalledTimes(1);
+    expect(compiled.textContent).not.toContain('Unable to cancel the invite.');
   });
 
   describe('resetting a password', () => {

@@ -1725,4 +1725,156 @@ describe('ManageGroups', () => {
     pending.resolve();
     await settle(fixture);
   });
+
+  // ----- Revoke errors, copy failures and the members refresh (issue #96) -----
+
+  async function showRevokeError() {
+    const { fixture, groups } = await setup({
+      groups: {
+        listInvites: vi.fn(async () => [invite({ id: 'invite-9' })]),
+        revokeInvite: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
+    });
+    await settle(fixture);
+    await openPanel(fixture, 'Invite');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    await openPanel(fixture, 'Cancel');
+    expect(compiled.textContent).toContain('Unable to cancel the invite.');
+
+    return { fixture, groups, compiled };
+  }
+
+  it('clears a cancel-invite error when the invite panel is closed and reopened', async () => {
+    const { fixture, compiled } = await showRevokeError();
+
+    await openPanel(fixture, 'Close');
+    await openPanel(fixture, 'Invite');
+
+    expect(compiled.textContent).not.toContain('Unable to cancel the invite.');
+  });
+
+  it('clears a cancel-invite error when an invite is sent', async () => {
+    const { fixture, groups, compiled } = await showRevokeError();
+
+    setInputValue(
+      compiled.querySelector<HTMLInputElement>('input[name="inviteEmail"]')!,
+      'friend@buddy.test',
+    );
+    await settle(fixture);
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(groups.inviteToGroup).toHaveBeenCalledTimes(1);
+    expect(compiled.textContent).not.toContain('Unable to cancel the invite.');
+  });
+
+  it('goes back to offering Copy link when a second copy fails', async () => {
+    const writeText = vi
+      .fn<(text: string) => Promise<void>>()
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('denied'));
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const { fixture } = await setup();
+    const compiled = await sendInviteFrom(fixture);
+
+    findButtonByText(compiled, 'Copy link')!.click();
+    await settle(fixture);
+    expect(findButtonByText(compiled, 'Copied!')).toBeTruthy();
+
+    findButtonByText(compiled, 'Copied!')!.click();
+    await settle(fixture);
+
+    expect(writeText).toHaveBeenCalledTimes(2);
+    expect(findButtonByText(compiled, 'Copied!')).toBeUndefined();
+    expect(findButtonByText(compiled, 'Copy link')).toBeTruthy();
+  });
+
+  describe('adding a child while a members panel is open', () => {
+    function groupRow(compiled: HTMLElement, name: string): HTMLElement {
+      const row = Array.from(compiled.querySelectorAll('li')).find(
+        (li) => li.querySelector('span')?.textContent?.trim() === name,
+      );
+      if (!row) {
+        throw new Error(`group row not found for "${name}"`);
+      }
+      return row;
+    }
+
+    async function openIn(fixture: ComponentFixture<ManageGroups>, name: string, button: string) {
+      findButtonByText(groupRow(fixture.nativeElement as HTMLElement, name), button)!.click();
+      await settle(fixture);
+    }
+
+    async function setupTwoGroups() {
+      let added = false;
+      const getGroup = vi.fn(async (groupId: string) =>
+        groupDetail({
+          id: groupId,
+          members: [
+            member({ userId: 'ada', givenName: 'Ada', familyName: 'Kid', isChild: true }),
+            ...(added && groupId === 'group-a'
+              ? [member({ userId: 'child-1', givenName: 'Sam', familyName: 'Kid', isChild: true })]
+              : []),
+          ],
+        }),
+      );
+      const { fixture, groups } = await setup({
+        guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-1' })]) },
+        groups: {
+          listMyGroups: vi.fn(async () => [
+            group({ id: 'group-a', name: 'Home' }),
+            group({ id: 'group-b', name: 'School' }),
+          ]),
+          getGroup,
+          addChildToGroup: vi.fn(async () => {
+            added = true;
+          }),
+        },
+      });
+      await settle(fixture);
+      return { fixture, groups, getGroup };
+    }
+
+    async function addSamToHome(fixture: ComponentFixture<ManageGroups>) {
+      const compiled = fixture.nativeElement as HTMLElement;
+      const home = groupRow(compiled, 'Home');
+      selectByLabel(
+        home.querySelector<HTMLSelectElement>('select[name="selectedChild"]')!,
+        'Sam Kid',
+      );
+      await settle(fixture);
+      home.querySelector('form')!.dispatchEvent(new Event('submit'));
+      await settle(fixture);
+    }
+
+    it('refreshes the members panel of the same group', async () => {
+      const { fixture, groups } = await setupTwoGroups();
+      await openIn(fixture, 'Home', 'Members');
+      await openIn(fixture, 'Home', 'Add a child');
+
+      await addSamToHome(fixture);
+
+      expect(groups.addChildToGroup).toHaveBeenCalledWith('group-a', 'child-1');
+      const compiled = fixture.nativeElement as HTMLElement;
+      const listed = Array.from(groupRow(compiled, 'Home').querySelectorAll('li span'))
+        .map((span) => span.textContent?.trim())
+        .filter((text) => text === 'Sam Kid');
+      expect(listed).toEqual(['Sam Kid']);
+    });
+
+    it("doesn't reload the members panel of another group", async () => {
+      const { fixture, getGroup } = await setupTwoGroups();
+      await openIn(fixture, 'School', 'Members');
+      await openIn(fixture, 'Home', 'Add a child');
+      const callsFor = (groupId: string) =>
+        getGroup.mock.calls.filter(([id]) => id === groupId).length;
+      expect(callsFor('group-b')).toBe(1);
+
+      await addSamToHome(fixture);
+
+      expect(callsFor('group-b')).toBe(1);
+      expect(callsFor('group-a')).toBe(2);
+    });
+  });
 });
