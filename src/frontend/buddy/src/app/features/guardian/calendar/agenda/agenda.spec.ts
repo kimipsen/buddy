@@ -1,5 +1,5 @@
 import { signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -277,6 +277,50 @@ describe('CalendarAgenda', () => {
     return Array.from(compiled.querySelectorAll<HTMLLIElement>('li')).find((item) =>
       item.textContent?.includes(title),
     );
+  }
+
+  // Fires a template binding's handler with a value the child control can't produce on its own
+  // (a native date input never holds '   '; a TaskPicker never emits a padded id), or reaches a
+  // handler behind a disabled control. Goes through the component's own `(event)` binding, so
+  // nothing protected is read (TS-002).
+  function emit(
+    fixture: ComponentFixture<unknown>,
+    host: Element,
+    eventName: string,
+    value?: unknown,
+  ): void {
+    fixture.debugElement
+      .query((debugElement) => debugElement.nativeElement === host)!
+      .triggerEventHandler(eventName, value);
+  }
+
+  // The `app-date-select` around the date input with this aria-label, e.g. 'Start date'.
+  function dateHost(scope: ParentNode, label: string): Element {
+    return scope.querySelector(`input[aria-label="${label}"]`)!.closest('app-date-select')!;
+  }
+
+  // Task, then From template: the steps every template test repeats.
+  async function chooseTemplateSource(fixture: ComponentFixture<unknown>): Promise<void> {
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Task')!.click();
+    await settle(fixture);
+    findButtonByText(fixture.nativeElement as HTMLElement, 'From template')!.click();
+    await settle(fixture);
+  }
+
+  // Focuses the task picker and clicks the option that reads `name`.
+  async function pickTemplate(fixture: ComponentFixture<unknown>, name: string): Promise<void> {
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLInputElement>('app-task-picker input')!
+      .dispatchEvent(new Event('focus'));
+    await settle(fixture);
+    Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
+        'app-task-picker ul li button',
+      ),
+    )
+      .find((button) => button.textContent?.includes(name))!
+      .click();
+    await settle(fixture);
   }
 
   // ----- Loading / empty / error -----
@@ -2075,6 +2119,591 @@ describe('CalendarAgenda', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Take out trash');
     expect(compiled.textContent).not.toContain('→');
+  });
+
+  // ----- The create form (W3 of #96) -----
+
+  describe('create form', () => {
+    const ADD = 'Add to calendar';
+    const paddedTemplate = taskTemplate({
+      id: 'template-1',
+      name: '  Morning routine  ',
+      icon: '  🌅  ',
+      color: '  #0ea5e9  ',
+    });
+
+    const page = (fixture: ComponentFixture<unknown>) => fixture.nativeElement as HTMLElement;
+    const form = (fixture: ComponentFixture<unknown>) => createForm(page(fixture));
+    const field = (fixture: ComponentFixture<unknown>, label: string) =>
+      form(fixture).querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)!;
+    const titleInput = (fixture: ComponentFixture<unknown>) =>
+      page(fixture).querySelector<HTMLInputElement>('input[name="itemTitle"]')!;
+    const addDisabled = (fixture: ComponentFixture<unknown>) =>
+      findButtonByText(page(fixture), ADD)!.disabled;
+
+    async function click(fixture: ComponentFixture<unknown>, text: string): Promise<void> {
+      findButtonByText(page(fixture), text)!.click();
+      await settle(fixture);
+    }
+
+    async function typeTitle(fixture: ComponentFixture<unknown>, title: string): Promise<void> {
+      setInputValue(titleInput(fixture), title);
+      await settle(fixture);
+    }
+
+    async function submit(fixture: ComponentFixture<unknown>): Promise<void> {
+      form(fixture).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+    }
+
+    async function chooseRepeatByIndex(
+      fixture: ComponentFixture<unknown>,
+      index: number,
+    ): Promise<void> {
+      selectByIndex(
+        page(fixture).querySelector<HTMLSelectElement>('select[name="itemRepeat"]')!,
+        index, // none(0), daily(1), weekly(2), monthly(3)
+      );
+      await settle(fixture);
+    }
+
+    const pressedWeekdays = (fixture: ComponentFixture<unknown>) =>
+      Array.from(
+        page(fixture).querySelectorAll<HTMLButtonElement>('[role="group"] button[aria-pressed]'),
+      )
+        .filter((button) => !button.closest('app-alarm-picker'))
+        .filter((button) => button.getAttribute('aria-pressed') === 'true')
+        .map((button) => button.getAttribute('aria-label'));
+
+    const alarmChipLabels = (fixture: ComponentFixture<unknown>) =>
+      Array.from(page(fixture).querySelectorAll('app-alarm-picker button[aria-pressed]')).map(
+        (button) => button.textContent?.trim(),
+      );
+
+    // T3.3: a blank (cleared, or only spaces) required date keeps Add disabled.
+    describe('required dates', () => {
+      const cases: {
+        kind: 'Event' | 'Task';
+        change: string;
+        label?: string;
+        value?: string;
+        enabled: boolean;
+      }[] = [
+        { kind: 'Event', change: 'none', enabled: true },
+        {
+          kind: 'Event',
+          change: 'Start date cleared',
+          label: 'Start date',
+          value: '',
+          enabled: false,
+        },
+        { kind: 'Event', change: 'End date cleared', label: 'End date', value: '', enabled: false },
+        {
+          kind: 'Event',
+          change: "Start date emitted as '   '",
+          label: 'Start date',
+          value: '   ',
+          enabled: false,
+        },
+        {
+          kind: 'Event',
+          change: "End date emitted as '   '",
+          label: 'End date',
+          value: '   ',
+          enabled: false,
+        },
+        { kind: 'Task', change: 'none', enabled: true },
+        { kind: 'Task', change: 'Due date cleared', label: 'Due date', value: '', enabled: false },
+        {
+          kind: 'Task',
+          change: "Due date emitted as '   '",
+          label: 'Due date',
+          value: '   ',
+          enabled: false,
+        },
+      ];
+
+      it.each(cases)('$kind, $change: Add enabled is $enabled', async (row) => {
+        const { fixture } = await setup();
+        await settle(fixture);
+
+        if (row.kind === 'Task') {
+          await click(fixture, 'Task');
+        }
+        await typeTitle(fixture, 'Piano lesson');
+
+        if (row.label !== undefined) {
+          if (row.value === '') {
+            setInputValue(field(fixture, row.label), '');
+          } else {
+            emit(fixture, dateHost(form(fixture), row.label), 'valueChange', row.value);
+          }
+          await settle(fixture);
+        }
+
+        expect(addDisabled(fixture)).toBe(!row.enabled);
+      });
+    });
+
+    it('keeps Add disabled for a title of only spaces', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+
+      await typeTitle(fixture, '   ');
+
+      expect(addDisabled(fixture)).toBe(true);
+    });
+
+    it('keeps Add disabled when the picked template has a blank colour', async () => {
+      const { fixture } = await setup({ templates: [taskTemplate({ color: '   ' })] });
+      await settle(fixture);
+
+      await chooseTemplateSource(fixture);
+      await pickTemplate(fixture, 'Morning routine');
+
+      expect(titleInput(fixture).value).toBe('Morning routine');
+      expect(addDisabled(fixture)).toBe(true);
+    });
+
+    it('creates an event, not a template task, after switching back from template mode', async () => {
+      const { fixture, calendars } = await setup({ templates: [taskTemplate()] });
+      await settle(fixture);
+
+      await chooseTemplateSource(fixture);
+      await click(fixture, 'Event');
+      await typeTitle(fixture, 'Piano lesson');
+      expect(addDisabled(fixture)).toBe(false);
+
+      await submit(fixture);
+
+      expect(calendars.scheduleTaskFromTemplate).not.toHaveBeenCalled();
+      expect(calendars.createItem).toHaveBeenCalledWith(
+        'cal-1',
+        expect.objectContaining({
+          title: 'Piano lesson',
+          schedule: expect.objectContaining({ kind: 0 }),
+        }),
+      );
+    });
+
+    it('disables Add in template mode when the due date is blank or the template id is blank', async () => {
+      const { fixture } = await setup({ templates: [taskTemplate()] });
+      await settle(fixture);
+
+      await chooseTemplateSource(fixture);
+      await pickTemplate(fixture, 'Morning routine');
+      expect(addDisabled(fixture)).toBe(false);
+
+      setInputValue(field(fixture, 'Due date'), '');
+      await settle(fixture);
+      expect(addDisabled(fixture)).toBe(true);
+
+      setInputValue(field(fixture, 'Due date'), today);
+      await settle(fixture);
+      expect(addDisabled(fixture)).toBe(false);
+
+      emit(fixture, dateHost(form(fixture), 'Due date'), 'valueChange', '   ');
+      await settle(fixture);
+      expect(addDisabled(fixture)).toBe(true);
+
+      emit(fixture, dateHost(form(fixture), 'Due date'), 'valueChange', today);
+      await settle(fixture);
+      expect(addDisabled(fixture)).toBe(false);
+
+      emit(fixture, page(fixture).querySelector('app-task-picker')!, 'templateIdChange', '   ');
+      await settle(fixture);
+      expect(addDisabled(fixture)).toBe(true);
+    });
+
+    it('creates nothing when the form is submitted without a title', async () => {
+      const { fixture, calendars } = await setup({ templates: [taskTemplate()] });
+      await settle(fixture);
+
+      await submit(fixture);
+
+      expect(calendars.createItem).not.toHaveBeenCalled();
+      expect(calendars.scheduleTaskFromTemplate).not.toHaveBeenCalled();
+    });
+
+    it('trims the title, icon and colour of a template task', async () => {
+      const { fixture, calendars } = await setup({ templates: [paddedTemplate] });
+      await settle(fixture);
+
+      await chooseTemplateSource(fixture);
+      await pickTemplate(fixture, 'Morning routine');
+      await submit(fixture);
+
+      expect(calendars.scheduleTaskFromTemplate).toHaveBeenCalledWith('cal-1', {
+        taskTemplateId: 'template-1',
+        startDate: today,
+        startTime: '09:00:00',
+        recurrence: null,
+        assignedTo: null,
+        title: 'Morning routine',
+        icon: '🌅',
+        color: '#0ea5e9',
+        alarms: [],
+      });
+    });
+
+    it('creates an all-day event with a trimmed icon and an exclusive end date', async () => {
+      const { fixture, calendars } = await setup();
+      await settle(fixture);
+
+      await typeTitle(fixture, 'Piano camp');
+      setInputValue(
+        page(fixture).querySelector<HTMLInputElement>('input[name="itemIcon"]')!,
+        '  🎹  ',
+      );
+      findToggle(form(fixture)).click(); // all day on
+      await settle(fixture);
+      setInputValue(field(fixture, 'Start date'), addDays(today, 7));
+      await settle(fixture);
+      setInputValue(field(fixture, 'End date'), addDays(today, 8));
+      await settle(fixture);
+      await submit(fixture);
+
+      expect(calendars.createItem).toHaveBeenCalledWith('cal-1', {
+        title: 'Piano camp',
+        icon: '🎹',
+        color: '#f43f5e',
+        schedule: {
+          kind: 0,
+          startsAt: { date: addDays(today, 7), time: '00:00:00' },
+          endsAt: { date: addDays(today, 9), time: '00:00:00' },
+          isAllDay: true,
+        },
+        recurrence: null,
+        alarms: [],
+      });
+    });
+
+    it('keeps the trimmed template icon and colour after switching back to Manual', async () => {
+      const { fixture, calendars } = await setup({ templates: [paddedTemplate] });
+      await settle(fixture);
+
+      await chooseTemplateSource(fixture);
+      await pickTemplate(fixture, 'Morning routine');
+      await click(fixture, 'Manual');
+      await submit(fixture);
+
+      expect(calendars.scheduleTaskFromTemplate).not.toHaveBeenCalled();
+      expect(calendars.createItem).toHaveBeenCalledWith(
+        'cal-1',
+        expect.objectContaining({ title: 'Morning routine', icon: '🌅', color: '#0ea5e9' }),
+      );
+    });
+
+    it('trims a padded end date of the repeat', async () => {
+      const { fixture, calendars } = await setup();
+      await settle(fixture);
+
+      await typeTitle(fixture, 'Trash day');
+      await chooseRepeatByIndex(fixture, 2);
+      emit(fixture, dateHost(form(fixture), 'Until (optional)'), 'valueChange', '  2026-12-01  ');
+      await settle(fixture);
+      await submit(fixture);
+
+      expect(calendars.createItem).toHaveBeenCalledWith(
+        'cal-1',
+        expect.objectContaining({
+          recurrence: {
+            frequency: 'Weekly',
+            intervalCount: 1,
+            until: '2026-12-01',
+            weekdays: null,
+          },
+        }),
+      );
+    });
+
+    describe('after a successful create', () => {
+      it('puts an event form back to its defaults', async () => {
+        const { fixture, calendars } = await setup();
+        await settle(fixture);
+
+        await typeTitle(fixture, 'Piano camp');
+        setInputValue(
+          page(fixture).querySelector<HTMLInputElement>('input[name="itemIcon"]')!,
+          '🎹',
+        );
+        page(fixture)
+          .querySelector<HTMLButtonElement>('app-color-swatch-picker button[aria-label="#10b981"]')!
+          .click();
+        await settle(fixture);
+        setInputValue(field(fixture, 'Start time'), '10:30');
+        await settle(fixture);
+        setInputValue(field(fixture, 'Start date'), addDays(today, 1));
+        await settle(fixture);
+        setInputValue(field(fixture, 'End date'), addDays(today, 2));
+        await settle(fixture);
+        setInputValue(field(fixture, 'End time'), '12:00');
+        await settle(fixture);
+        await chooseRepeatByIndex(fixture, 2);
+        setInputValue(field(fixture, 'Every'), '3');
+        await settle(fixture);
+        setInputValue(field(fixture, 'Until (optional)'), addDays(today, 30));
+        await settle(fixture);
+        form(fixture)
+          .querySelector<HTMLButtonElement>('app-alarm-picker button[aria-pressed]')!
+          .click(); // an alarm chip
+        await settle(fixture);
+        findToggle(form(fixture)).click(); // all day on
+        await settle(fixture);
+
+        await submit(fixture);
+        expect(calendars.createItem).toHaveBeenCalledTimes(1);
+
+        expect(page(fixture).querySelector<HTMLInputElement>('input[name="itemIcon"]')!.value).toBe(
+          '',
+        );
+        expect(titleInput(fixture).value).toBe('');
+        expect(
+          page(fixture)
+            .querySelector('app-color-swatch-picker button[aria-label="#f43f5e"]')!
+            .getAttribute('aria-checked'),
+        ).toBe('true');
+        expect(toggleIsChecked(findToggle(form(fixture)))).toBe(false);
+        expect(field(fixture, 'Start date').value).toBe(today);
+        expect(field(fixture, 'End date').value).toBe(today);
+        expect(field(fixture, 'Start time').value).toBe('09:00');
+        expect(field(fixture, 'End time').value).toBe('10:00');
+        expect(
+          page(fixture).querySelector<HTMLSelectElement>('select[name="itemRepeat"]')!
+            .selectedIndex,
+        ).toBe(0);
+        expect(
+          Array.from(
+            form(fixture).querySelectorAll<HTMLButtonElement>(
+              'app-alarm-picker button[aria-pressed]',
+            ),
+          ).filter((chip) => chip.getAttribute('aria-pressed') === 'true'),
+        ).toHaveLength(0);
+
+        await typeTitle(fixture, 'Second');
+        await chooseRepeatByIndex(fixture, 2);
+        await submit(fixture);
+
+        expect(calendars.createItem).toHaveBeenLastCalledWith(
+          'cal-1',
+          expect.objectContaining({
+            title: 'Second',
+            icon: null,
+            color: '#f43f5e',
+            alarms: [],
+            recurrence: { frequency: 'Weekly', intervalCount: 1, until: null, weekdays: null },
+          }),
+        );
+      });
+
+      it('puts a task form back to its defaults', async () => {
+        const members: AssignableMember[] = [
+          { userId: 'child-1', givenName: 'Sam', familyName: 'Kid' },
+        ];
+        const { fixture, calendars } = await setup({
+          templates: [taskTemplate()],
+          calendars: { listAssignableMembers: vi.fn(async () => members) },
+        });
+        await settle(fixture);
+
+        await click(fixture, 'Task');
+        selectValue(
+          page(fixture).querySelector<HTMLSelectElement>('select[name="itemAssignee"]')!,
+          'child-1',
+        );
+        await settle(fixture);
+        await click(fixture, 'From template');
+        await pickTemplate(fixture, 'Morning routine');
+        setInputValue(field(fixture, 'Due date'), addDays(today, 1));
+        await settle(fixture);
+        setInputValue(field(fixture, 'Due time'), '07:30');
+        await settle(fixture);
+        await submit(fixture);
+
+        expect(calendars.scheduleTaskFromTemplate).toHaveBeenCalledWith(
+          'cal-1',
+          expect.objectContaining({
+            startDate: addDays(today, 1),
+            startTime: '07:30:00',
+            assignedTo: 'child-1',
+          }),
+        );
+        expect(field(fixture, 'Due date').value).toBe(today);
+        expect(field(fixture, 'Due time').value).toBe('09:00');
+        expect(page(fixture).querySelector('app-task-picker')).toBeNull();
+
+        // Back in manual mode, with nobody assigned.
+        await typeTitle(fixture, 'Second task');
+        await submit(fixture);
+        expect(calendars.createItem).toHaveBeenCalledTimes(1);
+        expect(calendars.createItem).toHaveBeenLastCalledWith(
+          'cal-1',
+          expect.objectContaining({
+            title: 'Second task',
+            schedule: expect.objectContaining({
+              dueDate: { date: today, time: '09:00:00' },
+              assignedTo: null,
+            }),
+          }),
+        );
+
+        // No template is picked any more.
+        await typeTitle(fixture, 'Third task');
+        await click(fixture, 'From template');
+        expect(addDisabled(fixture)).toBe(true);
+      });
+    });
+
+    it('shows the due time and the timed alarm presets after switching to a template', async () => {
+      const { fixture } = await setup({ templates: [taskTemplate()] });
+      await settle(fixture);
+
+      await click(fixture, 'Task');
+      findToggle(form(fixture)).click(); // all day on
+      await settle(fixture);
+      expect(page(fixture).querySelector('input[aria-label="Due time"]')).toBeNull();
+      await click(fixture, 'From template');
+
+      expect(field(fixture, 'Due time').value).toBe('09:00');
+      expect(alarmChipLabels(fixture)).toEqual([
+        'At start',
+        '5 minutes before',
+        '15 minutes before',
+        '30 minutes before',
+        '1 hour before',
+        '2 hours before',
+        '1 day before',
+      ]);
+    });
+
+    it('forgets the picked template when going Manual and back to From template', async () => {
+      const { fixture } = await setup({ templates: [taskTemplate()] });
+      await settle(fixture);
+
+      await chooseTemplateSource(fixture);
+      await pickTemplate(fixture, 'Morning routine');
+      expect(
+        page(fixture).querySelector<HTMLInputElement>('app-task-picker input')!.value,
+      ).toContain('Morning routine');
+      await click(fixture, 'Manual');
+      await click(fixture, 'From template');
+
+      expect(page(fixture).querySelector<HTMLInputElement>('app-task-picker input')!.value).toBe(
+        '',
+      );
+      expect(addDisabled(fixture)).toBe(true);
+    });
+
+    it('offers only active templates and fills in the one picked from several', async () => {
+      const { fixture } = await setup({
+        templates: [
+          taskTemplate({ id: 'template-1', name: 'Morning routine' }),
+          taskTemplate({ id: 'template-2', name: 'Evening routine', icon: '🌙', color: '#6366f1' }),
+          taskTemplate({ id: 'template-3', name: 'Old routine', isArchived: true }),
+        ],
+      });
+      await settle(fixture);
+
+      await chooseTemplateSource(fixture);
+      page(fixture)
+        .querySelector<HTMLInputElement>('app-task-picker input')!
+        .dispatchEvent(new Event('focus'));
+      await settle(fixture);
+      const options = Array.from(
+        page(fixture).querySelectorAll('app-task-picker ul li button'),
+      ).map((button) => button.textContent);
+      expect(options).toHaveLength(3); // No template, Morning routine, Evening routine
+      expect(options.join(' ')).toContain('Morning routine');
+      expect(options.join(' ')).toContain('Evening routine');
+      expect(options.join(' ')).not.toContain('Old routine');
+
+      await pickTemplate(fixture, 'Evening routine');
+
+      expect(titleInput(fixture).value).toBe('Evening routine');
+      expect(page(fixture).querySelector<HTMLInputElement>('input[name="itemIcon"]')!.value).toBe(
+        '🌙',
+      );
+      expect(
+        page(fixture)
+          .querySelector('app-color-swatch-picker button[aria-label="#6366f1"]')!
+          .getAttribute('aria-checked'),
+      ).toBe('true');
+    });
+
+    it('labels the due time of a manual task "Due time"', async () => {
+      const { fixture } = await setup({ templates: [taskTemplate()] });
+      await settle(fixture);
+
+      await click(fixture, 'Task');
+
+      const labels = Array.from(form(fixture).querySelectorAll('span')).map((span) =>
+        span.textContent?.trim(),
+      );
+      expect(labels).toContain('Due time');
+      expect(labels).not.toContain('Leave by');
+      expect(field(fixture, 'Due time')).not.toBeNull();
+    });
+
+    it('seeds the weekday toggles from the start date of an event and the due date of a task', async () => {
+      freezeToday(2026, 10, 13); // Friday
+      const { fixture } = await setup();
+      await settle(fixture);
+
+      await typeTitle(fixture, 'Trash day');
+      setInputValue(field(fixture, 'Start date'), '2026-11-16'); // Monday
+      await settle(fixture);
+      await chooseRepeatByIndex(fixture, 2);
+      expect(pressedWeekdays(fixture)).toEqual(['Monday']);
+
+      await click(fixture, 'Task');
+      expect(pressedWeekdays(fixture)).toEqual(['Friday']);
+    });
+
+    it('starts the end time an hour after the start time on the chosen start date', async () => {
+      const { fixture, calendars } = await setup();
+      await settle(fixture);
+
+      await typeTitle(fixture, 'Piano lesson');
+      setInputValue(field(fixture, 'Start time'), '10:30');
+      await settle(fixture);
+      setInputValue(field(fixture, 'Start date'), addDays(today, 2));
+      await settle(fixture);
+      await submit(fixture);
+
+      expect(calendars.createItem).toHaveBeenCalledWith(
+        'cal-1',
+        expect.objectContaining({
+          schedule: {
+            kind: 0,
+            startsAt: { date: addDays(today, 2), time: '10:30:00' },
+            endsAt: { date: addDays(today, 2), time: '11:30:00' },
+            isAllDay: false,
+          },
+        }),
+      );
+    });
+
+    it('keeps the picked calendar when the week reloads', async () => {
+      const home = calendarSummary();
+      const school = calendarSummary({ id: 'cal-2', name: 'School', icon: '🏫' });
+      const { fixture, calendars } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [home, school]) },
+      });
+      await settle(fixture);
+
+      selectValue(
+        page(fixture).querySelector<HTMLSelectElement>('select[name="itemCalendar"]')!,
+        'cal-2',
+      );
+      await settle(fixture);
+      await click(fixture, 'Next week');
+      expect(calendars.listMyCalendars).toHaveBeenCalledTimes(2);
+
+      await typeTitle(fixture, 'Concert');
+      await submit(fixture);
+
+      expect(calendars.createItem).toHaveBeenCalledWith('cal-2', expect.anything());
+    });
   });
 
   // ----- Template-scheduled task runs (grouped rendering + the compound-key fix) -----
