@@ -517,3 +517,4 @@ StrykerOutput/
 !.beads/identity.toml
 
 .gc/
+plans/
