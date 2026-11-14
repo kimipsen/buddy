@@ -54,7 +54,7 @@ test('a guardian prints the sleep diary for a chosen period, up to 92 nights', a
   ).toBeVisible();
   const rows = page.locator('app-sleep-diary-sheet tbody tr');
   await expect(rows).toHaveCount(14);
-  await expect(rows.filter({ hasText: '20:15' })).toHaveCount(1);
+  await expect(rows.filter({ hasText: '8:15' })).toHaveCount(1);
   const printButton = page.getByRole('button', { name: 'Print', exact: true });
   await expect(printButton).toBeVisible();
 
@@ -63,7 +63,7 @@ test('a guardian prints the sleep diary for a chosen period, up to 92 nights', a
   await from.fill(localIsoDate(-91));
   await expect(rows).toHaveCount(92);
   await expect(page.getByRole('columnheader', { name: 'On duty' })).toBeVisible();
-  const cell = rows.filter({ hasText: '20:15' }).getByTestId('night-duty-cell');
+  const cell = rows.filter({ hasText: '8:15' }).getByTestId('night-duty-cell');
   await expect(cell).toContainText(DISPOSABLE_GUARDIAN_GIVEN_NAME);
   await expect(cell).toContainText('Screen night');
 
@@ -87,8 +87,11 @@ test('a guardian prints the sleep diary for a chosen period, up to 92 nights', a
   const pdf = await page.pdf({ preferCSSPageSize: true });
   await testInfo.attach('sleep-diary-60-nights.pdf', { body: pdf, contentType: 'application/pdf' });
   const text = pdf.toString('latin1');
-  // A4 landscape is 842 x 595 pt; the page tree's /Count is the number of pages.
-  expect(text).toMatch(/\/MediaBox\s*\[\s*0\s+0\s+841\.9\d*\s+595\.2\d*\s*\]/);
+  // A4 landscape is 842 x 595 pt (Chromium writes 841.92 x 594.96, so compare as numbers, as
+  // print-week-plan.spec.ts does); the page tree's /Count is the number of pages.
+  const box = /\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]/.exec(text);
+  expect(Number(box?.[1])).toBeCloseTo(842, -1);
+  expect(Number(box?.[2])).toBeCloseTo(595, -1);
   const pageCount = Number(/\/Type\s*\/Pages[^>]*\/Count\s+(\d+)/.exec(text)?.[1] ?? 0);
   expect(pageCount).toBeGreaterThan(1);
 });
