@@ -6,7 +6,7 @@ import { TranslationService } from '../../core/i18n/translation.service';
 import { SleepEntry } from '../../core/sleep-diary.service';
 import { TimeOfDayPipe } from '../../core/time-of-day.pipe';
 import { splitMinutes } from '../../features/guardian/sleep-diary/sleep-entry-draft';
-import type { NightDutyCell } from '../../features/guardian/sleep-diary/sleep-history/sleep-history';
+import type { NightDutyCell } from '../../features/guardian/sleep-diary/sleep-night-duty';
 
 interface SheetRow {
   date: string;
