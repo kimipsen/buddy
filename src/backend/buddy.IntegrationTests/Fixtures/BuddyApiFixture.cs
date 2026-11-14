@@ -127,21 +127,23 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             ["RateLimiting:MealieImages:PermitLimit"] = "1000000"
         };
 
-        Host = await AlbaHost.For<global::Program>(
-            builder => builder.ConfigureTestServices(services =>
+        Host = await AlbaHost.For<global::Program>(x =>
+        {
+            x.ConfigureServices(services =>
             {
                 // Inert unless a test arms it -- see ConcurrentWriterUserEventStore.
                 services.AddSingleton<MartenUserEventStore>();
                 services.Replace(ServiceDescriptor.Singleton<IUserEventStore, ConcurrentWriterUserEventStore>());
-            }),
-            ConfigurationOverride.Create(_configOverrides));
+            });
+        })
+            .WithConfiguration(_configOverrides);
     }
 
     // A second API host on the same Postgres/Keycloak/Mailpit, with extra configuration layered on
     // top of the shared host's -- for tests that need settings the shared host can't have (low rate
     // limits, a broken dependency) or extra test services (an in-memory telemetry exporter). The
     // caller owns and disposes it.
-    public Task<IAlbaHost> CreateHostAsync(
+    public async Task<IAlbaHost> CreateHostAsync(
         IReadOnlyDictionary<string, string?> overrides,
         Action<IServiceCollection>? configureServices = null)
     {
@@ -152,9 +154,11 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             merged[key] = value;
         }
 
-        return AlbaHost.For<global::Program>(
-            builder => builder.ConfigureTestServices(services => configureServices?.Invoke(services)),
-            ConfigurationOverride.Create(merged));
+        return await AlbaHost.For<global::Program>(x =>
+        {
+            x.ConfigureServices(services => configureServices?.Invoke(services));
+        })
+            .WithConfiguration(merged);
     }
 
     // A CreateHostAsync host started once per key and shared by every test that asks for it; the
