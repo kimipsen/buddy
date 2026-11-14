@@ -391,7 +391,9 @@ Built in the shape this section proposed: `core/sleep-diary.service.ts`, a guard
 dose times. The share view is the app's first page for a reader with no account,
 `features/shared-sleep-diary/` at `/shared/sleep-diary/:token`, outside `authGuard`: a printable
 table with the paper form's columns and a Print button. The share link's URL is the frontend page,
-not the API route.
+not the API route. A guardian can also print a chosen period of up to 92 nights at
+`/guardian/sleep-diary/print/:childId`, which uses the same shared sheet as the share page (see
+[Sleep diary printing](../../frontend/analysis/sleep-diary-printing.md)).
 
 ## Failure and edge-case behavior
 
@@ -436,12 +438,13 @@ not the API route.
   4). An older child/teen may reasonably want to see their own sleep
   history; if that's requested, it's an additive `View` tier the same shape
   `PickupSchedule` already has, not a redesign.
-- **Actual PDF export, formatted like the attached clinical form.** This
-  document specifies the data and a shareable read-only _view_; whether that
-  view is an HTML page styled for printing or a generated PDF file is a
-  frontend/rendering decision deferred here. If a clinic specifically wants
-  the exact 14-day grid layout from the attached form, that's a rendering
-  template, not a data-model change.
+- **Actual PDF export, formatted like the attached clinical form.** Printing a
+  chosen period now exists, at `/guardian/sleep-diary/print/:childId`, as an
+  HTML page with the clinic form's columns (see
+  [Sleep diary printing](../../frontend/analysis/sleep-diary-printing.md)). A
+  generated PDF file and the form's exact 14-day grid stay open; if a clinic
+  specifically wants that grid, it's a rendering template, not a data-model
+  change.
 - **Reminders to fill in today's diary.** No notification infrastructure
   exists anywhere in this codebase today (`notification|reminder|push`
   returns nothing — same gap [gamified-progress.md](gamified-progress.md#remaining-open-questions)

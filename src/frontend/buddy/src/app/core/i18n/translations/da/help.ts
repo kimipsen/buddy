@@ -211,6 +211,15 @@ export const help = {
             s3: 'Kopiér linket med det samme, for det vises kun én gang, og send det til lægen.',
           },
         },
+        printDiary: {
+          title: 'Udskriv dagbogen for en periode',
+          body: 'Du kan udskrive dagbogen for en periode på op til 92 nætter, fx til søvnklinikken. Udskriften har én række pr. nat med de samme kolonner som klinikkens skema, hvem der havde nattevagten hver nat, hvis I bruger nattevagt, og jeres søvnhygiejniske tiltag. Kolonneoverskrifterne gentages på hver side.',
+          steps: {
+            s1: 'Gå under "Nætter" til de nætter, du vil have med, med "Forrige 14 nætter" eller "Næste 14 nætter", og tryk "Udskriv".',
+            s2: 'Ret "Fra" og "Til" for at udskrive en længere eller kortere periode.',
+            s3: 'Tryk "Udskriv", og vælg en printer, eller gem som PDF.',
+          },
+        },
       },
     },
     feelings: {
