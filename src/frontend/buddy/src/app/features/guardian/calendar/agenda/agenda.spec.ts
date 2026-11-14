@@ -299,6 +299,17 @@ describe('CalendarAgenda', () => {
     return scope.querySelector(`input[aria-label="${label}"]`)!.closest('app-date-select')!;
   }
 
+  // A promise the test settles itself, to hold a request in flight.
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    let reject!: (reason: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
   // Task, then From template: the steps every template test repeats.
   async function chooseTemplateSource(fixture: ComponentFixture<unknown>): Promise<void> {
     findButtonByText(fixture.nativeElement as HTMLElement, 'Task')!.click();
@@ -1525,6 +1536,328 @@ describe('CalendarAgenda', () => {
         recurrence: { frequency: 'Weekly', intervalCount: 1, until: null, weekdays: null },
       }),
     );
+  });
+
+  describe('list actions and list errors', () => {
+    const TASK_ERROR = 'Unable to update this task.';
+    const DELETE_ERROR = 'Unable to delete this item.';
+    const SKIP_ERROR = 'Unable to skip this day.';
+
+    // T: a task due today whose completion fails. R: a repeating event. K: a skipped repeating event.
+    function taskT() {
+      return occurrence({
+        itemId: 'task-t',
+        kind: 'Task',
+        title: 'Buy milk',
+        startsAt: null,
+        endsAt: null,
+        dueAt: `${today}T09:00:00Z`,
+      });
+    }
+    function eventR(overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {}) {
+      return occurrence({
+        itemId: 'event-r',
+        title: 'Football',
+        isRepeating: true,
+        ...overrides,
+      });
+    }
+    function eventK() {
+      return occurrence({
+        itemId: 'event-k',
+        title: 'Yoga',
+        isRepeating: true,
+        isSkipped: true,
+      });
+    }
+
+    async function openList(
+      items: CalendarOccurrence[],
+      calendars: Partial<CalendarsService> = {},
+    ) {
+      const result = await setup({
+        calendars: {
+          listOccurrencesInRange: vi.fn(async () => items),
+          setTaskCompletion: vi.fn(async () => Promise.reject(new Error('boom'))),
+          ...calendars,
+        },
+      });
+      await settle(result.fixture);
+      return result;
+    }
+
+    const host = (fixture: ComponentFixture<unknown>) => fixture.nativeElement as HTMLElement;
+    const text = (fixture: ComponentFixture<unknown>) => host(fixture).textContent ?? '';
+
+    async function click(
+      fixture: ComponentFixture<unknown>,
+      label: string,
+      inRow?: string,
+    ): Promise<void> {
+      const scope = inRow ? row(host(fixture), inRow)! : host(fixture);
+      findButtonByText(scope, label)!.click();
+      await settle(fixture);
+    }
+
+    async function failTaskT(fixture: ComponentFixture<unknown>): Promise<void> {
+      findToggle(row(host(fixture), 'Buy milk')!).click();
+      await settle(fixture);
+      expect(text(fixture)).toContain(TASK_ERROR);
+    }
+
+    const count = (haystack: string, needle: string) => haystack.split(needle).length - 1;
+    const buttonCount = (fixture: ComponentFixture<unknown>, label: string) =>
+      Array.from(host(fixture).querySelectorAll('button')).filter(
+        (button) => button.textContent?.trim() === label,
+      ).length;
+
+    it('sends no completion for a task due tomorrow, even when the toggle emits checked', async () => {
+      const task = occurrence({
+        itemId: 'task-t',
+        kind: 'Task',
+        title: 'Buy milk',
+        startsAt: null,
+        endsAt: null,
+        dueAt: `${addDays(today, 1)}T09:00:00Z`,
+      });
+      const { fixture, calendars } = await openList([task]);
+
+      const toggleHost = findToggle(host(fixture)).closest('app-toggle')!;
+      emit(fixture, toggleHost, 'checkedChange', true);
+      await settle(fixture);
+
+      expect(calendars.setTaskCompletion).not.toHaveBeenCalled();
+    });
+
+    const actions: [string, (fixture: ComponentFixture<unknown>) => Promise<void>][] = [
+      ['switching view', (f) => click(f, 'Day')],
+      ['Today', (f) => click(f, 'Today')],
+      ['Next week', (f) => click(f, 'Next week')],
+      ['asking to delete', (f) => click(f, 'Delete', 'Football')],
+      ['asking to skip', (f) => click(f, 'Skip day', 'Football')],
+      ['restoring a day', (f) => click(f, 'Restore', 'Yoga')],
+      ['starting an edit', (f) => click(f, 'Edit', 'Football')],
+    ];
+
+    it.each(actions)('clears a task error when %s', async (_name, act) => {
+      const { fixture } = await openList([taskT(), eventR(), eventK()]);
+      await failTaskT(fixture);
+
+      await act(fixture);
+
+      expect(text(fixture)).not.toContain(TASK_ERROR);
+    });
+
+    it('clears a task error when a delete is confirmed', async () => {
+      const { fixture } = await openList([taskT(), eventR(), eventK()]);
+      await click(fixture, 'Delete', 'Football');
+      await failTaskT(fixture);
+
+      await click(fixture, 'Confirm', 'Football');
+
+      expect(text(fixture)).not.toContain(TASK_ERROR);
+    });
+
+    it('clears a task error when an event is created and the week reloads', async () => {
+      const { fixture, calendars } = await openList([taskT(), eventR(), eventK()]);
+      await failTaskT(fixture);
+
+      setInputValue(
+        host(fixture).querySelector<HTMLInputElement>('input[name="itemTitle"]')!,
+        'Piano',
+      );
+      await settle(fixture);
+      createForm(host(fixture)).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(calendars.createItem).toHaveBeenCalledTimes(1);
+      expect(text(fixture)).not.toContain(TASK_ERROR);
+    });
+
+    it('clears a task error that arrived in Month view when a day is picked', async () => {
+      freezeToday(2026, 10, 13);
+      const task = occurrence({
+        itemId: 'task-t',
+        kind: 'Task',
+        title: 'Buy milk',
+        startsAt: null,
+        endsAt: null,
+        dueAt: '2026-11-13T09:00:00Z',
+      });
+      const completion = deferred<never>();
+      const { fixture } = await openList([task], {
+        setTaskCompletion: vi.fn(() => completion.promise),
+      });
+
+      findToggle(row(host(fixture), 'Buy milk')!).click();
+      await settle(fixture);
+      await click(fixture, 'Month');
+      completion.reject(new Error('boom'));
+      await settle(fixture);
+      expect(host(fixture).querySelector('app-month-grid')).toBeTruthy();
+      expect(text(fixture)).toContain(TASK_ERROR);
+
+      monthCell(host(fixture), '13')!.click();
+      await settle(fixture);
+
+      expect(text(fixture)).not.toContain(TASK_ERROR);
+    });
+
+    it.each([
+      ['task', TASK_ERROR, async (fixture: ComponentFixture<unknown>) => failTaskT(fixture), {}],
+      [
+        'delete',
+        DELETE_ERROR,
+        async (fixture: ComponentFixture<unknown>) => {
+          await click(fixture, 'Delete', 'Football');
+          await click(fixture, 'Confirm', 'Football');
+        },
+        { deleteItem: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      ],
+      [
+        'skip',
+        SKIP_ERROR,
+        async (fixture: ComponentFixture<unknown>) => {
+          await click(fixture, 'Skip day', 'Football');
+          await click(fixture, 'Skip', 'Football');
+        },
+        { setOccurrenceSkip: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      ],
+    ])('clears the %s error with Today', async (_name, message, cause, calendars) => {
+      const { fixture } = await openList([taskT(), eventR(), eventK()], calendars);
+      await cause(fixture);
+      expect(text(fixture)).toContain(message);
+
+      await click(fixture, 'Today');
+
+      expect(text(fixture)).not.toContain(message);
+    });
+
+    describe('closing the other prompts', () => {
+      it('closes the edit form of another item when Delete is pressed', async () => {
+        const { fixture } = await openList([taskT(), eventR()]);
+        await click(fixture, 'Edit', 'Football');
+        expect(host(fixture).querySelector('input[name="editTitle"]')).not.toBeNull();
+
+        await click(fixture, 'Delete', 'Buy milk');
+
+        expect(host(fixture).querySelector('input[name="editTitle"]')).toBeNull();
+      });
+
+      it('closes a skip prompt when Delete is pressed on another item', async () => {
+        const { fixture } = await openList([taskT(), eventR()]);
+        await click(fixture, 'Skip day', 'Football');
+        expect(text(fixture)).toContain('Skip just this day?');
+
+        await click(fixture, 'Delete', 'Buy milk');
+
+        expect(text(fixture)).not.toContain('Skip just this day?');
+      });
+
+      it('closes the edit form of another item when Skip day is pressed', async () => {
+        const { fixture } = await openList([taskT(), eventR()]);
+        await click(fixture, 'Edit', 'Buy milk');
+        expect(host(fixture).querySelector('input[name="editTitle"]')).not.toBeNull();
+
+        await click(fixture, 'Skip day', 'Football');
+
+        expect(host(fixture).querySelector('input[name="editTitle"]')).toBeNull();
+      });
+
+      it('closes a delete prompt when Skip day is pressed on another item', async () => {
+        const { fixture } = await openList([taskT(), eventR()]);
+        await click(fixture, 'Delete', 'Buy milk');
+        expect(text(fixture)).toContain('Delete this?');
+
+        await click(fixture, 'Skip day', 'Football');
+
+        expect(text(fixture)).not.toContain('Delete this?');
+      });
+    });
+
+    describe('skipping a repeating item', () => {
+      const tomorrow = () => addDays(today, 1);
+      const repeating = () => [
+        eventR(),
+        eventR({ startsAt: `${tomorrow()}T09:00:00Z`, endsAt: `${tomorrow()}T10:00:00Z` }),
+      ];
+
+      it('asks to skip only the day of the row it was pressed on', async () => {
+        const { fixture } = await openList(repeating());
+
+        await click(fixture, 'Skip day', 'Football');
+
+        expect(count(text(fixture), 'Skip just this day?')).toBe(1);
+      });
+
+      it('leaves the other days of the item, and other items, untouched', async () => {
+        const once = occurrence({ itemId: 'once', title: 'Dentist' });
+        const { fixture } = await openList([...repeating(), once]);
+
+        await click(fixture, 'Skip day', 'Football');
+        await click(fixture, 'Skip', 'Football');
+
+        expect(buttonCount(fixture, 'Restore')).toBe(1);
+        expect(buttonCount(fixture, 'Skip day')).toBe(1);
+        expect(count(text(fixture), 'Skipped')).toBe(1);
+        expect(row(host(fixture), 'Dentist')).toBeTruthy();
+      });
+
+      it('closes the prompt after a skip, so restoring does not bring it back', async () => {
+        const { fixture } = await openList([eventR()]);
+
+        await click(fixture, 'Skip day', 'Football');
+        await click(fixture, 'Skip', 'Football');
+        await click(fixture, 'Restore', 'Football');
+
+        expect(text(fixture)).not.toContain('Skip just this day?');
+        expect(buttonCount(fixture, 'Skip day')).toBe(1);
+      });
+
+      it('shows the restore error when restoring a skipped day fails', async () => {
+        const { fixture } = await openList([eventK()], {
+          setOccurrenceSkip: vi.fn(async () => Promise.reject(new Error('boom'))),
+        });
+
+        await click(fixture, 'Restore', 'Yoga');
+
+        expect(text(fixture)).toContain('Unable to restore this day.');
+      });
+    });
+
+    describe('deleting', () => {
+      it('keeps the other items listed after one is deleted', async () => {
+        const alpha = occurrence({ itemId: 'alpha', title: 'Alpha' });
+        const beta = occurrence({ itemId: 'beta', title: 'Beta' });
+        const { fixture } = await openList([alpha, beta]);
+
+        await click(fixture, 'Delete', 'Alpha');
+        await click(fixture, 'Confirm', 'Alpha');
+
+        expect(row(host(fixture), 'Alpha')).toBeUndefined();
+        expect(row(host(fixture), 'Beta')).toBeTruthy();
+      });
+
+      it('closes the prompt when the delete finishes after the week changed', async () => {
+        const removal = deferred<undefined>();
+        const { fixture } = await openList([], {
+          listOccurrencesInRange: vi.fn(async (from: string) => [
+            eventR({ startsAt: `${from}T09:00:00Z`, endsAt: `${from}T10:00:00Z` }),
+          ]),
+          deleteItem: vi.fn(() => removal.promise),
+        });
+
+        await click(fixture, 'Delete', 'Football');
+        await click(fixture, 'Confirm', 'Football');
+        await click(fixture, 'Next week');
+        removal.resolve(undefined);
+        await settle(fixture);
+
+        expect(row(host(fixture), 'Football')).toBeTruthy();
+        expect(findButtonByText(row(host(fixture), 'Football')!, 'Delete')).toBeTruthy();
+        expect(text(fixture)).not.toContain('Delete every day of this?');
+      });
+    });
   });
 
   describe('weekday toggles', () => {
