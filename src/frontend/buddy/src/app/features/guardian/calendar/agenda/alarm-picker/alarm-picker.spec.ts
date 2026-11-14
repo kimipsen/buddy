@@ -32,14 +32,20 @@ describe('alarm helpers', () => {
     expect(sameAlarms([-120], [-60])).toBe(false);
     expect(sameAlarms([], [])).toBe(true);
   });
+
+  it('compares unsorted selections against a second argument in a different order', () => {
+    expect(sameAlarms([-1440, -120], [-120, -1440])).toBe(true);
+  });
 });
 
 describe('AlarmPicker', () => {
-  async function render(value: number[], isAllDay = false) {
+  async function render(value: number[], isAllDay?: boolean) {
     await TestBed.configureTestingModule({ imports: [AlarmPicker] }).compileComponents();
     const fixture = TestBed.createComponent(AlarmPicker);
     fixture.componentRef.setInput('value', value);
-    fixture.componentRef.setInput('isAllDay', isAllDay);
+    if (isAllDay !== undefined) {
+      fixture.componentRef.setInput('isAllDay', isAllDay);
+    }
     const emitted: number[][] = [];
     fixture.componentInstance.valueChange.subscribe((next) => emitted.push(next));
     fixture.detectChanges();
@@ -108,5 +114,61 @@ describe('AlarmPicker', () => {
         .slice(-3)
         .every((chip) => chip.pressed === 'true'),
     ).toBe(true);
+  });
+
+  const TIMED_LABELS = [
+    'At start',
+    '5 minutes before',
+    '15 minutes before',
+    '30 minutes before',
+    '1 hour before',
+    '2 hours before',
+    '1 day before',
+  ];
+
+  it('shows the seven timed presets when isAllDay is not set', async () => {
+    const { chips } = await render([]);
+
+    expect(chips().map((chip) => chip.label)).toEqual(TIMED_LABELS);
+  });
+
+  it('adds a chip only for an offset outside the presets', async () => {
+    const preset = await render([-15]);
+
+    expect(preset.chips().map((chip) => chip.label)).toEqual(TIMED_LABELS);
+    expect(
+      preset
+        .chips()
+        .filter((chip) => chip.pressed === 'true')
+        .map((chip) => chip.label),
+    ).toEqual(['15 minutes before']);
+
+    TestBed.resetTestingModule();
+    const custom = await render([-15, -200]);
+
+    expect(custom.chips().map((chip) => chip.label)).toEqual([
+      ...TIMED_LABELS,
+      '3 h 20 min before',
+    ]);
+    expect(custom.chips().at(-1)!.pressed).toBe('true');
+  });
+
+  it('ignores a click on a disabled chip', async () => {
+    const { fixture, emitted, chips } = await render([-15, -60, -120]);
+
+    const chip = chips().find((candidate) => candidate.label === '5 minutes before')!;
+    expect(chip.button.disabled).toBe(true);
+    const debug = fixture.debugElement.query((de) => de.nativeElement === chip.button);
+    debug.triggerEventHandler('click');
+
+    expect(emitted).toEqual([]);
+  });
+
+  // The label of a zero offset outside the all-day presets reads oddly today ("after" with no
+  // duration). This pins it as it is; see the follow-up noted in the pull request (D-1).
+  it('labels a zero offset in all-day mode as it reads today', async () => {
+    const { chips } = await render([0], true);
+
+    expect(chips().at(-1)!.label).toBe('after');
   });
 });
