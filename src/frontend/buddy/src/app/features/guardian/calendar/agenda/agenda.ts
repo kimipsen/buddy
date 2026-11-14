@@ -352,6 +352,7 @@ export class CalendarAgenda {
   protected readonly skipping = createAction<string>();
 
   protected readonly editingItemId = signal<string | null>(null);
+  // Stryker disable StringLiteral,BooleanLiteral: never reaches an output: saveEditItem only uses it for the kind startEditItem set it for
   protected readonly editTitle = signal('');
   protected readonly editIcon = signal('');
   protected readonly editColor = signal('');
@@ -362,6 +363,7 @@ export class CalendarAgenda {
   protected readonly editDueDate = signal('');
   protected readonly editDueTime = signal('');
   protected readonly editIsAllDay = signal(false);
+  // Stryker restore StringLiteral,BooleanLiteral
   protected readonly editAlarms = signal<number[]>([]);
   protected readonly editingKind = signal<CalendarItemKind>(EVENT_KIND);
   protected readonly savingEdit = createAction<string>();

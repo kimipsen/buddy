@@ -1129,6 +1129,257 @@ describe('CalendarAgenda', () => {
     expect(findButtonByText(compiled, 'Save')!.disabled).toBe(true);
   });
 
+  describe('edit form', () => {
+    function eventItem(overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {}) {
+      return occurrence({ itemId: 'item-1', title: 'Dentist', ...overrides });
+    }
+
+    function taskItem(overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {}) {
+      return occurrence({
+        itemId: 'task-1',
+        kind: 'Task',
+        title: 'Buy groceries',
+        startsAt: null,
+        endsAt: null,
+        dueAt: `${today}T17:00:00Z`,
+        ...overrides,
+      });
+    }
+
+    async function openEdit(
+      items: CalendarOccurrence[],
+      stubs: Parameters<typeof setup>[0] = {},
+      title = items[0].title,
+    ) {
+      const result = await setup({
+        ...stubs,
+        calendars: {
+          listOccurrencesInRange: vi.fn(async () => items),
+          ...stubs.calendars,
+        },
+      });
+      await settle(result.fixture);
+      findButtonByText(row(result.fixture.nativeElement as HTMLElement, title)!, 'Edit')!.click();
+      await settle(result.fixture);
+      return result;
+    }
+
+    async function openList(items: CalendarOccurrence[]) {
+      const result = await setup({
+        calendars: { listOccurrencesInRange: vi.fn(async () => items) },
+      });
+      await settle(result.fixture);
+      return result;
+    }
+
+    function saveDisabled(fixture: ComponentFixture<unknown>): boolean {
+      return findButtonByText(editForm(fixture), 'Save')!.disabled;
+    }
+
+    async function submitEdit(fixture: ComponentFixture<unknown>): Promise<void> {
+      editForm(fixture).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+    }
+
+    it('keeps Save disabled when the colour is only spaces', async () => {
+      const { fixture } = await openEdit([eventItem({ color: '   ' })]);
+
+      expect(saveDisabled(fixture)).toBe(true);
+    });
+
+    describe('required dates', () => {
+      const cases: {
+        kind: 'Event' | 'Task';
+        change: string;
+        label?: string;
+        value?: string;
+        enabled: boolean;
+      }[] = [
+        { kind: 'Event', change: 'none', enabled: true },
+        {
+          kind: 'Event',
+          change: 'Start date cleared',
+          label: 'Start date',
+          value: '',
+          enabled: false,
+        },
+        { kind: 'Event', change: 'End date cleared', label: 'End date', value: '', enabled: false },
+        {
+          kind: 'Event',
+          change: "Start date emitted as '   '",
+          label: 'Start date',
+          value: '   ',
+          enabled: false,
+        },
+        {
+          kind: 'Event',
+          change: "End date emitted as '   '",
+          label: 'End date',
+          value: '   ',
+          enabled: false,
+        },
+        { kind: 'Task', change: 'none', enabled: true },
+        { kind: 'Task', change: 'Due date cleared', label: 'Due date', value: '', enabled: false },
+        {
+          kind: 'Task',
+          change: "Due date emitted as '   '",
+          label: 'Due date',
+          value: '   ',
+          enabled: false,
+        },
+      ];
+
+      it.each(cases)('$kind, $change: Save enabled is $enabled', async (spec) => {
+        const { fixture } = await openEdit([spec.kind === 'Event' ? eventItem() : taskItem()]);
+
+        if (spec.label !== undefined) {
+          const form = editForm(fixture);
+          if (spec.value === '') {
+            setInputValue(
+              form.querySelector<HTMLInputElement>(`input[aria-label="${spec.label}"]`)!,
+              '',
+            );
+          } else {
+            emit(fixture, dateHost(form, spec.label), 'valueChange', spec.value);
+          }
+          await settle(fixture);
+        }
+
+        expect(saveDisabled(fixture)).toBe(!spec.enabled);
+      });
+    });
+
+    it('submits nothing when the title is only spaces', async () => {
+      const { fixture, calendars } = await openEdit([eventItem()]);
+
+      setInputValue(
+        editForm(fixture).querySelector<HTMLInputElement>('input[name="editTitle"]')!,
+        '   ',
+      );
+      await settle(fixture);
+      await submitEdit(fixture);
+
+      expect(calendars.updateItemDetails).not.toHaveBeenCalled();
+      expect(calendars.rescheduleItem).not.toHaveBeenCalled();
+    });
+
+    it('trims the title, icon and colour before saving the details', async () => {
+      const { fixture, calendars } = await openEdit([eventItem({ color: '  #abcdef  ' })]);
+
+      const form = editForm(fixture);
+      setInputValue(
+        form.querySelector<HTMLInputElement>('input[name="editTitle"]')!,
+        '  Dentist checkup  ',
+      );
+      setInputValue(form.querySelector<HTMLInputElement>('input[name="editIcon"]')!, '  🦷  ');
+      await settle(fixture);
+      await submitEdit(fixture);
+
+      expect(calendars.updateItemDetails).toHaveBeenCalledWith('cal-1', 'item-1', {
+        title: 'Dentist checkup',
+        icon: '🦷',
+        color: '#abcdef',
+      });
+    });
+
+    it('reschedules an all-day task with the 00:00 sentinel time', async () => {
+      const { fixture, calendars } = await openEdit([taskItem({ isAllDay: true })]);
+
+      await submitEdit(fixture);
+
+      expect(calendars.rescheduleItem).toHaveBeenCalledWith('cal-1', 'task-1', {
+        schedule: { kind: 1, dueDate: { date: today, time: '00:00:00' }, isAllDay: true },
+      });
+    });
+
+    const a = eventItem({ itemId: 'a', title: 'Alpha', isRepeating: true });
+    const b = eventItem({ itemId: 'b', title: 'Beta' });
+
+    it('closes a delete prompt on another item when Edit is pressed', async () => {
+      // A delete prompt on Beta, then Edit on Alpha.
+      const result = await openList([a, b]);
+      findButtonByText(
+        row(result.fixture.nativeElement as HTMLElement, 'Beta')!,
+        'Delete',
+      )!.click();
+      await settle(result.fixture);
+      expect((result.fixture.nativeElement as HTMLElement).textContent).toContain('Delete this?');
+      findButtonByText(row(result.fixture.nativeElement as HTMLElement, 'Alpha')!, 'Edit')!.click();
+      await settle(result.fixture);
+      expect((result.fixture.nativeElement as HTMLElement).textContent).not.toContain(
+        'Delete this?',
+      );
+    });
+
+    it('closes a skip prompt on another item when Edit is pressed', async () => {
+      const result = await openList([a, b]);
+      findButtonByText(
+        row(result.fixture.nativeElement as HTMLElement, 'Alpha')!,
+        'Skip day',
+      )!.click();
+      await settle(result.fixture);
+      expect((result.fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Skip just this day?',
+      );
+      findButtonByText(row(result.fixture.nativeElement as HTMLElement, 'Beta')!, 'Edit')!.click();
+      await settle(result.fixture);
+      expect((result.fixture.nativeElement as HTMLElement).textContent).not.toContain(
+        'Skip just this day?',
+      );
+    });
+
+    it('forgets a failed save when the edit is cancelled and started again', async () => {
+      const { fixture } = await openEdit([eventItem()], {
+        calendars: { updateItemDetails: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      });
+
+      await submitEdit(fixture);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Unable to update this item.',
+      );
+
+      findButtonByText(editForm(fixture), 'Cancel')!.click();
+      await settle(fixture);
+      findButtonByText(row(fixture.nativeElement as HTMLElement, 'Dentist')!, 'Edit')!.click();
+      await settle(fixture);
+
+      expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+        'Unable to update this item.',
+      );
+    });
+
+    it('closes the form on Cancel and lists the title again', async () => {
+      const { fixture } = await openEdit([eventItem()]);
+
+      findButtonByText(editForm(fixture), 'Cancel')!.click();
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector('input[name="editTitle"]')).toBeNull();
+      expect(row(compiled, 'Dentist')).toBeTruthy();
+    });
+
+    it('moves the end along when the start date moves, and saves both', async () => {
+      const { fixture, calendars } = await openEdit([eventItem()]);
+
+      setInputValue(
+        editForm(fixture).querySelector<HTMLInputElement>('input[aria-label="Start date"]')!,
+        addDays(today, 1),
+      );
+      await settle(fixture);
+      await submitEdit(fixture);
+
+      expect(calendars.rescheduleItem).toHaveBeenCalledWith('cal-1', 'item-1', {
+        schedule: {
+          kind: 0,
+          startsAt: { date: addDays(today, 1), time: '09:00:00' },
+          endsAt: { date: addDays(today, 1), time: '10:00:00' },
+          isAllDay: false,
+        },
+      });
+    });
+  });
+
   // ----- Create -----
 
   it('disables the add button until a title is entered, given a valid default calendar/kind/dates', async () => {
