@@ -97,6 +97,9 @@ in real time.
       [Night duty iCal feed](docs/backend/analysis/night-duty-ical-feed.md))
 - [x] Night duty in the sleep diary: each logged night shows who was on duty and the night's
       note, as night duty planned it, so guardians can spot patterns across homes
+- [x] Print a child's sleep diary for a chosen period of up to 92 nights on A4, with the clinic
+      form's columns and who was on duty each night (see
+      [Sleep diary printing](docs/frontend/analysis/sleep-diary-printing.md))
 
 ### Child
 

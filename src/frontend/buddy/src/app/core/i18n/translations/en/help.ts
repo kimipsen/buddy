@@ -210,6 +210,15 @@ export const help = {
             s3: 'Copy the link right away, because it is only shown once, and send it to the doctor.',
           },
         },
+        printDiary: {
+          title: 'Print the diary for a period',
+          body: 'You can print the diary for any period of up to 92 nights, for example to bring to the sleep clinic. The printout has one row per night with the same columns as the clinic’s form, who was on duty each night if you use night duty, and your sleep hygiene notes. The column headings are repeated on every page.',
+          steps: {
+            s1: 'Under "Nights", go to the nights you want with "Previous 14 nights" or "Next 14 nights", and press "Print".',
+            s2: 'Change "From" and "To" to print a longer or shorter period.',
+            s3: 'Press "Print", then choose a printer or save as PDF.',
+          },
+        },
       },
     },
     feelings: {
