@@ -138,6 +138,16 @@ Log a night in the same fields as a sleep clinic’s form, review the last 14 ni
 
 <img src="mobile/guardian-sleep-diary.png" alt="Sleep diary on a phone" width="320">
 
+## Sleep diary printout
+
+A child’s sleep diary for a chosen period of up to 92 nights on A4 landscape, laid out like the clinic’s paper form, with who was on duty each night and the sleep hygiene notes, without the app’s navigation.
+
+![Sleep diary printout](guardian-sleep-diary-print.png)
+
+<img src="tablet/guardian-sleep-diary-print.png" alt="Sleep diary printout on a tablet" width="384">
+
+<img src="mobile/guardian-sleep-diary-print.png" alt="Sleep diary printout on a phone" width="320">
+
 ## Feelings
 
 A child’s feelings check-ins over 14 days, each a colour, a face and a word on a morning-to-evening line, next to the medicine taken and the night before’s sleep; an 8-week summary, a day’s check-ins with edit and remove, logging an observation, reminder times, faces-only buttons and a read-only link for a doctor.
