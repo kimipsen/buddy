@@ -2,7 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SleepEntry } from '../../../../core/sleep-diary.service';
-import { NightDutyCell, SleepHistory } from './sleep-history';
+import { NightDutyCell } from '../sleep-night-duty';
+import { SleepHistory } from './sleep-history';
 
 async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
   fixture.detectChanges();

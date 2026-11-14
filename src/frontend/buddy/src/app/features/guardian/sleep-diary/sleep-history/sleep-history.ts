@@ -8,13 +8,7 @@ import { SleepEntry } from '../../../../core/sleep-diary.service';
 import { TimeOfDayPipe } from '../../../../core/time-of-day.pipe';
 import { splitMinutes } from '../sleep-entry-draft';
 import { Card } from '../../../../shared/card/card';
-import { ResponsibleText } from '../../night-duty/night-people';
-
-// Who was on duty a night (night duty, GitHub issue #68): the person, or null for a note on its own.
-export interface NightDutyCell {
-  who: ResponsibleText | null;
-  note: string;
-}
+import { NightDutyCell } from '../sleep-night-duty';
 
 interface HistoryRow {
   date: string;

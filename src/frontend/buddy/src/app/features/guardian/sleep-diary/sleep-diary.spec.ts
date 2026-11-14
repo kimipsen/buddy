@@ -272,6 +272,7 @@ describe('GuardianSleepDiary', () => {
         },
       });
 
+      expect(nightDuty.listNights).toHaveBeenCalledTimes(1);
       expect(nightDuty.listNights).toHaveBeenCalledWith('c1', '2026-03-02', '2026-03-15');
       expect(guardians.listChildGuardians).toHaveBeenCalledWith('c1');
       expect(headers(compiled)).toContain('On duty');

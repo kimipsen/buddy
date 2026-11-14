@@ -3,11 +3,8 @@ import { FormsModule } from '@angular/forms';
 
 import { firstAndLast } from '../../../core/array-utils';
 import { addDaysIso, buildDateRangeIso, todayIsoDate } from '../../../core/date-utils';
-import { FeaturesService } from '../../../core/features.service';
-import { ChildSummary, GuardianSummary, GuardiansService } from '../../../core/guardians.service';
+import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import { TranslationService } from '../../../core/i18n/translation.service';
-import { Night, NightDutyService, nightEntry } from '../../../core/night-duty.service';
 import {
   SleepDiaryEntries,
   SleepDiaryService,
@@ -16,8 +13,8 @@ import {
 import { HygieneNotes } from './hygiene-notes/hygiene-notes';
 import { SleepShareLinks } from './share-links/share-links';
 import { SleepEntryForm } from './sleep-entry-form/sleep-entry-form';
-import { NightDutyCell, SleepHistory } from './sleep-history/sleep-history';
-import { responsibleText } from '../night-duty/night-people';
+import { NightDutyCell, SleepNightDuty } from './sleep-night-duty';
+import { SleepHistory } from './sleep-history/sleep-history';
 import { Page } from '../../../shared/page/page';
 
 // The paper form a sleep clinic hands out covers 14 nights; the history pages by the same window.
@@ -30,11 +27,6 @@ interface DiaryRequest {
 }
 
 const EMPTY_DIARY: SleepDiaryEntries = { sleepHygieneNotes: '', entries: [] };
-
-interface NightDutyData {
-  nights: Night[];
-  guardians: GuardianSummary[];
-}
 
 // Guardian-only, like the backend (no child view): log a night, review the last 14, keep the
 // diary-wide hygiene notes and hand a read-only link to a clinician.
@@ -54,9 +46,7 @@ interface NightDutyData {
 export class GuardianSleepDiary {
   private readonly guardians = inject(GuardiansService);
   private readonly sleepDiary = inject(SleepDiaryService);
-  private readonly features = inject(FeaturesService);
-  private readonly nightDuty = inject(NightDutyService);
-  private readonly translation = inject(TranslationService);
+  private readonly sleepNightDuty = inject(SleepNightDuty);
 
   protected readonly children = resource({ loader: () => this.guardians.listMyChildren() });
   protected readonly childList = computed((): ChildSummary[] =>
@@ -104,52 +94,12 @@ export class GuardianSleepDiary {
   // because of it.
   private readonly nightDutyData = resource({
     params: () => this.request(),
-    loader: async ({ params }): Promise<NightDutyData | null> => {
-      if (!this.features.enabled('nightDuty')) {
-        return null;
-      }
-
-      try {
-        const [nights, guardians] = await Promise.all([
-          this.nightDuty.listNights(params.childId, params.from, params.to),
-          // Without names a guardian's night still shows "A guardian".
-          this.guardians.listChildGuardians(params.childId).catch((): GuardianSummary[] => []),
-        ]);
-        return { nights, guardians };
-      } catch {
-        return null;
-      }
-    },
+    loader: ({ params }) => this.sleepNightDuty.load(params.childId, params.from, params.to),
   });
   protected readonly nightDutyByDate = computed(
     (): Partial<Record<string, NightDutyCell>> | null => {
       const data = this.nightDutyData.hasValue() ? this.nightDutyData.value() : null;
-
-      if (!data) {
-        return null;
-      }
-
-      const people = { guardians: data.guardians, babysitters: [] };
-      const labels = {
-        guardian: this.translation.translate('nightDuty.who.guardian'),
-        babysitter: this.translation.translate('nightDuty.who.babysitter'),
-        sleepover: (host: string) =>
-          this.translation.translate('nightDuty.who.sleepover', { host }),
-      };
-      const byDate: Partial<Record<string, NightDutyCell>> = {};
-
-      for (const night of data.nights) {
-        const entry = nightEntry(night);
-
-        if (entry) {
-          byDate[night.date] = {
-            who: responsibleText(entry.responsible, people, labels),
-            note: entry.note ?? '',
-          };
-        }
-      }
-
-      return byDate;
+      return data ? this.sleepNightDuty.cells(data) : null;
     },
   );
   protected readonly selectedEntry = computed(
