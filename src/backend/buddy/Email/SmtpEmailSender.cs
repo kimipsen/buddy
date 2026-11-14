@@ -60,12 +60,12 @@ public sealed class SmtpEmailSender(IOptionsMonitor<MailOptions> options, Fronte
             // Only authenticate when credentials are configured and the server actually advertises
             // support for it -- lets Mailpit's unauthenticated SMTP keep working even if placeholder
             // credentials are set in the environment.
-            if (mail.Credentials is { } credentials && client.Capabilities.HasFlag(SmtpCapabilities.Authentication))
+            if (mail.Credentials is { } credentials && client.Capabilities.Contains(SmtpCapability.Authentication))
             {
                 await client.AuthenticateAsync(credentials.Username, credentials.Password, cancellationToken);
             }
-
-            await client.SendAsync(message, cancellationToken);
+            var request = new MailKit.SendRequest(message);
+            await client.SendAsync(request, cancellationToken);
             await client.DisconnectAsync(true, cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
