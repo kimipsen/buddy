@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { SleepEntry } from '../../core/sleep-diary.service';
-import type { NightDutyCell } from '../../features/guardian/sleep-diary/sleep-history/sleep-history';
+import type { NightDutyCell } from '../../features/guardian/sleep-diary/sleep-night-duty';
 import { SleepDiarySheet } from './sleep-diary-sheet';
 
 async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
