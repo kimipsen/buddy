@@ -26,6 +26,7 @@ describe('feature routes', () => {
     ['guardian', GUARDIAN_ROUTES, 'print/sheet/:templateId', 'printing'],
     ['guardian', GUARDIAN_ROUTES, 'house-rules/print/children/:childId', 'houseRules'],
     ['guardian', GUARDIAN_ROUTES, 'house-rules/print/groups/:groupId', 'houseRules'],
+    ['guardian', GUARDIAN_ROUTES, 'sleep-diary/print/:childId', 'sleepDiary'],
     ['guardian', guardianChildren, 'mealplan', 'mealplans'],
     ['guardian', guardianChildren, 'mealplan/ai-assistant', 'mealplanAiAssistant'],
     ['guardian', guardianChildren, 'mealplan/import', 'mealplanImport'],

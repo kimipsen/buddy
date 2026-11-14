@@ -1,0 +1,80 @@
+<div
+  class="min-h-dvh bg-slate-100 text-slate-950 dark:bg-slate-950 dark:text-slate-50 print:min-h-0 print:bg-white print:text-black"
+>
+  <div
+    class="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 print:hidden"
+  >
+    <a
+      routerLink="/guardian/sleep-diary"
+      class="text-sm font-medium text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-slate-100"
+      >← {{ 'sleepDiary.print.backLink' | translate }}</a
+    >
+    <div class="flex flex-wrap items-center gap-3 text-sm">
+      <span>{{ 'sleepDiary.print.fromLabel' | translate }}</span>
+      <app-date-select
+        [value]="from()"
+        [ariaLabel]="'sleepDiary.print.fromLabel' | translate"
+        (valueChange)="setFrom($event)"
+      />
+      <span>{{ 'sleepDiary.print.toLabel' | translate }}</span>
+      <app-date-select
+        [value]="to()"
+        [ariaLabel]="'sleepDiary.print.toLabel' | translate"
+        (valueChange)="setTo($event)"
+      />
+    </div>
+    @if (ready()) {
+      <button
+        type="button"
+        class="ml-auto rounded-lg bg-emerald-600 dark:bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 dark:hover:bg-emerald-400"
+        (click)="print()"
+      >
+        {{ 'sleepDiary.print.printButton' | translate }}
+      </button>
+    }
+  </div>
+
+  @let period = this.period();
+  @if (period.kind === 'missing') {
+    <p role="alert" class="p-8 text-sm text-red-600 dark:text-red-400 print:hidden">
+      {{ 'sleepDiary.print.periodMissing' | translate }}
+    </p>
+  } @else if (period.kind === 'reversed') {
+    <p role="alert" class="p-8 text-sm text-red-600 dark:text-red-400 print:hidden">
+      {{ 'sleepDiary.print.periodReversed' | translate }}
+    </p>
+  } @else if (period.kind === 'tooLong') {
+    <p role="alert" class="p-8 text-sm text-red-600 dark:text-red-400 print:hidden">
+      {{ 'sleepDiary.print.periodTooLong' | translate }}
+    </p>
+  } @else if (failed()) {
+    <p class="p-8 text-sm text-red-600 dark:text-red-400">
+      {{ 'sleepDiary.loadError' | translate }}
+    </p>
+  } @else if (ready() && diary.hasValue()) {
+    <!-- A4 landscape: 297mm wide on screen; the page's own margins on paper. -->
+    <article
+      class="mx-auto my-8 w-full max-w-[297mm] bg-white p-4 shadow-sm dark:bg-slate-900 sm:p-[10mm] print:m-0 print:max-w-none print:bg-white print:p-0 print:text-black print:shadow-none"
+    >
+      <header class="mb-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 print:text-black">
+          {{ 'sleepDiary.shared.eyebrow' | translate }}
+        </p>
+        <h1 class="text-xl font-semibold">
+          {{ 'sleepDiary.shared.title' | translate: { name: childName() } }}
+        </h1>
+        <p class="text-sm text-slate-600 print:text-black">{{ periodLabel() }}</p>
+      </header>
+      <app-sleep-diary-sheet
+        [days]="period.days"
+        [entries]="diary.value().entries"
+        [hygieneNotes]="diary.value().sleepHygieneNotes"
+        [nightDuty]="nightDutyByDate()"
+      />
+    </article>
+  } @else {
+    <div class="p-8 print:hidden">
+      <app-loading-spinner [label]="'sleepDiary.loading' | translate" />
+    </div>
+  }
+</div>
