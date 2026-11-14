@@ -113,6 +113,7 @@ export const sleepDiary = {
       tired: 'Tired',
       naps: 'Naps (time, min)',
       total: 'Time slept',
+      nightDuty: 'On duty',
       remarks: 'Remarks',
     },
     yes: 'Yes',

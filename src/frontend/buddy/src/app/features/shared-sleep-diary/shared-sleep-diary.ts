@@ -5,10 +5,8 @@ import { ActivatedRoute } from '@angular/router';
 
 import { addDaysIso, buildDateRangeIso, parseIsoDate } from '../../core/date-utils';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
-import { TranslationService } from '../../core/i18n/translation.service';
-import { SleepDiaryService, SleepEntry } from '../../core/sleep-diary.service';
-import { TimeOfDayPipe } from '../../core/time-of-day.pipe';
-import { splitMinutes } from '../guardian/sleep-diary/sleep-entry-draft';
+import { SleepDiaryService } from '../../core/sleep-diary.service';
+import { SleepDiarySheet } from '../../shared/sleep-diary-sheet/sleep-diary-sheet';
 
 const DAYS_SHOWN = 14;
 
@@ -17,25 +15,17 @@ interface Range {
   to?: string;
 }
 
-interface Row {
-  date: string;
-  label: string;
-  isWeekend: boolean;
-  entry: SleepEntry | undefined;
-}
-
 // The page a clinician opens from a share link: no login and no app chrome, a printable table
 // with the same columns as the clinic's paper sleep-registration form. The token in the URL is the
 // only credential (GetSharedSleepDiary on the backend).
 @Component({
   selector: 'app-shared-sleep-diary',
-  imports: [DatePipe, TimeOfDayPipe, TranslatePipe],
+  imports: [DatePipe, SleepDiarySheet, TranslatePipe],
   templateUrl: './shared-sleep-diary.html',
 })
 export class SharedSleepDiary {
   private readonly route = inject(ActivatedRoute);
   private readonly sleepDiary = inject(SleepDiaryService);
-  private readonly translation = inject(TranslationService);
 
   private readonly token = this.route.snapshot.paramMap.get('token') ?? '';
 
@@ -52,26 +42,15 @@ export class SharedSleepDiary {
     return error instanceof HttpErrorResponse && error.status === 404;
   });
 
-  protected readonly rows = computed((): Row[] => {
+  protected readonly days = computed((): string[] => {
     if (!this.diary.hasValue()) {
       return [];
     }
 
     const shared = this.diary.value();
-    const locale = this.translation.language();
-    const byDate = new Map(shared.entries.map((entry) => [entry.date, entry]));
     const dayCount = parseIsoDate(shared.to).getTime() - parseIsoDate(shared.from).getTime();
 
-    return buildDateRangeIso(shared.from, Math.round(dayCount / 86_400_000) + 1).map((date) => {
-      const day = parseIsoDate(date);
-
-      return {
-        date,
-        label: day.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' }),
-        isWeekend: day.getDay() === 0 || day.getDay() === 6,
-        entry: byDate.get(date),
-      };
-    });
+    return buildDateRangeIso(shared.from, Math.round(dayCount / 86_400_000) + 1);
   });
 
   protected previous(): void {
@@ -90,9 +69,5 @@ export class SharedSleepDiary {
 
   protected print(): void {
     window.print();
-  }
-
-  protected duration(total: number): { hours: number; minutes: number } {
-    return splitMinutes(total);
   }
 }
