@@ -105,6 +105,13 @@
                 {{ 'sleepDiary.range.next' | translate }}
               </button>
             }
+            <a
+              class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+              [routerLink]="['/guardian/sleep-diary/print', childId]"
+              [queryParams]="printQuery()"
+            >
+              {{ 'sleepDiary.print.open' | translate }}
+            </a>
           </div>
         </app-sleep-history>
       }
