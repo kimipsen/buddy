@@ -170,6 +170,16 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     waitFor: '9 h 25 min',
   },
   {
+    name: 'guardian-sleep-diary-print',
+    title: 'Sleep diary printout',
+    description:
+      'A child’s sleep diary for a chosen period of up to 92 nights on A4 landscape, laid out like the clinic’s paper form, with who was on duty each night and the sleep hygiene notes, without the app’s navigation.',
+    as: 'guardian',
+    route: '/guardian/sleep-diary/print/:childId',
+    path: (demo) => `/guardian/sleep-diary/print/${demo.childId}`,
+    waitFor: '9 h 25 min',
+  },
+  {
     name: 'guardian-feelings',
     title: 'Feelings',
     description:
