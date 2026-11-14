@@ -478,6 +478,7 @@ export class CalendarAgenda {
   protected readonly weekdaysFiltered = computed(
     () => this.newRepeat() === DAILY && this.shownWeekdays().length < ALL_WEEKDAYS.length,
   );
+  // Stryker disable next-line StringLiteral: the newCalendarId effect sets it to '' on its first run, before anything reads it
   protected readonly newAssignedTo = signal('');
   protected readonly creating = createAction();
 
@@ -501,6 +502,7 @@ export class CalendarAgenda {
   // A packing list's items are all due when the child leaves the house, so its time reads
   // "Leave by" (docs/backend/analysis/packing-checklists.md, Frontend).
   protected readonly newDueTimeLabel = computed(() =>
+    // Stryker disable next-line ConditionalExpression: in manual mode no template is ever selected (setTaskSource('manual') clears it), so the source check can't change the label
     this.newTaskSource() === 'template' && this.selectedTaskTemplate()?.kind === 'Checklist'
       ? 'taskLibrary.leaveBy'
       : 'calendar.agenda.form.dueTimeLabel',
@@ -1108,6 +1110,7 @@ export class CalendarAgenda {
     this.newRepeat.set('none');
     this.newIntervalCount.set(1);
     this.newUntil.set('');
+    // Stryker disable next-line CallExpression: the repeat is now 'none', nothing reads newWeekdays while it is, and chooseRepeat() clears it before the repeat changes
     this.newWeekdays.set(null);
     this.newAssignedTo.set('');
     this.newTaskSource.set('manual');
