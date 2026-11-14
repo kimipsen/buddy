@@ -121,4 +121,14 @@ export const sleepDiary = {
     hygieneTitle: 'Søvnhygiejniske tiltag, rutiner og ritualer',
     noHygiene: 'Intet registreret.',
   },
+  print: {
+    open: 'Udskriv',
+    backLink: 'Tilbage til søvndagbogen',
+    fromLabel: 'Fra',
+    toLabel: 'Til',
+    printButton: 'Udskriv',
+    periodMissing: 'Vælg en fra-dato og en til-dato.',
+    periodReversed: 'Til-datoen kan ikke ligge før fra-datoen.',
+    periodTooLong: 'En udskrift kan højst dække 92 nætter. Vælg en kortere periode.',
+  },
 };

@@ -27,6 +27,7 @@ import { GuardianFirstThen } from './first-then/first-then';
 import { GuardianTransitionWarnings } from './transition-warnings/transition-warnings';
 import { GuardianTaskLibrary } from './task-library/task-library';
 import { GuardianVisitSummaries } from './visit-summaries/visit-summaries';
+import { SleepDiaryPrintPage } from './sleep-diary/print/sleep-diary-print-page';
 import { VisitSummaryPrintPage } from './visit-summaries/print/visit-summary-print-page';
 import { VisitSummaryPage } from './visit-summaries/summary/visit-summary-page';
 import { GuardianWorkLocations } from './work-locations/work-locations';
@@ -59,6 +60,12 @@ export const GUARDIAN_ROUTES: Routes = [
     path: 'visit-summaries/print/:childId/:summaryId',
     component: VisitSummaryPrintPage,
     canActivate: [featureGuard('visitSummaries')],
+  },
+  // The sleep diary's A4 printout for a chosen period, outside the shell for the same reason.
+  {
+    path: 'sleep-diary/print/:childId',
+    component: SleepDiaryPrintPage,
+    canActivate: [featureGuard('sleepDiary')],
   },
   {
     path: '',

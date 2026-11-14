@@ -121,4 +121,14 @@ export const sleepDiary = {
     hygieneTitle: 'Sleep hygiene measures, routines and rituals',
     noHygiene: 'None recorded.',
   },
+  print: {
+    open: 'Print',
+    backLink: 'Back to sleep diary',
+    fromLabel: 'From',
+    toLabel: 'To',
+    printButton: 'Print',
+    periodMissing: 'Choose a from date and a to date.',
+    periodReversed: 'The to date can’t be before the from date.',
+    periodTooLong: 'A printout can cover at most 92 nights. Choose a shorter period.',
+  },
 };
