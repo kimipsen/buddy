@@ -190,6 +190,38 @@ describe('GuardianSleepDiary', () => {
     expect(sleepDiary.listShareLinks).toHaveBeenLastCalledWith('c2');
   });
 
+  describe('print link', () => {
+    const printLink = (compiled: HTMLElement) =>
+      compiled.querySelector<HTMLAnchorElement>('a[href^="/guardian/sleep-diary/print/"]');
+
+    it('opens the print page with the shown window, and follows paging and the child', async () => {
+      const { fixture, compiled } = await setup();
+
+      expect(printLink(compiled)!.textContent?.trim()).toBe('Print');
+      expect(printLink(compiled)!.getAttribute('href')).toBe(
+        '/guardian/sleep-diary/print/c1?from=2026-03-02&to=2026-03-15',
+      );
+
+      Array.from(compiled.querySelectorAll('button'))
+        .find((b) => b.textContent?.trim() === 'Previous 14 nights')!
+        .click();
+      await settle(fixture);
+
+      expect(printLink(compiled)!.getAttribute('href')).toBe(
+        '/guardian/sleep-diary/print/c1?from=2026-02-16&to=2026-03-01',
+      );
+
+      const select = compiled.querySelector<HTMLSelectElement>('#sleepDiaryChildId')!;
+      select.value = select.options[1].value;
+      select.dispatchEvent(new Event('change'));
+      await settle(fixture);
+
+      expect(printLink(compiled)!.getAttribute('href')).toBe(
+        '/guardian/sleep-diary/print/c2?from=2026-02-16&to=2026-03-01',
+      );
+    });
+  });
+
   it('shows a saved night in the history without reloading', async () => {
     const { fixture, compiled, sleepDiary } = await setup();
 

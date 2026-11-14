@@ -1,5 +1,6 @@
 import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import { firstAndLast } from '../../../core/array-utils';
 import { addDaysIso, buildDateRangeIso, todayIsoDate } from '../../../core/date-utils';
@@ -35,6 +36,7 @@ const EMPTY_DIARY: SleepDiaryEntries = { sleepHygieneNotes: '', entries: [] };
   imports: [
     FormsModule,
     HygieneNotes,
+    RouterLink,
     SleepEntryForm,
     SleepHistory,
     SleepShareLinks,
@@ -62,6 +64,11 @@ export class GuardianSleepDiary {
     buildDateRangeIso(addDaysIso(this.rangeEnd(), -(NIGHTS_SHOWN - 1)), NIGHTS_SHOWN),
   );
   protected readonly canGoForward = computed(() => this.rangeEnd() < this.today);
+  // The print page takes the window on screen as its period.
+  protected readonly printQuery = computed(() => {
+    const [from, to] = firstAndLast(this.days());
+    return { from, to };
+  });
 
   private readonly request = computed(
     (): DiaryRequest | undefined => {
