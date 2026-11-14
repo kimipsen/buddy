@@ -11,6 +11,7 @@ import {
 import { toIsoDate, todayIsoDate } from '../../../../core/date-utils';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TaskLibraryService, TaskTemplate } from '../../../../core/task-library.service';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { UsersService } from '../../../../core/users.service';
 import { CalendarAgenda } from './agenda';
 import { FlatOccurrence, nestOccurrence } from '../../../../../testing/occurrence-fixture';
@@ -244,6 +245,38 @@ describe('CalendarAgenda', () => {
   // input instead.
   function createForm(compiled: HTMLElement): HTMLFormElement {
     return compiled.querySelector<HTMLInputElement>('input[name="itemTitle"]')!.closest('form')!;
+  }
+
+  // The edit form, anchored on its own title input (see createForm).
+  function editForm(fixture: { nativeElement: unknown }): HTMLFormElement {
+    return (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLInputElement>('input[name="editTitle"]')!
+      .closest('form')!;
+  }
+
+  // Fixes "today" for the component, e.g. freezeToday(2026, 10, 13) is Friday 13 November 2026.
+  // The top-level afterEach restores real timers.
+  function freezeToday(year: number, monthIndex: number, day: number): void {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(year, monthIndex, day));
+  }
+
+  function viewTitle(compiled: HTMLElement): string {
+    return compiled.querySelector('h3')!.textContent!.trim();
+  }
+
+  // The month grid button of the day whose first span (the day number) reads `label`.
+  function monthCell(compiled: HTMLElement, label: string): HTMLButtonElement | undefined {
+    return Array.from(compiled.querySelectorAll<HTMLButtonElement>('app-month-grid button')).find(
+      (button) => button.querySelector('span')?.textContent?.trim() === label,
+    );
+  }
+
+  // The agenda list item that contains `title`.
+  function row(compiled: HTMLElement, title: string): HTMLLIElement | undefined {
+    return Array.from(compiled.querySelectorAll<HTMLLIElement>('li')).find((item) =>
+      item.textContent?.includes(title),
+    );
   }
 
   // ----- Loading / empty / error -----
@@ -1753,6 +1786,276 @@ describe('CalendarAgenda', () => {
     );
   });
 
+  // ----- Views, navigation, calendars and members (W2 of #96) -----
+
+  describe('view titles and navigation', () => {
+    function viewSwitches(compiled: HTMLElement): string[] {
+      return Array.from(
+        compiled
+          .querySelector('h3')!
+          .nextElementSibling!.querySelector('div')!
+          .querySelectorAll('button'),
+      ).map((button) => button.textContent!.trim());
+    }
+
+    it('titles each view and labels its previous and next buttons', async () => {
+      freezeToday(2026, 10, 13); // Friday
+      const { fixture, calendars } = await setup();
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(viewSwitches(compiled)).toEqual(['Day', 'Work week', 'Week', 'Month']);
+
+      // Week is the default.
+      expect(viewTitle(compiled)).toBe('This week');
+      expect(findButtonByText(compiled, 'Previous week')).toBeDefined();
+      expect(findButtonByText(compiled, 'Next week')).toBeDefined();
+
+      findButtonByText(compiled, 'Day')!.click();
+      await settle(fixture);
+      expect(viewTitle(compiled)).toBe('Friday, November 13');
+      expect(findButtonByText(compiled, 'Previous day')).toBeDefined();
+      expect(findButtonByText(compiled, 'Next day')).toBeDefined();
+
+      findButtonByText(compiled, 'Work week')!.click();
+      await settle(fixture);
+      expect(viewTitle(compiled)).toBe('Work week');
+      expect(findButtonByText(compiled, 'Previous week')).toBeDefined();
+      expect(findButtonByText(compiled, 'Next week')).toBeDefined();
+
+      findButtonByText(compiled, 'Next week')!.click();
+      await settle(fixture);
+      expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(
+        '2026-11-16',
+        '2026-11-20',
+        true,
+      );
+      findButtonByText(compiled, 'Previous week')!.click();
+      await settle(fixture);
+      expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(
+        '2026-11-09',
+        '2026-11-13',
+        true,
+      );
+
+      findButtonByText(compiled, 'Month')!.click();
+      await settle(fixture);
+      expect(viewTitle(compiled)).toBe('November 2026');
+      expect(findButtonByText(compiled, 'Previous month')).toBeDefined();
+      expect(findButtonByText(compiled, 'Next month')).toBeDefined();
+
+      // The tab strip is the last button group's sibling: Week is clicked by its own label.
+      Array.from(compiled.querySelector('h3')!.nextElementSibling!.querySelectorAll('button'))
+        .find((button) => button.textContent!.trim() === 'Week')!
+        .click();
+      await settle(fixture);
+      expect(viewTitle(compiled)).toBe('This week');
+    });
+
+    it('refetches only when the range changes, not when the language does', async () => {
+      freezeToday(2026, 10, 13);
+      const { fixture, calendars } = await setup();
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, 'Day')!.click();
+      await settle(fixture);
+      expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(
+        '2026-11-13',
+        '2026-11-13',
+        true,
+      );
+
+      findButtonByText(compiled, 'Work week')!.click();
+      await settle(fixture);
+      expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(
+        '2026-11-09',
+        '2026-11-13',
+        true,
+      );
+      expect(viewTitle(compiled)).toBe('Work week');
+
+      const callsBefore = vi.mocked(calendars.listOccurrencesInRange!).mock.calls.length;
+      await TestBed.inject(TranslationService).setLanguage('da');
+      await settle(fixture);
+      expect(viewTitle(compiled)).toBe('Arbejdsuge');
+      expect(vi.mocked(calendars.listOccurrencesInRange!).mock.calls.length).toBe(callsBefore);
+    });
+
+    it('keeps a skipped item off the month grid until its day is opened', async () => {
+      freezeToday(2026, 10, 13);
+      const at = (overrides: Partial<FlatOccurrence<CalendarOccurrence>>) =>
+        occurrence({
+          startsAt: '2026-11-10T09:00:00Z',
+          endsAt: '2026-11-10T10:00:00Z',
+          ...overrides,
+        });
+      const football = at({
+        itemId: 'football',
+        title: 'Football',
+        isRepeating: true,
+        isSkipped: true,
+      });
+      const piano = at({ itemId: 'piano', title: 'Piano' });
+      const { fixture } = await setup({
+        calendars: { listOccurrencesInRange: vi.fn(async () => [football, piano]) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Month')!.click();
+      await settle(fixture);
+
+      const cell = monthCell(compiled, '10')!;
+      expect(cell.textContent).toContain('Piano');
+      expect(cell.textContent).not.toContain('Football');
+
+      cell.click();
+      await settle(fixture);
+
+      expect(viewTitle(compiled)).toBe('Tuesday, November 10');
+      expect(row(compiled, 'Piano')).toBeDefined();
+      const footballRow = row(compiled, 'Football')!;
+      expect(footballRow.textContent).toContain('Skipped');
+      expect(findButtonByText(footballRow, 'Restore')).toBeDefined();
+    });
+  });
+
+  describe('calendars and members', () => {
+    function task(overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {}): CalendarOccurrence {
+      return occurrence({
+        itemId: 'task-1',
+        kind: 'Task',
+        title: 'Take out trash',
+        startsAt: null,
+        endsAt: null,
+        dueAt: `${today}T09:00:00Z`,
+        ...overrides,
+      });
+    }
+
+    it('shows the selected calendar icon as the create form icon placeholder, and 📅 for an unknown calendar when editing', async () => {
+      const home = calendarSummary({ id: 'cal-1', name: 'Home', icon: '🏠' });
+      const school = calendarSummary({ id: 'cal-2', name: 'School', icon: '🏫' });
+      const stray = occurrence({ itemId: 'stray', title: 'Stray', calendarId: 'cal-9' });
+      const { fixture } = await setup({
+        calendars: {
+          listMyCalendars: vi.fn(async () => [home, school]),
+          listOccurrencesInRange: vi.fn(async () => [stray]),
+        },
+      });
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      const placeholder = () =>
+        (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+          'input[name="itemIcon"]',
+        )!.placeholder;
+      expect(placeholder()).toBe('🏠');
+
+      selectValue(
+        compiled.querySelector<HTMLSelectElement>('select[name="itemCalendar"]')!,
+        'cal-2',
+      );
+      await settle(fixture);
+      expect(placeholder()).toBe('🏫');
+
+      findButtonByText(compiled, 'Edit')!.click();
+      await settle(fixture);
+      compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector<HTMLInputElement>('input[name="editIcon"]')!.placeholder).toBe(
+        '📅',
+      );
+    });
+
+    it('does not look up assignable members while no calendar can take new items', async () => {
+      const { fixture, calendars } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendarSummary({ role: 'Viewer' })]) },
+      });
+      await settle(fixture);
+
+      expect(calendars.listAssignableMembers).not.toHaveBeenCalled();
+    });
+
+    it('shows a member with no family name without a trailing space', async () => {
+      const members: AssignableMember[] = [
+        { userId: 'child-1', givenName: 'Emil', familyName: '' },
+      ];
+      const { fixture } = await setup({
+        calendars: {
+          listOccurrencesInRange: vi.fn(async () => [task({ assignedTo: 'child-1' })]),
+          listAssignableMembers: vi.fn(async () => members),
+        },
+      });
+      await settle(fixture);
+
+      const span = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('span')).find(
+        (candidate) => candidate.textContent?.startsWith('→'),
+      )!;
+      expect(span.textContent).toBe('→ Emil');
+    });
+
+    it('offers only Nobody as assignee after switching to a calendar whose members fail to load', async () => {
+      const home = calendarSummary({ id: 'cal-1', name: 'Home' });
+      const school = calendarSummary({ id: 'cal-2', name: 'School' });
+      const { fixture } = await setup({
+        calendars: {
+          listMyCalendars: vi.fn(async () => [home, school]),
+          listAssignableMembers: vi.fn(async (calendarId: string) =>
+            calendarId === 'cal-1'
+              ? [{ userId: 'child-1', givenName: 'Sam', familyName: 'Kid' }]
+              : Promise.reject(new Error('boom')),
+          ),
+        },
+      });
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Task')!.click();
+      await settle(fixture);
+
+      const options = () =>
+        Array.from(
+          (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLOptionElement>(
+            'select[name="itemAssignee"] option',
+          ),
+        ).map((option) => option.textContent!.trim());
+      expect(options()).toEqual(['Nobody', 'Sam Kid']);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      selectValue(
+        compiled.querySelector<HTMLSelectElement>('select[name="itemCalendar"]')!,
+        'cal-2',
+      );
+      await settle(fixture);
+      expect(options()).toEqual(['Nobody']);
+    });
+
+    it('lists a calendar’s items again after hiding and showing it', async () => {
+      const home = calendarSummary({ id: 'cal-1', name: 'Home' });
+      const school = calendarSummary({ id: 'cal-2', name: 'School' });
+      const homeItem = occurrence({ itemId: 'home-item', title: 'Home item' });
+      const { fixture } = await setup({
+        calendars: {
+          listMyCalendars: vi.fn(async () => [home, school]),
+          listOccurrencesInRange: vi.fn(async () => [homeItem]),
+        },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findToggle(compiled, 'Home').click();
+      await settle(fixture);
+      expect(compiled.textContent).not.toContain('Home item');
+      expect(toggleIsChecked(findToggle(compiled, 'Home'))).toBe(false);
+
+      findToggle(compiled, 'Home').click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Home item');
+      expect(toggleIsChecked(findToggle(compiled, 'Home'))).toBe(true);
+    });
+  });
+
   it('shows no assignee text for a task assigned to a member the guardian cannot resolve', async () => {
     const task = occurrence({
       itemId: 'task-1',
@@ -2203,12 +2506,6 @@ describe('CalendarAgenda', () => {
       return Array.from(
         root.querySelectorAll<HTMLButtonElement>('app-alarm-picker button[aria-pressed]'),
       ).map((button) => button.textContent!.trim());
-    }
-
-    function editForm(fixture: { nativeElement: unknown }): HTMLFormElement {
-      return (fixture.nativeElement as HTMLElement)
-        .querySelector<HTMLInputElement>('input[name="editTitle"]')!
-        .closest('form')!;
     }
 
     it('creates an event with the picked alarm and says alarms only reach subscribed calendar apps', async () => {

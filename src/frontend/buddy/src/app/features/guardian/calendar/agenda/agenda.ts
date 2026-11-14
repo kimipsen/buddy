@@ -605,6 +605,7 @@ export class CalendarAgenda {
       case 'day':
         this.anchorDate.set(addDaysIso(this.anchorDate(), direction));
         return;
+      // Stryker disable next-line ConditionalExpression: without its body this case falls through to 'week', which also shifts by DAYS_AHEAD (7) days
       case 'workweek':
         this.anchorDate.set(addDaysIso(this.anchorDate(), direction * 7));
         return;
