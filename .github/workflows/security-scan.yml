@@ -86,8 +86,12 @@ jobs:
       # Reads package-lock.json, so nothing is installed. Dev dependencies count too: they run in
       # CI and in the image builds. Low-severity advisories are listed but don't fail the job.
       # Fix a transitive one with a pin in package.json "overrides".
+      # Allowlisted advisories (remove each once a patched release exists):
+      # - GHSA-fc5q-39xc-vjpf: picomatch <= 4.0.7, no fix released (2026-11-17). Only reached through
+      #   build tooling (Angular CLI, eslint, @parcel/watcher via @tailwindcss/cli) matching our own
+      #   file paths; nothing ships in the app or the Keycloak theme.
       - name: npm audit
-        run: npx --yes audit-ci@7.1.0 --moderate
+        run: npx --yes audit-ci@7.1.0 --moderate --allowlist GHSA-fc5q-39xc-vjpf
 
   image:
     name: Container image (${{ matrix.name }})
