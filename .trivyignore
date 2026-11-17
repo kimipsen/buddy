@@ -32,7 +32,8 @@ CVE-2026-116587 exp:2026-11-15
 # rebuild pulls it. Recheck when this expires.
 CVE-2026-78661 exp:2026-11-22
 
-# keycloak (guava 33.6.0, bundled by quay.io/keycloak/keycloak:26.8.1, the newest release): Guava
+# keycloak (guava 33.6.0, bundled by quay.io/keycloak/keycloak:26.8.2, the newest release): Guava
 # DoS, fixed in 33.7.2. Swapping a jar inside Keycloak's distribution isn't supported; the fix
-# arrives with the next Keycloak release. Recheck when this expires.
-CVE-2026-102554 exp:2026-11-15
+# arrives with the next Keycloak release. Extended on 2026-11-17: 26.8.2 still bundles 33.6.0.
+# Recheck when this expires.
+CVE-2026-102554 exp:2026-11-24
