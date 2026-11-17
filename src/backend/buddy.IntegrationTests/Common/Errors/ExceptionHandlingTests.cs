@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Reflection;
 
@@ -30,7 +29,7 @@ public sealed class ExceptionHandlingTests(BuddyApiFixture fixture) : IAsyncLife
 
     // Static because the host is shared by every test in this class (BuddyApiFixture.SharedHostAsync);
     // InitializeAsync resets both before each test.
-    private static readonly ConcurrentQueue<(string Category, LogLevel Level, Exception? Exception)> Logs = new();
+    private static readonly CapturingLoggerProvider Logs = new();
     private static readonly IGuardianLinkEventStore ThrowingStore = DispatchProxy.Create<IGuardianLinkEventStore, ThrowingProxy>();
 
     private IAlbaHost _host = null!;
@@ -48,7 +47,7 @@ public sealed class ExceptionHandlingTests(BuddyApiFixture fixture) : IAsyncLife
             services =>
             {
                 services.Replace(ServiceDescriptor.Singleton(ThrowingStore));
-                services.AddSingleton<ILoggerProvider>(new CapturingLoggerProvider(Logs));
+                services.AddSingleton<ILoggerProvider>(Logs);
             });
     }
 
@@ -150,12 +149,11 @@ public sealed class ExceptionHandlingTests(BuddyApiFixture fixture) : IAsyncLife
         Assert.Equal(expected, ExceptionHandlingFeature.IsDependencyUnavailable(exception));
     }
 
-    private static async Task<(string Category, LogLevel Level, Exception? Exception)> WaitForAsync(
-        Func<(string Category, LogLevel Level, Exception? Exception), bool> predicate)
+    private static async Task<LogEntry> WaitForAsync(Func<LogEntry, bool> predicate)
     {
         for (var attempt = 0; attempt < 50; attempt++)
         {
-            if (Logs.Where(predicate).ToArray() is [var entry])
+            if (Logs.Entries.Where(predicate).ToArray() is [var entry])
             {
                 return entry;
             }
@@ -172,24 +170,5 @@ public sealed class ExceptionHandlingTests(BuddyApiFixture fixture) : IAsyncLife
         public Func<Exception> Next { get; set; } = () => new InvalidOperationException();
 
         protected override object? Invoke(MethodInfo? targetMethod, object?[]? args) => throw Next();
-    }
-
-    private sealed class CapturingLoggerProvider(ConcurrentQueue<(string Category, LogLevel Level, Exception? Exception)> logs) : ILoggerProvider
-    {
-        public ILogger CreateLogger(string categoryName) => new CapturingLogger(categoryName, logs);
-
-        public void Dispose()
-        {
-        }
-
-        private sealed class CapturingLogger(string category, ConcurrentQueue<(string, LogLevel, Exception?)> logs) : ILogger
-        {
-            public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-            public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None;
-
-            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
-                logs.Enqueue((category, logLevel, exception));
-        }
     }
 }

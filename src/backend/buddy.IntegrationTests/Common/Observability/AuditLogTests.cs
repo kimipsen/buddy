@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-
 using Alba;
 
 using buddy.Common.Observability;
@@ -311,39 +309,5 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
         });
 
         return await fixture.GetUserIdAsync(token);
-    }
-
-    private sealed record LogEntry(string Category, int EventId, LogLevel Level, string Message, IReadOnlyList<KeyValuePair<string, object?>> State)
-    {
-        public object? Property(string name) => State.FirstOrDefault(p => p.Key == name).Value;
-    }
-
-    private sealed class CapturingLoggerProvider : ILoggerProvider
-    {
-        private readonly ConcurrentQueue<LogEntry> _entries = new();
-
-        public LogEntry[] Entries => [.. _entries];
-
-        public void Clear() => _entries.Clear();
-
-        public ILogger CreateLogger(string categoryName) => new CapturingLogger(categoryName, _entries);
-
-        public void Dispose()
-        {
-        }
-
-        private sealed class CapturingLogger(string category, ConcurrentQueue<LogEntry> entries) : ILogger
-        {
-            public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-            public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None;
-
-            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
-            {
-                var properties = state as IReadOnlyList<KeyValuePair<string, object?>> ?? [];
-                var message = formatter(state, exception) + (exception is null ? "" : $" {exception}");
-                entries.Enqueue(new LogEntry(category, eventId.Id, logLevel, message, properties));
-            }
-        }
     }
 }
