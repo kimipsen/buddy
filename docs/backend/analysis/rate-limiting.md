@@ -174,6 +174,19 @@ recipe photos must not use up the window the searches, links and imports share, 
 searches must not hide the photos. The browser caches each photo for an hour
 (`Cache-Control: private, max-age=3600`). `MealieRateLimitTests` checks the two budgets apart.
 
+### `mcp`: per user, on `POST /mcp`
+
+Added with [mcp-server.md](mcp-server.md): every MCP tool call is one `POST /mcp`. Partition
+`mcp:<sub>` (the client IP for an unauthenticated request, whose 401 comes after the limiter), fixed
+window of 120 requests per minute (`RateLimiting:Mcp`). Unlike the other policies it **replaces** the
+global limit: the global limiter returns no limiter for a request whose matched endpoint carries the
+`mcp` policy, so a looping LLM client cannot drain the same guardian's `Authenticated` bucket and 429
+their web app. The exemption is decided by endpoint metadata, not by path: the `GET`/`DELETE` 405s,
+unknown `/mcp/...` paths and `/mcpfoo` keep the normal global partitioning. The metadata route
+(`/.well-known/oauth-protected-resource/mcp`) is not an endpoint: the MCP authentication handler
+answers it inside `UseAuthentication`, so it is not rate limited and is covered by
+`McpDiscoveryTests`. `McpRateLimitTests` pins all of this.
+
 ### `outbound-email`: per user, on the endpoints that send email
 
 `InviteGuardian`, `InviteToGroup`, `ResendCurrentUserEmailVerification` and `UpdateCurrentEmail`.

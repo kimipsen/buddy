@@ -128,7 +128,8 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             ["RateLimiting:PersonalDataExport:PermitLimit"] = "1000000",
             ["RateLimiting:VisitSummaryShare:PermitLimit"] = "1000000",
             ["RateLimiting:Mealie:PermitLimit"] = "1000000",
-            ["RateLimiting:MealieImages:PermitLimit"] = "1000000"
+            ["RateLimiting:MealieImages:PermitLimit"] = "1000000",
+            ["RateLimiting:Mcp:PermitLimit"] = "1000000"
         };
 
         Host = await AlbaHost.For<global::Program>(x =>

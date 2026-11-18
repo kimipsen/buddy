@@ -205,6 +205,8 @@ app.UseAuthorization();
 // Before provisioning, so an account outside the buddy-guardian/buddy-child groups never becomes a
 // Buddy user.
 app.UseBuddyMembers();
+// Only /mcp: a child's account never reaches provisioning or a tool through the MCP server.
+app.UseMcpGuardians();
 // Before the idempotency middleware, so an unprovisioned caller never reserves a key.
 app.UseProvisionedUsers();
 // Outside UseIdempotencyKeys: a request that lost a concurrency race gets 409 and its

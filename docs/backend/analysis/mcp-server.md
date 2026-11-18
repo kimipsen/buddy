@@ -821,7 +821,31 @@ landed first, green on the old pipeline, then again on the new one and on a flag
   import that lists `clientScopes` drops Keycloak's default scopes (profile, email, roles). Only
   `buddy-other` lives in `TestRealm.json`.
 
-Still open (slice 3 and later): the effect of `IdempotencyKeyMiddleware`, `UseETags` and the other
+## Slice 3 results
+
+Verified in `McpGuardianTests` and `McpRateLimitTests`:
+
+- **Endpoint resolved before the limiter.** Minimal-API hosts add `UseRouting` first, so
+  `GetEndpoint()` is set when the global limiter runs and the endpoint-metadata exemption works. No
+  path fallback is needed. Only `POST /mcp` (policy `mcp`) is exempt from the global bucket; `GET`/`DELETE`
+  405s and unknown `/mcp/...` paths still draw from it, and an unauthenticated `POST /mcp` is limited by the
+  `mcp` policy's per-IP partition.
+- **Guardian middleware.** `McpGuardianMiddleware` (`UseWhen` on `/mcp`, after `UseBuddyMembers`, before
+  `UseProvisionedUsers`): a child gets `403 not_a_buddy_guardian`, an account in neither group still gets
+  `not_a_buddy_member`, an unprovisioned guardian `user_not_provisioned`. The explicit
+  `RequireAuthorization` metadata is present (the child test would pass through otherwise).
+- **Logs under the production filters** (`Default` Information, `Microsoft.AspNetCore` Warning): a 429 on
+  `/mcp` emits event 8005 (category `buddy.Common.RateLimiting.RateLimitingFeature`, Information) with
+  `CallerKind` and `Endpoint` (the mapped route display name, containing `/mcp`). A 401 emits nothing:
+  JwtBearer's failure lines are Information in a filtered category and there is no application-level 401
+  log. The 401 rollout query is therefore a follow-up; the 429 one works.
+- **Audit.** `McpLog` uses event ids 15000-15099 (15001 `ToolCalled`, 15002 guardian rejection), no
+  collision with the highest id in use (14002). `RecordToolCall` also sets the `mcp.tool` activity tag.
+  The handler for health data is unchanged: an MCP sleep diary read is identified by joining the
+  `ToolCalled` line to event 5004 by user and time (open decision for the PR: an `Mcp` value in
+  `HealthDataAccessPath`).
+
+Still open (slice 4 and later): the effect of `IdempotencyKeyMiddleware`, `UseETags` and the other
 middleware on a streamed `/mcp` response, CORS, and the stateless edge cases (missing
 `Mcp-Session-Id`, unsupported `MCP-Protocol-Version`, batch arrays, `ping`).
 
