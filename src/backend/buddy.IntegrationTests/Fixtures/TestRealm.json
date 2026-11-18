@@ -59,6 +59,32 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "buddy-other",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect",
+      "defaultClientScopes": ["basic", "profile", "email", "roles"],
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "groups",
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [

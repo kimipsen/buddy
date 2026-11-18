@@ -218,6 +218,29 @@ public sealed class BuddyApiFixture : IAsyncLifetime
         return token;
     }
 
+    // A token for the same user from another test-realm client, uncached. "buddy-other" has no
+    // buddy-api audience mapper, so the API must reject it (the wrong-audience case).
+    public async Task<string> GetAccessTokenForClientAsync(string clientId, TestUser user, string scope = "openid profile email")
+    {
+        using var client = new HttpClient();
+        var tokenEndpoint = $"http://{_keycloak.Hostname}:{_keycloak.GetMappedPublicPort(8080)}/realms/{RealmName}/protocol/openid-connect/token";
+
+        var response = await client.PostAsync(tokenEndpoint, new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["grant_type"] = "password",
+            ["client_id"] = clientId,
+            ["username"] = user.Username,
+            ["password"] = user.Password,
+            ["scope"] = scope
+        }));
+
+        response.EnsureSuccessStatusCode();
+
+        var payload = await response.Content.ReadFromJsonAsync<JsonElement>();
+        return payload.GetProperty("access_token").GetString()
+            ?? throw new InvalidOperationException($"Keycloak token response for '{user.Username}' on '{clientId}' had no access_token.");
+    }
+
     public Task<string> GetAccessTokenAsync(TestUser user) => GetAccessTokenAsync(user.Username, user.Password);
 
     // Tries a direct-grant login without caching and returns Keycloak's error_description, or null
