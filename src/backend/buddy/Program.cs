@@ -20,6 +20,7 @@ using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.HouseRules;
 using buddy.Features.Mealplans;
+using buddy.Features.Mcp;
 using buddy.Features.Medicines;
 using buddy.Features.NightDuty;
 using buddy.Features.Pickups;
@@ -160,6 +161,11 @@ builder.Services.AddFirstThenFeature(builder.Configuration);
 // After Users and Guardians: authorization reads IGuardianLinkEventStore, the report's names
 // IUserEventStore. The report's sections come from SleepDiaries, Medicines and Feelings.
 builder.Services.AddVisitSummariesFeature(builder.Configuration);
+// Only with Features:Mcp on; read through McpFeature.IsEnabled (the one flag reader).
+if (McpFeature.IsEnabled(builder.Configuration))
+{
+    builder.Services.AddMcpFeature();
+}
 // Last: erasure orchestrates every feature's IPersonalDataEraser.
 builder.Services.AddPrivacyFeature();
 
@@ -299,6 +305,11 @@ if (features.FirstThen)
 if (features.VisitSummaries)
 {
     app.MapVisitSummariesFeature();
+}
+
+if (McpFeature.IsEnabled(app.Configuration))
+{
+    app.MapMcpFeature();
 }
 
 // JasperFx command line: no arguments runs the API as before; `projections --rebuild --store <name>`

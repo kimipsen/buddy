@@ -2,12 +2,18 @@ namespace buddy.Common.FeatureFlags;
 
 // Which optional features this installation offers, bound from "Features:*" -- the family's
 // operator turns one off with an environment variable (Features__Medicines=false). Every flag
-// defaults to on, so an installation without the section behaves as before. Off hides a feature's
+// defaults to on, so an installation without the section behaves as before -- except Mcp, which
+// is off until the operator opts in (docs/backend/analysis/mcp-server.md). Off hides a feature's
 // endpoints and screens only: its registrations, data and GDPR coverage stay.
 // See docs/backend/analysis/feature-flags.md.
 public sealed class FeatureOptions
 {
     public const string SectionName = "Features";
+
+    // Off by default: the MCP server (POST /mcp) is a new way into the family's data, so each
+    // installation opts in. Not part of InstallationFeatures or GET /features: it has no screen.
+    // Read through McpFeature.IsEnabled, never from the post-Build() flags.
+    public bool Mcp { get; set; }
 
     public bool Mealplans { get; set; } = true;
 
