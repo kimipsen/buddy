@@ -95,6 +95,7 @@ public sealed class BuddyApiFixture : IAsyncLifetime
         _mailpitClient = new HttpClient { BaseAddress = new Uri($"http://{_mailpit.Hostname}:{mailpitHttpPort}") };
 
         var adminClientSecret = await SetUpKeycloakAdminServiceAccountAsync(keycloakBaseUrl);
+        await SetUpMcpClientAsync(keycloakBaseUrl);
 
         _configOverrides = new Dictionary<string, string?>
         {
@@ -102,6 +103,9 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             ["Authentication:Keycloak:Authority"] = keycloakAuthority,
             ["Authentication:Keycloak:Audience"] = Audience,
             ["Authentication:Keycloak:RequireHttpsMetadata"] = "false",
+            // On for the whole suite, so every existing test runs through the MCP-aware pipeline; the
+            // flag-off tests build their own host (see RestAuthenticationRegressionTests).
+            ["Features:Mcp"] = "true",
             ["Authentication:KeycloakAdmin:Realm"] = RealmName,
             ["Authentication:KeycloakAdmin:TokenEndpoint"] = $"{keycloakBaseUrl}/realms/master/protocol/openid-connect/token",
             ["Authentication:KeycloakAdmin:AdminBaseUrl"] = $"{keycloakBaseUrl}/admin/realms/{RealmName}",
@@ -219,7 +223,7 @@ public sealed class BuddyApiFixture : IAsyncLifetime
     }
 
     // A token for the same user from another test-realm client, uncached. "buddy-other" has no
-    // buddy-api audience mapper, so the API must reject it (the wrong-audience case).
+    // buddy-api audience mapper, so the REST API must reject it (the wrong-audience case).
     public async Task<string> GetAccessTokenForClientAsync(string clientId, TestUser user, string scope = "openid profile email")
     {
         using var client = new HttpClient();
@@ -234,12 +238,20 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             ["scope"] = scope
         }));
 
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"Keycloak refused a '{clientId}' token for '{user.Username}' (scope '{scope}'): {await response.Content.ReadAsStringAsync()}");
+        }
 
         var payload = await response.Content.ReadFromJsonAsync<JsonElement>();
         return payload.GetProperty("access_token").GetString()
             ?? throw new InvalidOperationException($"Keycloak token response for '{user.Username}' on '{clientId}' had no access_token.");
     }
+
+    // A buddy-mcp token for the user. With the default scope it carries buddy-mcp:read; pass "openid"
+    // for one with the right audience (the client's own mapper) but without the scope.
+    public Task<string> GetMcpAccessTokenAsync(TestUser user, string scope = "openid profile email buddy-mcp:read") =>
+        GetAccessTokenForClientAsync("buddy-mcp", user, scope);
 
     public Task<string> GetAccessTokenAsync(TestUser user) => GetAccessTokenAsync(user.Username, user.Password);
 
@@ -513,6 +525,104 @@ public sealed class BuddyApiFixture : IAsyncLifetime
         scopeResponse.EnsureSuccessStatusCode();
 
         return AdminClientSecret;
+    }
+
+    // The buddy-mcp client scope and client, created through the Admin API rather than TestRealm.json: a
+    // realm import that lists clientScopes replaces Keycloak's defaults (profile, email, roles, ...),
+    // which every other client here relies on. The scope carries the audience, groups and profile
+    // mappers; the client is a public direct-grant client (test realm only, never the app realm) with
+    // its own audience mapper, so a token minted without the optional scope has the right audience but
+    // no buddy-mcp:read (the 403 case).
+    private async Task SetUpMcpClientAsync(string keycloakBaseUrl)
+    {
+        var adminToken = await GetAdminTokenAsync(CancellationToken.None);
+
+        using var client = new HttpClient { BaseAddress = new Uri($"{keycloakBaseUrl}/admin/realms/{RealmName}/") };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        static object AudienceMapper() => new
+        {
+            name = "audience-buddy-mcp",
+            protocol = "openid-connect",
+            protocolMapper = "oidc-audience-mapper",
+            consentRequired = false,
+            config = new Dictionary<string, string>
+            {
+                ["included.client.audience"] = "buddy-mcp",
+                ["id.token.claim"] = "false",
+                ["access.token.claim"] = "true"
+            }
+        };
+
+        static object PropertyMapper(string claim, string attribute, string type = "String") => new
+        {
+            name = claim,
+            protocol = "openid-connect",
+            protocolMapper = "oidc-usermodel-property-mapper",
+            consentRequired = false,
+            config = new Dictionary<string, string>
+            {
+                ["user.attribute"] = attribute,
+                ["claim.name"] = claim,
+                ["jsonType.label"] = type,
+                ["id.token.claim"] = "false",
+                ["access.token.claim"] = "true",
+                ["userinfo.token.claim"] = "true"
+            }
+        };
+
+        var scopeResponse = await client.PostAsJsonAsync("client-scopes", new
+        {
+            name = "buddy-mcp:read",
+            description = "Read access to a guardian's Buddy data through the MCP server",
+            protocol = "openid-connect",
+            attributes = new Dictionary<string, string>
+            {
+                ["include.in.token.scope"] = "true",
+                ["display.on.consent.screen"] = "false"
+            },
+            protocolMappers = new object[]
+            {
+                AudienceMapper(),
+                new
+                {
+                    name = "groups",
+                    protocol = "openid-connect",
+                    protocolMapper = "oidc-group-membership-mapper",
+                    consentRequired = false,
+                    config = new Dictionary<string, string>
+                    {
+                        ["claim.name"] = "groups",
+                        ["full.path"] = "false",
+                        ["id.token.claim"] = "true",
+                        ["access.token.claim"] = "true",
+                        ["userinfo.token.claim"] = "true"
+                    }
+                },
+                PropertyMapper("email", "email"),
+                PropertyMapper("email_verified", "emailVerified", "boolean"),
+                PropertyMapper("preferred_username", "username"),
+                PropertyMapper("given_name", "firstName"),
+                PropertyMapper("family_name", "lastName")
+            }
+        });
+        scopeResponse.EnsureSuccessStatusCode();
+
+        var clientResponse = await client.PostAsJsonAsync("clients", new
+        {
+            clientId = "buddy-mcp",
+            enabled = true,
+            publicClient = true,
+            standardFlowEnabled = false,
+            implicitFlowEnabled = false,
+            directAccessGrantsEnabled = true,
+            serviceAccountsEnabled = false,
+            protocol = "openid-connect",
+            defaultClientScopes = new[] { "basic", "profile", "email", "roles" },
+            optionalClientScopes = new[] { "buddy-mcp:read" },
+            protocolMappers = new[] { AudienceMapper() }
+        });
+        clientResponse.EnsureSuccessStatusCode();
     }
 
     public async Task<JsonElement[]> GetMailpitMessagesToAsync(string emailAddress, CancellationToken cancellationToken = default)

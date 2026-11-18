@@ -1,6 +1,13 @@
 using buddy.Common;
 using buddy.Common.FeatureFlags;
+using buddy.Features.Users;
 
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
+
+using ModelContextProtocol.AspNetCore.Authentication;
+using ModelContextProtocol.Authentication;
 using ModelContextProtocol.Server;
 
 namespace buddy.Features.Mcp;
@@ -10,6 +17,19 @@ namespace buddy.Features.Mcp;
 public static class McpAuth
 {
     public const string PathPrefix = "/mcp";
+
+    // The MCP JwtBearer scheme (audience buddy-mcp), the default scheme that picks between it and
+    // the REST scheme by path, and the SDK's handler: it answers the 401 challenge with
+    // resource_metadata and serves the protected-resource metadata document.
+    public const string Scheme = "BuddyMcp";
+    public const string SelectorScheme = "BuddyMcpSelector";
+    public const string MetadataScheme = McpAuthenticationDefaults.AuthenticationScheme;
+
+    public const string Audience = "buddy-mcp";
+    public const string ReadScope = "buddy-mcp:read";
+    public const string ReadPolicy = "McpRead";
+
+    public const string MetadataPathPrefix = "/.well-known/oauth-protected-resource";
 
     public static bool IsMcpPath(PathString path) => path.StartsWithSegments(PathPrefix, StringComparison.OrdinalIgnoreCase);
 }
@@ -27,6 +47,70 @@ public static class McpFeature
     public static bool IsEnabled(IConfiguration configuration) =>
         configuration.GetValue<bool>($"{FeatureOptions.SectionName}:{nameof(FeatureOptions.Mcp)}");
 
+    // The scheme set when Features:Mcp is on (the flag-off pipeline stays exactly as it was):
+    // a policy scheme as the default scheme, routing /mcp to the MCP JwtBearer scheme and everything
+    // else to the REST one, so a buddy-api token never authenticates on /mcp and the reverse.
+    internal static IServiceCollection AddMcpAuthentication(this IServiceCollection services, AuthenticationBuilder authentication)
+    {
+        authentication
+            .AddPolicyScheme(McpAuth.SelectorScheme, displayName: null, options =>
+                options.ForwardDefaultSelector = context =>
+                    McpAuth.IsMcpPath(context.Request.Path) ? McpAuth.Scheme : JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(McpAuth.Scheme, options =>
+            {
+                // The plain JwtBearer challenge has no resource_metadata parameter; the SDK handler's has.
+                options.ForwardChallenge = McpAuth.MetadataScheme;
+                options.Events = new JwtBearerEvents { OnForbidden = WriteInsufficientScopeChallenge };
+            })
+            .AddMcp(_ => { });
+
+        services.AddOptions<JwtBearerOptions>(McpAuth.Scheme)
+            .Configure<IOptionsMonitor<KeycloakOptions>>((options, keycloakOptions) =>
+                UsersFeature.ConfigureJwtBearer(options, keycloakOptions.CurrentValue, McpAuth.Audience));
+
+        services.AddOptions<McpAuthenticationOptions>(McpAuth.MetadataScheme)
+            .Configure<IOptionsMonitor<KeycloakOptions>>((options, keycloakOptions) =>
+            {
+                var keycloak = keycloakOptions.CurrentValue;
+                // A new document per request: the resource is this server's own /mcp URL as the client
+                // reached it (UseForwardedHeaders has run), so nothing request-specific is cached.
+                options.Events.OnResourceMetadataRequest = context =>
+                {
+                    var request = context.HttpContext.Request;
+                    context.ResourceMetadata = new ProtectedResourceMetadata
+                    {
+                        Resource = $"{request.Scheme}://{request.Host}{request.PathBase}{McpAuth.PathPrefix}",
+                        AuthorizationServers = [keycloak.ValidIssuer ?? keycloak.Authority],
+                        ScopesSupported = [McpAuth.ReadScope],
+                        BearerMethodsSupported = ["header"]
+                    };
+                    return Task.CompletedTask;
+                };
+            });
+
+        services.AddAuthorizationBuilder()
+            .AddPolicy(McpAuth.ReadPolicy, policy => policy
+                .RequireAuthenticatedUser()
+                .RequireAssertion(context => HasScope(context.User, McpAuth.ReadScope)));
+
+        return services;
+    }
+
+    // Keycloak puts the granted scopes in one space-separated "scope" claim.
+    internal static bool HasScope(System.Security.Claims.ClaimsPrincipal user, string scope) =>
+        user.FindAll("scope").Any(claim => claim.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains(scope, StringComparer.Ordinal));
+
+    // JwtBearer answers a failed authorization policy with a bare 403; the hint names the missing scope.
+    // Only registered on the MCP scheme, so REST responses stay as they were.
+    private static Task WriteInsufficientScopeChallenge(ForbiddenContext context)
+    {
+        var request = context.HttpContext.Request;
+        var metadata = $"{request.Scheme}://{request.Host}{request.PathBase}{McpAuth.MetadataPathPrefix}{McpAuth.PathPrefix}";
+        context.Response.Headers.WWWAuthenticate =
+            $"Bearer error=\"insufficient_scope\", scope=\"{McpAuth.ReadScope}\", resource_metadata=\"{metadata}\"";
+        return Task.CompletedTask;
+    }
+
     public static IServiceCollection AddMcpFeature(this IServiceCollection services)
     {
         services.AddMcpServer(options => options.ServerInstructions = ServerInstructions)
@@ -43,7 +127,7 @@ public static class McpFeature
     {
         // Stateless: GET and DELETE answer 405 (no sessions, no server-to-client stream).
         endpoints.MapMcp(McpAuth.PathPrefix)
-            .RequireAuthorization()
+            .RequireAuthorization(McpAuth.ReadPolicy)
             .ExcludeFromDescription();
 
         return endpoints;
