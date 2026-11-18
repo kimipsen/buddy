@@ -3,9 +3,11 @@ using System.Security.Claims;
 using buddy.Common.Configuration;
 using buddy.Common.Erasure;
 using buddy.Common.Http;
+using buddy.Common.FeatureFlags;
 using buddy.Common.OpenApi;
 using buddy.Common.Postgres;
 using buddy.Features.Guardians;
+using buddy.Features.Mcp;
 using buddy.Serialization;
 
 using JasperFx.Events;
@@ -63,29 +65,32 @@ public static class UsersFeature
     {
         services.AddBuddyOpenApiDocument(OpenApiDocumentName);
 
-        services.AddValidatedOptions<KeycloakOptions>(KeycloakOptions.SectionName);
+        var keycloakOptionsBuilder = services.AddValidatedOptions<KeycloakOptions>(KeycloakOptions.SectionName);
         // Shared process-wide pool -- see PostgresDataSource.
         services.AddPostgresDataSource(configuration);
 
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        // Read through the one flag reader: the scheme set below must agree with Program.cs.
+        var mcpEnabled = McpFeature.IsEnabled(configuration);
+
+        var authentication = services.AddAuthentication(mcpEnabled ? McpAuth.SelectorScheme : JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer();
 
         services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
             .Configure<IOptionsMonitor<KeycloakOptions>>((jwtBearerOptions, keycloakOptions) =>
-            {
-                var keycloak = keycloakOptions.CurrentValue;
+                ConfigureJwtBearer(jwtBearerOptions, keycloakOptions.CurrentValue, keycloakOptions.CurrentValue.Audience));
 
-                jwtBearerOptions.Authority = keycloak.Authority;
-                jwtBearerOptions.Audience = keycloak.Audience;
-                jwtBearerOptions.RequireHttpsMetadata = keycloak.RequireHttpsMetadata;
-                jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters
-                {
-                    NameClaimType = "preferred_username",
-                    RoleClaimType = ClaimTypes.Role,
-                    ValidateAudience = !string.IsNullOrWhiteSpace(keycloak.Audience),
-                    ValidIssuer = keycloak.ValidIssuer ?? keycloak.Authority
-                };
-            });
+        if (mcpEnabled)
+        {
+            // An empty audience turns validation off on the REST scheme, which would then accept a
+            // buddy-mcp token; with MCP on the audience is required (mcp-server.md, R3).
+            keycloakOptionsBuilder
+                .Validate(
+                    keycloak => !string.IsNullOrWhiteSpace(keycloak.Audience),
+                    $"{KeycloakOptions.SectionName}:Audience must not be empty while {FeatureOptions.SectionName}:{nameof(FeatureOptions.Mcp)} is on.")
+                .ValidateOnStart();
+
+            services.AddMcpAuthentication(authentication);
+        }
 
         services.AddAuthorization();
         services.AddTransient<IClaimsTransformation, UserIdClaimsTransformation>();
@@ -146,6 +151,21 @@ public static class UsersFeature
         services.AddSingleton<IPersonalDataExporter, OnboardingPersonalDataExporter>();
 
         return services;
+    }
+
+    // Shared by the REST and the MCP scheme so the two cannot drift: everything but the audience.
+    internal static void ConfigureJwtBearer(JwtBearerOptions jwtBearerOptions, KeycloakOptions keycloak, string audience)
+    {
+        jwtBearerOptions.Authority = keycloak.Authority;
+        jwtBearerOptions.Audience = audience;
+        jwtBearerOptions.RequireHttpsMetadata = keycloak.RequireHttpsMetadata;
+        jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters
+        {
+            NameClaimType = "preferred_username",
+            RoleClaimType = ClaimTypes.Role,
+            ValidateAudience = !string.IsNullOrWhiteSpace(audience),
+            ValidIssuer = keycloak.ValidIssuer ?? keycloak.Authority
+        };
     }
 
     public static IEndpointRouteBuilder MapUsersFeature(this IEndpointRouteBuilder endpoints)

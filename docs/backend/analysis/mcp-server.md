@@ -795,11 +795,35 @@ Verified in `McpSkeletonTests` against `ModelContextProtocol.AspNetCore` 2.4.0 o
 - **Fake clock.** `PeriodicTimer` over `FakeTimeProvider` fires after `Advance`
   (package `Microsoft.Extensions.TimeProvider.Testing` 11.0.0).
 
-Not yet spiked (they need a bearer token, so they wait for the slice 2 test realm and must be
-answered before slice 2 and 3 text is relied on): GET/DELETE 405, whether the protected-resource
-metadata is an endpoint or an authentication-handler response, whether `OnForbidden` can write
-`WWW-Authenticate` on the SDK's scheme, the effect of `IdempotencyKeyMiddleware`, `UseETags` and
-the other middleware on a streamed `/mcp` response, CORS, and the stateless edge cases.
+## Slice 2 spike results
+
+Verified in `McpAuthenticationTests` and `RestAuthenticationRegressionTests` (the regression tests
+landed first, green on the old pipeline, then again on the new one and on a flag-off host):
+
+- **Challenge routing.** The policy scheme forwards the challenge to the MCP JwtBearer scheme, whose
+  `ForwardChallenge = McpAuthenticationDefaults.AuthenticationScheme` hands it to the SDK handler:
+  the 401 carries `resource_metadata`. REST keeps the plain `Bearer` challenge (byte-identical).
+- **`OnForbidden` writes `WWW-Authenticate`** on the MCP scheme: 403
+  `Bearer error="insufficient_scope", scope="buddy-mcp:read", resource_metadata=...`. The
+  `IAuthorizationMiddlewareResultHandler` fallback is not needed and REST is untouched.
+- **Protected-resource metadata is not an endpoint.** The SDK handler answers
+  `/.well-known/oauth-protected-resource/mcp` from inside `UseAuthentication` (200 flag-on, 404
+  flag-off with the scheme not registered), so it never reaches the endpoint data source or
+  `UseRateLimiter`. Slice 3 states "not an endpoint, not rate limited" and adds no coverage-list
+  entry. The document is built per request (the resource URL follows the request's scheme/host).
+- **GET/DELETE `/mcp`** answer 405 when authenticated.
+- **Audience (R3).** `buddy-api`, `buddy-other` and no-token requests get 401 on `/mcp`; a `buddy-mcp`
+  token gets 401 on REST. Paths `/MCP` and `/mcp/` are the MCP endpoint; `/mcpfoo` is not.
+- **Empty `Keycloak:Audience`** with the flag on throws `OptionsValidationException` at startup; flag
+  off it starts.
+- **Realm setup.** The `buddy-mcp:read` scope and the `buddy-mcp` client are created by
+  `BuddyApiFixture.SetUpMcpClientAsync` through the Admin API, not in `TestRealm.json`: a realm
+  import that lists `clientScopes` drops Keycloak's default scopes (profile, email, roles). Only
+  `buddy-other` lives in `TestRealm.json`.
+
+Still open (slice 3 and later): the effect of `IdempotencyKeyMiddleware`, `UseETags` and the other
+middleware on a streamed `/mcp` response, CORS, and the stateless edge cases (missing
+`Mcp-Session-Id`, unsupported `MCP-Protocol-Version`, batch arrays, `ping`).
 
 ## Diagram
 
