@@ -784,6 +784,23 @@ setup doc.
 - **Child access.** Lean: never by default. If wanted, it would be a separate, minimal tool list
   ("what's my day?") behind its own flag.
 
+## Slice 1 spike results
+
+Verified in `McpSkeletonTests` against `ModelContextProtocol.AspNetCore` 2.4.0 on .NET 11:
+
+- **Flag read.** `McpFeature.IsEnabled(IConfiguration)` is the only reader. The flag-off and flag-on
+  hosts from `fixture.SharedHostAsync(..., overrides)` really differ at registration time: flag off,
+  `POST /mcp` is 404; flag on and unauthenticated, 401.
+- **Stateless.** `WithHttpTransport(o => o.Stateless = true)` is accepted by the SDK.
+- **Fake clock.** `PeriodicTimer` over `FakeTimeProvider` fires after `Advance`
+  (package `Microsoft.Extensions.TimeProvider.Testing` 11.0.0).
+
+Not yet spiked (they need a bearer token, so they wait for the slice 2 test realm and must be
+answered before slice 2 and 3 text is relied on): GET/DELETE 405, whether the protected-resource
+metadata is an endpoint or an authentication-handler response, whether `OnForbidden` can write
+`WWW-Authenticate` on the SDK's scheme, the effect of `IdempotencyKeyMiddleware`, `UseETags` and
+the other middleware on a streamed `/mcp` response, CORS, and the stateless edge cases.
+
 ## Diagram
 
 ```mermaid

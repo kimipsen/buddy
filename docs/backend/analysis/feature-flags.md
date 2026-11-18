@@ -64,8 +64,10 @@ public sealed class FeatureOptions
 
 The operator turns a feature off with an environment variable such as `Features__Medicines=false`.
 
-- **Every flag defaults to `true`.** An existing installation that upgrades without touching its
-  configuration keeps every feature. That matches how `RateLimitingOptions` and
+- **Every flag defaults to `true`, except `Mcp`.** An existing installation that upgrades without
+  touching its configuration keeps every feature. `Mcp` (the MCP server, see `mcp-server.md`) defaults
+  to `false`: it is a new way into the family's data, so each installation opts in. It is not part of
+  `InstallationFeatures` or `GET /features`, and `McpFeature.IsEnabled(IConfiguration)` is its only reader. That matches how `RateLimitingOptions` and
   `AiAssistantModelOptions` rely on class defaults and are absent from `appsettings.json`.
 - **A misspelt key fails startup.** The binder normally ignores unknown keys, so
   `Features__Medecines=false` would silently leave medicines on. `FeatureOptions` binds with
@@ -401,7 +403,7 @@ that only use the global limit and on the `ETagCoverageTests` exclusion list.
 | Question             | Decision                                                                                                                                                                                                                     |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Where flags live     | `Features` configuration section, set by the operator via env vars, validated on start, no admin screen, because each family has an operator and Buddy has no installation-admin role                                        |
-| Default              | Every flag `true`, so upgrades change nothing                                                                                                                                                                                |
+| Default              | Every flag `true` except `Mcp`, so upgrades change nothing                                                                                                                                                                              |
 | Which features       | Mealplans (+ AI assistant, import), medicines, sleep diary, house rules, pickups, babysitters, work locations, printing, progress, task library, help. Calendars, users, guardians, groups and privacy are core.             |
 | What off means       | Hide the HTTP surface and UI. Keep registrations, data, GDPR coverage and background services.                                                                                                                               |
 | Backend enforcement  | Don't map the disabled endpoints. Routing answers `404`.                                                                                                                                                                     |
