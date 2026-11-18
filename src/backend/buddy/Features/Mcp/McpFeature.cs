@@ -1,9 +1,11 @@
 using buddy.Common;
 using buddy.Common.FeatureFlags;
+using buddy.Common.RateLimiting;
 using buddy.Features.Users;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 
 using ModelContextProtocol.AspNetCore.Authentication;
@@ -128,6 +130,7 @@ public static class McpFeature
         // Stateless: GET and DELETE answer 405 (no sessions, no server-to-client stream).
         endpoints.MapMcp(McpAuth.PathPrefix)
             .RequireAuthorization(McpAuth.ReadPolicy)
+            .RequireRateLimiting(RateLimitingFeature.McpPolicy)
             .ExcludeFromDescription();
 
         return endpoints;

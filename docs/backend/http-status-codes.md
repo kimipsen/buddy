@@ -133,6 +133,10 @@ Typical Buddy use:
   (`not_a_buddy_member`): `BuddyMemberMiddleware` returns this before provisioning, on every
   authorized endpoint including `GET /users/me`, so such an account never becomes a Buddy user.
   The token's `groups` claim comes from the `groups` mapper on the `buddy-frontend` client.
+- an authenticated caller on `/mcp` who is not in the `buddy-guardian` Keycloak group
+  (`not_a_buddy_guardian`): `McpGuardianMiddleware` returns this after the member check and before
+  provisioning, so a child's account never reaches a tool through the MCP server. `/mcp` is not in
+  the OpenAPI contract.
 - an authenticated caller with no Buddy user yet (`user_not_provisioned`): the Keycloak token is
   valid but its subject never called `GET /users/me`, which creates the user.
   `ProvisionedUserMiddleware` returns this once, before any handler runs, on every authorized

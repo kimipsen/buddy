@@ -40,9 +40,13 @@ public sealed class RateLimitingOptions
     // window the searches, links and imports share. The browser caches each photo for an hour.
     public FixedWindowLimits MealieImages { get; set; } = new() { PermitLimit = 120, Window = TimeSpan.FromMinutes(1) };
 
+    // Per user, on POST /mcp (docs/backend/analysis/mcp-server.md): an LLM client can loop, so its calls
+    // draw only from this budget and never from the guardian's own Authenticated bucket.
+    public FixedWindowLimits Mcp { get; set; } = new() { PermitLimit = 120, Window = TimeSpan.FromMinutes(1) };
+
     public bool IsValid() =>
         Authenticated.IsValid() && Anonymous.IsValid() && IcalFeed.IsValid() && AiAssistant.IsValid() && OutboundEmail.IsValid()
-        && PersonalDataExport.IsValid() && VisitSummaryShare.IsValid() && Mealie.IsValid() && MealieImages.IsValid();
+        && PersonalDataExport.IsValid() && VisitSummaryShare.IsValid() && Mealie.IsValid() && MealieImages.IsValid() && Mcp.IsValid();
 }
 
 public sealed class TokenBucketLimits

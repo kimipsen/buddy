@@ -29,6 +29,7 @@ public static class RateLimitingFeature
     public const string VisitSummarySharePolicy = "visit-summary-share";
     public const string MealiePolicy = "mealie";
     public const string MealieImagesPolicy = "mealie-images";
+    public const string McpPolicy = "mcp";
 
     public static IServiceCollection AddRateLimitingFeature(this IServiceCollection services)
     {
@@ -45,11 +46,18 @@ public static class RateLimitingFeature
                 options.OnRejected = RejectAsync;
 
                 options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-                    // A missing, expired or invalid token never authenticates, so it lands in the IP
-                    // partition and can't mint fresh per-user buckets.
-                    IsAuthenticated(context)
-                        ? RateLimitPartition.GetTokenBucketLimiter(UserKey(context), _ => limits.Authenticated.ToOptions())
-                        : RateLimitPartition.GetTokenBucketLimiter(IpKey(context), _ => limits.Anonymous.ToOptions()));
+                    // POST /mcp only has its own "mcp" policy: a looping LLM client must not drain the
+                    // guardian's Authenticated bucket and 429 their web app. Decided by the matched
+                    // endpoint's policy, not by path, so everything else under /mcp (the 405s, unknown
+                    // paths, /mcpfoo) keeps the normal partitioning. Unauthenticated POST /mcp is still
+                    // limited, by the policy, whose caller key falls back to the client IP.
+                    UsesMcpPolicy(context)
+                        ? RateLimitPartition.GetNoLimiter("mcp")
+                        // A missing, expired or invalid token never authenticates, so it lands in the IP
+                        // partition and can't mint fresh per-user buckets.
+                        : IsAuthenticated(context)
+                            ? RateLimitPartition.GetTokenBucketLimiter(UserKey(context), _ => limits.Authenticated.ToOptions())
+                            : RateLimitPartition.GetTokenBucketLimiter(IpKey(context), _ => limits.Anonymous.ToOptions()));
 
                 // Not by IP: Google and Outlook poll every subscribed feed from shared server pools.
                 // By feed id AND token hash: the id isn't secret, so keying on it alone would let
@@ -81,10 +89,17 @@ public static class RateLimitingFeature
                 // The recipe photo proxy, apart from the other Mealie calls.
                 options.AddPolicy(MealieImagesPolicy, context =>
                     RateLimitPartition.GetFixedWindowLimiter($"mealie-images:{CallerKey(context)}", _ => limits.MealieImages.ToOptions()));
+
+                // POST /mcp, per user: every tool call reads the family's stores.
+                options.AddPolicy(McpPolicy, context =>
+                    RateLimitPartition.GetFixedWindowLimiter($"mcp:{CallerKey(context)}", _ => limits.Mcp.ToOptions()));
             });
 
         return services;
     }
+
+    private static bool UsesMcpPolicy(HttpContext context) =>
+        context.GetEndpoint()?.Metadata.GetMetadata<EnableRateLimitingAttribute>()?.PolicyName == McpPolicy;
 
     private static bool IsAuthenticated(HttpContext context) => context.User.Identity?.IsAuthenticated == true;
 
