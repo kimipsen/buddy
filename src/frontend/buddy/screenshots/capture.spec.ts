@@ -26,6 +26,20 @@ test.beforeEach(async ({ context }) => {
     config.keycloak.authority = KEYCLOAK_URL;
     await route.fulfill({ response, json: config });
   });
+
+  // Mealie mints a new random API token every seed, and the admin page shows its last four
+  // characters, so guardian-admin would change on every run. Pin the hint in the response.
+  await context.route('**/mealplans/children/*/mealie', async (route) => {
+    if (route.request().method() !== 'GET') {
+      return route.continue();
+    }
+    const response = await route.fetch();
+    if (!response.ok()) {
+      return route.fulfill({ response });
+    }
+    const view = await response.json();
+    await route.fulfill({ response, json: { ...view, tokenLast4: 'demo' } });
+  });
 });
 
 for (const entry of SCREENSHOT_PAGES) {
