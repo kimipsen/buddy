@@ -21,4 +21,7 @@ internal static partial class CommonLog
 
     [LoggerMessage(EventId = 8006, Level = LogLevel.Information, Message = "Feature flags {Flags} are off because their parent feature is off.")]
     public static partial void SubFlagsFollowParent(this ILogger logger, IEnumerable<string> flags);
+
+    [LoggerMessage(EventId = 8007, Level = LogLevel.Warning, Message = "Demo clock override active (Demo:Now): the server time starts at {Now} and advances in real time. Development only.")]
+    public static partial void DemoClockActive(this ILogger logger, DateTimeOffset now);
 }

@@ -1314,6 +1314,16 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       day,
       entry: { responsible: responsible ?? { kind: 3 }, note },
     });
+    // The seed's calendar is DEMO_NOW, so the API must run on the demo clock (Demo__Now, which
+    // playwright.screenshots.config.ts sets on the API it starts). A dev API on the real clock
+    // would show another week on the night duty page and reject a schedule dated in the demo past.
+    const schedule = await api.get<{ today: string }>(`/night-duty/children/${emil.id}`);
+    if (schedule.today !== todayIso) {
+      throw new Error(
+        `The API is not on the demo clock: it says today is ${schedule.today}, the demo day is ${todayIso}. ` +
+          'Stop the dev API (fuser -k -TERM 5193/tcp 7076/tcp) and let `task docs:screenshots` start it with Demo__Now.',
+      );
+    }
     await api.put(`/night-duty/children/${emil.id}/pattern`, {
       cycleWeeks: 2,
       anchorMonday: mondayIso,
