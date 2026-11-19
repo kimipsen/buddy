@@ -166,6 +166,15 @@ export function nextWeekdayOnOrAfter(isoDate: string, weekday: DayOfWeek): strin
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME = /^\d{2}:\d{2}$/;
 
+// A `from`/`to` query parameter as an ISO date; undefined when it is missing, not exactly
+// "YYYY-MM-DD" or not a real calendar day (2026-02-30 and 2027-02-29 round-trip to another date).
+export function parseRangeParam(value: string | null): string | undefined {
+  if (value === null || !ISO_DATE.test(value)) {
+    return undefined;
+  }
+  return toIsoDate(parseIsoDate(value)) === value ? value : undefined;
+}
+
 // Minutes since the epoch for a wall-clock date and "HH:mm" time, read as UTC so DST never adds
 // or drops an hour; null when either part is blank or malformed.
 function wallClockMinutes(isoDate: string, time: string): number | null {

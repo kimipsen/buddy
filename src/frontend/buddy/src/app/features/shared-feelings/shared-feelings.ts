@@ -1,9 +1,14 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 
-import { addDaysIso, buildDateRangeIso, parseIsoDate } from '../../core/date-utils';
+import {
+  addDaysIso,
+  buildDateRangeIso,
+  parseIsoDate,
+  parseRangeParam,
+} from '../../core/date-utils';
 import { TAG_LABEL_KEYS, zoneInfo } from '../../core/feelings';
 import { FeelingCheckIn, FeelingsService } from '../../core/feelings.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
@@ -36,10 +41,16 @@ export class SharedFeelings {
   private readonly feelings = inject(FeelingsService);
   private readonly translation = inject(TranslationService);
 
+  // Typed as optional: spec stubs of the route snapshot carry no queryParamMap.
+  private readonly query = this.route.snapshot.queryParamMap as ParamMap | undefined;
   private readonly token = this.route.snapshot.paramMap.get('token') ?? '';
 
-  // Empty until the reader pages: the server then picks the last 14 days on the child's clock.
-  private readonly range = signal<Range>({});
+  // The URL's ?from=&to= when valid (the documentation screenshots pin a window), else empty until
+  // the reader pages: the server then picks the last 14 days on the child's clock.
+  private readonly range = signal<Range>({
+    from: parseRangeParam(this.query?.get('from') ?? null),
+    to: parseRangeParam(this.query?.get('to') ?? null),
+  });
 
   protected readonly shared = resource({
     params: () => this.range(),
