@@ -1,0 +1,155 @@
+name: Documentation screenshots
+
+# Regenerates docs/screenshots (task docs:screenshots) on a GitHub runner and opens a pull request
+# when any image or the generated README changed. DEMO_NOW (screenshots/demo-family.ts) pins every
+# date and time, so a run that finds no real page change leaves the tree clean and opens nothing.
+#
+# Manual only (Actions → Documentation screenshots → Run workflow). The PR is opened with the
+# built-in GITHUB_TOKEN, so GitHub starts no other workflows on it: it changes only PNGs and the
+# generated README. The repo setting "Allow GitHub Actions to create and approve pull requests"
+# (Settings → Actions → General) must be on.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One run at a time: two would race for the same branch name pattern and the same demo family.
+concurrency:
+  group: docs-screenshots
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      # The API that playwright.screenshots.config.ts starts inherits these: the compose services
+      # published on the runner, as ciBackendEnv in playwright.config.ts does for the e2e suite.
+      # The config adds Demo__Now, the rate-limit budget and the Mealie switches itself.
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Postgres: Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=postgres
+      Authentication__Keycloak__Authority: http://localhost:9080/realms/buddy
+      Authentication__Keycloak__ValidIssuer: http://localhost:9080/realms/buddy
+      Authentication__KeycloakAdmin__TokenEndpoint: http://localhost:9080/realms/buddy/protocol/openid-connect/token
+      Authentication__KeycloakAdmin__AdminBaseUrl: http://localhost:9080/admin/realms/buddy
+      Authentication__KeycloakAdmin__ClientSecret: buddy-admin-cli-dev-secret
+      Cors__AllowedOrigins__0: http://localhost:4300
+      Mail__Host: localhost
+      Mail__Port: '2025'
+      # The screenshot tooling (screenshots/demo-family.ts) reaches the same services from the runner.
+      KEYCLOAK_URL: http://localhost:9080
+      MAILPIT_BASE_URL: http://localhost:9025
+      MEALIE_URL: http://localhost:9925
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: global.json
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: src/frontend/buddy/.nvmrc
+          cache: 'npm'
+          cache-dependency-path: src/frontend/buddy/package-lock.json
+
+      - uses: arduino/setup-task@c0bc642852239c2689f73f4ea6459c29405f3c52 # v3.0.0
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Ephemeral, CI-only credentials, the same as e2e-tests.yml.
+      - name: Write devcontainer .env
+        run: |
+          cat > .devcontainer/.env <<'EOF'
+          POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=postgres
+          POSTGRES_DB=postgres
+          KEYCLOAK_ADMIN=admin
+          KEYCLOAK_ADMIN_PASSWORD=admin
+          KC_DB_USERNAME=postgres
+          KC_DB_PASSWORD=postgres
+          MAILPIT_ENABLE_AUTH=false
+          MAILPIT_USERNAME=mailpit
+          MAILPIT_PASSWORD=mailpit
+          EOF
+
+      # The API runs on the bare runner, so Postgres must be published (see e2e-tests.yml).
+      - name: Publish Postgres for the runner
+        run: |
+          cat > .devcontainer/docker-compose.ci.yml <<'EOF'
+          services:
+            db:
+              ports:
+                - 5432:5432
+          EOF
+
+      - name: Start db, Keycloak, Mailpit and Mealie
+        run: docker compose -f .devcontainer/docker-compose.yml -f .devcontainer/docker-compose.ci.yml up -d --wait db keycloak mailpit mealie
+
+      - name: Install frontend dependencies
+        working-directory: src/frontend/buddy
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: src/frontend/buddy
+        run: npx playwright install --with-deps chromium
+
+      # The clock-check, then the capture; the config starts the API on the demo clock and the
+      # Angular dev server.
+      - name: Capture the screenshots
+        run: task docs:screenshots
+
+      - name: Open a pull request when the screenshots changed
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: chore/docs-screenshots-${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$(git status --porcelain -- docs/screenshots)" ]; then
+            echo "No screenshot changed; no pull request." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add -- docs/screenshots
+          changed=$(git diff --cached --name-only | wc -l)
+          git commit -m "docs(screenshots): regenerate the documentation screenshots" \
+            -m "Captured by the Documentation screenshots workflow: $RUN_URL"
+          git push origin "$BRANCH"
+
+          {
+            echo "Regenerated by the [Documentation screenshots workflow]($RUN_URL) from \`${GITHUB_SHA::8}\`: $changed file(s) under \`docs/screenshots\` changed."
+            echo
+            echo "## What changed"
+            echo
+            git diff --name-status HEAD~1 HEAD | sed 's/^/- /'
+            echo
+            echo "## Testing"
+            echo
+            echo "- \`task docs:screenshots\` on ubuntu-latest (clock-check, demo seed, capture of every page)."
+            echo
+            echo "Not run: CI. GitHub starts no workflows on a pull request opened with the built-in token; this one changes only images and the generated README."
+          } > pr-body.md
+
+          url=$(gh pr create --base "${GITHUB_REF_NAME}" --head "$BRANCH" \
+            --title "docs(screenshots): regenerate the documentation screenshots" \
+            --body-file pr-body.md)
+          echo "Opened $url ($changed file(s) changed)." | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the screenshots
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: docs-screenshots
+          path: |
+            docs/screenshots/
+            src/frontend/buddy/test-results/screenshots/
+          retention-days: 14
