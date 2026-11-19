@@ -1,9 +1,14 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, resource, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 
-import { addDaysIso, buildDateRangeIso, parseIsoDate } from '../../core/date-utils';
+import {
+  addDaysIso,
+  buildDateRangeIso,
+  parseIsoDate,
+  parseRangeParam,
+} from '../../core/date-utils';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { SleepDiaryService } from '../../core/sleep-diary.service';
 import { SleepDiarySheet } from '../../shared/sleep-diary-sheet/sleep-diary-sheet';
@@ -27,10 +32,16 @@ export class SharedSleepDiary {
   private readonly route = inject(ActivatedRoute);
   private readonly sleepDiary = inject(SleepDiaryService);
 
+  // Typed as optional: spec stubs of the route snapshot carry no queryParamMap.
+  private readonly query = this.route.snapshot.queryParamMap as ParamMap | undefined;
   private readonly token = this.route.snapshot.paramMap.get('token') ?? '';
 
-  // Empty until the reader pages: the server then picks the last 14 days.
-  private readonly range = signal<Range>({});
+  // The URL's ?from=&to= when valid (the documentation screenshots pin a window), else empty until
+  // the reader pages: the server then picks the last 14 days.
+  private readonly range = signal<Range>({
+    from: parseRangeParam(this.query?.get('from') ?? null),
+    to: parseRangeParam(this.query?.get('to') ?? null),
+  });
 
   protected readonly diary = resource({
     params: () => this.range(),

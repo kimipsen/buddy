@@ -16,6 +16,7 @@ import {
   minutesOfDayInTimeZone,
   nextWeekdayOnOrAfter,
   parseIsoDate,
+  parseRangeParam,
   shiftMonthIso,
   shiftRangeEnd,
   shiftRangeEndDate,
@@ -515,5 +516,40 @@ describe('instantInTimeZone', () => {
     expect(instantInTimeZone('1970-01-01', '11:15', 'Africa/Monrovia')).toBe(
       Date.parse('1970-01-01T11:59:30Z'),
     );
+  });
+});
+
+describe('parseRangeParam', () => {
+  it('returns a valid ISO date as it is', () => {
+    expect(parseRangeParam('2026-03-02')).toBe('2026-03-02');
+  });
+
+  it('returns undefined when the parameter is absent or empty', () => {
+    expect(parseRangeParam(null)).toBeUndefined();
+    expect(parseRangeParam('')).toBeUndefined();
+  });
+
+  it('returns undefined for the wrong format', () => {
+    expect(parseRangeParam('2026-3-2')).toBeUndefined();
+    expect(parseRangeParam('02-03-2026')).toBeUndefined();
+    expect(parseRangeParam('2026-03-02T00:00')).toBeUndefined();
+    expect(parseRangeParam('abcd-ef-gh')).toBeUndefined();
+  });
+
+  it('returns undefined for whitespace around a date', () => {
+    expect(parseRangeParam(' 2026-03-02')).toBeUndefined();
+    expect(parseRangeParam('2026-03-02 ')).toBeUndefined();
+    expect(parseRangeParam('   ')).toBeUndefined();
+  });
+
+  it('rejects days that do not exist', () => {
+    expect(parseRangeParam('2026-02-30')).toBeUndefined();
+    expect(parseRangeParam('2027-02-29')).toBeUndefined();
+    expect(parseRangeParam('2026-13-01')).toBeUndefined();
+    expect(parseRangeParam('2026-00-10')).toBeUndefined();
+  });
+
+  it('accepts a leap day', () => {
+    expect(parseRangeParam('2028-02-29')).toBe('2028-02-29');
   });
 });
