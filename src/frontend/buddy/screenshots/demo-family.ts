@@ -359,6 +359,10 @@ export async function resetDemoFamily(): Promise<void> {
 
     if (api) {
       try {
+        // Provision the Buddy user first: a Keycloak account left behind by an interrupted run has
+        // none, and every other endpoint answers 403 user_not_provisioned until it exists.
+        await api.get('/users/me');
+
         for (const group of await api.get<Named[]>('/groups')) {
           await api.delete(`/groups/${group.id}`).catch(warn);
         }
