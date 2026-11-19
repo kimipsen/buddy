@@ -189,6 +189,29 @@ automatically:
    and creating a child fails with `500`. `buddy-realm.json` ships it, but a
    realm created by hand, or before 26.8.2 (upgrading Keycloak creates the
    scope but doesn't add it to the client), needs it added once.
+   With `Features__Mcp` on, the API's daily cleanup of abandoned MCP client
+   registrations (see `docs/backend/analysis/mcp-server.md`) also lists and
+   deletes clients, so `buddy-admin-cli`'s service account needs the
+   `manage-clients` role next to `manage-users` (**Clients > buddy-admin-cli >
+   Service accounts roles > Assign role > Filter by clients >
+   realm-management > manage-clients**). `buddy-realm.json` ships it. Without
+   it the cleanup logs a failure (event 15004) each day and nothing is
+   deleted; nothing else is affected.
+   An existing realm is not updated by a new `buddy-realm.json` (Keycloak's
+   `--import-realm` skips a realm that already exists). To use the MCP server
+   on one, add by hand what `buddy-realm.json` ships: the `buddy-mcp:read`
+   client scope (audience mapper for `buddy-mcp`, the `groups` mapper, shown on
+   the consent screen); the public `buddy-mcp` client (PKCE S256, consent
+   required, loopback redirect URIs); the anonymous client registration
+   policies and the client policies listed in
+   `docs/backend/analysis/mcp-server.md` ("Slice 4 results"); and
+   `manage-clients` for `buddy-admin-cli`. Anonymous registration is turned
+   off by emptying **Realm settings > Client registration > Client
+   registration policies > Anonymous access policies > Trusted Hosts**. The
+   cleanup of abandoned registrations starts as a dry run
+   (`Mcp__ClientCleanup__DryRun=true` is the default): read its summary line
+   (log event 15003), then set `Mcp__ClientCleanup__DryRun=false` to let it
+   delete. `Mcp__ClientCleanup__Enabled=false` turns it off.
 4. Generate a new secret for `buddy-admin-cli` (Clients > buddy-admin-cli >
    Credentials), then update the running API app with it. The commands below
    use `$RESOURCE_GROUP` etc. from `.env` — load them into your shell first

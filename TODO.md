@@ -6,6 +6,17 @@
 
 ## Open
 
+### MCP server follow-ups (2026-11-18)
+
+Plan in [MCP server](docs/backend/analysis/mcp-server.md). v1 is read-only.
+
+- [ ] **Write tools** behind explicit confirmation (phase 2).
+- [ ] **"Connected AI apps" card** in the guardian settings, to list and revoke grants.
+- [ ] **DCR rate limit** and Client ID Metadata Documents (CIMD).
+- [ ] **Manual checks** from the implementation plan: real consent through a real client, the
+      existing-realm upgrade on production, and the effect of idempotency, ETag and CORS middleware
+      on streamed `/mcp` responses.
+
 ### Performance and load testing with k6 (2026-10-24)
 
 Plan in [Performance and load testing with k6](docs/backend/analysis/load-testing-k6.md).

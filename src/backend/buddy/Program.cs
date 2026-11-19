@@ -164,7 +164,7 @@ builder.Services.AddVisitSummariesFeature(builder.Configuration);
 // Only with Features:Mcp on; read through McpFeature.IsEnabled (the one flag reader).
 if (McpFeature.IsEnabled(builder.Configuration))
 {
-    builder.Services.AddMcpFeature();
+    builder.Services.AddMcpFeature(builder.Configuration);
 }
 // Last: erasure orchestrates every feature's IPersonalDataEraser.
 builder.Services.AddPrivacyFeature();
