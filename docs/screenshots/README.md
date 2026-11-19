@@ -4,8 +4,8 @@
      change the titles and descriptions in screenshots/pages.ts instead. -->
 
 Every page of Buddy, signed in as the demo guardian Sara Holm or her son Emil. The data is a
-demo family seeded fresh for each run, so dates are relative to the day the screenshots were
-taken. Each page is shown on a desktop browser (1280×800), on a tablet in portrait (iPad Mini,
+demo family seeded fresh for each run, with the calendar fixed at Wednesday 2026-11-11 (Europe/Copenhagen),
+so the screenshots do not change with the day they were taken. Each page is shown on a desktop browser (1280×800), on a tablet in portrait (iPad Mini,
 768×1024) and on a phone (iPhone 15, 393×852).
 
 ## Login
