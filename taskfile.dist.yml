@@ -138,6 +138,23 @@ tasks:
       - '[ -d node_modules ] || npm ci --no-audit --no-fund'
       - npx tsc --noEmit -p tsconfig.json
 
+  docs:screenshots:clock-check:
+    desc: >-
+      Fail when the screenshot tooling in src/frontend/buddy/screenshots reads the real clock
+      (new Date() with no argument, Date.now(, Date()). The demo calendar is frozen at DEMO_NOW in
+      demo-family.ts. Exactly one line, the Keycloak token expiry, is allowed, marked
+      "clock-check: allow". Comment-only lines are skipped.
+    dir: src/frontend/buddy
+    cmds:
+      - |
+        hits=$(grep -rnE "new Date\(\)|Date\.now\(|\bDate\(\)" screenshots --include='*.ts' | grep -vE ':[0-9]+:[[:space:]]*(//|\*|/\*)' || true)
+        bad=$(printf '%s\n' "$hits" | grep -v 'clock-check: allow' | sed '/^$/d' || true)
+        allowed=$(printf '%s\n' "$hits" | grep -c 'clock-check: allow' || true)
+        if [ -n "$bad" ]; then echo "Real-clock reads in the screenshot tooling:"; echo "$bad"; fail=1; fi
+        if [ "$allowed" != "1" ]; then echo "Expected exactly one 'clock-check: allow' line, found $allowed"; fail=1; fi
+        [ -z "$fail" ] || exit 1
+        echo "clock-check ok"
+
   docs:screenshots:
     desc: >-
       Regenerate the page screenshots in docs/screenshots (and its README.md).
@@ -148,6 +165,7 @@ tasks:
       Angular dev server itself, or reuses them if they're already running.
     dir: src/frontend/buddy
     cmds:
+      - task: docs:screenshots:clock-check
       - npm run screenshots
 
   lint:markdown:
