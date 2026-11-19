@@ -24,6 +24,9 @@ export interface DemoFamily {
   groupId: string;
   // Emil's daily morning routine (a template-scheduled task), for the focus view.
   morningRoutineItemId: string;
+  // The 14 demo days (first to last, yyyy-MM-dd) the shared sleep-diary and feelings pages open
+  // on. Without it they default to the real last 14 days, which holds none of the demo data.
+  sharedRange: { from: string; to: string };
 }
 
 export interface ScreenshotPage {
@@ -43,9 +46,9 @@ export interface ScreenshotPage {
   waitFor?: string;
   // Capture the whole scrollable page instead of just the viewport (default true).
   fullPage?: boolean;
-  // A time of day ('HH:mm', in the demo family's time zone) the browser clock is fixed at, so a
-  // page that depends on the time (the visual timer) shows the same moment on every run. Only
-  // applied once that time has passed today: a clock ahead of real time would expire the session.
+  // A time of day ('HH:mm', in the demo family's time zone) on the demo day the browser clock is
+  // fixed at, so a page that depends on the time (the visual timer) shows the same moment on every
+  // run. Without it the clock is fixed at the demo's "now". Every page runs on a fixed clock.
   clock?: string;
   // localStorage entries to put in place before the page loads, for state that lives only in the
   // browser (a homework session). Called with the capture's "now" and today's date (yyyy-MM-dd)
@@ -482,7 +485,9 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     as: 'anonymous',
     route: '/shared/sleep-diary/:token',
     path: (demo) =>
-      demo.sleepDiaryShareToken ? `/shared/sleep-diary/${demo.sleepDiaryShareToken}` : null,
+      demo.sleepDiaryShareToken
+        ? `/shared/sleep-diary/${demo.sleepDiaryShareToken}?from=${demo.sharedRange.from}&to=${demo.sharedRange.to}`
+        : null,
     waitFor: 'Sleep diary for Emil',
   },
   {
@@ -493,7 +498,9 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     as: 'anonymous',
     route: '/shared/feelings/:token',
     path: (demo) =>
-      demo.feelingsShareToken ? `/shared/feelings/${demo.feelingsShareToken}` : null,
+      demo.feelingsShareToken
+        ? `/shared/feelings/${demo.feelingsShareToken}?from=${demo.sharedRange.from}&to=${demo.sharedRange.to}`
+        : null,
     waitFor: 'Feelings check-ins for Emil',
   },
   {

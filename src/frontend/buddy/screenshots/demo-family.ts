@@ -1446,6 +1446,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       childId: emil.id,
       groupId: group.id,
       morningRoutineItemId: morningItem.id,
+      sharedRange: { from: inDays(-13), to: todayIso },
     };
   } finally {
     await api.dispose();

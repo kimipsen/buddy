@@ -1,6 +1,7 @@
 import { existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { DEMO_NOW, TIME_ZONE, demoDate } from './demo-family';
 import { SCREENSHOT_PAGES } from './pages';
 import { SCREENSHOTS_DIR, screenshotsDirFor } from './screenshots-dir';
 
@@ -44,12 +45,20 @@ export default function globalTeardown(): void {
     '     change the titles and descriptions in screenshots/pages.ts instead. -->',
     '',
     'Every page of Buddy, signed in as the demo guardian Sara Holm or her son Emil. The data is a',
-    'demo family seeded fresh for each run, so dates are relative to the day the screenshots were',
-    'taken. Each page is shown on a desktop browser (1280×800), on a tablet in portrait (iPad Mini,',
+    `demo family seeded fresh for each run, with the calendar fixed at ${demoLabel()} (${TIME_ZONE}),`,
+    'so the screenshots do not change with the day they were taken. Each page is shown on a desktop browser (1280×800), on a tablet in portrait (iPad Mini,',
     '768×1024) and on a phone (iPhone 15, 393×852).',
     '',
     ...sections.flatMap((section) => [section, '']),
   ].join('\n');
 
   writeFileSync(join(SCREENSHOTS_DIR, 'README.md'), readme);
+}
+
+// The fixed demo day, e.g. "Wednesday 2026-11-11". Built from DEMO_NOW, never hard-coded.
+function demoLabel(): string {
+  const weekday = new Intl.DateTimeFormat('en-GB', { timeZone: TIME_ZONE, weekday: 'long' }).format(
+    DEMO_NOW,
+  );
+  return `${weekday} ${demoDate(DEMO_NOW)}`;
 }
