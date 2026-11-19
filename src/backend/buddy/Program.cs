@@ -9,6 +9,7 @@ using buddy.Common.Idempotency;
 using buddy.Common.OpenApi;
 using buddy.Common.Observability;
 using buddy.Common.RateLimiting;
+using buddy.Common.Time;
 using buddy.Common.Validation;
 using buddy.Common.Versioning;
 using buddy.Email;
@@ -79,7 +80,13 @@ builder.Host.UseWolverine(opts =>
 
 // The one source of "now": handlers and services take a TimeProvider instead of reading
 // DateTimeOffset.UtcNow (banned in BannedSymbols.txt), so tests can swap in a fake clock.
-builder.Services.AddSingleton(TimeProvider.System);
+// With Demo__Now set (Development only) it is an offset clock for the documentation screenshots.
+var timeProvider = DemoClock.Create(builder.Configuration, builder.Environment);
+builder.Services.AddSingleton(timeProvider);
+if (!ReferenceEquals(timeProvider, TimeProvider.System))
+{
+    builder.Services.AddHostedService<DemoClockWarning>();
+}
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {

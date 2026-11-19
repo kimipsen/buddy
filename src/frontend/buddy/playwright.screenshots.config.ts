@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+import { DEMO_NOW } from './screenshots/demo-family';
+
 // Captures the documentation screenshots in docs/screenshots (`task docs:screenshots`). Separate
 // from playwright.config.ts so the e2e suite never runs it. It seeds its own demo family
 // (screenshots/demo-family.ts) and starts the API and dev server itself, reusing them when they're
@@ -63,13 +65,18 @@ export default defineConfig({
       command: 'dotnet run --project ../../backend/buddy',
       url: 'https://localhost:7076/openapi/v1.json',
       ignoreHTTPSErrors: true,
-      reuseExistingServer: true,
+      // Never reuse a running API by default: it would be on the real clock. The seed checks the
+      // clock and fails then, so BUDDY_SCREENSHOTS_REUSE_API=1 (an API started by hand with Demo__Now,
+      // e.g. for a determinism run) is safe.
+      reuseExistingServer: process.env['BUDDY_SCREENSHOTS_REUSE_API'] === '1',
       timeout: 180_000,
       // The demo seed sends several hundred requests as Sara within seconds, past the per-user
       // burst (200, then 5 a second; RateLimitingOptions.Authenticated), so it failed with a 429
       // part-way through. Only the API this config starts gets the larger budget, as
       // playwright.config.ts does for anonymous requests; a reused dev API keeps its limits.
       env: {
+        // The server clock of the demo day (development-only override, Common/Time/DemoClock.cs).
+        Demo__Now: DEMO_NOW.toISOString(),
         RateLimiting__Authenticated__TokenLimit: '5000',
         RateLimiting__Authenticated__TokensPerPeriod: '500',
         // The demo family's Mealie (screenshots/demo-family.ts) is local and plain http.
