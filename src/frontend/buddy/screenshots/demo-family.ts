@@ -48,31 +48,49 @@ interface TaskTemplateDto extends Named {
 
 // ---- Dates -------------------------------------------------------------------------------------
 
+// The demo calendar is frozen at DEMO_NOW so a regenerated screenshot never depends on the day it
+// ran. Every "today"-relative value below derives from it; the clock-check guard
+// (task docs:screenshots:clock-check) fails on a real-clock read anywhere in this folder.
+export const DEMO_NOW = new Date('2026-11-11T10:30:00+01:00');
+
+/** The calendar day (YYYY-MM-DD) of an instant in the demo family's time zone. */
+export function demoDate(date: Date): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
+
+// A demo calendar day is carried as a Date at 12:00 UTC of that day, so day arithmetic and the
+// UTC getters never cross a DST change or a day boundary.
+const calendarDay = (iso: string) => new Date(`${iso}T12:00:00Z`);
+
 function isoDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return date.toISOString().slice(0, 10);
 }
 
 function addDays(date: Date, days: number): Date {
   const copy = new Date(date);
-  copy.setDate(copy.getDate() + days);
+  copy.setUTCDate(copy.getUTCDate() + days);
   return copy;
 }
 
-const today = new Date();
-// Monday of the current week (getDay: 0 = Sunday).
-const monday = addDays(today, -((today.getDay() + 6) % 7));
+const today = calendarDay(demoDate(DEMO_NOW));
+// Monday of the current week (getUTCDay: 0 = Sunday).
+const monday = addDays(today, -((today.getUTCDay() + 6) % 7));
 const mondayIso = isoDate(monday);
 const todayIso = isoDate(today);
 const inDays = (days: number) => isoDate(addDays(today, days));
 // Three weeks from this week's Monday: covers the pages that show the next seven days and the
 // print sheet, which opens on next week.
 const planDays = Array.from({ length: 21 }, (_, i) => addDays(monday, i));
-const isWeekday = (date: Date) => date.getDay() >= 1 && date.getDay() <= 5;
-const weekdayOf = (iso: string) => new Date(`${iso}T12:00:00`).getDay();
-const nextWeekday = (weekday: number) => inDays((weekday - today.getDay() + 7) % 7);
+const isWeekday = (date: Date) => date.getUTCDay() >= 1 && date.getUTCDay() <= 5;
+const weekdayOf = (iso: string) => calendarDay(iso).getUTCDay();
+const nextWeekday = (weekday: number) => inDays((weekday - today.getUTCDay() + 7) % 7);
 
 // ---- Keycloak ----------------------------------------------------------------------------------
 
@@ -117,7 +135,7 @@ export async function browserTokenSet(username: string, password: string) {
     accessToken: body.access_token,
     refreshToken: body.refresh_token ?? null,
     idToken: body.id_token ?? null,
-    expiresAt: Date.now() + body.expires_in * 1000,
+    expiresAt: Date.now() + body.expires_in * 1000, // clock-check: allow (token expiry, not page content)
   };
 }
 
@@ -778,7 +796,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       });
     }
 
-    // Indexed by getDay (0 = Sunday).
+    // Indexed by getUTCDay (0 = Sunday).
     const dinners = [
       'Spaghetti bolognese',
       'Fish fingers & potatoes',
@@ -802,7 +820,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         });
       await assign('Breakfast', 'Oatmeal with berries');
       if (isWeekday(day)) await assign('Lunch', 'Rye bread sandwiches');
-      await assign('Dinner', dinners[day.getDay()]);
+      await assign('Dinner', dinners[day.getUTCDay()]);
       await assign('Snack', 'Apple and carrot sticks');
     }
 
@@ -1019,7 +1037,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     });
     const sleepShare = await api
       .post<{ token: string }>(`/sleep-diary/children/${emil.id}/share-links`, {
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        expiresAt: null,
       })
       .catch((error: unknown) => {
         warn(error);
@@ -1059,6 +1077,8 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
           zone: 'Green',
           tags: ['Calm'],
           note: '',
+          date: todayIso,
+          time: '07:00:00',
         });
         await api.put(`/feelings/children/${emil.id}/prompt-times`, {
           times: ['07:00', '15:00', '19:30'],
@@ -1070,7 +1090,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         await idaApi.post('/feelings/me/check-ins', { zone: 'Green', tags: ['Happy'] });
 
         return await api.post<{ token: string }>(`/feelings/children/${emil.id}/share-links`, {
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          expiresAt: null,
         });
       } catch (error: unknown) {
         warn(error);
@@ -1097,7 +1117,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         });
         const link = await api.post<{ token: string }>(
           `/visit-summaries/children/${emil.id}/${summary.id}/share-links`,
-          { expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() },
+          { expiresAt: null },
         );
         return { id: summary.id, token: link.token };
       } catch (error: unknown) {
@@ -1337,7 +1357,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
           date: isoDate(date),
           entry: {
             responsible: Math.floor(back / 2) % 2 === 0 ? mom : dad,
-            note: date.getDay() === 5 ? 'Screen night 📱' : '',
+            note: date.getUTCDay() === 5 ? 'Screen night 📱' : '',
           },
         };
       }),
