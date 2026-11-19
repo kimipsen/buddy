@@ -72,6 +72,11 @@ Mailpit prerequisites as the e2e suite.
 and fails when a route is missing from `pages.ts` (or its documented
 `UNCAPTURED_ROUTES` exceptions). See the `doc-screenshots` skill for details.
 
+The `Documentation screenshots` workflow (`.github/workflows/docs-screenshots.yml`, started by
+hand from the Actions tab) runs the same task on a GitHub runner and opens a pull request when any
+image changed. Fonts render slightly differently there than in the devcontainer, so commit
+screenshots from one place only, preferably the workflow.
+
 ### Waiting for async work in component tests
 
 The frontend has no `zone.js` dependency and runs zoneless. Component tests
@@ -229,6 +234,11 @@ and the design in
   real backend and frontend. A CI-only override (`docker-compose.ci.yml`,
   written by the workflow) publishes Postgres on `localhost:5432` for the API
   running on the runner.
+- `.github/workflows/docs-screenshots.yml` (manual only) starts the same
+  services, runs `task docs:screenshots` and opens a pull request with the
+  changed images. It uses the built-in token, so no other workflow runs on that
+  pull request, and it needs the repository setting "Allow GitHub Actions to
+  create and approve pull requests".
 - `.github/workflows/mutation-testing.yml` runs mutation testing nightly and on
   demand. See [nightly mutation testing](#nightly-mutation-testing).
 - `.github/workflows/codeql.yml` runs CodeQL's `security-and-quality` queries

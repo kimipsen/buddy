@@ -36,6 +36,12 @@ SCREENSHOTS_DIR=$S/shots npx playwright test -c playwright.screenshots.config.ts
 SCREENSHOTS_DIR=$S/shots npx playwright test -c playwright.screenshots.config.ts --project mobile       # phone only
 ```
 
+### On GitHub Actions
+
+`.github/workflows/docs-screenshots.yml` (Actions → Documentation screenshots → Run workflow) runs `task docs:screenshots` on ubuntu-latest against the compose services published on the runner (the same localhost overrides as the e2e workflow, set as job env) and opens a pull request `chore/docs-screenshots-<run id>` when `docs/screenshots` changed. No change, no PR. The images are uploaded as the `docs-screenshots` artifact either way. The PR is opened with the built-in token, so no CI runs on it.
+
+The runner's fonts differ from the devcontainer's, so local and CI captures differ by a few pixels. Commit screenshots from one place only, preferably the workflow; run locally into `$S/shots` to check your own change.
+
 ## Desktop and mobile
 
 Every page is captured twice, once per Playwright project. `screenshotsDirFor(project)` in `screenshots/screenshots-dir.ts` maps `desktop` to `docs/screenshots/` (the paths existing docs link to) and any other project to a subfolder named after it, so `mobile` lands in `docs/screenshots/mobile/`. There's nothing per page to configure: a new `pages.ts` entry gets both images.
