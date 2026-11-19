@@ -2,7 +2,7 @@ import { type Page, expect, test } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { KEYCLOAK_URL, TIME_ZONE, browserTokenSet } from './demo-family';
+import { DEMO_NOW, KEYCLOAK_URL, TIME_ZONE, browserTokenSet, demoDate } from './demo-family';
 import { type DemoFamily, SCREENSHOT_PAGES } from './pages';
 import { screenshotsDirFor } from './screenshots-dir';
 
@@ -49,21 +49,21 @@ for (const entry of SCREENSHOT_PAGES) {
       );
     }
 
-    const fixedTime = entry.clock ? pastTimeToday(entry.clock) : null;
-    if (fixedTime) {
-      await page.clock.setFixedTime(fixedTime);
-    }
+    // Every page runs at the demo clock, so what it shows never depends on the day it was captured.
+    // The access token's expiry is checked against the browser clock, and the demo day lies in the
+    // past, so the token never looks expired.
+    const fixedTime = demoInstant(entry.clock);
+    await page.clock.setFixedTime(fixedTime);
 
     if (entry.localStorage) {
-      const nowMs = (fixedTime ?? new Date()).getTime();
-      const today = new Intl.DateTimeFormat('sv-SE', { timeZone: TIME_ZONE }).format(nowMs);
+      const nowMs = fixedTime.getTime();
       await page.addInitScript(
         (entries) => {
           for (const [key, value] of Object.entries(entries)) {
             window.localStorage.setItem(key, value);
           }
         },
-        entry.localStorage(nowMs, today),
+        entry.localStorage(nowMs, demoDate(fixedTime)),
       );
     }
 
@@ -98,10 +98,24 @@ for (const entry of SCREENSHOT_PAGES) {
   });
 }
 
-// Today at `clock` ('HH:mm') in the demo family's time zone, or null while that time is still to
-// come: a browser clock ahead of real time would make the access token look expired.
-function pastTimeToday(clock: string): Date | null {
-  const now = new Date();
+// The demo day at `clock` ('HH:mm') in the demo family's time zone, or the demo "now" itself
+// without one.
+function demoInstant(clock?: string): Date {
+  if (!clock) {
+    return DEMO_NOW;
+  }
+
+  const [hour, minute] = clock.split(':').map(Number);
+  const [year, month, day] = demoDate(DEMO_NOW).split('-').map(Number);
+  // The wall-clock time read as UTC, corrected by the zone's offset from UTC at that moment. The
+  // offset is read again at the corrected instant, in case a daylight-saving change lies between.
+  const wall = Date.UTC(year, month - 1, day, hour, minute);
+  const first = wall - zoneOffsetMs(wall);
+  return new Date(wall - zoneOffsetMs(first));
+}
+
+// How far the demo time zone's wall clock is ahead of UTC at `instantMs`.
+function zoneOffsetMs(instantMs: number): number {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat('en-GB', {
       timeZone: TIME_ZONE,
@@ -112,22 +126,17 @@ function pastTimeToday(clock: string): Date | null {
       minute: '2-digit',
       hourCycle: 'h23',
     })
-      .formatToParts(now)
+      .formatToParts(instantMs)
       .map((part) => [part.type, part.value]),
   );
-  const [hour, minute] = clock.split(':').map(Number);
-  // The wall-clock time read as UTC, corrected by the zone's offset from UTC right now.
-  const wallNow = Date.UTC(
+  const wall = Date.UTC(
     +parts['year'],
     +parts['month'] - 1,
     +parts['day'],
     +parts['hour'],
     +parts['minute'],
   );
-  const offsetMs = wallNow - Math.floor(now.getTime() / 60_000) * 60_000;
-  const target =
-    Date.UTC(+parts['year'], +parts['month'] - 1, +parts['day'], hour, minute) - offsetMs;
-  return target <= now.getTime() ? new Date(target) : null;
+  return wall - Math.floor(instantMs / 60_000) * 60_000;
 }
 
 // How far the page is wider than the screen, with the elements sticking out furthest, or null
