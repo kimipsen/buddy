@@ -309,6 +309,20 @@ The family brings its own key, so the provider is the family's own processor. Bu
 still the party that assembles the data and sends it, so minimization and disclosure are Buddy's
 responsibility.
 
+## Question 6b: MCP clients
+
+**Decision: the read-only MCP server ([mcp-server.md](mcp-server.md)) sends family data to an AI app
+only when a guardian signs in to that app with their own account and consents to `buddy-mcp:read`.**
+
+- The AI app is the guardian's own processor, chosen by the guardian, not by Buddy. Buddy exposes
+  what the guardian can already see in the app, scoped to their own families.
+- Only `buddy-guardian` accounts are accepted; a child's account never reaches a tool.
+- Every tool call is logged with tool, user, outcome and duration, never argument values. The sleep
+  diary tool also writes its health read-audit log (Question 7).
+- The guardian revokes a grant in the Keycloak account console. Abandoned dynamically registered
+  clients are deleted after 7 days without a consenting user.
+- Tool results can carry text other family members wrote, so per-call approval stays on in the client.
+
 ## Question 7: auditing access to health data
 
 **Decision: structured audit logs for every read of a child's medicines or sleep diary, in the same
@@ -316,7 +330,7 @@ form as the existing audit logs ([observability.md](../observability.md)).** New
 
 - `ListMedicineSchedules`, `ListTodaysDoses` and their group variants (new `MedicinesLog`, EventIds
   9001+);
-- `ListSleepDiaryEntries` (`SleepDiariesLog` 5004).
+- `ListSleepDiaryEntries` (`SleepDiariesLog` 5004). The MCP `list_sleep_diary` tool goes through the same handler, so it writes this line too, besides its own `McpLog` line (15001).
 - `ListFeelingCheckIns` and `GetMyFeelingsToday` (`FeelingsLog` 11004, added with
   [feelings-check-in.md](feelings-check-in.md)); `GetSharedFeelings` logs every view (11003).
 
@@ -450,6 +464,7 @@ Background services: `UserErasureService` (finishes interrupted erasures) and
 | AI calendar titles                                                                               | Only items assigned to the session's child or to nobody, in the child's family calendars; the rest are sent as "busy" (user's decision)                                           |
 | Backups                                                                                          | An erasure ledger plus 30-day backup rotation (user's decision); see below                                                                                                        |
 | Free text in shared spaces that names an erased person                                           | Stays. It is part of the family's shared plan, the other members can edit or delete it, and the author's identity is erased (user's decision)                                     |
+| MCP clients                                                                                      | Read-only, the guardian's own sign-in and consent; calls logged without argument values; abandoned clients deleted after 7 days (see Question 6b)                                 |
 
 ## Remaining open questions
 

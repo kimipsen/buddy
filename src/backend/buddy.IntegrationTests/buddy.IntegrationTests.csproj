@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <None Include="Fixtures\TestRealm.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Features\Mcp\Golden\*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="EventShapeTests\GoldenFiles\**\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

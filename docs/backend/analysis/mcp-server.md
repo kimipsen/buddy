@@ -1,6 +1,6 @@
 # MCP Server
 
-Status: Proposed (not yet implemented)
+Status: Implemented (v1, read-only). Setup: [mcp-setup.md](../../mcp-setup.md)
 
 ## Context
 
@@ -351,7 +351,7 @@ MCP clients have no client id for a self-hosted Buddy until they register.
   client still needs a guardian to sign in and consent. Two things keep it in check:
   - **Cleanup.** A daily `McpClientCleanupService` in the API, the same shape as
     [`IdempotencyCleanupService`](../../../src/backend/buddy/Common/Idempotency/IdempotencyCleanupService.cs),
-    uses `IKeycloakAdminClient` to delete dynamically registered clients that nobody has
+    uses `IKeycloakClientRegistry` (the Admin API, with the service account's `manage-clients` role) to delete dynamically registered clients that nobody has
     consented to within **7 days** of registering:
     - _Which clients are registered ones._ In OIDC dynamic registration the server assigns the
       `client_id`, and Keycloak makes it a UUID. Every client created by hand has a readable id:
@@ -845,9 +845,112 @@ Verified in `McpGuardianTests` and `McpRateLimitTests`:
   `ToolCalled` line to event 5004 by user and time (open decision for the PR: an `Mcp` value in
   `HealthDataAccessPath`).
 
-Still open (slice 4 and later): the effect of `IdempotencyKeyMiddleware`, `UseETags` and the other
-middleware on a streamed `/mcp` response, CORS, and the stateless edge cases (missing
-`Mcp-Session-Id`, unsupported `MCP-Protocol-Version`, batch arrays, `ping`).
+## Slice 4 results
+
+Verified against Keycloak 26.8.2 in `McpClientRegistrationTests`, `McpClientCleanupTests`,
+`McpClientCleanerTests` and `KeycloakParityTests`, after a spike on a throwaway container:
+
+- **A realm import replaces Keycloak's defaults.** A file that lists `clientScopes` or the
+  `ClientRegistrationPolicy` components drops the built-in ones (profile, email, roles, the stock
+  policies). So `buddy-realm.json` and `TestRealm.json` carry the full default scope set and the full
+  policy set next to the new entries, and `KeycloakParityTests` keeps the two lists identical. This
+  replaces the slice 2 workaround: the fixture no longer creates the scope and client through the
+  Admin API; both live in `TestRealm.json`. The deploy Keycloak image has no realm file (production
+  realms are made by hand, see `deploy/README.md`), so the third "realm file" of the plan is the
+  deploy guide, which now names the `manage-clients` role.
+- **Allowed client scopes** is a whitelist that must name every scope a registration ends up with,
+  the realm's default ones included, so it lists `buddy-mcp:read` plus the nine default scopes and
+  has `allow-default-scopes` off. With it on, `offline_access` (a default optional scope) is
+  accepted. The realm's default _optional_ scopes are cut to `buddy-mcp:read` alone: a client that
+  sends no `scope` in its registration still gets it, and none gets `offline_access`, `address`,
+  `phone` or `microprofile-jwt`.
+- **PKCE, no implicit or password grant, no secret** come from client policies, not registration
+  policies: the profile `buddy-mcp-dcr` (`pkce-enforcer` with auto-configure, `reject-implicit-grant`,
+  `reject-ropc-grant`) applies to `ByAnonymous` registrations, and `buddy-mcp-public-only` rejects an
+  anonymous confidential client. A registered client ends up public, with S256 set on it, consent
+  required, full scope off and `buddy-mcp:read` as its only optional scope; a client asking for the
+  implicit or password grant is registered without them.
+  - The "no secret" policy needs all three conditions (`ByAnonymous`, the MCP scope, confidential).
+    Without `ByAnonymous` it also refuses a confidential client an operator creates by hand, which
+    inherits `buddy-mcp:read` as a default optional scope. Without the scope condition a condition
+    that abstains on token requests still lets the policy apply, and it refused `buddy-admin-cli`'s
+    own client-credentials token.
+- **Trusted hosts** accepts loopback (`localhost`, `127.0.0.1`) and `claude.ai`, `vscode.dev`,
+  `chatgpt.com`, and refuses another host, a look-alike (`claude.ai.evil.example`) and a custom scheme.
+  **An IPv6 literal (`http://[::1]:...`) is refused** with `::1` in the list or without; such a client
+  uses the pre-registered `buddy-mcp` client, whose redirect URIs include `http://[::1]/*`. Keycloak
+  matches a loopback redirect on any port for all three loopback spellings on that client.
+- **Max clients** is 59: the 6 built-ins plus `buddy-frontend`, `buddy-admin-cli` and `buddy-mcp`,
+  plus 50. `KeycloakParityTests` recomputes it from the realm file.
+- **A registered client's token** (code flow with consent, PKCE) has `aud` `buddy-mcp` and not
+  `buddy-api`, `scope` with `buddy-mcp:read`, and `groups` with `buddy-guardian`.
+- **Keycloak keeps no creation time for a client**, and the registration response's
+  `client_id_issued_at` is not stored. `McpClientCleaner` therefore stamps each registered client it
+  finds unconsented with a `buddy.firstSeen` client attribute (read, merge, write through
+  `IKeycloakClientRegistry`, because a client update replaces the whole attributes map) and deletes it
+  on the first pass 7 days or more after the stamp. The grace period runs from the first pass that saw
+  the client, up to a day after it registered, and a consented client is never stamped. A client whose
+  only consenting user was deleted starts its grace period when a pass first finds it unconsented.
+- **Which clients are candidates.** A UUID `client_id`, not a built-in or `buddy-*` client, public, and
+  with a `buddy-mcp:*` scope. A stamp that doesn't parse or lies in the future keeps the client ("kept:
+  unknown").
+- **Failsafes** (`Mcp:ClientCleanup`, `McpClientCleanupOptions`; the defaults are pinned by a test):
+  - `Enabled` (default on). Off: the job is not registered and a startup line (15007) says so.
+  - `DryRun` (default **on**). A dry run stamps `buddy.firstSeen` (its one write) so the age rule
+    progresses, never deletes, and lists what it would delete in the summary line (15003, `wouldDelete`
+    with the client ids). So "job in place" means dry run first: the operator reads one summary line,
+    then sets `DryRun=false`.
+  - `MaxDeletesPerPass` (default 100, validated at startup: negative or unparsable stops the host).
+    Would-be deletions count against it. Past the cap the pass stops deleting and logs an Error (15005).
+  - Fail closed. The pass reads `GET /users/count` and then pages the users; the pages must add up to
+    the count. Any exception or non-2xx on the count, the paging or a user's consents, an answer that
+    doesn't parse, or a user list that doesn't match the count keeps every client for that pass (15006,
+    counted as kept: unknown) and tries again the next day. A failed stamp or delete for one client is
+    logged (15008) and doesn't end the pass; a failed pass is logged (15004).
+  - The first pass is 24 hours after startup, as in `IdempotencyCleanupService` (no startup pass), so a
+    host that starts runs nothing against Keycloak. `BuddyApiFixture` sets
+    `Mcp:ClientCleanup:Enabled=false`, so no test host runs it.
+- **Admin roles.** `GET /users/count`, user paging and `GET /users/{id}/consents` work with
+  `manage-users` alone (verified with a service account that has only it); listing, updating and
+  deleting clients needs `manage-clients`. The service account therefore needs both. This is a privilege
+  increase: the API's Keycloak credential can now delete clients. Added to the dev realm file (the
+  `buddy`-realm shape, as production), the fixture's master-realm service account and both deploy guides.
+- **Anonymous registration switch.** Keycloak has no on/off flag; the switch is the anonymous Trusted
+  Hosts list. Emptied, every anonymous registration is refused (verified). The dev realm ships it
+  usable; to turn it off, empty the list under **Realm settings > Client registration > Client
+  registration policies > Anonymous access policies > Trusted Hosts**, and use the pre-registered
+  `buddy-mcp` client meanwhile. `Features:Mcp` controls `/mcp` and the metadata document only.
+- **An existing realm is not updated.** `--import-realm` skips a realm that already exists, so existing
+  dev and production realms need the scope, the client, the policies and the role added by hand; see
+  the upgrade note in `deploy/README.md`. This was checked only on a fresh import, not as an automated
+  upgrade test.
+- **Test environment.** `GrantConsentAsync` walks the real login and consent screens: Keycloak marks
+  its login cookies `Secure`, which a .NET `CookieContainer` won't send over the test container's
+  plain HTTP, so the helper keeps the cookies by hand. Keycloak has no Admin API call that creates a
+  consent.
+
+Still open after v1: the effect of `IdempotencyKeyMiddleware`, `UseETags` and the other middleware on a
+streamed `/mcp` response was not verified against a real streaming client (it is a manual check in
+`TODO.md`); v1 tools only return plain JSON results.
+
+## Slice 5 and 6 results
+
+Verified in `McpReadTests`, `McpToolTests`, `McpCatalogueTests`, `McpBoundaryTests` and
+`McpEdgeCaseTests`:
+
+- **Catalogue.** `tools/list` equals `Features/Mcp/Golden/tools-list.json` (instructions plus every
+  tool, sorted by name). Set `MCP_UPDATE_GOLDEN=1` to rewrite it. With a feature flag off, only that
+  feature's tools disappear.
+- **Scoping.** Every tool that takes an id answers "not found" for a child the caller is not linked
+  to, and a revoked guardian link gives not found on the next call.
+- **Boundaries.** A range of 92 days is accepted and 93 is a validation error; an unknown tool and
+  malformed arguments or bodies are never a 5xx.
+- **Logs.** No log line contains a value the caller sent.
+- **Stateless edge cases.** `ping` is answered without a session. An unknown `Mcp-Session-Id`, an
+  unsupported `MCP-Protocol-Version` and a JSON-RPC batch array are answered with a 2xx or 4xx, never
+  a 5xx; the tests pin that range, not the exact status.
+- **CORS (decision).** The only CORS policy is `Frontend`. v1 documents "desktop and server-side
+  clients only" in the setup guide and adds no MCP policy.
 
 ## Diagram
 

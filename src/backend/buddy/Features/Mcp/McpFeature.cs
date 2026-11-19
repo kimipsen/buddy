@@ -1,4 +1,5 @@
 using buddy.Common;
+using buddy.Common.Configuration;
 using buddy.Common.FeatureFlags;
 using buddy.Common.RateLimiting;
 using buddy.Features.Users;
@@ -113,17 +114,87 @@ public static class McpFeature
         return Task.CompletedTask;
     }
 
-    public static IServiceCollection AddMcpFeature(this IServiceCollection services)
+    public static IServiceCollection AddMcpFeature(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddMcpServer(options => options.ServerInstructions = ServerInstructions)
             .WithHttpTransport(options => options.Stateless = true)
-            .AddMcpTools();
+            .AddMcpTools(configuration);
+
+        services.AddHttpContextAccessor();
+        services.AddScoped<McpToolRunner>();
+
+        // Deletes abandoned dynamically registered clients so they can't fill Keycloak's max-clients policy.
+        services.AddValidatedOptions<McpClientCleanupOptions>(McpClientCleanupOptions.SectionName);
+        services.AddHttpClient<IKeycloakClientRegistry, KeycloakClientRegistry>();
+        services.AddTransient<McpClientCleaner>();
+        if (McpClientCleanupOptions.IsEnabled(configuration))
+        {
+            services.AddHostedService<McpClientCleanupService>();
+        }
+        else
+        {
+            services.AddHostedService<McpStartupLogger>();
+        }
 
         return services;
     }
 
-    // Slice 5 registers the tools here.
-    private static IMcpServerBuilder AddMcpTools(this IMcpServerBuilder builder) => builder;
+    // The tool classes, one per feature. A tool of a feature switched off (Features:<Name>=false) is
+    // not registered, so it is absent from tools/list and a call gets the JSON-RPC "unknown tool" error.
+    // Flags are read from the same IConfiguration as the endpoints (FeatureOptions.Effective).
+    private static IMcpServerBuilder AddMcpTools(this IMcpServerBuilder builder, IConfiguration configuration)
+    {
+        var features = configuration.GetSection(FeatureOptions.SectionName).Get<FeatureOptions>() is { } options
+            ? options.Effective()
+            : new FeatureOptions().Effective();
+
+        builder
+            .WithTools<IdentityTools>()
+            .WithTools<FamilyTools>()
+            .WithTools<CalendarTools>();
+
+        if (features.Mealplans)
+        {
+            builder.WithTools<MealplanTools>();
+        }
+
+        if (features.NightDuty)
+        {
+            builder.WithTools<NightDutyTools>();
+        }
+
+        if (features.Pickups)
+        {
+            builder.WithTools<PickupsTools>();
+        }
+
+        if (features.TaskLibrary)
+        {
+            builder.WithTools<TaskLibraryTools>();
+        }
+
+        if (features.HouseRules)
+        {
+            builder.WithTools<HouseRulesTools>();
+        }
+
+        if (features.SleepDiary)
+        {
+            builder.WithTools<SleepDiaryTools>();
+        }
+
+        if (features.WorkLocations)
+        {
+            builder.WithTools<WorkLocationsTools>();
+        }
+
+        if (features.Progress)
+        {
+            builder.WithTools<ProgressTools>();
+        }
+
+        return builder;
+    }
 
     public static IEndpointRouteBuilder MapMcpFeature(this IEndpointRouteBuilder endpoints)
     {

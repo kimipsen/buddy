@@ -95,7 +95,6 @@ public sealed class BuddyApiFixture : IAsyncLifetime
         _mailpitClient = new HttpClient { BaseAddress = new Uri($"http://{_mailpit.Hostname}:{mailpitHttpPort}") };
 
         var adminClientSecret = await SetUpKeycloakAdminServiceAccountAsync(keycloakBaseUrl);
-        await SetUpMcpClientAsync(keycloakBaseUrl);
 
         _configOverrides = new Dictionary<string, string?>
         {
@@ -129,7 +128,11 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             ["RateLimiting:VisitSummaryShare:PermitLimit"] = "1000000",
             ["RateLimiting:Mealie:PermitLimit"] = "1000000",
             ["RateLimiting:MealieImages:PermitLimit"] = "1000000",
-            ["RateLimiting:Mcp:PermitLimit"] = "1000000"
+            ["RateLimiting:Mcp:PermitLimit"] = "1000000",
+
+            // The client cleanup is a daily job that deletes clients in the shared Keycloak: no test host runs
+            // it (the cleanup tests build McpClientCleaner themselves, and McpClientCleanupTests asserts this).
+            ["Mcp:ClientCleanup:Enabled"] = "false"
         };
 
         Host = await AlbaHost.For<global::Program>(x =>
@@ -433,6 +436,225 @@ public sealed class BuddyApiFixture : IAsyncLifetime
         return users.GetArrayLength() > 0;
     }
 
+    // The test Keycloak's base URL (no realm), for tests that talk to it directly.
+    public string KeycloakBaseUrl => $"http://{_keycloak.Hostname}:{_keycloak.GetMappedPublicPort(8080)}";
+
+    // Anonymous dynamic client registration (RFC 7591), exactly as an MCP client does it, with the
+    // body as given: returns the response so a test can look at a refusal's status and error.
+    public async Task<HttpResponseMessage> RegisterClientRawAsync(object body, string? realm = null, CancellationToken cancellationToken = default)
+    {
+        using var client = new HttpClient();
+        return await client.PostAsJsonAsync($"{KeycloakBaseUrl}/realms/{realm ?? RealmName}/clients-registrations/openid-connect", body, cancellationToken);
+    }
+
+    // A throwaway realm from a realm representation, for a test that needs settings the shared realm can't have
+    // (a small max-clients cap). Uses the master realm's admin account. The caller deletes it.
+    public async Task CreateRealmAsync(string realmJson, CancellationToken cancellationToken = default)
+    {
+        using var client = new HttpClient { BaseAddress = new Uri(KeycloakBaseUrl) };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAdminTokenAsync(cancellationToken));
+
+        using var response = await client.PostAsync("/admin/realms", new StringContent(realmJson, System.Text.Encoding.UTF8, "application/json"), cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"Keycloak refused to create the realm ({(int)response.StatusCode}); the master admin account must be able to create realms: {await response.Content.ReadAsStringAsync(cancellationToken)}");
+        }
+    }
+
+    public async Task DeleteRealmAsync(string realm, CancellationToken cancellationToken = default)
+    {
+        using var client = new HttpClient { BaseAddress = new Uri(KeycloakBaseUrl) };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAdminTokenAsync(cancellationToken));
+
+        using var response = await client.DeleteAsync($"/admin/realms/{realm}", cancellationToken);
+        response.EnsureSuccessStatusCode();
+    }
+
+    // Registers a public PKCE client like Claude Code or VS Code do (loopback redirect, buddy-mcp:read)
+    // and returns the client_id Keycloak assigned (a UUID).
+    public async Task<string> RegisterClientAsync(string redirectUri = "http://127.0.0.1:33333/callback", CancellationToken cancellationToken = default)
+    {
+        using var response = await RegisterClientRawAsync(new
+        {
+            client_name = $"Test client {Guid.NewGuid():N}"[..24],
+            redirect_uris = new[] { redirectUri },
+            token_endpoint_auth_method = "none",
+            grant_types = new[] { "authorization_code", "refresh_token" },
+            response_types = new[] { "code" },
+            scope = "buddy-mcp:read"
+        }, cancellationToken: cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"Keycloak refused the client registration: {response.StatusCode} {await response.Content.ReadAsStringAsync(cancellationToken)}");
+        }
+
+        var payload = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
+        return payload.GetProperty("client_id").GetString()
+            ?? throw new InvalidOperationException("Keycloak's registration response had no client_id.");
+    }
+
+    // The client's representation from the Admin API, or null when no such client exists.
+    public async Task<JsonElement?> GetKeycloakClientAsync(string clientId, CancellationToken cancellationToken = default)
+    {
+        var adminToken = await GetAdminTokenAsync(cancellationToken);
+
+        using var client = new HttpClient { BaseAddress = new Uri(KeycloakBaseUrl) };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        var clients = await client.GetFromJsonAsync<JsonElement>($"/admin/realms/{RealmName}/clients?clientId={Uri.EscapeDataString(clientId)}", cancellationToken);
+        return clients.GetArrayLength() == 0 ? null : clients[0].Clone();
+    }
+
+    public async Task<bool> KeycloakClientExistsAsync(string clientId, CancellationToken cancellationToken = default) =>
+        await GetKeycloakClientAsync(clientId, cancellationToken) is not null;
+
+    // Deletes the Keycloak account behind a test user; its consents go with it.
+    public async Task DeleteKeycloakUserAsync(string username, CancellationToken cancellationToken = default)
+    {
+        var adminToken = await GetAdminTokenAsync(cancellationToken);
+
+        using var client = new HttpClient { BaseAddress = new Uri(KeycloakBaseUrl) };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        var users = await client.GetFromJsonAsync<JsonElement>($"/admin/realms/{RealmName}/users?username={Uri.EscapeDataString(username)}&exact=true", cancellationToken);
+        var id = users[0].GetProperty("id").GetString();
+
+        using var response = await client.DeleteAsync($"/admin/realms/{RealmName}/users/{id}", cancellationToken);
+        response.EnsureSuccessStatusCode();
+    }
+
+    // Walks Keycloak's authorization-code flow as the guardian's browser would: the login form, then the
+    // consent screen, and accepts it. Keycloak stores the consent when the screen is accepted. The redirect
+    // back to the client is not followed; its code is returned. Keycloak has no Admin API call that
+    // creates a consent, so this is the only way a test gets one.
+    // Cookies are kept by hand: Keycloak marks its login cookies Secure, and a CookieContainer won't send
+    // those over the plain HTTP of the test container.
+    public async Task<string> GrantConsentAsync(TestUser user, string clientId, string redirectUri, CancellationToken cancellationToken = default)
+    {
+        using var handler = new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false };
+        using var http = new HttpClient(handler);
+        var cookies = new Dictionary<string, string>();
+
+        async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request)
+        {
+            if (cookies.Count > 0)
+            {
+                request.Headers.Add("Cookie", string.Join("; ", cookies.Select(cookie => $"{cookie.Key}={cookie.Value}")));
+            }
+
+            var response = await http.SendAsync(request, cancellationToken);
+            if (response.Headers.TryGetValues("Set-Cookie", out var setCookies))
+            {
+                foreach (var setCookie in setCookies)
+                {
+                    var pair = setCookie.Split(';')[0];
+                    var separator = pair.IndexOf('=', StringComparison.Ordinal);
+                    var (name, value) = (pair[..separator], pair[(separator + 1)..]);
+                    if (value.Length == 0)
+                    {
+                        cookies.Remove(name);
+                    }
+                    else
+                    {
+                        cookies[name] = value;
+                    }
+                }
+            }
+
+            return response;
+        }
+
+        var authUrl = $"{KeycloakBaseUrl}/realms/{RealmName}/protocol/openid-connect/auth" +
+            $"?client_id={Uri.EscapeDataString(clientId)}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type=code" +
+            "&scope=openid%20buddy-mcp%3Aread&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256";
+
+        var response = await SendAsync(new HttpRequestMessage(HttpMethod.Get, authUrl));
+        for (var step = 0; step < 10; step++)
+        {
+            if ((int)response.StatusCode is >= 300 and < 400)
+            {
+                var location = new Uri(response.RequestMessage!.RequestUri!, response.Headers.Location!);
+                if (location.ToString().StartsWith(redirectUri, StringComparison.Ordinal))
+                {
+                    return System.Web.HttpUtility.ParseQueryString(location.Query)["code"]
+                        ?? throw new InvalidOperationException($"The redirect back to '{clientId}' carried no code: {location}");
+                }
+
+                response = await SendAsync(new HttpRequestMessage(HttpMethod.Get, location));
+                continue;
+            }
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+            var fields = html.Contains("name=\"username\"", StringComparison.Ordinal)
+                ? new Dictionary<string, string> { ["username"] = user.Username, ["password"] = user.Password }
+                : html.Contains("name=\"accept\"", StringComparison.Ordinal)
+                    ? new Dictionary<string, string> { ["accept"] = "Yes" }
+                    : throw new InvalidOperationException($"Neither a login nor a consent form in Keycloak's page ({(int)response.StatusCode}): {html}");
+
+            response = await SendAsync(FirstFormRequest(response.RequestMessage!.RequestUri!, html, fields));
+        }
+
+        throw new InvalidOperationException($"The authorization flow for '{clientId}' did not reach the redirect URI in 10 steps.");
+    }
+
+    // The RFC 7636 appendix B verifier whose S256 challenge GrantConsentAsync sends.
+    public const string CodeVerifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+
+    // Redeems the code from GrantConsentAsync as a public PKCE client does and returns the access token.
+    public async Task<string> ExchangeCodeAsync(string clientId, string redirectUri, string code, CancellationToken cancellationToken = default)
+    {
+        using var http = new HttpClient();
+        using var response = await http.PostAsync($"{KeycloakBaseUrl}/realms/{RealmName}/protocol/openid-connect/token", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["grant_type"] = "authorization_code",
+            ["client_id"] = clientId,
+            ["redirect_uri"] = redirectUri,
+            ["code"] = code,
+            ["code_verifier"] = CodeVerifier
+        }), cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"Keycloak refused the code exchange for '{clientId}': {await response.Content.ReadAsStringAsync(cancellationToken)}");
+        }
+
+        var payload = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
+        return payload.GetProperty("access_token").GetString()
+            ?? throw new InvalidOperationException("Keycloak's token response had no access_token.");
+    }
+
+    // The POST for the page's first <form>: its action, its hidden inputs and the given fields.
+    private static HttpRequestMessage FirstFormRequest(Uri pageUri, string html, Dictionary<string, string> fields)
+    {
+        var form = System.Text.RegularExpressions.Regex.Match(html, "<form[^>]*action=\"(?<action>[^\"]+)\"[^>]*>(?<body>.*?)</form>", System.Text.RegularExpressions.RegexOptions.Singleline);
+        if (!form.Success)
+        {
+            throw new InvalidOperationException($"No <form> in Keycloak's page: {html}");
+        }
+
+        var values = new Dictionary<string, string>();
+        foreach (System.Text.RegularExpressions.Match input in System.Text.RegularExpressions.Regex.Matches(form.Groups["body"].Value, "<input[^>]*type=\"hidden\"[^>]*>"))
+        {
+            var name = System.Text.RegularExpressions.Regex.Match(input.Value, "name=\"([^\"]+)\"");
+            var value = System.Text.RegularExpressions.Regex.Match(input.Value, "value=\"([^\"]*)\"");
+            if (name.Success)
+            {
+                values[name.Groups[1].Value] = System.Net.WebUtility.HtmlDecode(value.Success ? value.Groups[1].Value : "");
+            }
+        }
+
+        foreach (var (key, value) in fields)
+        {
+            values[key] = value;
+        }
+
+        return new HttpRequestMessage(HttpMethod.Post, new Uri(pageUri, System.Net.WebUtility.HtmlDecode(form.Groups["action"].Value)))
+        {
+            Content = new FormUrlEncodedContent(values)
+        };
+    }
+
     // Whether Keycloak marks this account's email as verified (VerifyEmail syncs it).
     public async Task<bool> IsKeycloakEmailVerifiedAsync(string username, CancellationToken cancellationToken = default)
     {
@@ -504,11 +726,17 @@ public sealed class BuddyApiFixture : IAsyncLifetime
         var realmManagementClientDbId = realmManagementClients.EnumerateArray().First().GetProperty("id").GetString()
             ?? throw new InvalidOperationException($"Keycloak has no '{RealmName}-realm' client in the master realm.");
 
-        var manageUsersRole = await client.GetFromJsonAsync<JsonElement>($"/admin/realms/master/clients/{realmManagementClientDbId}/roles/manage-users");
+        // manage-users for the guardians' child accounts, manage-clients for the MCP client cleanup
+        // (McpClientCleanupService lists, stamps and deletes the dynamically registered clients).
+        var roles = new List<JsonElement>();
+        foreach (var roleName in new[] { "manage-users", "manage-clients" })
+        {
+            roles.Add(await client.GetFromJsonAsync<JsonElement>($"/admin/realms/master/clients/{realmManagementClientDbId}/roles/{roleName}"));
+        }
 
         var assignResponse = await client.PostAsJsonAsync(
             $"/admin/realms/master/users/{serviceAccountUserId}/role-mappings/clients/{realmManagementClientDbId}",
-            new[] { manageUsersRole });
+            roles);
         assignResponse.EnsureSuccessStatusCode();
 
         // Since 26.8.2 the Admin API only accepts tokens whose audience is the admin endpoint, which
@@ -526,104 +754,6 @@ public sealed class BuddyApiFixture : IAsyncLifetime
         scopeResponse.EnsureSuccessStatusCode();
 
         return AdminClientSecret;
-    }
-
-    // The buddy-mcp client scope and client, created through the Admin API rather than TestRealm.json: a
-    // realm import that lists clientScopes replaces Keycloak's defaults (profile, email, roles, ...),
-    // which every other client here relies on. The scope carries the audience, groups and profile
-    // mappers; the client is a public direct-grant client (test realm only, never the app realm) with
-    // its own audience mapper, so a token minted without the optional scope has the right audience but
-    // no buddy-mcp:read (the 403 case).
-    private async Task SetUpMcpClientAsync(string keycloakBaseUrl)
-    {
-        var adminToken = await GetAdminTokenAsync(CancellationToken.None);
-
-        using var client = new HttpClient { BaseAddress = new Uri($"{keycloakBaseUrl}/admin/realms/{RealmName}/") };
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
-
-        static object AudienceMapper() => new
-        {
-            name = "audience-buddy-mcp",
-            protocol = "openid-connect",
-            protocolMapper = "oidc-audience-mapper",
-            consentRequired = false,
-            config = new Dictionary<string, string>
-            {
-                ["included.client.audience"] = "buddy-mcp",
-                ["id.token.claim"] = "false",
-                ["access.token.claim"] = "true"
-            }
-        };
-
-        static object PropertyMapper(string claim, string attribute, string type = "String") => new
-        {
-            name = claim,
-            protocol = "openid-connect",
-            protocolMapper = "oidc-usermodel-property-mapper",
-            consentRequired = false,
-            config = new Dictionary<string, string>
-            {
-                ["user.attribute"] = attribute,
-                ["claim.name"] = claim,
-                ["jsonType.label"] = type,
-                ["id.token.claim"] = "false",
-                ["access.token.claim"] = "true",
-                ["userinfo.token.claim"] = "true"
-            }
-        };
-
-        var scopeResponse = await client.PostAsJsonAsync("client-scopes", new
-        {
-            name = "buddy-mcp:read",
-            description = "Read access to a guardian's Buddy data through the MCP server",
-            protocol = "openid-connect",
-            attributes = new Dictionary<string, string>
-            {
-                ["include.in.token.scope"] = "true",
-                ["display.on.consent.screen"] = "false"
-            },
-            protocolMappers = new object[]
-            {
-                AudienceMapper(),
-                new
-                {
-                    name = "groups",
-                    protocol = "openid-connect",
-                    protocolMapper = "oidc-group-membership-mapper",
-                    consentRequired = false,
-                    config = new Dictionary<string, string>
-                    {
-                        ["claim.name"] = "groups",
-                        ["full.path"] = "false",
-                        ["id.token.claim"] = "true",
-                        ["access.token.claim"] = "true",
-                        ["userinfo.token.claim"] = "true"
-                    }
-                },
-                PropertyMapper("email", "email"),
-                PropertyMapper("email_verified", "emailVerified", "boolean"),
-                PropertyMapper("preferred_username", "username"),
-                PropertyMapper("given_name", "firstName"),
-                PropertyMapper("family_name", "lastName")
-            }
-        });
-        scopeResponse.EnsureSuccessStatusCode();
-
-        var clientResponse = await client.PostAsJsonAsync("clients", new
-        {
-            clientId = "buddy-mcp",
-            enabled = true,
-            publicClient = true,
-            standardFlowEnabled = false,
-            implicitFlowEnabled = false,
-            directAccessGrantsEnabled = true,
-            serviceAccountsEnabled = false,
-            protocol = "openid-connect",
-            defaultClientScopes = new[] { "basic", "profile", "email", "roles" },
-            optionalClientScopes = new[] { "buddy-mcp:read" },
-            protocolMappers = new[] { AudienceMapper() }
-        });
-        clientResponse.EnsureSuccessStatusCode();
     }
 
     public async Task<JsonElement[]> GetMailpitMessagesToAsync(string emailAddress, CancellationToken cancellationToken = default)

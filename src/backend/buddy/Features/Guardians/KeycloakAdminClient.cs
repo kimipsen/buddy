@@ -192,27 +192,8 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
         EnsureSuccess(assignResponse, "assign child role");
     }
 
-    // Client-credentials grant for this confidential client's own service account -- the
-    // production equivalent of BuddyApiFixture's test-only admin-cli password grant. No token
-    // caching in v1: acceptable at this call volume (one call per child provisioned), noted as a
-    // follow-up rather than a correctness gap.
-    private async Task<string> GetServiceAccountTokenAsync(KeycloakAdminOptions admin, CancellationToken cancellationToken)
-    {
-        using var form = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["grant_type"] = "client_credentials",
-            ["client_id"] = admin.ClientId,
-            ["client_secret"] = admin.ClientSecret
-        });
-        using var response = await httpClient.PostAsync(admin.TokenEndpoint, form, cancellationToken);
-
-        EnsureSuccess(response, "service account token");
-
-        var payload = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
-
-        return payload.GetProperty("access_token").GetString()
-            ?? throw new InvalidOperationException("Keycloak admin token response had no access_token.");
-    }
+    private Task<string> GetServiceAccountTokenAsync(KeycloakAdminOptions admin, CancellationToken cancellationToken) =>
+        KeycloakAdminToken.GetServiceAccountTokenAsync(httpClient, admin, logger, cancellationToken);
 
     // Throws like EnsureSuccessStatusCode, after logging which call failed: the exception alone
     // only carries the status code, not whether it was the token, the user or the role mapping.

@@ -176,9 +176,13 @@ public sealed class McpRateLimitTests(BuddyApiFixture fixture) : IAsyncLifetime
         // Microsoft.AspNetCore category, which appsettings.json filters to Warning, and the code has
         // no application-level 401 log. The 429 line (event 8005, category RateLimitingFeature) is the
         // one rollout signal on /mcp.
+        // Startup lines (the cleanup-is-off notice, event 15007) predate the request; only what the 401 logs counts.
+        var before = Logs.Entries.Length;
+
         await PostMcpAsync("garbage");
 
-        Assert.DoesNotContain(Logs.Entries, e => e.Level >= LogLevel.Information && e.Category.Contains("JwtBearer"));
-        Assert.DoesNotContain(Logs.Entries, e => e.EventId is 8005 or >= 15000 and < 15100);
+        var logged = Logs.Entries.Skip(before).ToArray();
+        Assert.DoesNotContain(logged, e => e.Level >= LogLevel.Information && e.Category.Contains("JwtBearer"));
+        Assert.DoesNotContain(logged, e => e.EventId is 8005 or >= 15000 and < 15100);
     }
 }

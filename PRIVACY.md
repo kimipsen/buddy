@@ -99,6 +99,10 @@ backup rotation script and templates for the record of processing, the DPIA and 
 - **No access log screen in the app.** Buddy is meant to be run by each family, and that family
   has someone technical who can read the audit logs. Who has read a child's medicines, sleep
   diary or feelings check-ins is in the logs (see "Decide where the logs go" above).
+- **AI apps over MCP.** If your Buddy has the MCP server on, a guardian can connect an AI app
+  (Claude, VS Code, ChatGPT) with their own sign-in. That app then reads what the guardian can
+  see, and the app's provider handles it under its own terms. Calls are logged without what was
+  asked. Revoke a grant in the Keycloak account console. See [Connecting an AI app](docs/mcp-setup.md).
 
 ## Still open
 
