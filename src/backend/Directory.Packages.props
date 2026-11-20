@@ -13,7 +13,7 @@
     <PackageVersion Include="MailKit" Version="5.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0" />
     <PackageVersion Include="MinVer" Version="8.0.0" />
-    <PackageVersion Include="Marten" Version="9.60.0" />
+    <PackageVersion Include="Marten" Version="9.62.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="11.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0" />
     <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.4.0" />
@@ -22,8 +22,8 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.21.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.21.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.21.0" />
-    <PackageVersion Include="WolverineFx" Version="6.64.1" />
-    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.64.1" />
+    <PackageVersion Include="WolverineFx" Version="6.64.2" />
+    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.64.2" />
   </ItemGroup>
   <ItemGroup Label="Transitive security pins">
     <!-- MailKit -> MimeKit pulls in 10.0.0: CVE-2026-84008 and CVE-2026-70162 (GHSA-846f-f764-76mx,
@@ -37,7 +37,7 @@
     <PackageVersion Include="coverlet.collector" Version="10.1.1" />
     <PackageVersion Include="Alba" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="11.0.0" />
-    <PackageVersion Include="Testcontainers" Version="4.16.0" />
-    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
+    <PackageVersion Include="Testcontainers" Version="4.17.0" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.17.0" />
   </ItemGroup>
 </Project>
