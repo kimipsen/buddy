@@ -68,7 +68,7 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             // WithResourceMapping treats the target as a directory and keeps the source file's own
             // name (TestRealm.json) -- it does not rename to a target basename. Point it at the
             // import directory itself; Keycloak's dir importer picks up any *.json file inside.
-            .WithResourceMapping(realmImportPath, "/opt/keycloak/data/import")
+            .WithResourceMapping(FilePath.Of(realmImportPath), DirectoryPath.Of("/opt/keycloak/data/import"))
             .WithPortBinding(8080, true)
             .WithWaitStrategy(Wait.ForUnixContainer()
                 .UntilHttpRequestIsSucceeded(r => r
