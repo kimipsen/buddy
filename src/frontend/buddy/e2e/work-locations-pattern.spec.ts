@@ -10,6 +10,8 @@ import { expect, test } from './support/auth-fixture';
 
 // The overrides grid labels each day's picker "Location on <weekday, month day>" using the app
 // language (English for a fresh account), formatted the same way WorkDayOverrides.dayLabel does.
+// Look these up with { exact: true }: getByLabel matches substrings by default, so
+// "Location on Tue, Dec 1" would also match "Location on Tue, Dec 15" further down the grid.
 function dayPickerLabel(date: Date): string {
   const formatted = date.toLocaleDateString('en', {
     weekday: 'short',
@@ -57,9 +59,11 @@ test('guardian sets an alternating work pattern and marks a day off, and it pers
   const nextTuesday = new Date(tuesday.getFullYear(), tuesday.getMonth(), tuesday.getDate() + 7);
 
   const overrides = page.locator('app-work-day-overrides');
-  const tuesdayCell = overrides.locator('li', { has: page.getByLabel(dayPickerLabel(tuesday)) });
+  const tuesdayCell = overrides.locator('li', {
+    has: page.getByLabel(dayPickerLabel(tuesday), { exact: true }),
+  });
   const nextTuesdayCell = overrides.locator('li', {
-    has: page.getByLabel(dayPickerLabel(nextTuesday)),
+    has: page.getByLabel(dayPickerLabel(nextTuesday), { exact: true }),
   });
 
   // Assert on the cell's <p> lines, not the whole <li>: the <li> text also includes the picker's
@@ -85,7 +89,7 @@ test('guardian sets an alternating work pattern and marks a day off, and it pers
 
   const tuesdayAfterReload = page
     .locator('app-work-day-overrides')
-    .locator('li', { has: page.getByLabel(dayPickerLabel(tuesday)) });
+    .locator('li', { has: page.getByLabel(dayPickerLabel(tuesday), { exact: true }) });
   await expect(tuesdayAfterReload).toContainText('Exception');
   await expect(tuesdayAfterReload.getByRole('combobox')).toHaveValue('off');
 });
