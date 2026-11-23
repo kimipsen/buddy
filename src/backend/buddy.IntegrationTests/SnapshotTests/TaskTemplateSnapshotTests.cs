@@ -120,4 +120,67 @@ public sealed class TaskTemplateSnapshotTests(BuddyApiFixture fixture)
         Assert.Equal(Weekdays.None, Assert.Single(template.Subtasks).Weekdays);
         Assert.True(template.Subtasks[0].AppliesOn(new DateOnly(2026, 6, 2)));
     }
+
+    // ArchivedAt is the TaskTemplateArchived event's OccurredAt, and the live snapshot agrees with
+    // a full replay.
+    [Fact]
+    public async Task The_snapshot_of_an_archived_template_carries_the_archive_instant()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var template = await TaskLibraryTestHelpers.CreateTaskTemplateAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(template);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Delete.Url($"/task-templates/{template.Id}");
+            _.StatusCodeShouldBe(204);
+        });
+
+        var templates = fixture.Host.Services.GetRequiredService<ITaskTemplateEventStore>();
+        var id = new TaskTemplateId(template.Id);
+
+        var events = await templates.ReadAsync(id, CancellationToken.None);
+        var archivedEvent = Assert.Single(events, e => e.EventType == nameof(TaskTemplateArchived));
+        var replayed = TaskTemplate.Rehydrate(events);
+        var snapshot = await templates.FindSnapshotAsync(id, CancellationToken.None);
+
+        Assert.NotNull(replayed);
+        Assert.NotNull(snapshot);
+        Assert.True(snapshot.IsArchived);
+        Assert.Equal(((TaskTemplateArchived)archivedEvent.Value!).OccurredAt, snapshot.ArchivedAt);
+        Assert.Equivalent(replayed, snapshot, strict: true);
+    }
+
+    // Snapshots written before ArchivedAt existed, archived or not, must still load, with null.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void A_snapshot_from_before_ArchivedAt_still_loads_with_a_null_ArchivedAt(bool isArchived)
+    {
+        var before = $$"""
+            {
+              "Id": "00000000-0000-0000-0000-000000000080",
+              "TaskTemplate": {
+                "Id": "00000000-0000-0000-0000-000000000080",
+                "CreatedBy": "00000000-0000-0000-0000-000000000001",
+                "Name": "Morning routine",
+                "Icon": "sunrise",
+                "Color": "#ffaa00",
+                "Subtasks": [],
+                "IsArchived": {{(isArchived ? "true" : "false")}},
+                "LastModifiedBy": "00000000-0000-0000-0000-000000000001",
+                "Kind": "Routine"
+              }
+            }
+            """;
+
+        var serializer = fixture.Host.Services.GetRequiredService<ITaskLibraryStore>().Options.Serializer();
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(before));
+        var template = serializer.FromJson<TaskTemplateSnapshot>(stream).TaskTemplate;
+
+        Assert.Equal(isArchived, template.IsArchived);
+        Assert.Null(template.ArchivedAt);
+    }
 }

@@ -25,6 +25,22 @@ import { SuggestionPanel } from './suggestion-panel/suggestion-panel';
 import { Icon } from '../../../../shared/icon/icon';
 import { IconPicker } from '../../../../shared/icon-picker/icon-picker';
 
+// Archived templates stay listed for this long, then are hidden unless "Show archived" is on.
+export const ARCHIVED_RETENTION_DAYS = 30;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// True once a template has been archived for ARCHIVED_RETENTION_DAYS or more (inclusive). A
+// template that isn't archived, or whose archivedAt is missing, in the future or unparsable, is
+// never expired, so it stays visible.
+export function isArchivedExpired(template: TaskTemplate, now: Date): boolean {
+  if (!template.isArchived || template.archivedAt === null) {
+    return false;
+  }
+
+  const archivedAt = Date.parse(template.archivedAt);
+  return now.getTime() - archivedAt >= ARCHIVED_RETENTION_DAYS * DAY_MS;
+}
+
 const DEFAULT_COLOR = '#6366f1';
 const DEFAULT_ICON = '📋';
 const DEFAULT_SUBTASK_DURATION_MINUTES = 5;
@@ -117,12 +133,21 @@ export class ManageTasks {
   );
 
   // Reads straight from the shared service state, so a create/archive/subtask-edit from anywhere
-  // else on the page (there's nowhere else yet, but mirrors ManageMeals's contract) shows up here
-  // without a manual refetch. Archived templates stay in the list (visually distinguished) rather
-  // than being filtered out, unlike ManageMeals -- a template can't be un-archived once fetched,
-  // so keeping it visible with a badge lets a guardian see what happened rather than having it
-  // silently vanish.
+  // else on the page shows up here without a manual refetch. Archived templates stay listed
+  // (faded, with a badge) for ARCHIVED_RETENTION_DAYS, then hide behind "Show archived".
   protected readonly templates = this.taskLibrary.templates;
+  protected readonly showArchived = signal(false);
+
+  private readonly unexpiredTemplates = computed(() => {
+    const now = new Date();
+    return this.templates().filter((template) => !isArchivedExpired(template, now));
+  });
+  protected readonly visibleTemplates = computed(() =>
+    this.showArchived() ? this.templates() : this.unexpiredTemplates(),
+  );
+  protected readonly hiddenArchivedCount = computed(
+    () => this.templates().length - this.unexpiredTemplates().length,
+  );
 
   protected readonly expandedTemplateId = signal<string | null>(null);
   // Arriving from the dashboard's "Packing suggestions" pill (?child=) opens the first list with a

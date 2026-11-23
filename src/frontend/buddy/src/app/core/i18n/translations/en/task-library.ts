@@ -9,6 +9,10 @@ export const taskLibrary = {
     loadError: 'Unable to load children.',
     empty: 'No task templates yet. Add one below.',
     archivedBadge: 'Archived',
+    showArchived: 'Show archived',
+    archivedHiddenHint: '{count} archived hidden',
+    allArchivedHidden:
+      'All task templates are archived and hidden. Turn on Show archived to see them.',
     archive: 'Archive',
     archiveError: 'Unable to archive this task template.',
     totalDuration: '{duration} total',

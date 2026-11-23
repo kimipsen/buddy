@@ -87,6 +87,7 @@ function template(id: string, isArchived = false): TaskTemplate {
     subtasks: [],
     totalDurationMinutes: 0,
     isArchived,
+    archivedAt: null,
     createdBy: 'me',
     lastModifiedBy: 'me',
     kind: 'Routine',

@@ -21,7 +21,10 @@ public sealed record TaskTemplate(
     TaskTemplateKind Kind,
     ChecklistOptions Checklist,
     // Child suggestions for a checklist, oldest first; always empty for a routine.
-    ImmutableList<ChecklistSuggestion> Suggestions)
+    ImmutableList<ChecklistSuggestion> Suggestions,
+    // When the template was archived (the TaskTemplateArchived event's OccurredAt); null while active.
+    // Snapshots written before this field existed deserialize it as null until they are rebuilt.
+    DateTimeOffset? ArchivedAt = null)
 {
     // Snapshots written before packing checklists have no Checklist/Suggestions; System.Text.Json
     // then passes null. Read those as "no options" and "no suggestions" (a missing Kind is already
@@ -56,7 +59,8 @@ public sealed record TaskTemplate(
             created.CreatedBy,
             created.Kind,
             ChecklistOptions.None,
-            ImmutableList<ChecklistSuggestion>.Empty),
+            ImmutableList<ChecklistSuggestion>.Empty,
+            ArchivedAt: null),
         _ => throw EventReplay.NotAStartEvent(nameof(TaskTemplate), @event.EventType)
     };
 
@@ -91,7 +95,12 @@ public sealed record TaskTemplate(
             Subtasks = Reorder(template.Subtasks, reordered.After),
             LastModifiedBy = reordered.ModifiedBy
         },
-        TaskTemplateArchived archived => template with { IsArchived = true, LastModifiedBy = archived.ModifiedBy },
+        TaskTemplateArchived archived => template with
+        {
+            IsArchived = true,
+            ArchivedAt = archived.OccurredAt,
+            LastModifiedBy = archived.ModifiedBy
+        },
         ChecklistOptionsChanged changed => template with { Checklist = changed.After, LastModifiedBy = changed.ModifiedBy },
         ChecklistItemSuggested suggested => template with
         {

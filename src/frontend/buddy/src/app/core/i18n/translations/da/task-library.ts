@@ -9,6 +9,10 @@ export const taskLibrary = {
     loadError: 'Kunne ikke indlæse børn.',
     empty: 'Ingen opgaveskabeloner endnu. Tilføj en nedenfor.',
     archivedBadge: 'Arkiveret',
+    showArchived: 'Vis arkiverede',
+    archivedHiddenHint: '{count} arkiverede skjult',
+    allArchivedHidden:
+      'Alle opgaveskabeloner er arkiveret og skjult. Slå Vis arkiverede til for at se dem.',
     archive: 'Arkiver',
     archiveError: 'Kunne ikke arkivere denne opgaveskabelon.',
     totalDuration: '{duration} i alt',

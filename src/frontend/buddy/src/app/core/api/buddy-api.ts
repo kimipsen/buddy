@@ -5397,6 +5397,8 @@ export interface components {
       kind: components['schemas']['TaskTemplateKind'];
       checklist: null | components['schemas']['ChecklistOptionsResponse'];
       suggestions: components['schemas']['ChecklistSuggestionResponse'][];
+      /** Format: date-time */
+      archivedAt: null | string;
     };
     TaskTimingRequest: {
       dueDate: components['schemas']['DueDateRequest'];

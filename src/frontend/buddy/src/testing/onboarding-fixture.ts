@@ -76,6 +76,7 @@ export function taskTemplate(overrides: Partial<TaskTemplate> = {}): TaskTemplat
     subtasks: [],
     totalDurationMinutes: 0,
     isArchived: false,
+    archivedAt: null,
     createdBy: 'me',
     lastModifiedBy: 'me',
     kind: 'Routine',

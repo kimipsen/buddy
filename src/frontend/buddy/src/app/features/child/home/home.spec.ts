@@ -2121,6 +2121,7 @@ describe('ChildHome', () => {
         ],
         totalDurationMinutes: 0,
         isArchived: false,
+        archivedAt: null,
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
         kind: 'Checklist',

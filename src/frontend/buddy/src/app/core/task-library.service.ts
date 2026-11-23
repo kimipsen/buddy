@@ -55,6 +55,8 @@ export interface TaskTemplate {
   subtasks: Subtask[];
   totalDurationMinutes: number;
   isArchived: boolean;
+  // When the template was archived (ISO date-time), or null while it isn't.
+  archivedAt: string | null;
   createdBy: string;
   lastModifiedBy: string;
   kind: TaskTemplateKind;
@@ -107,6 +109,7 @@ function fromResponse(response: TaskTemplateResponse): TaskTemplate {
     })),
     totalDurationMinutes: parseDurationMinutes(response.totalDuration),
     isArchived: response.isArchived,
+    archivedAt: response.archivedAt,
     createdBy: response.createdBy,
     lastModifiedBy: response.lastModifiedBy,
     kind: response.kind,
@@ -196,7 +199,9 @@ export class TaskLibraryService {
     await firstValueFrom(this.http.delete<void>(`${this.base()}/${templateId}`));
     this.templatesState.update((current) =>
       current.map((template) =>
-        template.id === templateId ? { ...template, isArchived: true } : template,
+        template.id === templateId
+          ? { ...template, isArchived: true, archivedAt: new Date().toISOString() }
+          : template,
       ),
     );
   }

@@ -10,7 +10,7 @@ import {
   TaskTemplate,
   TaskTemplateDetails,
 } from '../../../../core/task-library.service';
-import { ManageTasks } from './manage-tasks';
+import { ManageTasks, isArchivedExpired } from './manage-tasks';
 
 describe('ManageTasks', () => {
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
@@ -57,6 +57,7 @@ describe('ManageTasks', () => {
       subtasks: [],
       totalDurationMinutes: 0,
       isArchived: false,
+      archivedAt: null,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       kind: 'Routine',
@@ -64,6 +65,14 @@ describe('ManageTasks', () => {
       suggestions: [],
       ...overrides,
     };
+  }
+
+  function daysAgo(days: number): string {
+    return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  }
+
+  function archivedToggle(compiled: HTMLElement): HTMLButtonElement | null {
+    return compiled.querySelector('button[role="switch"][aria-label="Show archived"]');
   }
 
   interface SetupOptions {
@@ -104,7 +113,11 @@ describe('ManageTasks', () => {
       }),
       archiveTaskTemplate: vi.fn(async (templateId: string) => {
         templatesState.update((current) =>
-          current.map((t) => (t.id === templateId ? { ...t, isArchived: true } : t)),
+          current.map((t) =>
+            t.id === templateId
+              ? { ...t, isArchived: true, archivedAt: new Date().toISOString() }
+              : t,
+          ),
         );
       }),
       addSubtask: vi.fn(
@@ -438,10 +451,15 @@ describe('ManageTasks', () => {
       expect(compiled.textContent).toContain('1h 30m total');
     });
 
-    it('shows an archived badge for archived templates but keeps them visible rather than filtering them out', async () => {
+    it('shows an archived badge for recently archived templates but keeps them visible', async () => {
       const templates = [
         template({ id: 'template-1', name: 'Active Template', isArchived: false }),
-        template({ id: 'template-2', name: 'Old Template', isArchived: true }),
+        template({
+          id: 'template-2',
+          name: 'Old Template',
+          isArchived: true,
+          archivedAt: daysAgo(5),
+        }),
       ];
       const { fixture } = await setup({ initialTemplates: templates });
       await settle(fixture);
@@ -457,6 +475,98 @@ describe('ManageTasks', () => {
       await settle(fixture);
 
       expect(findButtonByText(fixture.nativeElement as HTMLElement, 'Archive')).toBeUndefined();
+    });
+  });
+
+  describe('hiding long-archived templates', () => {
+    it('hides templates archived 30 days or more, and shows 29-day-old ones', async () => {
+      const { fixture } = await setup({
+        initialTemplates: [
+          template({ id: 't1', name: 'Fresh', isArchived: true, archivedAt: daysAgo(29) }),
+          template({ id: 't2', name: 'Stale', isArchived: true, archivedAt: daysAgo(31) }),
+        ],
+      });
+      await settle(fixture);
+
+      const text = (fixture.nativeElement as HTMLElement).textContent;
+      expect(text).toContain('Fresh');
+      expect(text).not.toContain('Stale');
+      expect(text).toContain('1 archived hidden');
+    });
+
+    it('reveals hidden templates when Show archived is switched on', async () => {
+      const { fixture } = await setup({
+        initialTemplates: [
+          template({ id: 't1', name: 'Active' }),
+          template({ id: 't2', name: 'Stale', isArchived: true, archivedAt: daysAgo(40) }),
+        ],
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      const toggle = archivedToggle(compiled)!;
+      expect(toggle.getAttribute('aria-checked')).toBe('false');
+      toggle.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain('Stale');
+      expect(archivedToggle(compiled)!.getAttribute('aria-checked')).toBe('true');
+      expect(compiled.textContent).not.toContain('archived hidden');
+    });
+
+    it('has no toggle when nothing is hidden', async () => {
+      const { fixture } = await setup({
+        initialTemplates: [
+          template({ id: 't1', isArchived: true, archivedAt: daysAgo(2) }),
+          template({ id: 't2', name: 'Other' }),
+        ],
+      });
+      await settle(fixture);
+
+      expect(archivedToggle(fixture.nativeElement as HTMLElement)).toBeNull();
+    });
+
+    it('shows the all-hidden state when every template is long archived', async () => {
+      const { fixture } = await setup({
+        initialTemplates: [template({ isArchived: true, archivedAt: daysAgo(60) })],
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(compiled.textContent).toContain('All task templates are archived and hidden');
+      expect(compiled.textContent).not.toContain('No task templates yet');
+      expect(archivedToggle(compiled)).not.toBeNull();
+    });
+
+    it('keeps a just-archived template listed', async () => {
+      const { fixture } = await setup({ initialTemplates: [template({ name: 'Just now' })] });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, 'Archive')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain('Just now');
+      expect(compiled.textContent).toContain('Archived');
+      expect(archivedToggle(compiled)).toBeNull();
+    });
+  });
+
+  describe('isArchivedExpired', () => {
+    const now = new Date('2026-11-23T12:00:00Z');
+    const at = (iso: string | null, isArchived = true) =>
+      isArchivedExpired(template({ isArchived, archivedAt: iso }), now);
+
+    it('is inclusive at exactly 30 days', () => {
+      expect(at('2026-10-24T12:00:00Z')).toBe(true);
+      expect(at('2026-10-24T12:00:01Z')).toBe(false);
+    });
+
+    it('never expires null, future, unparsable or non-archived values', () => {
+      expect(at(null)).toBe(false);
+      expect(at('2027-01-01T00:00:00Z')).toBe(false);
+      expect(at('not a date')).toBe(false);
+      expect(at('2020-01-01T00:00:00Z', false)).toBe(false);
     });
   });
 
