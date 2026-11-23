@@ -108,7 +108,7 @@ services:
       - buddy_network
 
   db:
-    image: postgres:18
+    image: postgres:19
     restart: unless-stopped
     env_file:
       - .env
