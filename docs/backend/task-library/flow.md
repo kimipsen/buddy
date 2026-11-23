@@ -121,9 +121,10 @@ approval is an idempotent `200` that ignores the body, so a retry needn't resend
 
 `TaskTemplate` is event-sourced. Its stream begins with
 `TaskTemplateCreated`, then records detail updates, subtask additions, updates,
-removals and reordering. `TaskTemplateArchived` is a soft delete. Archived
-templates remain visible in library listings and cannot be edited or scheduled
-again.
+removals and reordering. `TaskTemplateArchived` is a soft delete that records
+`ArchivedAt`. Archived templates remain in the API's library listings and
+cannot be edited or scheduled again; the guardian's task library page hides
+templates archived for 30 days or more unless "Show archived" is switched on.
 
 A template is indexed under the child it was created for, and that ownership
 never changes. Listing and lookup both resolve directly against that index

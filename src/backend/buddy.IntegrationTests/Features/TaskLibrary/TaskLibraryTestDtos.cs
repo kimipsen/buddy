@@ -30,4 +30,5 @@ internal sealed record TaskTemplateDto(
     Guid LastModifiedBy,
     string Kind,
     ChecklistOptionsDto? Checklist,
-    IReadOnlyList<ChecklistSuggestionDto> Suggestions);
+    IReadOnlyList<ChecklistSuggestionDto> Suggestions,
+    DateTimeOffset? ArchivedAt = null);

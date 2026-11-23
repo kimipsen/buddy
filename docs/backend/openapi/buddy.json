@@ -33626,7 +33626,8 @@
           "lastModifiedBy",
           "kind",
           "checklist",
-          "suggestions"
+          "suggestions",
+          "archivedAt"
         ],
         "type": "object",
         "properties": {
@@ -33681,6 +33682,13 @@
             "items": {
               "$ref": "#/components/schemas/ChecklistSuggestionResponse"
             }
+          },
+          "archivedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },

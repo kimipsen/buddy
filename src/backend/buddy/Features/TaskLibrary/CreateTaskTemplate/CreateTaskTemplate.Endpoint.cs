@@ -103,7 +103,8 @@ public sealed record TaskTemplateResponse(
     Guid LastModifiedBy,
     TaskTemplateKind Kind,
     ChecklistOptionsResponse? Checklist,
-    IReadOnlyList<ChecklistSuggestionResponse> Suggestions)
+    IReadOnlyList<ChecklistSuggestionResponse> Suggestions,
+    DateTimeOffset? ArchivedAt)
 {
     public const int ResolvedSuggestionHistory = 10;
 
@@ -121,7 +122,8 @@ public sealed record TaskTemplateResponse(
         template.LastModifiedBy.Value,
         template.Kind,
         template.Kind == TaskTemplateKind.Checklist ? new ChecklistOptionsResponse(template.Checklist.EveningBeforeFrom) : null,
-        [.. SuggestionsToShow(template, allSuggestions).Select(ChecklistSuggestionResponse.From)]);
+        [.. SuggestionsToShow(template, allSuggestions).Select(ChecklistSuggestionResponse.From)],
+        template.ArchivedAt);
 
     private static IEnumerable<ChecklistSuggestion> SuggestionsToShow(TaskTemplate template, bool allSuggestions)
     {

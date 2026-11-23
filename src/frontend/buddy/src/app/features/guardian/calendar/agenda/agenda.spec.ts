@@ -78,6 +78,7 @@ describe('CalendarAgenda', () => {
       subtasks: [],
       totalDurationMinutes: 15,
       isArchived: false,
+      archivedAt: null,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       kind: 'Routine',

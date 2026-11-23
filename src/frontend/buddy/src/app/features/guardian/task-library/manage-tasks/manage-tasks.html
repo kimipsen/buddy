@@ -40,13 +40,36 @@
       }
     }
 
+    @if (hiddenArchivedCount() > 0 || showArchived()) {
+      <div
+        class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-300"
+      >
+        <app-toggle
+          [checked]="showArchived()"
+          [ariaLabel]="'taskLibrary.manageTasks.showArchived' | translate"
+          (checkedChange)="showArchived.set($event)"
+        />
+        <span>{{ 'taskLibrary.manageTasks.showArchived' | translate }}</span>
+        @if (!showArchived() && hiddenArchivedCount() > 0) {
+          <span class="text-slate-500 dark:text-slate-400">{{
+            'taskLibrary.manageTasks.archivedHiddenHint'
+              | translate: { count: hiddenArchivedCount() }
+          }}</span>
+        }
+      </div>
+    }
+
     @if (templates().length === 0) {
       <p class="text-sm text-slate-500 dark:text-slate-400">
         {{ 'taskLibrary.manageTasks.empty' | translate }}
       </p>
+    } @else if (visibleTemplates().length === 0) {
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'taskLibrary.manageTasks.allArchivedHidden' | translate }}
+      </p>
     } @else {
       <ul class="space-y-3">
-        @for (template of templates(); track template.id) {
+        @for (template of visibleTemplates(); track template.id) {
           <li
             class="rounded-lg border border-slate-200 dark:border-slate-800"
             [class.opacity-60]="template.isArchived"

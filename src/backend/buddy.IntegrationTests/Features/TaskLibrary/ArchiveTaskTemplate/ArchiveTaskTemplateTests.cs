@@ -19,6 +19,11 @@ public sealed class ArchiveTaskTemplateTests(BuddyApiFixture fixture)
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
         var template = await TaskLibraryTestHelpers.CreateTaskTemplateAsync(fixture, guardianToken, child.Id);
         Assert.NotNull(template);
+        Assert.Null(template.ArchivedAt);
+
+        // The test host and the database can disagree a little on the clock.
+        var skew = TimeSpan.FromSeconds(1);
+        var before = DateTimeOffset.UtcNow;
 
         await fixture.Host.Scenario(_ =>
         {
@@ -26,6 +31,8 @@ public sealed class ArchiveTaskTemplateTests(BuddyApiFixture fixture)
             _.Delete.Url($"/task-templates/{template.Id}");
             _.StatusCodeShouldBe(204);
         });
+
+        var after = DateTimeOffset.UtcNow;
 
         var listResponse = await fixture.Host.Scenario(_ =>
         {
@@ -36,6 +43,8 @@ public sealed class ArchiveTaskTemplateTests(BuddyApiFixture fixture)
 
         var listed = Assert.Single(listResponse.ReadAsJson<List<TaskTemplateDto>>(), t => t.Id == template.Id);
         Assert.True(listed.IsArchived);
+        Assert.NotNull(listed.ArchivedAt);
+        Assert.InRange(listed.ArchivedAt.Value, before - skew, after + skew);
 
         // Archived templates reject further subtask writes -- ResolveForManageAsync's
         // (template is null || template.IsArchived) check collapses this to NotFound, the same

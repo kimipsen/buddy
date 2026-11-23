@@ -28,6 +28,7 @@ describe('TaskLibraryService', () => {
       subtasks: [],
       totalDuration: '00:00:00',
       isArchived: false,
+      archivedAt: null,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       kind: 'Routine',
@@ -46,6 +47,7 @@ describe('TaskLibraryService', () => {
       subtasks: [],
       totalDurationMinutes: 0,
       isArchived: false,
+      archivedAt: null,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       kind: 'Routine',
@@ -311,10 +313,12 @@ describe('TaskLibraryService', () => {
       req.flush(null);
 
       await promise;
-      expect(service.templates()).toEqual([
-        template({ id: 'template-1', isArchived: true }),
-        template({ id: 'template-2' }),
-      ]);
+      const [archived, untouched] = service.templates();
+      expect(archived).toEqual(
+        template({ id: 'template-1', isArchived: true, archivedAt: archived.archivedAt }),
+      );
+      expect(Math.abs(Date.now() - Date.parse(archived.archivedAt!))).toBeLessThan(5000);
+      expect(untouched).toEqual(template({ id: 'template-2' }));
     });
   });
 

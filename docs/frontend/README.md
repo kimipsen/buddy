@@ -168,7 +168,8 @@ The guardian routes currently include:
   calendar, plus event/task creation; "Skip day" on a repeating item's occurrence skips just that
   day (it stays in the list, muted, with Restore) while every other screen stops showing it
 - `/guardian/task-library` — per-child task template and subtask management: routines and packing
-  lists (items with weekdays, the "show the evening before" switch), "Copy to…" a sibling, and the
+  lists (items with weekdays, the "show the evening before" switch), "Copy to…" a sibling, archived
+  templates (hidden after 30 days, revealed by "Show archived"), and the
   child's packing suggestions to approve or decline; `?child=<id>` preselects a child and opens
   the list with a waiting suggestion (the dashboard's "Packing suggestions: N" pill links here)
   ([design](../backend/analysis/packing-checklists.md))
