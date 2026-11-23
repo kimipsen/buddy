@@ -36,7 +36,7 @@ What's missing:
 
 - **The frontend's npm dependencies are in no SBOM at all.** The runtime stage of
   [`src/frontend/buddy/Dockerfile`](../../../src/frontend/buddy/Dockerfile) copies only
-  `dist/buddy/browser` into `caddy:2-alpine`. Angular, RxJS and the other 11 runtime dependencies
+  `dist/buddy/browser` into `caddy:2.11.9-alpine`. Angular, RxJS and the other 11 runtime dependencies
   in `package.json` are bundled into hashed `.js` files without a `package-lock.json`, so Syft has
   nothing to read. The API is fine: Syft reads `buddy.deps.json` and the DLLs in `/app`, so Marten,
   WolverineFx and the rest are listed with versions.

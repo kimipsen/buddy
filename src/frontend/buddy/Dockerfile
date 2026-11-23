@@ -14,7 +14,14 @@ COPY . .
 RUN npm run build -- --configuration production \
     && rm dist/buddy/browser/config/runtime-config.json
 
-FROM caddy:2-alpine AS runtime
+# The project owns this Caddy build: the upstream runtime image bundles golang.org/x/net 0.60.0
+# (CVE-2026-78661, fixed in 0.62.0), so the module is replaced at build time. Drop this stage and
+# the COPY below once an upstream runtime image bundles x/net >= 0.62.0. The builder and runtime
+# tags must move together.
+FROM caddy:2.11.9-builder-alpine AS caddy-build
+RUN xcaddy build v2.11.9 --replace golang.org/x/net=golang.org/x/net@v0.62.0 --output /usr/bin/caddy
+
+FROM caddy:2.11.9-alpine AS runtime
 
 # Alpine publishes package fixes (e.g. brotli-libs 1.2.1 for CVE-2026-111497) before the caddy
 # image is rebuilt, so the upgrade picks up what the Trivy gate reports as fixable.
@@ -39,5 +46,8 @@ ENV BUDDY_VERSION=$BUDDY_VERSION
 COPY --from=build /app/dist/buddy/browser /usr/share/caddy
 COPY Caddyfile /etc/caddy/Caddyfile
 
-# The caddy binary carries cap_net_bind_service in the base image, so :80 still binds.
+# COPY drops file capabilities, so the rebuilt binary gets cap_net_bind_service back to bind :80.
+COPY --from=caddy-build /usr/bin/caddy /usr/bin/caddy
+RUN setcap cap_net_bind_service=+ep /usr/bin/caddy
+
 USER caddy
