@@ -1,11 +1,24 @@
 #!/usr/bin/env node
 // Turns a Stryker mutation report (mutation-testing-report-schema JSON, e.g.
-// reports/stryker-incremental.json) into a Markdown issue body listing every
+// reports/stryker-incremental.json) into Markdown issue bodies listing every
 // surviving and uncovered mutant, grouped by file, as a checklist.
 //
 // Usage:
-//   node scripts/mutation-issue.mjs [report.json] [--out full.md] [--max-chars N]
-//                                   [--stale stale.txt]
+//   node scripts/mutation-issue.mjs [report.json] [--out full.md] [--out-dir dir]
+//                                   [--max-chars N] [--stale stale.txt]
+//
+// Stdout gets the full combined body (every file with findings), for local use.
+// --out writes the same full body to a file.
+//
+// --out-dir splits the findings over groups of at most 5 report files, one
+// rolling GitHub issue per group. It writes `manifest.json` and one
+// `<3-digit index>-<slug>.md` body per group that has findings. A group is
+// derived from the file path alone (feature folder, large folders split by a
+// path hash), never from the position in a sorted list, so fixing mutants
+// never moves a file to another issue. Each body starts with a hidden marker,
+// `<!-- mutation-group: KEY -->`, that maps the body to its issue. A body over
+// --max-chars (default 60000, GitHub caps at 65536) drops its trailing
+// findings of the largest file, with a note pointing at the full report.
 //
 // --stale takes a list of files (one per line, as `scripts/mutation-batch.sh
 // --stale` prints them) whose results are out of date: their source or specs
@@ -13,134 +26,113 @@
 // score and the checklist, since the line numbers no longer match the source
 // and the fix may already be in; they're only named, with their old count.
 //
-// Writes the (possibly truncated) body to stdout and, with --out, the full,
-// untruncated body to a file. Exits 0 either way; the body says when there's
-// nothing to fix. When GITHUB_REPOSITORY and GITHUB_SHA are set, locations
-// link to the file at that commit; REPORT_PATH_PREFIX (default
-// src/frontend/buddy/) maps report paths to repo paths.
-import { readFileSync, writeFileSync } from 'node:fs';
+// Exits 0 either way; the body says when there's nothing to fix. When
+// GITHUB_REPOSITORY and GITHUB_SHA are set, locations link to the file at that
+// commit; REPORT_PATH_PREFIX (default src/frontend/buddy/) maps report paths to
+// repo paths.
+import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const args = process.argv.slice(2);
-const flag = (name, fallback) => {
-  const i = args.indexOf(name);
-  if (i === -1) return fallback;
-  const [, value] = args.splice(i, 2);
-  return value;
-};
-const outFile = flag('--out');
-// GitHub rejects issue bodies over 65536 characters.
-const maxChars = Number(flag('--max-chars', '60000'));
-const staleFile = flag('--stale');
-const reportPath = args[0] ?? 'reports/stryker-incremental.json';
-const stale = new Set(
-  staleFile
-    ? readFileSync(staleFile, 'utf8')
-        .split('\n')
-        .map((line) => line.trim())
-        .filter(Boolean)
-    : [],
-);
-
-const report = JSON.parse(readFileSync(reportPath, 'utf8'));
-const {
-  GITHUB_REPOSITORY: repo,
-  GITHUB_SHA: sha,
-  GITHUB_SERVER_URL: server = 'https://github.com',
-} = process.env;
-const prefix = process.env.REPORT_PATH_PREFIX ?? 'src/frontend/buddy/';
+export const MAX_FILES_PER_GROUP = 5;
+export const DEFAULT_MAX_CHARS = 60000;
+export const LABEL = 'mutation-testing';
+export const TITLE_PREFIX = 'Frontend mutation testing findings';
 
 const FINDINGS = new Set(['Survived', 'NoCoverage']);
-const counts = {};
-const files = [];
-const outdated = [];
+const APP_PREFIX = 'src/app/';
 
-for (const [path, file] of Object.entries(report.files).sort(([a], [b]) => a.localeCompare(b))) {
-  if (stale.has(path)) {
-    const old = file.mutants.filter((m) => FINDINGS.has(m.status)).length;
-    if (old > 0) outdated.push({ path, old });
-    continue;
+const byPath = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+
+// 32-bit FNV-1a over the UTF-8 bytes: tiny, deterministic across Node versions.
+export function fnv1a32(text) {
+  let hash = 0x811c9dc5;
+  for (const byte of Buffer.from(text, 'utf8')) {
+    hash ^= byte;
+    hash = Math.imul(hash, 0x01000193) >>> 0;
   }
-  const lines = file.source.split('\n');
-  const findings = [];
-  for (const mutant of file.mutants) {
-    counts[mutant.status] = (counts[mutant.status] ?? 0) + 1;
-    if (FINDINGS.has(mutant.status))
-      findings.push({ ...mutant, original: snippet(lines, mutant.location) });
+  return hash >>> 0;
+}
+
+export function folderOf(path) {
+  const slash = path.lastIndexOf('/');
+  const dir = slash === -1 ? '' : path.slice(0, slash);
+  if (dir === 'src/app' || dir === '') return 'app';
+  return dir.startsWith(APP_PREFIX) ? dir.slice(APP_PREFIX.length) : dir;
+}
+
+// Number of slots for a folder with `count` report files: the smallest power of
+// two >= ceil(count / 4), so every slot holds about 4 files on average.
+export function slotCount(count) {
+  let slots = 1;
+  while (slots < Math.ceil(count / 4)) slots *= 2;
+  return slots;
+}
+
+// Bucket key of one file: the folder when it has at most 5 report files,
+// otherwise `<folder>.<slot>` with a 2-digit slot taken from the path hash.
+export function groupKey(path, folderCounts) {
+  const folder = folderOf(path);
+  const count = folderCounts.get(folder) ?? 1;
+  if (count <= MAX_FILES_PER_GROUP) return folder;
+  const slot = fnv1a32(path) % slotCount(count);
+  return `${folder}.${String(slot).padStart(2, '0')}`;
+}
+
+// Splits the (sorted) report files of one bucket in chunks of at most 5.
+export function chunkOverflow(bucketFiles) {
+  const sorted = [...bucketFiles].sort(byPath);
+  const chunks = [];
+  for (let i = 0; i < sorted.length; i += MAX_FILES_PER_GROUP)
+    chunks.push(sorted.slice(i, i + MAX_FILES_PER_GROUP));
+  return chunks;
+}
+
+// a, b, ... z, aa, ab, ...
+function chunkLetters(index) {
+  let s = '';
+  for (let i = index + 1; i > 0; i = Math.floor((i - 1) / 26))
+    s = String.fromCharCode(97 + ((i - 1) % 26)) + s;
+  return s;
+}
+
+// Assigns every report file (with or without findings, stale included) to a
+// group. Depends on the list of paths only, never on the surviving mutants.
+// Returns Map<key, sortedPaths>, ordered by key.
+export function assignGroups(allPaths) {
+  const paths = [...new Set(allPaths)].sort(byPath);
+  const folderCounts = new Map();
+  for (const path of paths) {
+    const folder = folderOf(path);
+    folderCounts.set(folder, (folderCounts.get(folder) ?? 0) + 1);
   }
-  if (findings.length === 0) continue;
-  findings.sort(
-    (a, b) =>
-      a.location.start.line - b.location.start.line ||
-      a.location.start.column - b.location.start.column,
-  );
-  files.push({ path, findings });
+  const buckets = new Map();
+  for (const path of paths) {
+    const key = groupKey(path, folderCounts);
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(path);
+  }
+  const groups = new Map();
+  for (const [bucketKey, files] of buckets) {
+    const chunks = chunkOverflow(files);
+    chunks.forEach((chunk, i) =>
+      groups.set(chunks.length > 1 ? `${bucketKey}.${chunkLetters(i)}` : bucketKey, chunk),
+    );
+  }
+  return new Map([...groups].sort(([a], [b]) => byPath(a, b)));
 }
 
-const n = (status) => counts[status] ?? 0;
-const detected = n('Killed') + n('Timeout');
-const valid = detected + n('Survived') + n('NoCoverage');
-const score = valid > 0 ? `${((detected * 100) / valid).toFixed(2)}%` : 'n/a';
-const total = files.reduce((sum, f) => sum + f.findings.length, 0);
-
-const runId = process.env.GITHUB_RUN_ID;
-const runLink = runId ? ` by [this run](${server}/${repo}/actions/runs/${runId})` : '';
-
-const header = [
-  `Mutation score: **${score}** · ${n('Survived')} survived · ${n('NoCoverage')} without coverage · ` +
-    `${n('Killed')} killed · ${n('Timeout')} timed out · ${n('CompileError')} compile errors`,
-  '',
-  sha
-    ? `Generated from \`${sha.slice(0, 7)}\`${runLink}. ` +
-      'This issue is rewritten by every nightly run, so ticked boxes are not kept; a fixed mutant simply disappears.'
-    : '',
-  '',
-  'Each entry is `line: Mutator` followed by the original code and the replacement that no test noticed. ' +
-    'Fix a finding by adding or tightening a test so it fails for the replacement; ' +
-    '[equivalent mutants](https://stryker-mutator.io/docs/mutation-testing-elements/equivalent-mutants/) can be ignored with a `// Stryker disable next-line <Mutator>: <reason>` comment.',
-  '',
-].join('\n');
-
-const sections = files.map(({ path, findings }) => {
-  const items = findings.map((m) => {
-    const line = m.location.start.line;
-    const where =
-      repo && sha
-        ? `[L${line}](${server}/${repo}/blob/${sha}/${prefix}${path}#L${line})`
-        : `L${line}`;
-    const tag = m.status === 'NoCoverage' ? ' *(no coverage)*' : '';
-    return `- [ ] ${where}: \`${m.mutatorName}\`${tag}: ${code(m.original)} → ${code(m.replacement ?? '')}`;
-  });
-  return `### \`${path}\` (${findings.length})\n\n${items.join('\n')}\n`;
-});
-
-const empty = total === 0 ? 'No surviving or uncovered mutants. 🎉\n' : '';
-// Plain bullets, not checkboxes: the workflow keeps the issue open only while
-// there are checkbox items, and these files are re-run on a later night.
-const outdatedNote =
-  outdated.length > 0
-    ? `> [!NOTE]\n> ${outdated.length} file(s) changed since their last mutation run and are waiting to be re-run, ` +
-      'so their old findings are left out of the score and the list:\n' +
-      outdated.map(({ path, old }) => `> - \`${path}\` (${old} before the change)`).join('\n') +
-      '\n\n'
-    : '';
-const intro = `${header}\n${outdatedNote}${empty}`;
-const full = `${intro}${sections.join('\n')}`;
-if (outFile) writeFileSync(outFile, full);
-
-let body = intro;
-let shown = 0;
-for (const section of sections) {
-  // Leave room for the truncation note.
-  if (body.length + section.length > maxChars - 300) break;
-  body += `${section}\n`;
-  shown++;
+// The key sits in an HTML comment: `--` or `>` would close it early.
+export function sanitizeKey(key) {
+  return key.replace(/-{2,}/g, '-').replace(/>/g, '_');
 }
-if (shown < sections.length) {
-  body +=
-    `\n> [!NOTE]\n> ${sections.length - shown} more file(s) did not fit in an issue body. ` +
-    "The full list is in the `mutation-findings.md` file of the run's `frontend-mutation-report` artifact.\n";
+
+export const groupMarker = (key) => `<!-- mutation-group: ${sanitizeKey(key)} -->`;
+export const groupTitle = (key) => `${TITLE_PREFIX} (${key})`;
+
+export function groupSlug(key) {
+  return key.replace(/[^A-Za-z0-9._-]+/g, '-');
 }
-process.stdout.write(body);
 
 // Stryker locations are 1-based lines and columns, with an exclusive end column.
 function snippet(lines, { start, end }) {
@@ -160,3 +152,238 @@ function code(text) {
   const pad = s.startsWith('`') || s.endsWith('`') ? ' ' : '';
   return `${fence}${pad}${s}${pad}${fence}`;
 }
+
+function renderItem(m, links) {
+  const line = m.location.start.line;
+  const where = links
+    ? `[L${line}](${links.server}/${links.repo}/blob/${links.sha}/${links.prefix}${links.path}#L${line})`
+    : `L${line}`;
+  const tag = m.status === 'NoCoverage' ? ' *(no coverage)*' : '';
+  return `- [ ] ${where}: \`${m.mutatorName}\`${tag}: ${code(m.original)} → ${code(m.replacement ?? '')}`;
+}
+
+// `shown` findings of the file are listed; the rest is pointed at in the note.
+function renderSection({ path, items }, shown = items.length) {
+  const cut = items.length - shown;
+  const note =
+    cut > 0
+      ? `\n> ${cut} more finding${cut === 1 ? '' : 's'} of this file ${cut === 1 ? 'is' : 'are'} in ` +
+        "`mutation-findings.md` in the run's `frontend-mutation-report` artifact.\n"
+      : '';
+  return `### \`${path}\` (${items.length})\n\n${items.slice(0, shown).join('\n')}\n${note}`;
+}
+
+function outdatedNote(outdated) {
+  if (outdated.length === 0) return '';
+  // Plain bullets, never checkboxes: these files are re-run on a later night.
+  return (
+    `> [!NOTE]\n> ${outdated.length} file(s) changed since their last mutation run and are waiting to be re-run, ` +
+    'so their old findings are left out of the score and the list:\n' +
+    outdated.map(({ path, old }) => `> - \`${path}\` (${old} before the change)`).join('\n') +
+    '\n\n'
+  );
+}
+
+// Stable part of a group's body: marker plus file sections. Depends only on the
+// group's files and their findings. `group.sections` are rendered lines
+// ({ path, items, shown }).
+export function buildGroupStable(group) {
+  const sections = group.sections.map((s) => renderSection(s, s.shown ?? s.items.length));
+  return `${groupMarker(group.key)}\n\n${sections.join('\n')}`;
+}
+
+// Header part: changes every run and when other groups change.
+export function buildGroupHeader(group, ctx) {
+  const findings = group.sections.reduce((sum, s) => sum + s.items.length, 0);
+  return [
+    ctx.scoreLine,
+    '',
+    ctx.generated,
+    '',
+    ctx.howTo,
+    '',
+    `Group \`${group.key}\` of ${ctx.groupCount} findings issues ` +
+      `(${group.sections.length} file(s), ${findings} finding(s) in this issue).`,
+    '',
+    outdatedNote(group.outdated ?? []),
+  ].join('\n');
+}
+
+// Drops trailing findings of the largest file until the body fits maxChars.
+export function buildGroupBody(group, ctx, maxChars = DEFAULT_MAX_CHARS) {
+  const sections = group.sections.map((s) => ({ ...s, shown: s.items.length }));
+  const build = () => {
+    const g = { ...group, sections };
+    return `${buildGroupHeader(g, ctx)}${buildGroupStable(g)}`;
+  };
+  let body = build();
+  while (body.length > maxChars) {
+    let target;
+    let targetSize = -1;
+    for (const s of sections) {
+      if (s.shown === 0) continue;
+      const size = renderSection(s, s.shown).length;
+      // Sections are sorted by path, so ties go to the first path.
+      if (size > targetSize) {
+        target = s;
+        targetSize = size;
+      }
+    }
+    if (!target) break; // nothing left to drop
+    target.shown--;
+    body = build();
+  }
+  return body;
+}
+
+// Pure core: report JSON -> full combined body and per-group bodies.
+export function buildIssues(report, opts = {}) {
+  const {
+    stale = new Set(),
+    maxChars = DEFAULT_MAX_CHARS,
+    repo,
+    sha,
+    server = 'https://github.com',
+    prefix = 'src/frontend/buddy/',
+    runId,
+  } = opts;
+  const counts = {};
+  const files = [];
+  const outdated = [];
+
+  for (const [path, file] of Object.entries(report.files ?? {}).sort(([a], [b]) => byPath(a, b))) {
+    if (stale.has(path)) {
+      const old = file.mutants.filter((m) => FINDINGS.has(m.status)).length;
+      if (old > 0) outdated.push({ path, old });
+      continue;
+    }
+    const lines = file.source.split('\n');
+    const findings = [];
+    for (const mutant of file.mutants) {
+      counts[mutant.status] = (counts[mutant.status] ?? 0) + 1;
+      if (FINDINGS.has(mutant.status))
+        findings.push({ ...mutant, original: snippet(lines, mutant.location) });
+    }
+    if (findings.length === 0) continue;
+    findings.sort(
+      (a, b) =>
+        a.location.start.line - b.location.start.line ||
+        a.location.start.column - b.location.start.column,
+    );
+    const links = repo && sha ? { server, repo, sha, prefix, path } : null;
+    files.push({ path, items: findings.map((m) => renderItem(m, links)) });
+  }
+
+  const n = (status) => counts[status] ?? 0;
+  const detected = n('Killed') + n('Timeout');
+  const valid = detected + n('Survived') + n('NoCoverage');
+  const score = valid > 0 ? `${((detected * 100) / valid).toFixed(2)}%` : 'n/a';
+  const total = files.reduce((sum, f) => sum + f.items.length, 0);
+  const runLink = runId ? ` by [this run](${server}/${repo}/actions/runs/${runId})` : '';
+
+  const scoreLine =
+    `Mutation score: **${score}** · ${n('Survived')} survived · ${n('NoCoverage')} without coverage · ` +
+    `${n('Killed')} killed · ${n('Timeout')} timed out · ${n('CompileError')} compile errors`;
+  const generated = sha
+    ? `Generated from \`${sha.slice(0, 7)}\`${runLink}. ` +
+      'This issue is rewritten by every nightly run, so ticked boxes are not kept; a fixed mutant simply disappears.'
+    : '';
+  const howTo =
+    'Each entry is `line: Mutator` followed by the original code and the replacement that no test noticed. ' +
+    'Fix a finding by adding or tightening a test so it fails for the replacement; ' +
+    '[equivalent mutants](https://stryker-mutator.io/docs/mutation-testing-elements/equivalent-mutants/) can be ignored with a `// Stryker disable next-line <Mutator>: <reason>` comment.';
+  const ctxBase = { scoreLine, generated, howTo };
+
+  // Full combined body: every file with findings, never truncated.
+  const empty = total === 0 ? 'No surviving or uncovered mutants. 🎉\n' : '';
+  const intro = `${[scoreLine, '', generated, '', howTo, ''].join('\n')}\n${outdatedNote(outdated)}${empty}`;
+  const full = `${intro}${files.map((f) => renderSection(f)).join('\n')}`;
+
+  // Groups: layout comes from every report file, findings only fill it in.
+  const layout = assignGroups(Object.keys(report.files ?? {}));
+  const withFindings = new Map(files.map((f) => [f.path, f]));
+  const outdatedByPath = new Map(outdated.map((o) => [o.path, o]));
+  const groupDefs = [];
+  for (const [key, paths] of layout) {
+    const sections = paths.filter((p) => withFindings.has(p)).map((p) => withFindings.get(p));
+    if (sections.length === 0) continue;
+    groupDefs.push({
+      key,
+      sections,
+      outdated: paths.filter((p) => outdatedByPath.has(p)).map((p) => outdatedByPath.get(p)),
+    });
+  }
+  const ctx = { ...ctxBase, groupCount: groupDefs.length };
+  const groups = groupDefs.map((g) => ({
+    key: g.key,
+    title: groupTitle(g.key),
+    marker: groupMarker(g.key),
+    files: g.sections.map((s) => s.path),
+    findings: g.sections.reduce((sum, s) => sum + s.items.length, 0),
+    stable: buildGroupStable(g),
+    header: buildGroupHeader(g, ctx),
+    body: buildGroupBody(g, ctx, maxChars),
+  }));
+
+  return { score, total, full, groups };
+}
+
+export function writeOutDir(groups, dir) {
+  mkdirSync(dir, { recursive: true });
+  const manifest = { label: LABEL, groups: [] };
+  groups.forEach((g, i) => {
+    const file = `${String(i).padStart(3, '0')}-${groupSlug(g.key)}.md`;
+    writeFileSync(join(dir, file), g.body);
+    manifest.groups.push({ key: g.key, title: g.title, file, findings: g.findings });
+  });
+  writeFileSync(join(dir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  return manifest;
+}
+
+function main(argv) {
+  const args = [...argv];
+  const flag = (name, fallback) => {
+    const i = args.indexOf(name);
+    if (i === -1) return fallback;
+    const [, value] = args.splice(i, 2);
+    return value;
+  };
+  const outFile = flag('--out');
+  const outDir = flag('--out-dir');
+  const maxChars = Number(flag('--max-chars', String(DEFAULT_MAX_CHARS)));
+  const staleFile = flag('--stale');
+  const reportPath = args[0] ?? 'reports/stryker-incremental.json';
+  const stale = new Set(
+    staleFile
+      ? readFileSync(staleFile, 'utf8')
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean)
+      : [],
+  );
+  const report = JSON.parse(readFileSync(reportPath, 'utf8'));
+  const env = process.env;
+  const { full, groups } = buildIssues(report, {
+    stale,
+    maxChars,
+    repo: env.GITHUB_REPOSITORY,
+    sha: env.GITHUB_SHA,
+    server: env.GITHUB_SERVER_URL || undefined,
+    prefix: env.REPORT_PATH_PREFIX ?? undefined,
+    runId: env.GITHUB_RUN_ID,
+  });
+  if (outFile) writeFileSync(outFile, full);
+  if (outDir) writeOutDir(groups, outDir);
+  process.stdout.write(full);
+}
+
+// Run as a CLI only when executed directly (also through a symlink), not when
+// the test file imports the module.
+const isCli = (() => {
+  try {
+    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+})();
+if (isCli) main(process.argv.slice(2));
