@@ -50,7 +50,10 @@ export const TITLE_PREFIX = 'Frontend mutation testing findings';
 const FINDINGS = new Set(['Survived', 'NoCoverage']);
 const APP_PREFIX = 'src/app/';
 
-const byPath = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+const byPath = (a, b) => {
+  if (a < b) return -1;
+  return a > b ? 1 : 0;
+};
 
 // 32-bit FNV-1a over the UTF-8 bytes: tiny, deterministic across Node versions.
 export function fnv1a32(text) {
@@ -100,7 +103,7 @@ export function chunkOverflow(bucketFiles) {
 function chunkLetters(index) {
   let s = '';
   for (let i = index + 1; i > 0; i = Math.floor((i - 1) / 26))
-    s = String.fromCharCode(97 + ((i - 1) % 26)) + s;
+    s = String.fromCodePoint(97 + ((i - 1) % 26)) + s;
   return s;
 }
 
@@ -132,7 +135,7 @@ export function assignGroups(allPaths) {
 
 // The key sits in an HTML comment: `--` or `>` would close it early.
 export function sanitizeKey(key) {
-  return key.replace(/-{2,}/g, '-').replace(/>/g, '_');
+  return key.replace(/-{2,}/g, '-').replaceAll('>', '_');
 }
 
 export const groupMarker = (key) => `<!-- mutation-group: ${sanitizeKey(key)} -->`;
@@ -173,9 +176,10 @@ function renderItem(m, links) {
 // `shown` findings of the file are listed; the rest is pointed at in the note.
 function renderSection({ path, items }, shown = items.length) {
   const cut = items.length - shown;
+  const more = cut === 1 ? 'finding of this file is' : 'findings of this file are';
   const note =
     cut > 0
-      ? `\n> ${cut} more finding${cut === 1 ? '' : 's'} of this file ${cut === 1 ? 'is' : 'are'} in ` +
+      ? `\n> ${cut} more ${more} in ` +
         "`mutation-findings.md` in the run's `frontend-mutation-report` artifact.\n"
       : '';
   return `### \`${path}\` (${items.length})\n\n${items.slice(0, shown).join('\n')}\n${note}`;
@@ -244,21 +248,12 @@ export function buildGroupBody(group, ctx, maxChars = DEFAULT_MAX_CHARS) {
   return body;
 }
 
-// Pure core: report JSON -> full combined body and per-group bodies.
-export function buildIssues(report, opts = {}) {
-  const {
-    stale = new Set(),
-    maxChars = DEFAULT_MAX_CHARS,
-    repo,
-    sha,
-    server = 'https://github.com',
-    prefix = 'src/frontend/buddy/',
-    runId,
-  } = opts;
+// Per-status mutant counts, the rendered findings of every live file, and the
+// stale files that still had findings before the change.
+function collectFindings(report, stale, linkBase) {
   const counts = {};
   const files = [];
   const outdated = [];
-
   for (const [path, file] of Object.entries(report.files ?? {}).sort(([a], [b]) => byPath(a, b))) {
     if (stale.has(path)) {
       const old = file.mutants.filter((m) => FINDINGS.has(m.status)).length;
@@ -278,9 +273,42 @@ export function buildIssues(report, opts = {}) {
         a.location.start.line - b.location.start.line ||
         a.location.start.column - b.location.start.column,
     );
-    const links = repo && sha ? { server, repo, sha, prefix, path } : null;
+    const links = linkBase ? { ...linkBase, path } : null;
     files.push({ path, items: findings.map((m) => renderItem(m, links)) });
   }
+  return { counts, files, outdated };
+}
+
+// Groups: layout comes from every report file, findings only fill it in.
+function buildGroupDefs(paths, files, outdated) {
+  const withFindings = new Map(files.map((f) => [f.path, f]));
+  const outdatedByPath = new Map(outdated.map((o) => [o.path, o]));
+  const groupDefs = [];
+  for (const [key, groupPaths] of assignGroups(paths)) {
+    const sections = groupPaths.filter((p) => withFindings.has(p)).map((p) => withFindings.get(p));
+    if (sections.length === 0) continue;
+    groupDefs.push({
+      key,
+      sections,
+      outdated: groupPaths.filter((p) => outdatedByPath.has(p)).map((p) => outdatedByPath.get(p)),
+    });
+  }
+  return groupDefs;
+}
+
+// Pure core: report JSON -> full combined body and per-group bodies.
+export function buildIssues(report, opts = {}) {
+  const {
+    stale = new Set(),
+    maxChars = DEFAULT_MAX_CHARS,
+    repo,
+    sha,
+    server = 'https://github.com',
+    prefix = 'src/frontend/buddy/',
+    runId,
+  } = opts;
+  const linkBase = repo && sha ? { server, repo, sha, prefix } : null;
+  const { counts, files, outdated } = collectFindings(report, stale, linkBase);
 
   const n = (status) => counts[status] ?? 0;
   const detected = n('Killed') + n('Timeout');
@@ -307,20 +335,7 @@ export function buildIssues(report, opts = {}) {
   const intro = `${[scoreLine, '', generated, '', howTo, ''].join('\n')}\n${outdatedNote(outdated)}${empty}`;
   const full = `${intro}${files.map((f) => renderSection(f)).join('\n')}`;
 
-  // Groups: layout comes from every report file, findings only fill it in.
-  const layout = assignGroups(Object.keys(report.files ?? {}));
-  const withFindings = new Map(files.map((f) => [f.path, f]));
-  const outdatedByPath = new Map(outdated.map((o) => [o.path, o]));
-  const groupDefs = [];
-  for (const [key, paths] of layout) {
-    const sections = paths.filter((p) => withFindings.has(p)).map((p) => withFindings.get(p));
-    if (sections.length === 0) continue;
-    groupDefs.push({
-      key,
-      sections,
-      outdated: paths.filter((p) => outdatedByPath.has(p)).map((p) => outdatedByPath.get(p)),
-    });
-  }
+  const groupDefs = buildGroupDefs(Object.keys(report.files ?? {}), files, outdated);
   const ctx = { ...ctxBase, groupCount: groupDefs.length };
   const groups = groupDefs.map((g) => ({
     key: g.key,
@@ -349,7 +364,7 @@ export function writeOutDir(groups, dir) {
 }
 
 const MARKER_RE = /<!-- mutation-group: ([^\r\n]+?) -->/;
-const normalizeNewlines = (text) => (text ?? '').replace(/\r\n/g, '\n');
+const normalizeNewlines = (text) => (text ?? '').replaceAll('\r\n', '\n');
 
 // Key inside the hidden marker of an issue body, or null when there is none
 // (legacy issue) or it is malformed or foreign.
@@ -422,10 +437,10 @@ export function planSync(manifest, existingIssues) {
   return actions;
 }
 
+const issueRef = (number) => (number ? ` #${number}` : '');
+
 export function formatPlan(actions) {
-  return actions
-    .map((a) => `${a.type}${a.number ? ` #${a.number}` : ''} ${a.key}: ${a.reason}`)
-    .join('\n');
+  return actions.map((a) => `${a.type}${issueRef(a.number)} ${a.key}: ${a.reason}`).join('\n');
 }
 
 function readManifestDir(dir) {
