@@ -245,10 +245,7 @@ test('stale-only group is absent; a stale file in a group with findings is a pla
     ['a'],
   );
   const body = groups[0].body;
-  assert.match(
-    body,
-    new RegExp(`> - \`${staleInGroup.replace(/[/.]/g, '\\$&')}\` \\(3 before the change\\)`),
-  );
+  assert.ok(body.includes(`> - \`${staleInGroup}\` (3 before the change)`));
   assert.ok(!body.includes(`### \`${staleInGroup}\``));
   for (const line of body.split('\n').filter((l) => l.startsWith('>')))
     assert.ok(!line.includes('- [ ]'));
