@@ -26,6 +26,14 @@
 // score and the checklist, since the line numbers no longer match the source
 // and the fix may already be in; they're only named, with their old count.
 //
+// --plan-sync <issues.json> decides what to do with the rolling issues: the
+// input is the merged open + closed list of `mutation-testing` issues (as
+// `gh api` prints it, pull requests are ignored), the manifest and bodies come
+// from --out-dir. It prints the plan (create / edit / reopen+edit / close /
+// skip) as JSON; with --dry-run it prints one readable line per action
+// instead. The workflow only executes the plan, no matching logic lives in
+// shell.
+//
 // Exits 0 either way; the body says when there's nothing to fix. When
 // GITHUB_REPOSITORY and GITHUB_SHA are set, locations link to the file at that
 // commit; REPORT_PATH_PREFIX (default src/frontend/buddy/) maps report paths to
@@ -340,6 +348,94 @@ export function writeOutDir(groups, dir) {
   return manifest;
 }
 
+const MARKER_RE = /<!-- mutation-group: ([^\r\n]+?) -->/;
+const normalizeNewlines = (text) => (text ?? '').replace(/\r\n/g, '\n');
+
+// Key inside the hidden marker of an issue body, or null when there is none
+// (legacy issue) or it is malformed or foreign.
+export function markerKeyOf(body) {
+  const match = MARKER_RE.exec(normalizeNewlines(body));
+  return match ? match[1] : null;
+}
+
+// Decides what the nightly run does with the rolling issues.
+// manifest: { groups: [{ key, title, body, file? }] } (groups with findings only).
+// existingIssues: [{ number, title, state, body, createdAt }], open and closed.
+// Returns actions: { type: 'create' | 'edit' | 'reopen+edit' | 'close' | 'skip',
+//                    key, number?, title?, file?, reason }.
+// Matching is by the sanitised marker key, compared as a whole (`core` never
+// matches `core.12`). Open beats closed; of several open issues the lowest
+// number wins and the others are left alone; of several closed issues the
+// newest is reopened. Issues without a marker (legacy) are never touched.
+export function planSync(manifest, existingIssues) {
+  const marked = [];
+  for (const issue of existingIssues ?? []) {
+    if (!issue || 'pull_request' in issue) continue;
+    const key = markerKeyOf(issue.body);
+    if (key === null) continue;
+    marked.push({ ...issue, markerKey: key, open: String(issue.state).toLowerCase() === 'open' });
+  }
+  const wanted = new Set();
+  const actions = [];
+  for (const group of manifest.groups) {
+    const markerKey = sanitizeKey(group.key);
+    wanted.add(markerKey);
+    const own = marked.filter((i) => i.markerKey === markerKey);
+    const open = own.filter((i) => i.open).sort((a, b) => a.number - b.number);
+    const closed = own
+      .filter((i) => !i.open)
+      .sort(
+        (a, b) => String(b.createdAt).localeCompare(String(a.createdAt)) || b.number - a.number,
+      );
+    const base = { key: group.key, title: group.title, file: group.file };
+    if (open.length > 0) {
+      const issue = open[0];
+      const same =
+        normalizeNewlines(issue.body) === normalizeNewlines(group.body) &&
+        issue.title === group.title;
+      actions.push(
+        same
+          ? { ...base, type: 'skip', number: issue.number, reason: 'issue is up to date' }
+          : { ...base, type: 'edit', number: issue.number, reason: 'refresh findings' },
+      );
+    } else if (closed.length > 0) {
+      actions.push({
+        ...base,
+        type: 'reopen+edit',
+        number: closed[0].number,
+        reason: 'findings are back',
+      });
+    } else {
+      actions.push({ ...base, type: 'create', reason: 'no issue for this group yet' });
+    }
+  }
+  const stale = marked
+    .filter((i) => i.open && !wanted.has(i.markerKey))
+    .sort((a, b) => a.number - b.number);
+  for (const issue of stale)
+    actions.push({
+      type: 'close',
+      key: issue.markerKey,
+      number: issue.number,
+      reason: 'no findings left in this group',
+    });
+  return actions;
+}
+
+export function formatPlan(actions) {
+  return actions
+    .map((a) => `${a.type}${a.number ? ` #${a.number}` : ''} ${a.key}: ${a.reason}`)
+    .join('\n');
+}
+
+function readManifestDir(dir) {
+  const manifest = JSON.parse(readFileSync(join(dir, 'manifest.json'), 'utf8'));
+  return {
+    ...manifest,
+    groups: manifest.groups.map((g) => ({ ...g, body: readFileSync(join(dir, g.file), 'utf8') })),
+  };
+}
+
 function main(argv) {
   const args = [...argv];
   const flag = (name, fallback) => {
@@ -348,9 +444,21 @@ function main(argv) {
     const [, value] = args.splice(i, 2);
     return value;
   };
+  const dryRun = args.includes('--dry-run');
+  if (dryRun) args.splice(args.indexOf('--dry-run'), 1);
+  const planFile = flag('--plan-sync');
   const outFile = flag('--out');
   const outDir = flag('--out-dir');
   const maxChars = Number(flag('--max-chars', String(DEFAULT_MAX_CHARS)));
+  if (planFile) {
+    if (!outDir) throw new Error('--plan-sync needs --out-dir with the manifest and bodies');
+    const issues = JSON.parse(readFileSync(planFile, 'utf8'));
+    const actions = planSync(readManifestDir(outDir), issues);
+    process.stdout.write(
+      dryRun ? `${formatPlan(actions)}\n` : `${JSON.stringify(actions, null, 2)}\n`,
+    );
+    return;
+  }
   const staleFile = flag('--stale');
   const reportPath = args[0] ?? 'reports/stryker-incremental.json';
   const stale = new Set(
