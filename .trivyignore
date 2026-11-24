@@ -7,6 +7,6 @@
 
 # keycloak (guava 33.6.0, bundled by quay.io/keycloak/keycloak:26.8.2, the newest release): Guava
 # DoS, fixed in 33.7.2. Swapping a jar inside Keycloak's distribution isn't supported; the fix
-# arrives with the next Keycloak release. Extended on 2026-11-17: 26.8.2 still bundles 33.6.0.
-# Recheck when this expires.
-CVE-2026-102554 exp:2026-11-24
+# arrives with the next Keycloak release (a jar swap also breaks `kc.sh build`, see #120).
+# Extended on 2026-11-17 and 2026-11-24: 26.8.2 still bundles 33.6.0. Recheck when this expires.
+CVE-2026-102554 exp:2026-12-01
