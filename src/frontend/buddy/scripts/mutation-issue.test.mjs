@@ -20,6 +20,8 @@ import {
   groupMarker,
   groupSlug,
   groupTitle,
+  markerKeyOf,
+  planSync,
   sanitizeKey,
   writeOutDir,
 } from './mutation-issue.mjs';
@@ -330,6 +332,196 @@ test('--out-dir CLI writes manifest and bodies, also through a symlink', () => {
       ),
       readdirSync(join(dir, 'out-link')).map((f) => readFileSync(join(dir, 'out-link', f), 'utf8')),
     );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// --- planSync ---
+
+const mf = (...keys) => ({
+  groups: keys.map((key) => ({
+    key,
+    title: groupTitle(key),
+    body: `${groupMarker(key)}\nbody ${key}\n`,
+  })),
+});
+const issue = (number, key, state = 'open', extra = {}) => ({
+  number,
+  title: groupTitle(key),
+  state,
+  body: `${groupMarker(key)}\nold\n`,
+  createdAt: `2026-11-${String(number).padStart(2, '0')}T00:00:00Z`,
+  ...extra,
+});
+const typeOf = (actions, key) => actions.filter((a) => a.key === key).map((a) => a.type);
+
+test('planSync: creates a missing group and edits an existing open one', () => {
+  const actions = planSync(mf('a', 'b'), [issue(7, 'a')]);
+  assert.deepEqual(typeOf(actions, 'a'), ['edit']);
+  assert.equal(actions.find((a) => a.key === 'a').number, 7);
+  assert.deepEqual(typeOf(actions, 'b'), ['create']);
+});
+
+test('planSync: open beats closed, so no duplicate is created', () => {
+  const actions = planSync(mf('a'), [issue(3, 'a', 'closed'), issue(9, 'a', 'open')]);
+  assert.deepEqual(
+    actions.map((a) => [a.type, a.number]),
+    [['edit', 9]],
+  );
+});
+
+test('planSync: the newest closed issue is reopened', () => {
+  const actions = planSync(mf('a'), [
+    issue(3, 'a', 'closed'),
+    issue(5, 'a', 'CLOSED'),
+    issue(4, 'a', 'closed'),
+  ]);
+  assert.deepEqual(
+    actions.map((a) => [a.type, a.number]),
+    [['reopen+edit', 5]],
+  );
+});
+
+test('planSync: the lowest open number wins and duplicates are left alone', () => {
+  const actions = planSync(mf('a'), [issue(8, 'a'), issue(2, 'a'), issue(5, 'a')]);
+  assert.deepEqual(
+    actions.map((a) => [a.type, a.number]),
+    [['edit', 2]],
+  );
+});
+
+test('planSync: open marked issues without findings are closed, closed ones ignored', () => {
+  const actions = planSync(mf('a'), [issue(1, 'a'), issue(2, 'gone'), issue(3, 'older', 'closed')]);
+  assert.deepEqual(
+    actions.filter((a) => a.type === 'close').map((a) => [a.key, a.number]),
+    [['gone', 2]],
+  );
+  assert.equal(actions.length, 2);
+});
+
+test('planSync: marker-less issues (#101) and pull requests are never touched', () => {
+  const legacy = {
+    number: 101,
+    title: 'Frontend mutation testing findings',
+    state: 'open',
+    body: 'no marker',
+    createdAt: '2026-11-01T00:00:00Z',
+  };
+  const pr = { ...issue(50, 'gone'), pull_request: {} };
+  assert.deepEqual(planSync(mf(), [legacy, pr, { ...legacy, number: 102, body: null }]), []);
+});
+
+test('planSync: the marker key is matched whole, never as a prefix', () => {
+  const actions = planSync(mf('core', 'a/b'), [issue(12, 'core.12'), issue(13, 'a/b.00')]);
+  assert.deepEqual(typeOf(actions, 'core'), ['create']);
+  assert.deepEqual(typeOf(actions, 'a/b'), ['create']);
+  assert.deepEqual(
+    actions.filter((a) => a.type === 'close').map((a) => a.number),
+    [12, 13],
+  );
+});
+
+test('planSync: a second run on the same input creates nothing', () => {
+  const m = mf('a', 'b');
+  const issues = m.groups.map((g, i) => ({ ...issue(i + 1, g.key), body: g.body }));
+  const actions = planSync(m, issues);
+  assert.ok(actions.every((a) => a.type === 'skip'));
+});
+
+test('planSync: an equal body (also with CRLF) is skipped, a different one is edited', () => {
+  const m = mf('a');
+  const crlf = m.groups[0].body.replace(/\n/g, '\r\n');
+  assert.equal(planSync(m, [issue(1, 'a', 'open', { body: crlf })])[0].type, 'skip');
+  assert.equal(planSync(m, [issue(1, 'a', 'open', { body: `${crlf}x` })])[0].type, 'edit');
+  assert.equal(
+    planSync(m, [issue(1, 'a', 'open', { title: 'renamed', body: crlf })])[0].type,
+    'edit',
+  );
+  assert.equal(planSync(m, [issue(1, 'a', 'closed', { body: crlf })])[0].type, 'reopen+edit');
+});
+
+test('planSync: malformed or foreign markers are ignored without closing anything', () => {
+  const bad = [
+    '<!-- mutation-group: -->',
+    '<!-- mutation-group:a -->',
+    '<!-- mutation-group: a ->',
+    '<!-- other-group: a -->',
+    '<!-- mutation-group: a',
+  ];
+  const issues = bad.map((body, i) => ({
+    number: i + 1,
+    title: 't',
+    state: 'open',
+    body,
+    createdAt: '2026-11-01T00:00:00Z',
+  }));
+  for (const i of issues) assert.equal(markerKeyOf(i.body), null);
+  assert.deepEqual(
+    planSync(mf('a'), issues).map((a) => a.type),
+    ['create'],
+  );
+});
+
+test('planSync: a marker key is found inside a longer body, CRLF included', () => {
+  assert.equal(markerKeyOf(`header\r\n\r\n${groupMarker('x/y.01')}\r\n### f`), 'x/y.01');
+});
+
+test('--plan-sync CLI: CRLF bodies, a marker-less issue and two open duplicates', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mi-'));
+  try {
+    const out = join(dir, 'out');
+    const reportPath = join(dir, 'report.json');
+    writeFileSync(
+      reportPath,
+      JSON.stringify(reportOf([app('a/one.ts'), app('b/two.ts'), app('c/three.ts')])),
+    );
+    execFileSync(process.execPath, [SCRIPT, reportPath, '--out-dir', out]);
+    const manifest = JSON.parse(readFileSync(join(out, 'manifest.json'), 'utf8'));
+    assert.deepEqual(
+      manifest.groups.map((g) => g.key),
+      ['a', 'b', 'c'],
+    );
+    const bodyOf = (key) =>
+      readFileSync(join(out, manifest.groups.find((g) => g.key === key).file), 'utf8');
+    const issues = [
+      {
+        number: 101,
+        title: 'Frontend mutation testing findings',
+        state: 'open',
+        body: 'legacy',
+        createdAt: '2026-11-01T00:00:00Z',
+      },
+      { ...issue(10, 'a'), body: bodyOf('a').replace(/\n/g, '\r\n') },
+      issue(11, 'b'),
+      issue(12, 'b'),
+      issue(13, 'gone'),
+      { ...issue(14, 'c', 'open'), pull_request: {} },
+    ];
+    const issuesPath = join(dir, 'issues.json');
+    writeFileSync(issuesPath, JSON.stringify(issues));
+    const run = (...extra) =>
+      execFileSync(
+        process.execPath,
+        [SCRIPT, '--plan-sync', issuesPath, '--out-dir', out, ...extra],
+        { encoding: 'utf8' },
+      );
+    const plan = JSON.parse(run());
+    assert.deepEqual(
+      plan.map((a) => [a.type, a.key, a.number ?? null]),
+      [
+        ['skip', 'a', 10],
+        ['edit', 'b', 11],
+        ['create', 'c', null],
+        ['close', 'gone', 13],
+      ],
+    );
+    assert.equal(plan.find((a) => a.type === 'create').file, manifest.groups[2].file);
+    const dry = run('--dry-run');
+    assert.match(dry, /^skip #10 a: /m);
+    assert.match(dry, /^create c: /m);
+    assert.match(dry, /^close #13 gone: /m);
+    assert.ok(!dry.includes('"type"'));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
