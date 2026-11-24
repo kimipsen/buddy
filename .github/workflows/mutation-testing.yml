@@ -216,8 +216,6 @@ jobs:
           work=$(mktemp -d)
           trap 'rm -rf "$work"' EXIT
 
-          gh label create "$LABEL" --color D93F0B --description "Findings from the nightly mutation-testing run" 2>/dev/null || true
-
           # Open and closed issues with the label, every page, pull requests dropped.
           gh api --paginate "repos/$GITHUB_REPOSITORY/issues?labels=$LABEL&state=all&per_page=100" |
             jq -s 'add // [] | map(select(has("pull_request") | not))' > "$work/issues.json"
@@ -233,6 +231,8 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
+
+          gh label create "$LABEL" --color D93F0B --description "Findings from the nightly mutation-testing run" 2>/dev/null || true
 
           node scripts/mutation-issue.mjs --plan-sync "$work/issues.json" --out-dir "$out_dir" > "$work/plan.json"
 
