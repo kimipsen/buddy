@@ -4,7 +4,7 @@ on:
   # Nightly at 02:00 UTC. GitHub may start scheduled runs late, and disables schedules in repos
   # with no activity for 60 days.
   schedule:
-    - cron: "0 2 * * *"
+    - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
       scope:
@@ -12,6 +12,10 @@ on:
         type: choice
         options: [frontend, backend, both]
         default: frontend
+      dry_run:
+        description: Only list what the findings-issue step would create, edit, reopen or close (in the run summary), without touching any issue
+        type: boolean
+        default: false
 
 # Least privilege for the GITHUB_TOKEN; a job that needs more asks for it itself.
 permissions:
@@ -110,7 +114,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: src/frontend/buddy/.nvmrc
-          cache: "npm"
+          cache: 'npm'
           cache-dependency-path: src/frontend/buddy/package-lock.json
 
       - name: Install dependencies
@@ -183,29 +187,144 @@ jobs:
       - name: Build findings list
         run: |
           ./scripts/mutation-batch.sh --stale > reports/mutation-stale.txt
-          node scripts/mutation-issue.mjs --stale reports/mutation-stale.txt --out reports/mutation-findings.md > reports/mutation-issue.md
+          node scripts/mutation-issue.mjs --stale reports/mutation-stale.txt --out reports/mutation-findings.md --out-dir reports/mutation-issues > reports/mutation-issue.md
 
-      # One rolling issue, rewritten each run from the default branch: created when there are
-      # surviving/uncovered mutants, closed once there are none. Branch runs don't touch it.
+      # One rolling issue per group of at most 5 report files (see scripts/mutation-issue.mjs),
+      # each rewritten from the default branch: created when its group has surviving/uncovered
+      # mutants, edited while it still has them, closed once it has none, reopened if they come
+      # back. Branch runs don't touch them. The decisions (which issue belongs to which group)
+      # are made by `mutation-issue.mjs --plan-sync`, tested in mutation-issue.test.mjs; this step
+      # only executes the plan. Issues without a group marker (the old single issue) are never in
+      # the plan. A failing issue doesn't stop the others; the step fails at the end, listing them,
+      # and the next night repeats whatever is left. The first run after a full pass can create up
+      # to ~80 issues, so creations are capped per run (MAX_CREATES, the rest follows the next
+      # nights) and spaced out. Nothing in the repo or the Gas City config reacts to new
+      # `mutation-testing` issues (the city only polls pull requests), so they don't start work.
+      # Run the workflow by hand with dry_run to see the plan in the summary without touching any
+      # issue; do that before the first live run.
       - name: Update findings issue
         if: github.ref_name == github.event.repository.default_branch
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           LABEL: mutation-testing
-          TITLE: Frontend mutation testing findings
+          DRY_RUN: ${{ inputs.dry_run }}
+          MAX_CREATES: 25
         run: |
+          set -euo pipefail
+          out_dir=reports/mutation-issues
+          work=$(mktemp -d)
+          trap 'rm -rf "$work"' EXIT
+
           gh label create "$LABEL" --color D93F0B --description "Findings from the nightly mutation-testing run" 2>/dev/null || true
-          NUMBER=$(gh issue list --label "$LABEL" --state open --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
-          if grep -q '^- \[ \]' reports/mutation-issue.md; then
-            if [ -n "$NUMBER" ]; then
-              gh issue edit "$NUMBER" --body-file reports/mutation-issue.md
-            else
-              NUMBER=$(gh issue create --title "$TITLE" --label "$LABEL" --body-file reports/mutation-issue.md | grep -o '[0-9]*$')
+
+          # Open and closed issues with the label, every page, pull requests dropped.
+          gh api --paginate "repos/$GITHUB_REPOSITORY/issues?labels=$LABEL&state=all&per_page=100" |
+            jq -s 'add // [] | map(select(has("pull_request") | not))' > "$work/issues.json"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            node scripts/mutation-issue.mjs --plan-sync "$work/issues.json" --out-dir "$out_dir" --dry-run > "$work/plan.txt"
+            {
+              echo "### Findings issues (dry run, nothing was changed)"
+              echo
+              echo '```'
+              cat "$work/plan.txt"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          node scripts/mutation-issue.mjs --plan-sync "$work/issues.json" --out-dir "$out_dir" > "$work/plan.json"
+
+          # Runs a gh command; after a rate-limit error waits a minute and tries once more.
+          gh_retry() {
+            local err="$work/gh.err"
+            if "$@" 2> "$err"; then
+              return 0
             fi
-            echo "Findings: ${{ github.server_url }}/${{ github.repository }}/issues/$NUMBER" >> "$GITHUB_STEP_SUMMARY"
-          elif [ -n "$NUMBER" ]; then
-            gh issue close "$NUMBER" --comment "No surviving or uncovered mutants as of ${GITHUB_SHA::7}."
+            if grep -qiE 'rate limit|abuse' "$err"; then
+              echo "Rate limited, retrying in 60s: $*" >&2
+              sleep 60
+              if "$@" 2> "$err"; then
+                return 0
+              fi
+            fi
+            cat "$err" >&2
+            return 1
+          }
+
+          created=0 edited=0 reopened=0 closed=0 skipped=0 deferred=0
+          failures=()
+          links=()
+          issue_url() { echo "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/issues/$1"; }
+
+          while IFS= read -r action; do
+            type=$(jq -r '.type' <<< "$action")
+            key=$(jq -r '.key' <<< "$action")
+            number=$(jq -r '.number // empty' <<< "$action")
+            title=$(jq -r '.title // empty' <<< "$action")
+            file=$(jq -r '.file // empty' <<< "$action")
+            body="$out_dir/$file"
+            case "$type" in
+              create)
+                if [ "$created" -ge "$MAX_CREATES" ]; then
+                  deferred=$((deferred + 1))
+                  continue
+                fi
+                if url=$(gh_retry gh issue create --title "$title" --label "$LABEL" --body-file "$body"); then
+                  created=$((created + 1))
+                  links+=("- created $key: $url")
+                else
+                  failures+=("create $key")
+                fi
+                sleep 2
+                ;;
+              edit)
+                if gh_retry gh issue edit "$number" --title "$title" --body-file "$body"; then
+                  edited=$((edited + 1))
+                  links+=("- edited $key: $(issue_url "$number")")
+                else
+                  failures+=("edit #$number ($key)")
+                fi
+                ;;
+              reopen+edit)
+                if gh_retry gh issue reopen "$number" && gh_retry gh issue edit "$number" --title "$title" --body-file "$body"; then
+                  reopened=$((reopened + 1))
+                  links+=("- reopened $key: $(issue_url "$number")")
+                else
+                  failures+=("reopen #$number ($key)")
+                fi
+                ;;
+              close)
+                if gh_retry gh issue close "$number" --comment "No surviving or uncovered mutants in this group as of ${GITHUB_SHA::7}."; then
+                  closed=$((closed + 1))
+                  links+=("- closed $key: $(issue_url "$number")")
+                else
+                  failures+=("close #$number ($key)")
+                fi
+                ;;
+              skip)
+                skipped=$((skipped + 1))
+                ;;
+              *)
+                failures+=("unknown action '$type' for $key")
+                ;;
+            esac
+          done < <(jq -c '.[]' "$work/plan.json")
+
+          {
+            echo "### Findings issues"
+            echo
+            echo "Created $created, edited $edited, reopened $reopened, closed $closed, unchanged $skipped, deferred $deferred (creation cap $MAX_CREATES per run), failed ${#failures[@]}."
+            if [ "${#links[@]}" -gt 0 ]; then
+              echo
+              printf '%s\n' "${links[@]}"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${#failures[@]}" -gt 0 ]; then
+            printf '::error::Failed: %s\n' "${failures[@]}"
+            exit 1
           fi
 
       # Stryker's own HTML report only shows the last batch; render one from all results.
