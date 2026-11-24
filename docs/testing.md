@@ -364,20 +364,59 @@ summary. It uploads an HTML report of all results so far
 (`scripts/mutation-html.mjs`) and the incremental JSON as the
 `frontend-mutation-report` artifact.
 
-Runs on the default branch also keep one open issue, **Frontend mutation
-testing findings** (label `mutation-testing`), up to date. It lists every
-surviving and uncovered mutant as a checklist grouped by file, with a link to
-the line, the mutator, and the original and replacement code. Each run rewrites
-the issue, so a fixed mutant just drops off the list. The issue is closed once
-nothing is left. A file whose source or specs changed after its recorded
-results, and which the run didn't reach, is only named in a note with its old
-count (`scripts/mutation-batch.sh --stale` lists them, `mutation-issue.mjs
---stale` takes that list). Its old line numbers no longer match the source, and
-the change may already have fixed them, so its mutants stay out of the score
-and the checklist until a later night re-runs it. If the list is longer than GitHub's issue-body limit, the
-complete version is in `mutation-findings.md` in the artifact. To generate the
-same list locally from your own baseline, run
-`node scripts/mutation-issue.mjs` in `src/frontend/buddy`.
+Runs on the default branch also keep rolling issues of findings, one per
+group of at most 5 report files, titled **Frontend mutation testing findings
+(`<group key>`)** (label `mutation-testing`). Each lists every surviving and
+uncovered mutant of its files as a checklist grouped by file, with a link to
+the line, the mutator, and the original and replacement code.
+
+- **Groups.** A group comes from the file path alone: the feature folder, with a
+  large folder split over slots by a hash of the path, and a slot with more than
+  5 files split again (`.a`, `.b`, ...). It never depends on which mutants
+  survive, so fixing a mutant never moves a file to another issue. The group key
+  is in the fixed title and in a hidden marker on the first line of the body,
+  `<!-- mutation-group: KEY -->`. The marker, compared as a whole key, maps an
+  issue to its group.
+- **Lifecycle, per group.** The nightly run creates the issue when its group has
+  findings, rewrites it while it still has them, and closes it once nothing is
+  left, so a fixed mutant just drops off the list. A group with no findings
+  (including one whose files are all stale) gets no issue; its open issue is
+  closed. If findings come back later, the newest closed issue of the group is
+  reopened, also when someone closed it by hand while findings were left. If
+  several open issues carry the same marker, the one with the lowest number is
+  kept up to date and the others are left alone. Each rewrite refreshes the
+  header (score, commit, date), so an issue is only skipped when the body is
+  identical, which in practice means a re-run on the same commit.
+- **Legacy issue.** The old single issue (#101) has no marker and is never
+  touched. It stays open until you close it by hand.
+- **Stale files.** A file whose source or specs changed after its recorded
+  results, and which the run didn't reach, is only named in a note with its old
+  count (`scripts/mutation-batch.sh --stale` lists them, `mutation-issue.mjs
+--stale` takes that list). Its old line numbers no longer match the source,
+  and the change may already have fixed them, so its mutants stay out of the
+  score and the checklist until a later night re-runs it.
+- **Size.** A body over GitHub's limit drops its trailing findings of the
+  largest file and points at `mutation-findings.md`, which holds the complete
+  list, in the artifact.
+
+`mutation-issue.mjs` decides everything (grouping, bodies, which issue to
+create, edit, reopen or close); the workflow step only executes its plan.
+Locally, in `src/frontend/buddy`:
+
+- `node scripts/mutation-issue.mjs` prints the full combined list from your own
+  baseline.
+- `node scripts/mutation-issue.mjs --out-dir <dir>` writes `manifest.json` and
+  one body per group with findings.
+- `node scripts/mutation-issue.mjs --plan-sync issues.json --out-dir <dir>
+--dry-run` prints the action for each group, given the merged open and closed
+  `mutation-testing` issues as `gh api` returns them. Without `--dry-run` it
+  prints the plan as JSON.
+- `npm run test:scripts` runs the script tests.
+
+Run the workflow by hand with the `dry_run` input to get the same plan in the
+run summary without touching any issue. Do that before the first live run after
+a change to the grouping: the first live run can create dozens of issues (at
+most 25 per night, the rest follows the next nights).
 
 Before submitting a documentation-only change, run the relevant Markdown/link
 checks and `git diff --check`. Application tests are only necessary when the
