@@ -162977,15 +162977,64 @@
       "language": "typescript",
       "mutants": [
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@42:21-42:38\nArrowFunction: () => undefined",
+          "id": "13",
+          "mutatorName": "ConditionalExpression",
+          "replacement": "true",
+          "statusReason": "equivalent mutant, once the menu is closed there is no panel, so focusFirstItem() has nothing to focus",
+          "status": "Ignored",
+          "static": false,
+          "location": {
+            "end": {
+              "column": 20,
+              "line": 46
+            },
+            "start": {
+              "column": 9,
+              "line": 46
+            }
+          }
+        },
+        {
+          "id": "14",
+          "mutatorName": "ConditionalExpression",
+          "replacement": "false",
+          "statusReason": "equivalent mutant, once the menu is closed there is no panel, so focusFirstItem() has nothing to focus",
+          "status": "Ignored",
+          "static": false,
+          "location": {
+            "end": {
+              "column": 20,
+              "line": 46
+            },
+            "start": {
+              "column": 9,
+              "line": 46
+            }
+          }
+        },
+        {
+          "id": "4",
+          "mutatorName": "OptionalChaining",
+          "replacement": "this.users.currentUser().showVisualTimers",
+          "statusReason": "src/app/features/child/home/child-menu/child-menu.ts(32,48): error TS2531: Object is possibly 'null'.\n",
+          "status": "CompileError",
+          "location": {
+            "end": {
+              "column": 90,
+              "line": 32
+            },
+            "start": {
+              "column": 48,
+              "line": 32
+            }
+          }
+        },
+        {
+          "id": "11",
           "mutatorName": "ArrowFunction",
           "replacement": "() => undefined",
-          "statusReason": "src/app/features/child/home/child-menu/child-menu.ts(35,28): error TS2322: Type 'undefined' is not assignable to type 'boolean'.\n",
+          "statusReason": "src/app/features/child/home/child-menu/child-menu.ts(43,28): error TS2322: Type 'undefined' is not assignable to type 'boolean'.\n",
           "status": "CompileError",
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
-          "killedBy": [],
-          "coveredBy": [],
           "location": {
             "end": {
               "column": 39,
@@ -162998,18 +163047,48 @@
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@36:79-36:88\nStringLiteral: \"\"",
+          "id": "20",
+          "mutatorName": "OptionalChaining",
+          "replacement": "this.panel()?.nativeElement.querySelector<HTMLElement>('a, button').focus",
+          "statusReason": "src/app/features/child/home/child-menu/child-menu.ts(53,5): error TS2531: Object is possibly 'null'.\n",
+          "status": "CompileError",
+          "location": {
+            "end": {
+              "column": 79,
+              "line": 53
+            },
+            "start": {
+              "column": 5,
+              "line": 53
+            }
+          }
+        },
+        {
+          "id": "21",
+          "mutatorName": "OptionalChaining",
+          "replacement": "this.panel().nativeElement",
+          "statusReason": "src/app/features/child/home/child-menu/child-menu.ts(53,5): error TS2532: Object is possibly 'undefined'.\n",
+          "status": "CompileError",
+          "location": {
+            "end": {
+              "column": 32,
+              "line": 53
+            },
+            "start": {
+              "column": 5,
+              "line": 53
+            }
+          }
+        },
+        {
+          "id": "6",
           "mutatorName": "StringLiteral",
           "replacement": "\"\"",
-          "statusReason": "…ckdrop click,line=204,column=36::AssertionError: expected <body>…(1)</body> to be <button type=\"button\" …(3)>…(2)</button> // Object.is equality%0A%0A- Expected%0A+ Received%0A%0A@@ -1,5 +1,13 @@%0A+ <body>%0A+   <div%0A+     id=\"root81\"%0A+     ng-version=\"22.2.1\"%0A+   >%0A+     <div%0A+       class=\"relative\"%0A+     >%0A        <button%0A          aria-expanded=\"false\"%0A          aria-haspopup=\"true\"%0A          class=\"grid size-12 place-items-center rounded-2xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 focus:outline-none focus:ring-4 focus:ring-emerald-300\"%0A          type=\"button\"%0A@@ -22,5 +30,9 @@%0A            class=\"sr-only\"%0A          >%0A            Open menu%0A          </span>%0A        </button>%0A+       <!--container-->%0A+     </div>%0A+   </div>%0A+ </body>%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:204:36%0A%0A\n",
+          "statusReason": "…ular/platform-browser/fesm2022/_dom_renderer-chunk.mjs:\u001b[2m701:142\u001b[22m\u001b[39m\n\u001b[90m \u001b[2m❯\u001b[22m HTMLDivElement.callTheUserObjectsOperation ../../../../../../../../../home/kimips/source/repos/kim/worktrees/issue-126-clear-stale-child-menu-mutant/src/frontend/buddy/node_modules/jsdom/lib/generated/idl/EventListener.js:\u001b[2m26:30\u001b[22m\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\u001b[22m\u001b[39m\n\u001b[31m\u001b[1mSerialized Error:\u001b[22m\u001b[39m \u001b[90m{ code: -951 }\u001b[39m\n\u001b[31mThis error originated in \"\u001b[1msrc/app/features/child/home/child-menu/child-menu.spec.ts\u001b[22m\" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.\u001b[39m\n\u001b[31mThe last test to run before this error was \"\u001b[1mreturns focus to the toggle after closing via a backdrop click\u001b[22m\". This means either:\n- the error was thrown while Vitest was running this test, or\n- the error was thrown after the test completed, and this was the most recent test at that point.\u001b[39m\n\u001b[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\u001b[39m\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 29831,
           "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
             "0"
           ],
           "location": {
@@ -163024,18 +163103,58 @@
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@37:62-37:69\nStringLiteral: \"\"",
-          "mutatorName": "StringLiteral",
-          "replacement": "\"\"",
-          "statusReason": "…      Dark %0A+           </button>%0A+           <button%0A+             aria-pressed=\"true\"%0A+             class=\"rounded-lg px-2 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 transition hover:text-slate-950 dark:hover:text-slate-100 bg-white text-slate-950 shadow-sm dark:bg-slate-950 dark:text-slate-100\"%0A+             type=\"button\"%0A+           >%0A+              System %0A+           </button>%0A+           <!--container-->%0A+         </div>%0A+         <button%0A+           class=\"mt-3 block w-full rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500\"%0A+           type=\"button\"%0A+         >%0A+            Sign out %0A+         </button>%0A+       </div>%0A+       <!--container-->%0A+     </div>%0A+   </div>%0A+ </body>%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:174:36%0A%0A\n",
+          "id": "3",
+          "mutatorName": "EqualityOperator",
+          "replacement": "this.users.currentUser()?.showVisualTimers !== true",
+          "statusReason": "…00 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20\"\n  href=\"/child/timer\"\n  routerlink=\"/child/timer\"\n>\n   ⏱️ My timer \n</a>\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m255:37\u001b[22m\u001b[39m\n    \u001b[90m253|\u001b[39m       \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m \u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m254|\u001b[39m\n    \u001b[90m255|\u001b[39m       \u001b[34mexpect\u001b[39m(\u001b[34mmyTimerLink\u001b[39m(compiled))\u001b[33m.\u001b[39m\u001b[34mtoBeNull\u001b[39m()\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                                     \u001b[31m^\u001b[39m\n    \u001b[90m256|\u001b[39m     })\u001b[33m;\u001b[39m\n    \u001b[90m257|\u001b[39m   })\u001b[33m;\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m5 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m14 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:36:44\n\u001b[2m   Duration \u001b[22m 6.32s\u001b[2m (environment 43%, setup 29%, tests 22%, import 4%, transform 2%, worker 1%)\u001b[22m\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 28182,
           "killedBy": [
             "0"
           ],
-          "coveredBy": [
+          "location": {
+            "end": {
+              "column": 99,
+              "line": 32
+            },
+            "start": {
+              "column": 48,
+              "line": 32
+            }
+          }
+        },
+        {
+          "id": "5",
+          "mutatorName": "BooleanLiteral",
+          "replacement": "false",
+          "statusReason": "…00 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20\"\n  href=\"/child/timer\"\n  routerlink=\"/child/timer\"\n>\n   ⏱️ My timer \n</a>\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m255:37\u001b[22m\u001b[39m\n    \u001b[90m253|\u001b[39m       \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m \u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m254|\u001b[39m\n    \u001b[90m255|\u001b[39m       \u001b[34mexpect\u001b[39m(\u001b[34mmyTimerLink\u001b[39m(compiled))\u001b[33m.\u001b[39m\u001b[34mtoBeNull\u001b[39m()\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                                     \u001b[31m^\u001b[39m\n    \u001b[90m256|\u001b[39m     })\u001b[33m;\u001b[39m\n    \u001b[90m257|\u001b[39m   })\u001b[33m;\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m4 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m15 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:36:42\n\u001b[2m   Duration \u001b[22m 8.73s\u001b[2m (environment 57%, setup 19%, tests 15%, import 5%, transform 2%, worker 1%)\u001b[22m\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 30173,
+          "killedBy": [
+            "0"
+          ],
+          "location": {
+            "end": {
+              "column": 99,
+              "line": 32
+            },
+            "start": {
+              "column": 95,
+              "line": 32
+            }
+          }
+        },
+        {
+          "id": "7",
+          "mutatorName": "StringLiteral",
+          "replacement": "\"\"",
+          "statusReason": "…ver:border-slate-400 dark:hover:border-slate-500\"\n+           type=\"button\"\n+         >\n+            Sign out \n          </button>\n+       </div>\n+       <!--container-->\n+     </div>\n+   </div>\n+ </body>\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m189:36\u001b[22m\u001b[39m\n    \u001b[90m187|\u001b[39m     \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m \u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m188|\u001b[39m\n    \u001b[90m189|\u001b[39m     expect(document.activeElement).toBe(themeButton(compiled, 'Light')…\n    \u001b[90m   |\u001b[39m                                    \u001b[31m^\u001b[39m\n    \u001b[90m190|\u001b[39m   })\u001b[33m;\u001b[39m\n    \u001b[90m191|\u001b[39m\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m17 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:36:45\n\u001b[2m   Duration \u001b[22m 6.17s\u001b[2m (environment 50%, setup 21%, tests 17%, import 8%, transform 2%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 28341,
+          "killedBy": [
             "0"
           ],
           "location": {
@@ -163050,18 +163169,102 @@
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@39:35-39:40\nBooleanLiteral: true",
-          "mutatorName": "BooleanLiteral",
+          "id": "1",
+          "mutatorName": "ConditionalExpression",
           "replacement": "true",
-          "statusReason": "…r-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > returns focus to the toggle after closing via a backdrop click,line=193,column=42::TypeError: Cannot read properties of null (reading 'dispatchEvent')%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:193:42%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:200:5%0A%0A\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > ignores Escape while the menu is closed%2C leaving focus where it is,line=214,column=40::AssertionError: expected <button type=\"button\" …(3)>…(2)</button> not to be <button type=\"button\" …(3)>…(2)</button> // Object.is equality%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:214:40%0A%0A\n",
+          "statusReason": "…emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20\"\n  href=\"/child/timer\"\n  routerlink=\"/child/timer\"\n>\n   ⏱️ My timer \n</a>\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m255:37\u001b[22m\u001b[39m\n\n    \u001b[90m253|\u001b[39m       \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m \u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m254|\u001b[39m\n    \u001b[90m255|\u001b[39m       \u001b[34mexpect\u001b[39m(\u001b[34mmyTimerLink\u001b[39m(compiled))\u001b[33m.\u001b[39m\u001b[34mtoBeNull\u001b[39m()\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                                     \u001b[31m^\u001b[39m\n    \u001b[90m256|\u001b[39m     })\u001b[33m;\u001b[39m\n    \u001b[90m257|\u001b[39m   })\u001b[33m;\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m3 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m16 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:36:45\n\n\u001b[2m   Duration \u001b[22m 6.32s\u001b[2m (environment 48%, tests 24%, setup 18%, import 7%, transform 3%)\u001b[22m\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 28864,
           "killedBy": [
             "0"
           ],
-          "coveredBy": [
+          "location": {
+            "end": {
+              "column": 99,
+              "line": 32
+            },
+            "start": {
+              "column": 48,
+              "line": 32
+            }
+          }
+        },
+        {
+          "id": "2",
+          "mutatorName": "ConditionalExpression",
+          "replacement": "false",
+          "statusReason": "…r this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m242:33\u001b[22m\u001b[39m\n\n    \u001b[90m240|\u001b[39m\n    \u001b[90m241|\u001b[39m       \u001b[35mconst\u001b[39m link \u001b[33m=\u001b[39m \u001b[34mmyTimerLink\u001b[39m(compiled)\u001b[33m;\u001b[39m\n    \u001b[90m242|\u001b[39m       \u001b[34mexpect\u001b[39m(link\u001b[33m?.\u001b[39mtextContent)\u001b[33m.\u001b[39m\u001b[34mtoContain\u001b[39m(\u001b[32m'My timer'\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                                 \u001b[31m^\u001b[39m\n    \u001b[90m243|\u001b[39m\n    \u001b[90m244|\u001b[39m       \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m link\u001b[33m!\u001b[39m)\u001b[33m;\u001b[39m\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m17 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:36:44\n\u001b[2m   Duration \u001b[22m 8.16s\u001b[2m (environment 48%, tests 28%, setup 17%, import 5%, transform 2%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 29449,
+          "killedBy": [
+            "0"
+          ],
+          "location": {
+            "end": {
+              "column": 99,
+              "line": 32
+            },
+            "start": {
+              "column": 48,
+              "line": 32
+            }
+          }
+        },
+        {
+          "id": "0",
+          "mutatorName": "ArrowFunction",
+          "replacement": "() => undefined",
+          "statusReason": "… for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m242:33\u001b[22m\u001b[39m\n\n    \u001b[90m240|\u001b[39m\n    \u001b[90m241|\u001b[39m       \u001b[35mconst\u001b[39m link \u001b[33m=\u001b[39m \u001b[34mmyTimerLink\u001b[39m(compiled)\u001b[33m;\u001b[39m\n    \u001b[90m242|\u001b[39m       \u001b[34mexpect\u001b[39m(link\u001b[33m?.\u001b[39mtextContent)\u001b[33m.\u001b[39m\u001b[34mtoContain\u001b[39m(\u001b[32m'My timer'\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                                 \u001b[31m^\u001b[39m\n    \u001b[90m243|\u001b[39m\n    \u001b[90m244|\u001b[39m       \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m link\u001b[33m!\u001b[39m)\u001b[33m;\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m17 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:36:47\n\u001b[2m   Duration \u001b[22m 7.44s\u001b[2m (environment 40%, tests 33%, setup 21%, import 4%, transform 2%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 30100,
+          "killedBy": [
+            "0"
+          ],
+          "location": {
+            "end": {
+              "column": 99,
+              "line": 32
+            },
+            "start": {
+              "column": 42,
+              "line": 32
+            }
+          }
+        },
+        {
+          "id": "9",
+          "mutatorName": "BlockStatement",
+          "replacement": "{}",
+          "statusReason": "… assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string\u001b[39m\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m242:33\u001b[22m\u001b[39m\n    \u001b[90m240|\u001b[39m\n    \u001b[90m241|\u001b[39m       \u001b[35mconst\u001b[39m link \u001b[33m=\u001b[39m \u001b[34mmyTimerLink\u001b[39m(compiled)\u001b[33m;\u001b[39m\n    \u001b[90m242|\u001b[39m       \u001b[34mexpect\u001b[39m(link\u001b[33m?.\u001b[39mtextContent)\u001b[33m.\u001b[39m\u001b[34mtoContain\u001b[39m(\u001b[32m'My timer'\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                                 \u001b[31m^\u001b[39m\n    \u001b[90m243|\u001b[39m\n    \u001b[90m244|\u001b[39m       \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m link\u001b[33m!\u001b[39m)\u001b[33m;\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m15 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m4 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:36:49\n\u001b[2m   Duration \u001b[22m 9.05s\u001b[2m (environment 36%, setup 35%, tests 17%, import 7%, transform 3%, worker 1%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 33293,
+          "killedBy": [
+            "0"
+          ],
+          "location": {
+            "end": {
+              "column": 4,
+              "line": 49
+            },
+            "start": {
+              "column": 28,
+              "line": 42
+            }
+          }
+        },
+        {
+          "id": "8",
+          "mutatorName": "BooleanLiteral",
+          "replacement": "true",
+          "statusReason": "… assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string\u001b[39m\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m242:33\u001b[22m\u001b[39m\n    \u001b[90m240|\u001b[39m\n    \u001b[90m241|\u001b[39m       \u001b[35mconst\u001b[39m link \u001b[33m=\u001b[39m \u001b[34mmyTimerLink\u001b[39m(compiled)\u001b[33m;\u001b[39m\n    \u001b[90m242|\u001b[39m       \u001b[34mexpect\u001b[39m(link\u001b[33m?.\u001b[39mtextContent)\u001b[33m.\u001b[39m\u001b[34mtoContain\u001b[39m(\u001b[32m'My timer'\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                                 \u001b[31m^\u001b[39m\n    \u001b[90m243|\u001b[39m\n    \u001b[90m244|\u001b[39m       \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m link\u001b[33m!\u001b[39m)\u001b[33m;\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m17 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m2 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:37:16\n\u001b[2m   Duration \u001b[22m 6.39s\u001b[2m (environment 45%, setup 24%, tests 23%, import 5%, transform 3%, worker 1%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 32159,
+          "killedBy": [
             "0"
           ],
           "location": {
@@ -163076,263 +163279,14 @@
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@42:32-42:38\nBooleanLiteral: value",
-          "mutatorName": "BooleanLiteral",
-          "replacement": "value",
-          "statusReason": "…k:bg-slate-900 text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 focus:outline-none focus:ring-4 focus:ring-emerald-300\"%0A          type=\"button\"%0A@@ -22,5 +30,9 @@%0A            class=\"sr-only\"%0A          >%0A            Open menu%0A          </span>%0A        </button>%0A+       <!--container-->%0A+     </div>%0A+   </div>%0A+ </body>%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:204:36%0A%0A\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > returns focus to the toggle after closing via a backdrop click,line=193,column=42::TypeError: Cannot read properties of null (reading 'dispatchEvent')%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:193:42%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:200:5%0A%0A\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
-          "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 39,
-              "line": 43
-            },
-            "start": {
-              "column": 33,
-              "line": 43
-            }
-          }
-        },
-        {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@52:4-52:78\nOptionalChaining: this.panel()?.nativeElement.querySelector<HTMLElement>('a, button').focus",
-          "mutatorName": "OptionalChaining",
-          "replacement": "this.panel()?.nativeElement.querySelector<HTMLElement>('a, button').focus",
-          "statusReason": "src/app/features/child/home/child-menu/child-menu.ts(44,5): error TS2531: Object is possibly 'null'.\n",
-          "status": "CompileError",
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
-          "killedBy": [],
-          "coveredBy": [],
-          "location": {
-            "end": {
-              "column": 79,
-              "line": 53
-            },
-            "start": {
-              "column": 5,
-              "line": 53
-            }
-          }
-        },
-        {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@52:4-52:31\nOptionalChaining: this.panel().nativeElement",
-          "mutatorName": "OptionalChaining",
-          "replacement": "this.panel().nativeElement",
-          "statusReason": "src/app/features/child/home/child-menu/child-menu.ts(44,5): error TS2532: Object is possibly 'undefined'.\n",
-          "status": "CompileError",
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
-          "killedBy": [],
-          "coveredBy": [],
-          "location": {
-            "end": {
-              "column": 32,
-              "line": 53
-            },
-            "start": {
-              "column": 5,
-              "line": 53
-            }
-          }
-        },
-        {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@45:12-45:19\nConditionalExpression: true",
-          "mutatorName": "ConditionalExpression",
-          "replacement": "true",
-          "status": "Survived",
-          "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
-          "killedBy": [],
-          "coveredBy": [],
-          "location": {
-            "end": {
-              "column": 20,
-              "line": 46
-            },
-            "start": {
-              "column": 13,
-              "line": 46
-            }
-          }
-        },
-        {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@45:12-45:19\nConditionalExpression: false",
-          "mutatorName": "ConditionalExpression",
-          "replacement": "false",
-          "statusReason": "…      Dark %0A+           </button>%0A+           <button%0A+             aria-pressed=\"true\"%0A+             class=\"rounded-lg px-2 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 transition hover:text-slate-950 dark:hover:text-slate-100 bg-white text-slate-950 shadow-sm dark:bg-slate-950 dark:text-slate-100\"%0A+             type=\"button\"%0A+           >%0A+              System %0A+           </button>%0A+           <!--container-->%0A+         </div>%0A+         <button%0A+           class=\"mt-3 block w-full rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500\"%0A+           type=\"button\"%0A+         >%0A+            Sign out %0A+         </button>%0A+       </div>%0A+       <!--container-->%0A+     </div>%0A+   </div>%0A+ </body>%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:174:36%0A%0A\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
-          "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 20,
-              "line": 46
-            },
-            "start": {
-              "column": 13,
-              "line": 46
-            }
-          }
-        },
-        {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@45:25-47:5\nBlockStatement: {}",
+          "id": "23",
           "mutatorName": "BlockStatement",
           "replacement": "{}",
-          "statusReason": "…      Dark %0A+           </button>%0A+           <button%0A+             aria-pressed=\"true\"%0A+             class=\"rounded-lg px-2 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 transition hover:text-slate-950 dark:hover:text-slate-100 bg-white text-slate-950 shadow-sm dark:bg-slate-950 dark:text-slate-100\"%0A+             type=\"button\"%0A+           >%0A+              System %0A+           </button>%0A+           <!--container-->%0A+         </div>%0A+         <button%0A+           class=\"mt-3 block w-full rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500\"%0A+           type=\"button\"%0A+         >%0A+            Sign out %0A+         </button>%0A+       </div>%0A+       <!--container-->%0A+     </div>%0A+   </div>%0A+ </body>%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:174:36%0A%0A\n",
+          "statusReason": "…:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20\"\n  href=\"/child/timer\"\n  routerlink=\"/child/timer\"\n>\n   ⏱️ My timer \n</a>\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m245:37\u001b[22m\u001b[39m\n    \u001b[90m243|\u001b[39m\n    \u001b[90m244|\u001b[39m       \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m link\u001b[33m!\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m245|\u001b[39m       \u001b[34mexpect\u001b[39m(\u001b[34mmyTimerLink\u001b[39m(compiled))\u001b[33m.\u001b[39m\u001b[34mtoBeNull\u001b[39m()\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                                     \u001b[31m^\u001b[39m\n    \u001b[90m246|\u001b[39m     })\u001b[33m;\u001b[39m\n    \u001b[90m247|\u001b[39m\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m6 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m13 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 15:37:17\n\n\u001b[2m   Duration \u001b[22m 5.87s\u001b[2m (environment 46%, setup 23%, tests 22%, import 5%, transform 4%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 31838,
           "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 6,
-              "line": 48
-            },
-            "start": {
-              "column": 26,
-              "line": 46
-            }
-          }
-        },
-        {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@46:22-46:49\nArrowFunction: () => undefined",
-          "mutatorName": "ArrowFunction",
-          "replacement": "() => undefined",
-          "statusReason": "…      Dark %0A+           </button>%0A+           <button%0A+             aria-pressed=\"true\"%0A+             class=\"rounded-lg px-2 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 transition hover:text-slate-950 dark:hover:text-slate-100 bg-white text-slate-950 shadow-sm dark:bg-slate-950 dark:text-slate-100\"%0A+             type=\"button\"%0A+           >%0A+              System %0A+           </button>%0A+           <!--container-->%0A+         </div>%0A+         <button%0A+           class=\"mt-3 block w-full rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500\"%0A+           type=\"button\"%0A+         >%0A+            Sign out %0A+         </button>%0A+       </div>%0A+       <!--container-->%0A+     </div>%0A+   </div>%0A+ </body>%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:174:36%0A%0A\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
-          "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 50,
-              "line": 47
-            },
-            "start": {
-              "column": 23,
-              "line": 47
-            }
-          }
-        },
-        {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@46:51-46:78\nObjectLiteral: {}",
-          "mutatorName": "ObjectLiteral",
-          "replacement": "{}",
-          "statusReason": "…      Dark %0A+           </button>%0A+           <button%0A+             aria-pressed=\"true\"%0A+             class=\"rounded-lg px-2 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 transition hover:text-slate-950 dark:hover:text-slate-100 bg-white text-slate-950 shadow-sm dark:bg-slate-950 dark:text-slate-100\"%0A+             type=\"button\"%0A+           >%0A+              System %0A+           </button>%0A+           <!--container-->%0A+         </div>%0A+         <button%0A+           class=\"mt-3 block w-full rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500\"%0A+           type=\"button\"%0A+         >%0A+            Sign out %0A+         </button>%0A+       </div>%0A+       <!--container-->%0A+     </div>%0A+   </div>%0A+ </body>%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:174:36%0A%0A\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
-          "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 79,
-              "line": 47
-            },
-            "start": {
-              "column": 52,
-              "line": 47
-            }
-          }
-        },
-        {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@51:33-53:3\nBlockStatement: {}",
-          "mutatorName": "BlockStatement",
-          "replacement": "{}",
-          "statusReason": "…      Dark %0A+           </button>%0A+           <button%0A+             aria-pressed=\"true\"%0A+             class=\"rounded-lg px-2 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 transition hover:text-slate-950 dark:hover:text-slate-100 bg-white text-slate-950 shadow-sm dark:bg-slate-950 dark:text-slate-100\"%0A+             type=\"button\"%0A+           >%0A+              System %0A+           </button>%0A+           <!--container-->%0A+         </div>%0A+         <button%0A+           class=\"mt-3 block w-full rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500\"%0A+           type=\"button\"%0A+         >%0A+            Sign out %0A+         </button>%0A+       </div>%0A+       <!--container-->%0A+     </div>%0A+   </div>%0A+ </body>%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:174:36%0A%0A\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
-          "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 4,
-              "line": 54
-            },
-            "start": {
-              "column": 34,
-              "line": 52
-            }
-          }
-        },
-        {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@52:59-52:70\nStringLiteral: \"\"",
-          "mutatorName": "StringLiteral",
-          "replacement": "\"\"",
-          "statusReason": "…      Dark %0A+           </button>%0A+           <button%0A+             aria-pressed=\"true\"%0A+             class=\"rounded-lg px-2 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 transition hover:text-slate-950 dark:hover:text-slate-100 bg-white text-slate-950 shadow-sm dark:bg-slate-950 dark:text-slate-100\"%0A+             type=\"button\"%0A+           >%0A+              System %0A+           </button>%0A+           <!--container-->%0A+         </div>%0A+         <button%0A+           class=\"mt-3 block w-full rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500\"%0A+           type=\"button\"%0A+         >%0A+            Sign out %0A+         </button>%0A+       </div>%0A+       <!--container-->%0A+     </div>%0A+   </div>%0A+ </body>%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:174:36%0A%0A\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
-          "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 71,
-              "line": 53
-            },
-            "start": {
-              "column": 60,
-              "line": 53
-            }
-          }
-        },
-        {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@55:26-57:3\nBlockStatement: {}",
-          "mutatorName": "BlockStatement",
-          "replacement": "{}",
-          "statusReason": "…ror file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > returns focus to the toggle after closing via Escape,line=203,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:203:66%0A%0A\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > returns focus to the toggle after closing via a backdrop click,line=203,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:203:66%0A%0A\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
-          "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
             "0"
           ],
           "location": {
@@ -163347,18 +163301,14 @@
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@56:18-56:23\nBooleanLiteral: true",
+          "id": "25",
           "mutatorName": "BooleanLiteral",
           "replacement": "true",
-          "statusReason": "…rror file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > returns focus to the toggle after closing via Escape,line=203,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:203:66%0A%0A\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > returns focus to the toggle after closing via a backdrop click,line=203,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:203:66%0A%0A\n",
+          "statusReason": "…:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20\"\n  href=\"/child/timer\"\n  routerlink=\"/child/timer\"\n>\n   ⏱️ My timer \n</a>\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m245:37\u001b[22m\u001b[39m\n\n    \u001b[90m243|\u001b[39m\n    \u001b[90m244|\u001b[39m       \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m link\u001b[33m!\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m245|\u001b[39m       \u001b[34mexpect\u001b[39m(\u001b[34mmyTimerLink\u001b[39m(compiled))\u001b[33m.\u001b[39m\u001b[34mtoBeNull\u001b[39m()\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                                     \u001b[31m^\u001b[39m\n    \u001b[90m246|\u001b[39m     })\u001b[33m;\u001b[39m\n    \u001b[90m247|\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m6 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m13 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 15:37:15\n\n\u001b[2m   Duration \u001b[22m 7.48s\u001b[2m (environment 47%, tests 27%, setup 17%, import 7%, transform 2%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 32350,
           "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
             "0"
           ],
           "location": {
@@ -163373,96 +163323,58 @@
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@61:28-64:3\nBlockStatement: {}",
+          "id": "15",
           "mutatorName": "BlockStatement",
           "replacement": "{}",
-          "statusReason": "…rror file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > returns focus to the toggle after closing via Escape,line=203,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:203:66%0A%0A\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > returns focus to the toggle after closing via a backdrop click,line=203,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:203:66%0A%0A\n",
+          "statusReason": "…slate-400 dark:hover:border-slate-500\"\n+           type=\"button\"\n+         >\n+            Sign out \n          </button>\n+       </div>\n+       <!--container-->\n+     </div>\n+   </div>\n+ </body>\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m189:36\u001b[22m\u001b[39m\n    \u001b[90m187|\u001b[39m     \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m \u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m188|\u001b[39m\n    \u001b[90m189|\u001b[39m     expect(document.activeElement).toBe(themeButton(compiled, 'Light')…\n    \u001b[90m   |\u001b[39m                                    \u001b[31m^\u001b[39m\n    \u001b[90m190|\u001b[39m   })\u001b[33m;\u001b[39m\n    \u001b[90m191|\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m17 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 15:37:15\n\n\u001b[2m   Duration \u001b[22m 7.61s\u001b[2m (environment 44%, tests 29%, setup 18%, import 6%, transform 2%, worker 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 32448,
           "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
             "0"
           ],
           "location": {
             "end": {
-              "column": 4,
-              "line": 65
+              "column": 6,
+              "line": 48
             },
             "start": {
-              "column": 29,
-              "line": 62
+              "column": 22,
+              "line": 46
             }
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@62:4-62:17\nCallExpression: ;",
-          "mutatorName": "CallExpression",
-          "replacement": ";",
-          "statusReason": "…rror file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > returns focus to the toggle after closing via Escape,line=203,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:203:66%0A%0A\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > returns focus to the toggle after closing via a backdrop click,line=203,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:203:66%0A%0A\n",
+          "id": "18",
+          "mutatorName": "ObjectLiteral",
+          "replacement": "{}",
+          "statusReason": "…⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\u001b[22m\u001b[39m\n\u001b[31m\u001b[1mSerialized Error:\u001b[22m\u001b[39m \u001b[90m{ code: -203 }\u001b[39m\n\u001b[31mThis error originated in \"\u001b[1msrc/app/features/child/home/child-menu/child-menu.spec.ts\u001b[22m\" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.\u001b[39m\n\u001b[31mThe last test to run before this error was \"\u001b[1mis not offered when the child has not loaded yet\u001b[22m\". This means either:\n- the error was thrown while Vitest was running this test, or\n- the error was thrown after the test completed, and this was the most recent test at that point.\u001b[39m\n\u001b[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m17 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\n\u001b[2m     Errors \u001b[22m \u001b[1m\u001b[31m17 errors\u001b[39m\u001b[22m\n\u001b[2m   Start at \u001b[22m 15:37:16\n\n\u001b[2m   Duration \u001b[22m 6.96s\u001b[2m (environment 44%, setup 25%, tests 20%, import 6%, transform 3%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 32563,
           "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
             "0"
           ],
           "location": {
             "end": {
-              "column": 18,
-              "line": 63
+              "column": 79,
+              "line": 47
             },
             "start": {
-              "column": 5,
-              "line": 63
+              "column": 52,
+              "line": 47
             }
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@63:4-63:41\nCallExpression: ;",
-          "mutatorName": "CallExpression",
-          "replacement": ";",
-          "statusReason": "…ckdrop click,line=204,column=36::AssertionError: expected <body>…(1)</body> to be <button type=\"button\" …(3)>…(2)</button> // Object.is equality%0A%0A- Expected%0A+ Received%0A%0A@@ -1,5 +1,13 @@%0A+ <body>%0A+   <div%0A+     id=\"root81\"%0A+     ng-version=\"22.2.1\"%0A+   >%0A+     <div%0A+       class=\"relative\"%0A+     >%0A        <button%0A          aria-expanded=\"false\"%0A          aria-haspopup=\"true\"%0A          class=\"grid size-12 place-items-center rounded-2xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 focus:outline-none focus:ring-4 focus:ring-emerald-300\"%0A          type=\"button\"%0A@@ -22,5 +30,9 @@%0A            class=\"sr-only\"%0A          >%0A            Open menu%0A          </span>%0A        </button>%0A+       <!--container-->%0A+     </div>%0A+   </div>%0A+ </body>%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:204:36%0A%0A\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
-          "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 42,
-              "line": 64
-            },
-            "start": {
-              "column": 5,
-              "line": 64
-            }
-          }
-        },
-        {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@67:29-71:3\nBlockStatement: {}",
+          "id": "29",
           "mutatorName": "BlockStatement",
           "replacement": "{}",
-          "statusReason": "…p 4%)\u001b[22m\n\n\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > closes the open menu when Escape is pressed,line=114,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:114:66%0A%0A\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > returns focus to the toggle after closing via Escape,line=203,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:203:66%0A%0A\n",
+          "statusReason": "…e 'false' // Object.is equality\u001b[39m\n\n\nExpected: \"false\"\nReceived: \"true\"\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m218:66\u001b[22m\u001b[39m\n\n    \u001b[90m216|\u001b[39m     fixture\u001b[33m.\u001b[39m\u001b[34mdetectChanges\u001b[39m()\u001b[33m;\u001b[39m\n    \u001b[90m217|\u001b[39m\n    \u001b[90m218|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n    \u001b[90m   |\u001b[39m                                                                  \u001b[31m^\u001b[39m\n    \u001b[90m219|\u001b[39m     \u001b[34mexpect\u001b[39m(document\u001b[33m.\u001b[39mactiveElement)\u001b[33m.\u001b[39m\u001b[34mtoBe\u001b[39m(\u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m220|\u001b[39m   })\u001b[33m;\u001b[39m\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m17 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 15:37:16\n\n\u001b[2m   Duration \u001b[22m 7.11s\u001b[2m (environment 39%, setup 28%, tests 25%, import 6%, transform 3%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 32114,
           "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
             "0"
           ],
           "location": {
@@ -163477,70 +163389,168 @@
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@68:8-68:19\nConditionalExpression: true",
-          "mutatorName": "ConditionalExpression",
-          "replacement": "true",
-          "statusReason": "…^\u001b[39m\n    \u001b[90m215|\u001b[39m   });\n    \u001b[90m216|\u001b[39m });\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m11 passed\u001b[39m\u001b[22m\u001b[90m (12)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m200 passed\u001b[39m\u001b[22m\u001b[90m (201)\u001b[39m\n\u001b[2m   Start at \u001b[22m 07:28:51\n\u001b[2m   Duration \u001b[22m 14.71s\u001b[2m (environment 39%, tests 30%, transform 19%, import 7%, setup 5%)\u001b[22m\n\n\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > ignores Escape while the menu is closed%2C leaving focus where it is,line=214,column=40::AssertionError: expected <button type=\"button\" …(3)>…(2)</button> not to be <button type=\"button\" …(3)>…(2)</button> // Object.is equality%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:214:40%0A%0A\n",
+          "id": "12",
+          "mutatorName": "BooleanLiteral",
+          "replacement": "value",
+          "statusReason": "…his assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m242:33\u001b[22m\u001b[39m\n\n    \u001b[90m240|\u001b[39m\n    \u001b[90m241|\u001b[39m       \u001b[35mconst\u001b[39m link \u001b[33m=\u001b[39m \u001b[34mmyTimerLink\u001b[39m(compiled)\u001b[33m;\u001b[39m\n    \u001b[90m242|\u001b[39m       \u001b[34mexpect\u001b[39m(link\u001b[33m?.\u001b[39mtextContent)\u001b[33m.\u001b[39m\u001b[34mtoContain\u001b[39m(\u001b[32m'My timer'\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                                 \u001b[31m^\u001b[39m\n    \u001b[90m243|\u001b[39m\n    \u001b[90m244|\u001b[39m       \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m link\u001b[33m!\u001b[39m)\u001b[33m;\u001b[39m\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m15 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m4 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 15:37:18\n\n\u001b[2m   Duration \u001b[22m 5.94s\u001b[2m (environment 50%, tests 21%, setup 19%, import 8%, transform 2%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 33397,
           "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
             "0"
           ],
           "location": {
             "end": {
-              "column": 20,
-              "line": 69
+              "column": 39,
+              "line": 43
             },
             "start": {
-              "column": 9,
-              "line": 69
+              "column": 33,
+              "line": 43
             }
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@68:8-68:19\nConditionalExpression: false",
-          "mutatorName": "ConditionalExpression",
-          "replacement": "false",
-          "statusReason": "…p 4%)\u001b[22m\n\n\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > closes the open menu when Escape is pressed,line=114,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:114:66%0A%0A\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > returns focus to the toggle after closing via Escape,line=203,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:203:66%0A%0A\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
-          "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 20,
-              "line": 69
-            },
-            "start": {
-              "column": 9,
-              "line": 69
-            }
-          }
-        },
-        {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@68:21-70:5\nBlockStatement: {}",
+          "id": "26",
           "mutatorName": "BlockStatement",
           "replacement": "{}",
-          "statusReason": "…up 4%)\u001b[22m\n\n\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > closes the open menu when Escape is pressed,line=114,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:114:66%0A%0A\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > returns focus to the toggle after closing via Escape,line=203,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:203:66%0A%0A\n",
+          "statusReason": "…' to be 'false' // Object.is equality\u001b[39m\n\nExpected: \"false\"\nReceived: \"true\"\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m218:66\u001b[22m\u001b[39m\n\n    \u001b[90m216|\u001b[39m     fixture\u001b[33m.\u001b[39m\u001b[34mdetectChanges\u001b[39m()\u001b[33m;\u001b[39m\n    \u001b[90m217|\u001b[39m\n    \u001b[90m218|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n    \u001b[90m   |\u001b[39m                                                                  \u001b[31m^\u001b[39m\n    \u001b[90m219|\u001b[39m     \u001b[34mexpect\u001b[39m(document\u001b[33m.\u001b[39mactiveElement)\u001b[33m.\u001b[39m\u001b[34mtoBe\u001b[39m(\u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m220|\u001b[39m   })\u001b[33m;\u001b[39m\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m4 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m15 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:37:18\n\u001b[2m   Duration \u001b[22m 6.10s\u001b[2m (environment 40%, tests 27%, setup 25%, import 5%, transform 2%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 33340,
           "killedBy": [
             "0"
           ],
-          "coveredBy": [
+          "location": {
+            "end": {
+              "column": 4,
+              "line": 65
+            },
+            "start": {
+              "column": 29,
+              "line": 62
+            }
+          }
+        },
+        {
+          "id": "22",
+          "mutatorName": "StringLiteral",
+          "replacement": "\"\"",
+          "statusReason": "…r:border-slate-400 dark:hover:border-slate-500\"\n+           type=\"button\"\n+         >\n+            Sign out \n          </button>\n+       </div>\n+       <!--container-->\n+     </div>\n+   </div>\n+ </body>\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m189:36\u001b[22m\u001b[39m\n    \u001b[90m187|\u001b[39m     \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m \u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m188|\u001b[39m\n    \u001b[90m189|\u001b[39m     expect(document.activeElement).toBe(themeButton(compiled, 'Light')…\n    \u001b[90m   |\u001b[39m                                    \u001b[31m^\u001b[39m\n    \u001b[90m190|\u001b[39m   })\u001b[33m;\u001b[39m\n    \u001b[90m191|\u001b[39m\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m17 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 15:37:16\n\n\u001b[2m   Duration \u001b[22m 7.85s\u001b[2m (environment 46%, tests 22%, setup 22%, import 7%, transform 2%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 33883,
+          "killedBy": [
+            "0"
+          ],
+          "location": {
+            "end": {
+              "column": 71,
+              "line": 53
+            },
+            "start": {
+              "column": 60,
+              "line": 53
+            }
+          }
+        },
+        {
+          "id": "27",
+          "mutatorName": "CallExpression",
+          "replacement": ";",
+          "statusReason": "…' // Object.is equality\u001b[39m\n\nExpected: \"false\"\nReceived: \"true\"\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m218:66\u001b[22m\u001b[39m\n    \u001b[90m216|\u001b[39m     fixture\u001b[33m.\u001b[39m\u001b[34mdetectChanges\u001b[39m()\u001b[33m;\u001b[39m\n    \u001b[90m217|\u001b[39m\n    \u001b[90m218|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n    \u001b[90m   |\u001b[39m                                                                  \u001b[31m^\u001b[39m\n    \u001b[90m219|\u001b[39m     \u001b[34mexpect\u001b[39m(document\u001b[33m.\u001b[39mactiveElement)\u001b[33m.\u001b[39m\u001b[34mtoBe\u001b[39m(\u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m220|\u001b[39m   })\u001b[33m;\u001b[39m\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m4 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m15 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 15:37:18\n\n\u001b[2m   Duration \u001b[22m 7.04s\u001b[2m (environment 49%, tests 23%, setup 19%, import 4%, transform 3%, worker 1%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 34013,
+          "killedBy": [
+            "0"
+          ],
+          "location": {
+            "end": {
+              "column": 18,
+              "line": 63
+            },
+            "start": {
+              "column": 5,
+              "line": 63
+            }
+          }
+        },
+        {
+          "id": "19",
+          "mutatorName": "BlockStatement",
+          "replacement": "{}",
+          "statusReason": "…order-slate-400 dark:hover:border-slate-500\"\n+           type=\"button\"\n+         >\n+            Sign out \n          </button>\n+       </div>\n+       <!--container-->\n+     </div>\n+   </div>\n+ </body>\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m189:36\u001b[22m\u001b[39m\n\n    \u001b[90m187|\u001b[39m     \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m \u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m188|\u001b[39m\n    \u001b[90m189|\u001b[39m     expect(document.activeElement).toBe(themeButton(compiled, 'Light')…\n    \u001b[90m   |\u001b[39m                                    \u001b[31m^\u001b[39m\n    \u001b[90m190|\u001b[39m   })\u001b[33m;\u001b[39m\n    \u001b[90m191|\u001b[39m\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m17 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 15:37:18\n\n\u001b[2m   Duration \u001b[22m 6.87s\u001b[2m (environment 40%, tests 34%, setup 20%, import 4%, transform 2%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 34533,
+          "killedBy": [
+            "0"
+          ],
+          "location": {
+            "end": {
+              "column": 4,
+              "line": 54
+            },
+            "start": {
+              "column": 34,
+              "line": 52
+            }
+          }
+        },
+        {
+          "id": "28",
+          "mutatorName": "CallExpression",
+          "replacement": ";",
+          "statusReason": "…         class=\"sr-only\"\n          >\n            Open menu\n          </span>\n        </button>\n+       <!--container-->\n+     </div>\n+   </div>\n+ </body>\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m219:36\u001b[22m\u001b[39m\n\n    \u001b[90m217|\u001b[39m\n    \u001b[90m218|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n    \u001b[90m219|\u001b[39m     \u001b[34mexpect\u001b[39m(document\u001b[33m.\u001b[39mactiveElement)\u001b[33m.\u001b[39m\u001b[34mtoBe\u001b[39m(\u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                                    \u001b[31m^\u001b[39m\n    \u001b[90m220|\u001b[39m   })\u001b[33m;\u001b[39m\n    \u001b[90m221|\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m17 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 15:37:18\n\n\u001b[2m   Duration \u001b[22m 7.33s\u001b[2m (environment 37%, tests 35%, setup 18%, import 6%, transform 3%, worker 1%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 33995,
+          "killedBy": [
+            "0"
+          ],
+          "location": {
+            "end": {
+              "column": 42,
+              "line": 64
+            },
+            "start": {
+              "column": 5,
+              "line": 64
+            }
+          }
+        },
+        {
+          "id": "17",
+          "mutatorName": "ArrowFunction",
+          "replacement": "() => undefined",
+          "statusReason": "…over:border-slate-400 dark:hover:border-slate-500\"\n+           type=\"button\"\n+         >\n+            Sign out \n          </button>\n+       </div>\n+       <!--container-->\n+     </div>\n+   </div>\n+ </body>\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m189:36\u001b[22m\u001b[39m\n\n    \u001b[90m187|\u001b[39m     \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m \u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m188|\u001b[39m\n    \u001b[90m189|\u001b[39m     expect(document.activeElement).toBe(themeButton(compiled, 'Light')…\n    \u001b[90m   |\u001b[39m                                    \u001b[31m^\u001b[39m\n    \u001b[90m190|\u001b[39m   })\u001b[33m;\u001b[39m\n    \u001b[90m191|\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m17 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:37:18\n\n\u001b[2m   Duration \u001b[22m 7.86s\u001b[2m (environment 43%, setup 25%, tests 24%, import 5%, transform 2%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 35376,
+          "killedBy": [
+            "0"
+          ],
+          "location": {
+            "end": {
+              "column": 50,
+              "line": 47
+            },
+            "start": {
+              "column": 23,
+              "line": 47
+            }
+          }
+        },
+        {
+          "id": "32",
+          "mutatorName": "BlockStatement",
+          "replacement": "{}",
+          "statusReason": "…' to be 'false' // Object.is equality\u001b[39m\n\n\nExpected: \"false\"\nReceived: \"true\"\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m218:66\u001b[22m\u001b[39m\n    \u001b[90m216|\u001b[39m     fixture\u001b[33m.\u001b[39m\u001b[34mdetectChanges\u001b[39m()\u001b[33m;\u001b[39m\n    \u001b[90m217|\u001b[39m\n    \u001b[90m218|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n    \u001b[90m   |\u001b[39m                                                                  \u001b[31m^\u001b[39m\n    \u001b[90m219|\u001b[39m     \u001b[34mexpect\u001b[39m(document\u001b[33m.\u001b[39mactiveElement)\u001b[33m.\u001b[39m\u001b[34mtoBe\u001b[39m(\u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m220|\u001b[39m   })\u001b[33m;\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m17 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:37:20\n\n\u001b[2m   Duration \u001b[22m 5.95s\u001b[2m (environment 38%, tests 26%, setup 24%, import 8%, transform 3%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 26046,
+          "killedBy": [
             "0"
           ],
           "location": {
@@ -163555,18 +163565,58 @@
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@69:6-69:21\nCallExpression: ;",
-          "mutatorName": "CallExpression",
-          "replacement": ";",
-          "statusReason": "…p 4%)\u001b[22m\n\n\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > closes the open menu when Escape is pressed,line=114,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:114:66%0A%0A\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > returns focus to the toggle after closing via Escape,line=203,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:203:66%0A%0A\n",
+          "id": "31",
+          "mutatorName": "ConditionalExpression",
+          "replacement": "false",
+          "statusReason": "… to be 'false' // Object.is equality\u001b[39m\n\nExpected: \"false\"\nReceived: \"true\"\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m218:66\u001b[22m\u001b[39m\n    \u001b[90m216|\u001b[39m     fixture\u001b[33m.\u001b[39m\u001b[34mdetectChanges\u001b[39m()\u001b[33m;\u001b[39m\n    \u001b[90m217|\u001b[39m\n    \u001b[90m218|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n    \u001b[90m   |\u001b[39m                                                                  \u001b[31m^\u001b[39m\n    \u001b[90m219|\u001b[39m     \u001b[34mexpect\u001b[39m(document\u001b[33m.\u001b[39mactiveElement)\u001b[33m.\u001b[39m\u001b[34mtoBe\u001b[39m(\u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m220|\u001b[39m   })\u001b[33m;\u001b[39m\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m17 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 15:37:19\n\n\u001b[2m   Duration \u001b[22m 7.02s\u001b[2m (environment 46%, setup 25%, tests 22%, import 5%, transform 3%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 34098,
           "killedBy": [
             "0"
           ],
-          "coveredBy": [
+          "location": {
+            "end": {
+              "column": 20,
+              "line": 69
+            },
+            "start": {
+              "column": 9,
+              "line": 69
+            }
+          }
+        },
+        {
+          "id": "30",
+          "mutatorName": "ConditionalExpression",
+          "replacement": "true",
+          "statusReason": "…Error\u001b[22m: expected <button type=\"button\" …(3)>…(2)</button> not to be <button type=\"button\" …(3)>…(2)</button> // Object.is equality\u001b[39m\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m229:40\u001b[22m\u001b[39m\n\n    \u001b[90m227|\u001b[39m\n    \u001b[90m228|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n    \u001b[90m229|\u001b[39m     \u001b[34mexpect\u001b[39m(document\u001b[33m.\u001b[39mactiveElement)\u001b[33m.\u001b[39mnot\u001b[33m.\u001b[39m\u001b[34mtoBe\u001b[39m(\u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                                        \u001b[31m^\u001b[39m\n    \u001b[90m230|\u001b[39m   })\u001b[33m;\u001b[39m\n    \u001b[90m231|\u001b[39m\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m18 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:37:20\n\u001b[2m   Duration \u001b[22m 7.89s\u001b[2m (environment 44%, tests 26%, setup 23%, import 3%, transform 3%, worker 1%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 33355,
+          "killedBy": [
+            "0"
+          ],
+          "location": {
+            "end": {
+              "column": 20,
+              "line": 69
+            },
+            "start": {
+              "column": 9,
+              "line": 69
+            }
+          }
+        },
+        {
+          "id": "33",
+          "mutatorName": "CallExpression",
+          "replacement": ";",
+          "statusReason": "…/ Object.is equality\u001b[39m\n\n\nExpected: \"false\"\nReceived: \"true\"\n\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m218:66\u001b[22m\u001b[39m\n\n    \u001b[90m216|\u001b[39m     fixture\u001b[33m.\u001b[39m\u001b[34mdetectChanges\u001b[39m()\u001b[33m;\u001b[39m\n    \u001b[90m217|\u001b[39m\n    \u001b[90m218|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n    \u001b[90m   |\u001b[39m                                                                  \u001b[31m^\u001b[39m\n    \u001b[90m219|\u001b[39m     \u001b[34mexpect\u001b[39m(document\u001b[33m.\u001b[39mactiveElement)\u001b[33m.\u001b[39m\u001b[34mtoBe\u001b[39m(\u001b[34mtoggleButton\u001b[39m(compiled))\u001b[33m;\u001b[39m\n    \u001b[90m220|\u001b[39m   })\u001b[33m;\u001b[39m\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m2 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m17 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 15:37:36\n\n\u001b[2m   Duration \u001b[22m 4.92s\u001b[2m (environment 46%, setup 24%, tests 22%, import 5%, transform 2%, worker 1%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 18189,
+          "killedBy": [
             "0"
           ],
           "location": {
@@ -163581,44 +163631,14 @@
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@73:44-75:3\nBlockStatement: {}",
-          "mutatorName": "BlockStatement",
-          "replacement": "{}",
-          "statusReason": "…lledWith('dark');\n    \u001b[90m147|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m11 passed\u001b[39m\u001b[22m\u001b[90m (12)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m200 passed\u001b[39m\u001b[22m\u001b[90m (201)\u001b[39m\n\u001b[2m   Start at \u001b[22m 07:31:48\n\u001b[2m   Duration \u001b[22m 14.48s\u001b[2m (environment 48%, tests 27%, transform 15%, import 6%, setup 4%)\u001b[22m\n\n\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > switches the theme mode when a theme button is clicked%2C without closing the menu,line=145,column=21::AssertionError: expected \"vi.fn()\" to be called 1 times, but got 0 times%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:145:21%0A%0A\n",
-          "status": "Killed",
-          "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
-          "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
-            "0"
-          ],
-          "location": {
-            "end": {
-              "column": 4,
-              "line": 76
-            },
-            "start": {
-              "column": 45,
-              "line": 74
-            }
-          }
-        },
-        {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@74:4-74:29\nCallExpression: ;",
+          "id": "35",
           "mutatorName": "CallExpression",
           "replacement": ";",
-          "statusReason": "…alledWith('dark');\n    \u001b[90m147|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m11 passed\u001b[39m\u001b[22m\u001b[90m (12)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m200 passed\u001b[39m\u001b[22m\u001b[90m (201)\u001b[39m\n\u001b[2m   Start at \u001b[22m 07:32:30\n\u001b[2m   Duration \u001b[22m 14.65s\u001b[2m (environment 46%, tests 26%, transform 18%, import 6%, setup 5%)\u001b[22m\n\n\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > switches the theme mode when a theme button is clicked%2C without closing the menu,line=145,column=21::AssertionError: expected \"vi.fn()\" to be called 1 times, but got 0 times%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:145:21%0A%0A\n",
+          "statusReason": "…m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m152:21\u001b[22m\u001b[39m\n\n    \u001b[90m150|\u001b[39m     \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m \u001b[34mthemeButton\u001b[39m(compiled\u001b[33m,\u001b[39m \u001b[32m'Dark'\u001b[39m)\u001b[33m!\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m151|\u001b[39m\n    \u001b[90m152|\u001b[39m     \u001b[34mexpect\u001b[39m(setMode)\u001b[33m.\u001b[39m\u001b[34mtoHaveBeenCalledTimes\u001b[39m(\u001b[34m1\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                     \u001b[31m^\u001b[39m\n    \u001b[90m153|\u001b[39m     \u001b[34mexpect\u001b[39m(setMode)\u001b[33m.\u001b[39m\u001b[34mtoHaveBeenCalledWith\u001b[39m(\u001b[32m'dark'\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m154|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m18 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:37:37\n\u001b[2m   Duration \u001b[22m 4.77s\u001b[2m (environment 45%, setup 26%, tests 20%, import 6%, transform 3%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 18945,
           "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
             "0"
           ],
           "location": {
@@ -163633,18 +163653,36 @@
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@77:27-80:3\nBlockStatement: {}",
-          "mutatorName": "BlockStatement",
-          "replacement": "{}",
-          "statusReason": "…    expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n    \u001b[90m126|\u001b[39m     expect(signOutButton(compiled)).toBeNull();\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m11 passed\u001b[39m\u001b[22m\u001b[90m (12)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m200 passed\u001b[39m\u001b[22m\u001b[90m (201)\u001b[39m\n\u001b[2m   Start at \u001b[22m 07:33:15\n\u001b[2m   Duration \u001b[22m 14.09s\u001b[2m (environment 48%, tests 26%, transform 15%, import 6%, setup 5%)\u001b[22m\n\n\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > logs out and closes the menu when sign out is clicked,line=124,column=20::AssertionError: expected \"vi.fn()\" to be called 1 times, but got 0 times%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:124:20%0A%0A\n",
+          "id": "38",
+          "mutatorName": "CallExpression",
+          "replacement": ";",
+          "statusReason": "… but got 0 times\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m131:20\u001b[22m\u001b[39m\n\n    \u001b[90m129|\u001b[39m     \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m \u001b[34msignOutButton\u001b[39m(compiled)\u001b[33m!\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m130|\u001b[39m\n    \u001b[90m131|\u001b[39m     \u001b[34mexpect\u001b[39m(logout)\u001b[33m.\u001b[39m\u001b[34mtoHaveBeenCalledTimes\u001b[39m(\u001b[34m1\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                    \u001b[31m^\u001b[39m\n    \u001b[90m132|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n    \u001b[90m133|\u001b[39m     \u001b[34mexpect\u001b[39m(\u001b[34msignOutButton\u001b[39m(compiled))\u001b[33m.\u001b[39m\u001b[34mtoBeNull\u001b[39m()\u001b[33m;\u001b[39m\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m18 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:37:37\n\u001b[2m   Duration \u001b[22m 5.07s\u001b[2m (environment 51%, setup 24%, tests 18%, import 4%, transform 2%, worker 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 18412,
           "killedBy": [
             "0"
           ],
-          "coveredBy": [
+          "location": {
+            "end": {
+              "column": 24,
+              "line": 80
+            },
+            "start": {
+              "column": 5,
+              "line": 80
+            }
+          }
+        },
+        {
+          "id": "36",
+          "mutatorName": "BlockStatement",
+          "replacement": "{}",
+          "statusReason": "… got 0 times\u001b[39m\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m131:20\u001b[22m\u001b[39m\n\n    \u001b[90m129|\u001b[39m     \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m \u001b[34msignOutButton\u001b[39m(compiled)\u001b[33m!\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m130|\u001b[39m\n    \u001b[90m131|\u001b[39m     \u001b[34mexpect\u001b[39m(logout)\u001b[33m.\u001b[39m\u001b[34mtoHaveBeenCalledTimes\u001b[39m(\u001b[34m1\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                    \u001b[31m^\u001b[39m\n    \u001b[90m132|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n    \u001b[90m133|\u001b[39m     \u001b[34mexpect\u001b[39m(\u001b[34msignOutButton\u001b[39m(compiled))\u001b[33m.\u001b[39m\u001b[34mtoBeNull\u001b[39m()\u001b[33m;\u001b[39m\n\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m18 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:37:37\n\n\u001b[2m   Duration \u001b[22m 5.07s\u001b[2m (environment 50%, setup 23%, tests 19%, import 5%, transform 2%, worker 1%)\u001b[22m\n\n\n",
+          "status": "Killed",
+          "testsCompleted": 1,
+          "duration": 19090,
+          "killedBy": [
             "0"
           ],
           "location": {
@@ -163659,18 +163697,14 @@
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@78:4-78:17\nCallExpression: ;",
+          "id": "37",
           "mutatorName": "CallExpression",
           "replacement": ";",
-          "statusReason": "…\u001b[39m\n    \u001b[90m126|\u001b[39m     expect(signOutButton(compiled)).toBeNull();\n    \u001b[90m127|\u001b[39m   });\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m11 passed\u001b[39m\u001b[22m\u001b[90m (12)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m200 passed\u001b[39m\u001b[22m\u001b[90m (201)\u001b[39m\n\u001b[2m   Start at \u001b[22m 07:34:01\n\u001b[2m   Duration \u001b[22m 16.69s\u001b[2m (environment 47%, transform 21%, tests 20%, import 8%, setup 4%)\u001b[22m\n\n\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > logs out and closes the menu when sign out is clicked,line=125,column=66::AssertionError: expected 'true' to be 'false' // Object.is equality%0A%0AExpected: \"false\"%0AReceived: \"true\"%0A%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:125:66%0A%0A\n",
+          "statusReason": "…'false' // Object.is equality\u001b[39m\n\nExpected: \"false\"\nReceived: \"true\"\n\n\u001b[36m \u001b[2m❯\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m132:66\u001b[22m\u001b[39m\n\n    \u001b[90m130|\u001b[39m\n    \u001b[90m131|\u001b[39m     \u001b[34mexpect\u001b[39m(logout)\u001b[33m.\u001b[39m\u001b[34mtoHaveBeenCalledTimes\u001b[39m(\u001b[34m1\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m132|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n    \u001b[90m   |\u001b[39m                                                                  \u001b[31m^\u001b[39m\n    \u001b[90m133|\u001b[39m     \u001b[34mexpect\u001b[39m(\u001b[34msignOutButton\u001b[39m(compiled))\u001b[33m.\u001b[39m\u001b[34mtoBeNull\u001b[39m()\u001b[33m;\u001b[39m\n    \u001b[90m134|\u001b[39m   })\u001b[33m;\u001b[39m\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m18 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\u001b[2m   Start at \u001b[22m 15:37:37\n\u001b[2m   Duration \u001b[22m 5.00s\u001b[2m (environment 51%, setup 21%, tests 20%, import 4%, transform 3%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 19146,
           "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
             "0"
           ],
           "location": {
@@ -163685,33 +163719,29 @@
           }
         },
         {
-          "id": "src/app/features/child/home/child-menu/child-menu.ts@79:4-79:23\nCallExpression: ;",
-          "mutatorName": "CallExpression",
-          "replacement": ";",
-          "statusReason": "….23s\u001b[2m (environment 39%, transform 27%, tests 23%, import 8%, setup 4%)\u001b[22m\n\n\n\u001b[2m  Transform \u001b[22m \u001b[30m\u001b[42m buddy \u001b[49m\u001b[39m \u001b[33mtransforming modules took 13.21s\u001b[39m\u001b[2m · 27% of tracked time, re-done on every run\u001b[22m\n\u001b[2m            \u001b[22m \u001b[2mpersist transforms across runs with \u001b[22m\u001b[33mfsModuleCache: true\u001b[39m\n\u001b[2m            \u001b[22m \u001b[2mon CI this only helps when the cache directory is persisted between runs\u001b[22m\n\u001b[2m            \u001b[22m \u001b[2mlearn more: https://vitest.dev/guide/improving-performance#caching-between-reruns\u001b[22m\n\n\n::error file=/home/runner/work/buddy/buddy/src/frontend/buddy/.stryker-tmp/sandbox-hCnR0Z/src/app/features/child/home/child-menu/child-menu.spec.ts,title=[buddy] src/app/features/child/home/child-menu/child-menu.spec.ts > ChildMenu > logs out and closes the menu when sign out is clicked,line=124,column=20::AssertionError: expected \"vi.fn()\" to be called 1 times, but got 0 times%0A ❯ src/app/features/child/home/child-menu/child-menu.spec.ts:124:20%0A%0A\n",
+          "id": "34",
+          "mutatorName": "BlockStatement",
+          "replacement": "{}",
+          "statusReason": "…\u001b[22m src/app/features/child/home/child-menu/child-menu.spec.ts:\u001b[2m152:21\u001b[22m\u001b[39m\n\n    \u001b[90m150|\u001b[39m     \u001b[34mfireClick\u001b[39m(fixture\u001b[33m,\u001b[39m \u001b[34mthemeButton\u001b[39m(compiled\u001b[33m,\u001b[39m \u001b[32m'Dark'\u001b[39m)\u001b[33m!\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m151|\u001b[39m\n    \u001b[90m152|\u001b[39m     \u001b[34mexpect\u001b[39m(setMode)\u001b[33m.\u001b[39m\u001b[34mtoHaveBeenCalledTimes\u001b[39m(\u001b[34m1\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m   |\u001b[39m                     \u001b[31m^\u001b[39m\n    \u001b[90m153|\u001b[39m     \u001b[34mexpect\u001b[39m(setMode)\u001b[33m.\u001b[39m\u001b[34mtoHaveBeenCalledWith\u001b[39m(\u001b[32m'dark'\u001b[39m)\u001b[33m;\u001b[39m\n    \u001b[90m154|\u001b[39m     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe(…\n\n\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\u001b[22m\u001b[39m\n\n\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m18 passed\u001b[39m\u001b[22m\u001b[90m (19)\u001b[39m\n\n\u001b[2m   Start at \u001b[22m 15:37:37\n\n\u001b[2m   Duration \u001b[22m 4.85s\u001b[2m (environment 48%, setup 24%, tests 21%, import 4%, transform 3%, worker 1%)\u001b[22m\n\n\n",
           "status": "Killed",
           "testsCompleted": 1,
-          "relativeFileName": "src/app/features/child/home/child-menu/child-menu.ts",
-          "static": false,
+          "duration": 19640,
           "killedBy": [
-            "0"
-          ],
-          "coveredBy": [
             "0"
           ],
           "location": {
             "end": {
-              "column": 24,
-              "line": 80
+              "column": 4,
+              "line": 76
             },
             "start": {
-              "column": 5,
-              "line": 80
+              "column": 45,
+              "line": 74
             }
           }
         }
       ],
-      "source": "import {\n  Component,\n  ElementRef,\n  HostListener,\n  Injector,\n  computed,\n  afterNextRender,\n  inject,\n  signal,\n  viewChild,\n} from '@angular/core';\n\nimport { RouterLink } from '@angular/router';\n\nimport { AuthService } from '../../../../core/auth.service';\nimport { TranslatePipe } from '../../../../core/i18n/translate.pipe';\nimport { THEME_MODES, ThemeMode } from '../../../../core/theme';\nimport { ThemeService } from '../../../../core/theme.service';\nimport { UsersService } from '../../../../core/users.service';\n\n@Component({\n  selector: 'app-child-menu',\n  imports: [RouterLink, TranslatePipe],\n  templateUrl: './child-menu.html',\n})\nexport class ChildMenu {\n  private readonly auth = inject(AuthService);\n  protected readonly theme = inject(ThemeService);\n  private readonly users = inject(UsersService);\n\n  // \"My timer\" only while a guardian has timers on (the page's guard says the same).\n  protected readonly timersOn = computed(() => this.users.currentUser()?.showVisualTimers === true);\n\n  protected readonly themeModes = THEME_MODES;\n\n  private readonly injector = inject(Injector);\n  private readonly trigger = viewChild.required<ElementRef<HTMLButtonElement>>('trigger');\n  private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');\n\n  protected readonly open = signal(false);\n\n  protected toggle(): void {\n    this.open.update((value) => !value);\n\n    // Stryker disable next-line ConditionalExpression: after closing, the panel is gone, so focusFirstItem() finds nothing to focus\n    if (this.open()) {\n      afterNextRender(() => this.focusFirstItem(), { injector: this.injector });\n    }\n  }\n\n  // Runs once the panel has rendered, so keyboard users land inside the menu they just opened.\n  private focusFirstItem(): void {\n    this.panel()?.nativeElement.querySelector<HTMLElement>('a, button')?.focus();\n  }\n\n  protected close(): void {\n    this.open.set(false);\n  }\n\n  // Backdrop click / Escape: close and hand focus back to the toggle, since the focused control\n  // inside the panel is about to be removed from the DOM.\n  protected dismiss(): void {\n    this.close();\n    this.trigger().nativeElement.focus();\n  }\n\n  @HostListener('document:keydown.escape')\n  protected onEscape(): void {\n    if (this.open()) {\n      this.dismiss();\n    }\n  }\n\n  protected setTheme(mode: ThemeMode): void {\n    this.theme.setMode(mode);\n  }\n\n  protected logout(): void {\n    this.close();\n    this.auth.logout();\n  }\n}\n"
+      "source": "import {\n  Component,\n  ElementRef,\n  HostListener,\n  Injector,\n  computed,\n  afterNextRender,\n  inject,\n  signal,\n  viewChild,\n} from '@angular/core';\n\nimport { RouterLink } from '@angular/router';\n\nimport { AuthService } from '../../../../core/auth.service';\nimport { TranslatePipe } from '../../../../core/i18n/translate.pipe';\nimport { THEME_MODES, ThemeMode } from '../../../../core/theme';\nimport { ThemeService } from '../../../../core/theme.service';\nimport { UsersService } from '../../../../core/users.service';\n\n@Component({\n  selector: 'app-child-menu',\n  imports: [RouterLink, TranslatePipe],\n  templateUrl: './child-menu.html',\n})\nexport class ChildMenu {\n  private readonly auth = inject(AuthService);\n  protected readonly theme = inject(ThemeService);\n  private readonly users = inject(UsersService);\n\n  // \"My timer\" only while a guardian has timers on (the page's guard says the same).\n  protected readonly timersOn = computed(() => this.users.currentUser()?.showVisualTimers === true);\n\n  protected readonly themeModes = THEME_MODES;\n\n  private readonly injector = inject(Injector);\n  private readonly trigger = viewChild.required<ElementRef<HTMLButtonElement>>('trigger');\n  private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');\n\n  protected readonly open = signal(false);\n\n  protected toggle(): void {\n    this.open.update((value) => !value);\n\n    // Stryker disable next-line ConditionalExpression: equivalent mutant, once the menu is closed there is no panel, so focusFirstItem() has nothing to focus\n    if (this.open()) {\n      afterNextRender(() => this.focusFirstItem(), { injector: this.injector });\n    }\n  }\n\n  // Runs once the panel has rendered, so keyboard users land inside the menu they just opened.\n  private focusFirstItem(): void {\n    this.panel()?.nativeElement.querySelector<HTMLElement>('a, button')?.focus();\n  }\n\n  protected close(): void {\n    this.open.set(false);\n  }\n\n  // Backdrop click / Escape: close and hand focus back to the toggle, since the focused control\n  // inside the panel is about to be removed from the DOM.\n  protected dismiss(): void {\n    this.close();\n    this.trigger().nativeElement.focus();\n  }\n\n  @HostListener('document:keydown.escape')\n  protected onEscape(): void {\n    if (this.open()) {\n      this.dismiss();\n    }\n  }\n\n  protected setTheme(mode: ThemeMode): void {\n    this.theme.setMode(mode);\n  }\n\n  protected logout(): void {\n    this.close();\n    this.auth.logout();\n  }\n}\n"
     },
     "src/app/core/token-storage.ts": {
       "language": "typescript",
