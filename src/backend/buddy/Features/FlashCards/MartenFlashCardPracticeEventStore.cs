@@ -1,6 +1,9 @@
 using buddy.Common.Concurrency;
 
+using JasperFx.Events;
+
 using Marten;
+using Marten.Events;
 
 namespace buddy.Features.FlashCards;
 
@@ -21,6 +24,19 @@ public sealed class MartenFlashCardPracticeEventStore(IFlashCardsStore store) : 
         var snapshot = await session.LoadAsync<FlashCardPracticeSnapshot>(id.Value, cancellationToken);
 
         return snapshot?.FlashCardPractice;
+    }
+
+    public async Task<FlashCardGameFinished?> FindFinishedGameAsync(FlashCardPracticeId id, Guid gameId, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+        var events = await session.Events.QueryAllRawEvents()
+            .Where(e => e.StreamId == id.Value && e.EventTypesAre(typeof(FlashCardGameFinished)))
+            .ToListAsync(cancellationToken);
+
+        return events
+            .Select(e => e.Data)
+            .OfType<FlashCardGameFinished>()
+            .FirstOrDefault(e => e.GameId == gameId);
     }
 
     public async Task<long?> ReadVersionAsync(FlashCardPracticeId id, CancellationToken cancellationToken)

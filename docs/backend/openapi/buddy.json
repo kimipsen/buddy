@@ -21511,6 +21511,322 @@
         ]
       }
     },
+    "/flash-cards/me/sets": {
+      "get": {
+        "tags": [
+          "FlashCards"
+        ],
+        "operationId": "ListMyFlashCardSets",
+        "parameters": [
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "An ETag from an earlier 200; when it still matches, the answer is 304 with no body.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "A strong validator: a hash of this body.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-cache (revalidate with If-None-Match before reuse).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyFlashCardSetResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "not_a_buddy_member",
+              "user_not_provisioned"
+            ]
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/flash-cards/me/sets/{setId}/deck": {
+      "get": {
+        "tags": [
+          "FlashCards"
+        ],
+        "operationId": "GetFlashCardDeck",
+        "parameters": [
+          {
+            "name": "setId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "tierId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "An ETag from an earlier 200; when it still matches, the answer is 304 with no body.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "A strong validator: a hash of this body.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-cache (revalidate with If-None-Match before reuse).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlashCardDeckResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "not_a_buddy_member",
+              "user_not_provisioned"
+            ]
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/flash-cards/me/games": {
+      "post": {
+        "tags": [
+          "FlashCards"
+        ],
+        "operationId": "FinishFlashCardGame",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again.",
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FinishFlashCardGameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinishFlashCardGameResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060invalid_idempotency_key\u0060, \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "invalid_idempotency_key",
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Unprocessable Entity. ErrorEnvelope code: \u0060game_id_reused\u0060, \u0060game_no_longer_available\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "game_id_reused",
+              "game_no_longer_available"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060not_a_buddy_member\u0060, \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "not_a_buddy_member",
+              "user_not_provisioned"
+            ]
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060, \u0060idempotency_key_in_progress\u0060, \u0060idempotency_key_reused\u0060, \u0060idempotency_response_unavailable\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict",
+              "idempotency_key_in_progress",
+              "idempotency_key_reused",
+              "idempotency_response_unavailable"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
     "/sleep-diary/children/{childId}/entries/{date}": {
       "put": {
         "tags": [
@@ -29412,6 +29728,57 @@
         ],
         "type": "string"
       },
+      "DeckCard": {
+        "required": [
+          "key",
+          "question",
+          "answer",
+          "math"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "math": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DeckMathResponse"
+              }
+            ]
+          }
+        }
+      },
+      "DeckMathResponse": {
+        "required": [
+          "left",
+          "operation",
+          "right"
+        ],
+        "type": "object",
+        "properties": {
+          "left": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "operation": {
+            "$ref": "#/components/schemas/MathOperation"
+          },
+          "right": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "DisplayModeResponse": {
         "required": [
           "displayMode"
@@ -29946,6 +30313,100 @@
         ],
         "type": "string"
       },
+      "FinishFlashCardGameRequest": {
+        "required": [
+          "gameId",
+          "setId",
+          "tierId",
+          "results"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "setId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tierId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "results": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/FinishFlashCardGameResultRequest"
+            }
+          }
+        }
+      },
+      "FinishFlashCardGameResponse": {
+        "required": [
+          "stars",
+          "totalStars",
+          "game"
+        ],
+        "type": "object",
+        "properties": {
+          "stars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalStars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "game": {
+            "$ref": "#/components/schemas/FlashCardGameResponse"
+          }
+        }
+      },
+      "FinishFlashCardGameResultRequest": {
+        "required": [
+          "slot",
+          "cardKey",
+          "knewFirstTime"
+        ],
+        "type": "object",
+        "properties": {
+          "slot": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cardKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "knewFirstTime": {
+            "type": "boolean"
+          },
+          "repeatedAnswer": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "question": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "answer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "FirstThenBoardResponse": {
         "required": [
           "revision",
@@ -30064,6 +30525,20 @@
           "Unlocked"
         ],
         "type": "string"
+      },
+      "FlashCardDeckResponse": {
+        "required": [
+          "cards"
+        ],
+        "type": "object",
+        "properties": {
+          "cards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeckCard"
+            }
+          }
+        }
       },
       "FlashCardGameResponse": {
         "required": [
@@ -32197,6 +32672,38 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FeelingCheckInResponse"
+            }
+          }
+        }
+      },
+      "MyFlashCardSetResponse": {
+        "required": [
+          "setId",
+          "setName",
+          "kind",
+          "uniqueCardCount",
+          "tiers"
+        ],
+        "type": "object",
+        "properties": {
+          "setId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "setName": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/FlashCardSetKind"
+          },
+          "uniqueCardCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlashCardTierResponse"
             }
           }
         }

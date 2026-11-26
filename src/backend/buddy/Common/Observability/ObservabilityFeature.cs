@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 using buddy.Common.Health;
 using buddy.Common.Versioning;
+using buddy.Features.FlashCards;
 
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -34,7 +35,7 @@ public static class ObservabilityFeature
     private const string SecretRouteParameter = "token";
 
     // ActivitySource and Meter names: Npgsql covers every Marten query, Wolverine every handler.
-    private static readonly string[] Sources = ["Npgsql", "Wolverine"];
+    private static readonly string[] Sources = ["Npgsql", "Wolverine", FlashCardsMetrics.MeterName];
 
     public static WebApplicationBuilder AddObservabilityFeature(this WebApplicationBuilder builder)
     {

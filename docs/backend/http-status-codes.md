@@ -223,14 +223,19 @@ Use for semantically invalid payloads when syntax is correct.
 
 Typical Buddy use:
 
-- not used in this project
+- `POST /flash-cards/me/games` (`FinishFlashCardGame`): two business-rule
+  rejections that are not a bad field, each with its own `ErrorEnvelope` code:
+  `game_id_reused` (the game id already belongs to a game of another set or
+  tier) and `game_no_longer_available` (the guardian disabled the set or removed
+  the tier before any stars were awarded for the game)
 
 Team rule (resolved):
 
 - `400` is used uniformly for all validation failures, structural and
   semantic alike — see the [validation rules analysis](analysis/validation-rules.md).
-  `422` is not used anywhere; this keeps the status-code decision independent
-  of _why_ a request was rejected.
+  `422` is reserved for the two flash-card finish rejections above, which are
+  state conflicts with a code the client acts on, not invalid fields; keep new
+  validation on `400`.
 
 ### 429 Too Many Requests
 

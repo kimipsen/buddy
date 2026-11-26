@@ -2772,6 +2772,54 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/flash-cards/me/sets': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ListMyFlashCardSets'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/flash-cards/me/sets/{setId}/deck': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['GetFlashCardDeck'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/flash-cards/me/games': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['FinishFlashCardGame'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/sleep-diary/children/{childId}/entries/{date}': {
     parameters: {
       query?: never;
@@ -3989,6 +4037,19 @@ export interface components {
     };
     /** @enum {string} */
     DayOfWeek: 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
+    DeckCard: {
+      key: string;
+      question: string;
+      answer: string;
+      math: null | components['schemas']['DeckMathResponse'];
+    };
+    DeckMathResponse: {
+      /** Format: int32 */
+      left: number;
+      operation: components['schemas']['MathOperation'];
+      /** Format: int32 */
+      right: number;
+    };
     DisplayModeResponse: {
       displayMode: components['schemas']['FeelingsDisplayMode'];
     };
@@ -4172,6 +4233,31 @@ export interface components {
       | 'Body';
     /** @enum {string} */
     FeelingZone: 'Blue' | 'Green' | 'Yellow' | 'Red';
+    FinishFlashCardGameRequest: {
+      /** Format: uuid */
+      gameId: string;
+      /** Format: uuid */
+      setId: string;
+      /** Format: uuid */
+      tierId: string;
+      results: null | components['schemas']['FinishFlashCardGameResultRequest'][];
+    };
+    FinishFlashCardGameResponse: {
+      /** Format: int32 */
+      stars: number;
+      /** Format: int32 */
+      totalStars: number;
+      game: components['schemas']['FlashCardGameResponse'];
+    };
+    FinishFlashCardGameResultRequest: {
+      /** Format: int32 */
+      slot: number;
+      cardKey: null | string;
+      knewFirstTime: boolean;
+      repeatedAnswer?: null | boolean;
+      question?: null | string;
+      answer?: null | string;
+    };
     FirstThenBoardResponse: {
       /** Format: int32 */
       revision: number;
@@ -4200,6 +4286,9 @@ export interface components {
     };
     /** @enum {string} */
     FirstThenState: 'None' | 'Waiting' | 'Unlocked';
+    FlashCardDeckResponse: {
+      cards: components['schemas']['DeckCard'][];
+    };
     FlashCardGameResponse: {
       /** Format: uuid */
       gameId: string;
@@ -4798,6 +4887,15 @@ export interface components {
       promptTimes: string[];
       displayMode: components['schemas']['FeelingsDisplayMode'];
       checkIns: components['schemas']['FeelingCheckInResponse'][];
+    };
+    MyFlashCardSetResponse: {
+      /** Format: uuid */
+      setId: string;
+      setName: string;
+      kind: components['schemas']['FlashCardSetKind'];
+      /** Format: int32 */
+      uniqueCardCount: number;
+      tiers: components['schemas']['FlashCardTierResponse'][];
     };
     MyTransitionWarningsResponse: {
       enabled: boolean;
@@ -18715,6 +18813,189 @@ export interface operations {
       };
       /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ListMyFlashCardSets: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MyFlashCardSetResponse'][];
+        };
+      };
+      304: components['responses']['NotModified'];
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  GetFlashCardDeck: {
+    parameters: {
+      query: {
+        tierId: string;
+      };
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path: {
+        setId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FlashCardDeckResponse'];
+        };
+      };
+      304: components['responses']['NotModified'];
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  FinishFlashCardGame: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FinishFlashCardGameRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FinishFlashCardGameResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`, `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Unprocessable Entity. ErrorEnvelope code: `game_id_reused`, `game_no_longer_available`. */
+      422: {
         headers: {
           [name: string]: unknown;
         };

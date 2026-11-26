@@ -18,9 +18,21 @@ public sealed record FlashCardGameSummary(
     DateOnly FinishedOn,
     FlashCardSetId SetId,
     string SetName,
+    FlashCardTierId TierId,
     int CardCount,
     int KnownCount,
-    int Stars);
+    int Stars)
+{
+    public static FlashCardGameSummary From(FlashCardGameFinished finished) => new(
+        finished.GameId,
+        finished.FinishedOn,
+        finished.SetId,
+        finished.SetName,
+        finished.TierId,
+        finished.CardCount,
+        finished.Results.Count(r => r.KnewFirstTime),
+        finished.Stars);
+}
 
 // One stream per child: which sets are enabled with which tiers, and the finished games. Not part of
 // ChildProgress, which is read on every dashboard and snapshotted with every star.
@@ -75,14 +87,7 @@ public sealed record FlashCardPractice(
 
     private static ImmutableList<FlashCardGameSummary> AddGame(ImmutableList<FlashCardGameSummary> games, FlashCardGameFinished finished)
     {
-        var added = games.Add(new FlashCardGameSummary(
-            finished.GameId,
-            finished.FinishedOn,
-            finished.SetId,
-            finished.SetName,
-            finished.CardCount,
-            finished.Results.Count(r => r.KnewFirstTime),
-            finished.Stars));
+        var added = games.Add(FlashCardGameSummary.From(finished));
 
         return added.Count > MaxGames ? added.RemoveRange(0, added.Count - MaxGames) : added;
     }

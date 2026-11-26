@@ -71,6 +71,39 @@ internal static class FlashCardTestHelpers
     public static async Task<ChildFlashCardsResponse> GetChildAsync(BuddyApiFixture fixture, string token, Guid childId) =>
         (await GetAsync(fixture, token, $"/flash-cards/children/{childId}")).ReadAsJson<ChildFlashCardsResponse>();
 
+    public static async Task<FlashCardDeckResponse> GetDeckAsync(BuddyApiFixture fixture, string token, Guid setId, Guid tierId) =>
+        (await GetAsync(fixture, token, $"/flash-cards/me/sets/{setId}/deck?tierId={tierId}")).ReadAsJson<FlashCardDeckResponse>();
+
+    // One result per deck slot; the first knownCount slots are "I knew it" (all of them by default).
+    public static object[] ResultsFor(FlashCardDeckResponse deck, int? knownCount = null) =>
+        [.. deck.Cards.Select((card, slot) => new { Slot = slot, CardKey = card.Key, KnewFirstTime = slot < (knownCount ?? deck.Cards.Count) })];
+
+    public static Task<IScenarioResult> FinishAsync(
+        BuddyApiFixture fixture, string token, Guid gameId, Guid setId, Guid tierId, object results, int status = 200, string? idempotencyKey = null) =>
+        fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+
+            if (idempotencyKey is not null)
+            {
+                _.WithRequestHeader("Idempotency-Key", idempotencyKey);
+            }
+
+            _.Post.Json(new { GameId = gameId, SetId = setId, TierId = tierId, Results = results }).ToUrl("/flash-cards/me/games");
+            _.StatusCodeShouldBe(status);
+        });
+
+    // Loads the deck for the tier and finishes it with every card known.
+    public static async Task<FinishFlashCardGameResponse> PlayAsync(BuddyApiFixture fixture, string childToken, Guid setId, FlashCardTierResponse tier, Guid? gameId = null)
+    {
+        var deck = await GetDeckAsync(fixture, childToken, setId, tier.Id);
+
+        return (await FinishAsync(fixture, childToken, gameId ?? Guid.NewGuid(), setId, tier.Id, ResultsFor(deck))).ReadAsJson<FinishFlashCardGameResponse>();
+    }
+
+    public static async Task<int> TotalStarsAsync(BuddyApiFixture fixture, string childToken) =>
+        (await GetAsync(fixture, childToken, "/progress/me")).ReadAsJson<buddy.Features.Progress.ProgressSummary>().TotalStars;
+
     // A guardian with one child, and that child's own token.
     public static async Task<(string GuardianToken, Guid GuardianId, ChildResponseDto Child, string ChildToken)> CreateFamilyAsync(BuddyApiFixture fixture)
     {

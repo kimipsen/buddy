@@ -103,3 +103,37 @@ Content-Type: application/json
 # Disable a set for a child (guardian only)
 DELETE {{buddy_HostAddress}}/flash-cards/children/{{childId}}/sets/{{setId}}
 Authorization: Bearer {{guardianToken}}
+
+###
+
+# The sets the signed-in child can play (the child only; a guardian gets 404)
+GET {{buddy_HostAddress}}/flash-cards/me/sets
+Authorization: Bearer {{childToken}}
+
+###
+
+# A deck for one tier: exactly the tier's card count, repeats included. Nothing is stored and there
+# is no game id: the client generates it when the game starts.
+GET {{buddy_HostAddress}}/flash-cards/me/sets/{{setId}}/deck?tierId={{tierId}}
+Authorization: Bearer {{childToken}}
+
+###
+
+# Finish a game: awards the tier's stars (once per set per day, topping up for a higher tier) and
+# records it in the history. gameId is the client's id for this game; a retry reuses it with a new
+# Idempotency-Key. One result per slot, slots 0..N-1. question/answer are only an echo for a card the
+# guardian removed mid-game. 422 codes: game_id_reused, game_no_longer_available.
+POST {{buddy_HostAddress}}/flash-cards/me/games
+Authorization: Bearer {{childToken}}
+Idempotency-Key: {{$guid}}
+Content-Type: application/json
+
+{
+  "gameId": "00000000-0000-7000-8000-000000000001",
+  "setId": "{{setId}}",
+  "tierId": "{{tierId}}",
+  "results": [
+    { "slot": 0, "cardKey": "add:4+5", "knewFirstTime": true },
+    { "slot": 1, "cardKey": "add:2+3", "knewFirstTime": false, "repeatedAnswer": true }
+  ]
+}
