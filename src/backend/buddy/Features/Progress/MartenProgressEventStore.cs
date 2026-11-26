@@ -1,5 +1,10 @@
 using buddy.Common.Concurrency;
 
+using JasperFx.Events;
+
+using Marten;
+using Marten.Events;
+
 namespace buddy.Features.Progress;
 
 public sealed class MartenProgressEventStore(IProgressStore store) : IProgressEventStore
@@ -35,9 +40,22 @@ public sealed class MartenProgressEventStore(IProgressStore store) : IProgressEv
         await using var session = store.LightweightSession();
         session.StartTrackedStream(id.Value, payloads);
 
-        await session.SaveChangesAsync(cancellationToken);
+        await session.SaveStartedStreamAsync("progress", cancellationToken);
 
         return events;
+    }
+
+    public async Task<FlashCardStarsAwarded?> FindFlashCardAwardAsync(ProgressId id, Guid gameId, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+        var events = await session.Events.QueryAllRawEvents()
+            .Where(e => e.StreamId == id.Value && e.EventTypesAre(typeof(FlashCardStarsAwarded)))
+            .ToListAsync(cancellationToken);
+
+        return events
+            .Select(e => e.Data)
+            .OfType<FlashCardStarsAwarded>()
+            .FirstOrDefault(e => e.GameId == gameId);
     }
 
     public async Task AppendAsync(ProgressId id, IReadOnlyCollection<ProgressEvent> events, CancellationToken cancellationToken)

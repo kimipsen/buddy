@@ -4,6 +4,7 @@ using System.Text.Json;
 
 using Alba;
 
+using buddy.Features.Progress;
 using buddy.Features.Users;
 using buddy.IntegrationTests.Common.Concurrency;
 
@@ -142,6 +143,10 @@ public sealed class BuddyApiFixture : IAsyncLifetime
                 // Inert unless a test arms it -- see ConcurrentWriterUserEventStore.
                 services.AddSingleton<MartenUserEventStore>();
                 services.Replace(ServiceDescriptor.Singleton<IUserEventStore, ConcurrentWriterUserEventStore>());
+
+                // Same for the progress store -- see ConcurrentWriterProgressEventStore.
+                services.AddSingleton<MartenProgressEventStore>();
+                services.Replace(ServiceDescriptor.Singleton<IProgressEventStore, ConcurrentWriterProgressEventStore>());
             });
         })
             .WithConfiguration(_configOverrides);

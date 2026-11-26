@@ -72,6 +72,34 @@ public static class GoalPostResolver
         }
     }
 
+    // Every goal post -- real or extrapolated -- whose threshold lies in (fromExclusive, toInclusive],
+    // ascending. A flash card award can jump several thresholds at once, unlike a task star's +1.
+    // Like AtThreshold it only reports what was crossed; the caller skips thresholds already in
+    // ChildProgress.UnlockedMilestones (a revoked star never removes one, so recrossing it later
+    // emits nothing, exactly as for a task star).
+    public static IReadOnlyList<ResolvedGoalPost> CrossedBetween(ImmutableArray<GoalPost> configured, int fromExclusive, int toInclusive)
+    {
+        List<ResolvedGoalPost> crossed = [];
+        var index = 0;
+
+        while (true)
+        {
+            var resolved = At(configured, index);
+
+            if (resolved.Threshold > toInclusive)
+            {
+                return crossed;
+            }
+
+            if (resolved.Threshold > fromExclusive)
+            {
+                crossed.Add(resolved);
+            }
+
+            index++;
+        }
+    }
+
     // Resolves what a child should currently see: the highest goal post already reached (null if
     // none yet), and the next one ahead.
     public static (ResolvedGoalPost? Current, ResolvedGoalPost Next) Resolve(ImmutableArray<GoalPost> configured, int totalStars)

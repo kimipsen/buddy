@@ -15,7 +15,8 @@ public union ProgressEvent(
     RewardRequested,
     RewardRequestApproved,
     RewardRequestDeclined,
-    RewardRequestCancelled
+    RewardRequestCancelled,
+    FlashCardStarsAwarded
 )
 {
     public static ProgressEvent FromPayload(object payload) => payload switch
@@ -30,6 +31,7 @@ public union ProgressEvent(
         RewardRequestApproved e => e,
         RewardRequestDeclined e => e,
         RewardRequestCancelled e => e,
+        FlashCardStarsAwarded e => e,
         _ => throw new ArgumentException($"Unknown progress event payload: {payload.GetType().Name}", nameof(payload)),
     };
 
@@ -45,6 +47,7 @@ public union ProgressEvent(
         RewardRequestApproved => nameof(RewardRequestApproved),
         RewardRequestDeclined => nameof(RewardRequestDeclined),
         RewardRequestCancelled => nameof(RewardRequestCancelled),
+        FlashCardStarsAwarded => nameof(FlashCardStarsAwarded),
     };
 }
 
@@ -82,3 +85,10 @@ public sealed record RewardRequestDeclined(ProgressId Id, RewardRequestId Reques
 
 // The child withdraws their own pending request: the reservation is released.
 public sealed record RewardRequestCancelled(ProgressId Id, RewardRequestId RequestId, DateTimeOffset OccurredAt);
+
+// Stars a child earned by finishing a flash card game. SetId is a plain Guid (the FlashCardSetId's
+// value) so Progress takes no dependency on the FlashCards feature. Day is the child's local date on
+// the finish day and keys the per-set-per-day cap in ChildProgress.FlashCardStarsByDay; GameId lets a
+// retried finish find the award it already wrote. Stars is the amount awarded by this event (the
+// difference to what the set already paid out that day), never the tier's full value.
+public sealed record FlashCardStarsAwarded(ProgressId Id, Guid SetId, DateOnly Day, int Stars, Guid GameId, DateTimeOffset OccurredAt);
