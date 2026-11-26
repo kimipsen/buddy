@@ -75,7 +75,7 @@ public sealed class FlashCardStoreTests(BuddyApiFixture fixture)
         await store.CreateAsync(b, [new FlashCardSetCreated(b, ownerB, "B", FlashCardSetKind.Text, null, Now)], CancellationToken.None);
         await store.CreateAsync(c, [new FlashCardSetCreated(c, other, "C", FlashCardSetKind.Text, null, Now)], CancellationToken.None);
 
-        Assert.Equal([a, b], (await store.ListIdsByOwnersAsync([ownerA, ownerB], CancellationToken.None)).OrderBy(i => i.Value));
+        Assert.Equal(new HashSet<FlashCardSetId> { a, b }, (await store.ListIdsByOwnersAsync([ownerA, ownerB], CancellationToken.None)).ToHashSet());
         Assert.Empty(await store.ListIdsByOwnersAsync([], CancellationToken.None));
     }
 

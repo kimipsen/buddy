@@ -88,4 +88,17 @@ public sealed class ProgressEventShapeTests
     public void RewardRequestCancelled() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new RewardRequestCancelled(FixedProgressId, FixedRequestId, FixedInstant),
         "Progress/RewardRequestCancelled.json");
+
+    private static readonly Guid FixedSetId = Guid.Parse("00000000-0000-0000-0000-0000000000a0");
+    private static readonly Guid FixedGameId = Guid.Parse("00000000-0000-0000-0000-0000000000a3");
+
+    [Fact]
+    public void FlashCardStarsAwarded() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new FlashCardStarsAwarded(FixedProgressId, FixedSetId, FixedDate, 3, FixedGameId, FixedInstant),
+        "Progress/FlashCardStarsAwarded.json");
+
+    [Fact]
+    public void FlashCardStarsAwarded_reads_back() => EventShapeTestSupport.AssertGoldenFileReadsBackAs(
+        new FlashCardStarsAwarded(FixedProgressId, FixedSetId, FixedDate, 3, FixedGameId, FixedInstant),
+        "Progress/FlashCardStarsAwarded.json");
 }

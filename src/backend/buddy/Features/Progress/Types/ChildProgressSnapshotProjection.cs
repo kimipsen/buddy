@@ -47,4 +47,7 @@ public sealed class ChildProgressSnapshotProjection : SingleStreamProjection<Chi
 
     public ChildProgressSnapshot Apply(ChildProgressSnapshot current, RewardRequestCancelled cancelled) =>
         current with { ChildProgress = ChildProgress.Advance(current.ChildProgress, ProgressEvent.FromPayload(cancelled)) };
+
+    public ChildProgressSnapshot Apply(ChildProgressSnapshot current, FlashCardStarsAwarded awarded) =>
+        current with { ChildProgress = ChildProgress.Advance(current.ChildProgress, ProgressEvent.FromPayload(awarded)) };
 }

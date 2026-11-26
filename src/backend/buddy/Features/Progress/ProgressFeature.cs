@@ -35,7 +35,8 @@ public static class ProgressFeature
         typeof(RewardRequested),
         typeof(RewardRequestApproved),
         typeof(RewardRequestDeclined),
-        typeof(RewardRequestCancelled)
+        typeof(RewardRequestCancelled),
+        typeof(FlashCardStarsAwarded)
     ];
 
     public static IServiceCollection AddProgressFeature(this IServiceCollection services, IConfiguration configuration)

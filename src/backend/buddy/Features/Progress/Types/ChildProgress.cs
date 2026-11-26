@@ -17,13 +17,22 @@ public sealed record ChildProgress(
     // Sum of the approved requests' costs. TotalStars stays lifetime and keeps driving goal posts.
     int SpentStars,
     // Every request the child made, oldest first.
-    ImmutableArray<RewardRequest> RewardRequests)
+    ImmutableArray<RewardRequest> RewardRequests,
+    // What each flash card set has paid out per local day, the base of the daily cap. Pruned on every
+    // award (see Advance), so it stays small; TotalStars is never touched by pruning.
+    ImmutableArray<FlashCardDayStars> FlashCardStarsByDay)
 {
     // Snapshots written before reward redemption have no Rewards/RewardRequests; System.Text.Json
     // then passes default(ImmutableArray), which throws on first use. Read those as empty.
     public ImmutableArray<Reward> Rewards { get; init; } = Rewards.IsDefault ? [] : Rewards;
 
     public ImmutableArray<RewardRequest> RewardRequests { get; init; } = RewardRequests.IsDefault ? [] : RewardRequests;
+
+    // Snapshots written before flash cards have no FlashCardStarsByDay: read those as empty too.
+    public ImmutableArray<FlashCardDayStars> FlashCardStarsByDay { get; init; } = FlashCardStarsByDay.IsDefault ? [] : FlashCardStarsByDay;
+
+    // Entries more than this many days older than the newest stored day are dropped.
+    public const int FlashCardDayRetention = 7;
 
     // A child with no progress stream yet -- what ProgressStarted folds to, so readers and the
     // first writer can work from one non-null state instead of `current?.X ?? default` chains.
@@ -36,7 +45,8 @@ public sealed record ChildProgress(
         ImmutableArray<GoalPost>.Empty,
         ImmutableArray<Reward>.Empty,
         0,
-        ImmutableArray<RewardRequest>.Empty);
+        ImmutableArray<RewardRequest>.Empty,
+        ImmutableArray<FlashCardDayStars>.Empty);
 
     // Stars held by pending requests, so several requests can't together overspend the balance.
     public int ReservedStars => RewardRequests.Where(r => r.Status == RewardRequestStatus.Pending).Sum(r => r.Cost);
@@ -102,10 +112,33 @@ public sealed record ChildProgress(
         RewardRequestApproved approved => Resolve(progress, approved.RequestId, RewardRequestStatus.Approved, approved.ApprovedBy, approved.OccurredAt),
         RewardRequestDeclined declined => Resolve(progress, declined.RequestId, RewardRequestStatus.Declined, declined.DeclinedBy, declined.OccurredAt),
         RewardRequestCancelled cancelled => Resolve(progress, cancelled.RequestId, RewardRequestStatus.Cancelled, progress.ChildId, cancelled.OccurredAt),
+        FlashCardStarsAwarded awarded => AddFlashCardStars(progress, awarded),
         ProgressStarted => throw EventReplay.AlreadyStarted(nameof(ChildProgress), @event.EventType)
     };
 
+    // Stars this set already paid out on this local day.
+    public int FlashCardStarsOn(Guid setId, DateOnly day) =>
+        FlashCardStarsByDay.Where(e => e.SetId == setId && e.Day == day).Sum(e => e.Stars);
+
     public RewardRequest? FindRequest(RewardRequestId requestId) => RewardRequests.FirstOrDefault(r => r.Id == requestId);
+
+    // Adds the award to the cap entry for (SetId, Day), then prunes relative to the newest stored Day
+    // (not today's date, so Advance stays a pure function of the events). A late award for a day more
+    // than FlashCardDayRetention before the newest is pruned at once: it still raises TotalStars but
+    // leaves no cap entry.
+    private static ChildProgress AddFlashCardStars(ChildProgress progress, FlashCardStarsAwarded awarded)
+    {
+        var days = progress.FlashCardStarsByDay;
+        var index = days.Select(e => (e.SetId, e.Day)).ToList().IndexOf((awarded.SetId, awarded.Day));
+        days = index < 0
+            ? days.Add(new FlashCardDayStars(awarded.SetId, awarded.Day, awarded.Stars))
+            : days.SetItem(index, days[index] with { Stars = days[index].Stars + awarded.Stars });
+
+        var newest = days.Max(e => e.Day);
+        days = [.. days.Where(e => newest.DayNumber - e.Day.DayNumber <= FlashCardDayRetention)];
+
+        return progress with { TotalStars = progress.TotalStars + awarded.Stars, FlashCardStarsByDay = days };
+    }
 
     private static ChildProgress Resolve(ChildProgress progress, RewardRequestId requestId, RewardRequestStatus status, UserId resolvedBy, DateTimeOffset resolvedAt)
     {
@@ -125,3 +158,8 @@ public sealed record ChildProgress(
         };
     }
 }
+
+// One entry of the daily cap: the stars a flash card set has paid out on a child's local day. SetId is
+// the FlashCardSetId's Guid; an array of these is used because System.Text.Json has no default
+// converter for a composite dictionary key.
+public sealed record FlashCardDayStars(Guid SetId, DateOnly Day, int Stars);
