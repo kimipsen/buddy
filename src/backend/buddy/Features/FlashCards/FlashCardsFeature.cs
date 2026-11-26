@@ -79,11 +79,22 @@ public static class FlashCardsFeature
 
     public static IEndpointRouteBuilder MapFlashCardsFeature(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGroup("/flash-cards")
+        var flashCards = endpoints.MapGroup("/flash-cards")
             .WithTags("FlashCards")
             .RequireAuthorization()
             .WithGroupName(OpenApiDocumentName)
             .WithETag();
+
+        flashCards.MapListFlashCardSets();
+        flashCards.MapCreateFlashCardSet();
+        flashCards.MapUpdateFlashCardSet();
+        flashCards.MapDeleteFlashCardSet();
+        flashCards.MapAddFlashCard();
+        flashCards.MapUpdateFlashCard();
+        flashCards.MapRemoveFlashCard();
+        flashCards.MapGetChildFlashCards();
+        flashCards.MapEnableFlashCardSet();
+        flashCards.MapDisableFlashCardSet();
 
         return endpoints;
     }

@@ -1,0 +1,105 @@
+@buddy_HostAddress = http://localhost:5193
+
+### List the flash-card sets the guardian owns or shares (guardian only)
+
+GET {{buddy_HostAddress}}/flash-cards/sets
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Create a text set (guardian only)
+POST {{buddy_HostAddress}}/flash-cards/sets
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "name": "Capitals",
+  "kind": "Text"
+}
+
+###
+
+# Create a math set (guardian only)
+POST {{buddy_HostAddress}}/flash-cards/sets
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "name": "Add to 10",
+  "kind": "Math",
+  "math": { "operation": "Addition", "limit": 10 }
+}
+
+###
+
+# Rename a set (guardian only)
+PUT {{buddy_HostAddress}}/flash-cards/sets/{{setId}}
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "name": "European capitals"
+}
+
+###
+
+# Delete a set (soft; guardian only)
+DELETE {{buddy_HostAddress}}/flash-cards/sets/{{setId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Add a card to a text set (guardian only)
+POST {{buddy_HostAddress}}/flash-cards/sets/{{setId}}/cards
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "question": "Capital of Denmark?",
+  "answer": "Copenhagen"
+}
+
+###
+
+# Update a card (guardian only)
+PUT {{buddy_HostAddress}}/flash-cards/sets/{{setId}}/cards/{{cardId}}
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "question": "Capital of Sweden?",
+  "answer": "Stockholm"
+}
+
+###
+
+# Remove a card (guardian only)
+DELETE {{buddy_HostAddress}}/flash-cards/sets/{{setId}}/cards/{{cardId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Show what a child can practise (the child or a linked guardian)
+GET {{buddy_HostAddress}}/flash-cards/children/{{childId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Enable a set for a child with tiers; replaces the current tiers (guardian only).
+# Give a tier its "id" to keep it; leave it out for a new one.
+PUT {{buddy_HostAddress}}/flash-cards/children/{{childId}}/sets/{{setId}}
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "tiers": [
+    { "cardCount": 5, "stars": 1 },
+    { "cardCount": 10, "stars": 3 }
+  ]
+}
+
+###
+
+# Disable a set for a child (guardian only)
+DELETE {{buddy_HostAddress}}/flash-cards/children/{{childId}}/sets/{{setId}}
+Authorization: Bearer {{guardianToken}}
