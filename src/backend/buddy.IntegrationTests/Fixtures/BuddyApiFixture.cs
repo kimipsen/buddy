@@ -4,6 +4,7 @@ using System.Text.Json;
 
 using Alba;
 
+using buddy.Features.FlashCards;
 using buddy.Features.Progress;
 using buddy.Features.Users;
 using buddy.IntegrationTests.Common.Concurrency;
@@ -147,6 +148,11 @@ public sealed class BuddyApiFixture : IAsyncLifetime
                 // Same for the progress store -- see ConcurrentWriterProgressEventStore.
                 services.AddSingleton<MartenProgressEventStore>();
                 services.Replace(ServiceDescriptor.Singleton<IProgressEventStore, ConcurrentWriterProgressEventStore>());
+
+                // And the flash-card practice store -- see TestFlashCardPracticeEventStore.
+                services.AddSingleton<MartenFlashCardPracticeEventStore>();
+                services.AddSingleton<TestFlashCardPracticeEventStore>();
+                services.Replace(ServiceDescriptor.Singleton<IFlashCardPracticeEventStore>(sp => sp.GetRequiredService<TestFlashCardPracticeEventStore>()));
             });
         })
             .WithConfiguration(_configOverrides);

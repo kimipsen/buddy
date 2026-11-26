@@ -71,6 +71,10 @@ public static class FlashCardsFeature
             return options;
         });
 
+        services.AddSingleton<FlashCardsMetrics>();
+        // Decks are shuffled with the shared thread-safe instance.
+        services.AddSingleton<Random>(_ => Random.Shared);
+
         services.AddSingleton<IFlashCardSetEventStore, MartenFlashCardSetEventStore>();
         services.AddSingleton<IFlashCardPracticeEventStore, MartenFlashCardPracticeEventStore>();
 
@@ -95,6 +99,9 @@ public static class FlashCardsFeature
         flashCards.MapGetChildFlashCards();
         flashCards.MapEnableFlashCardSet();
         flashCards.MapDisableFlashCardSet();
+        flashCards.MapListMyFlashCardSets();
+        flashCards.MapGetFlashCardDeck();
+        flashCards.MapFinishFlashCardGame();
 
         return endpoints;
     }

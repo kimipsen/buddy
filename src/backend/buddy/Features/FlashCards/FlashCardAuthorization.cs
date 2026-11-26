@@ -103,6 +103,11 @@ public static class FlashCardAuthorization
             : FlashCardAccess.Allowed;
     }
 
+    // The play routes (/me/...) belong to a child: the child is the caller, never a request field. A
+    // guardian has no practice stream of their own, so they get NotFound.
+    public static async Task<FlashCardAccess> CheckPlay(UserId callerId, IGuardianLinkEventStore guardians, CancellationToken cancellationToken) =>
+        await guardians.IsChildAsync(callerId, cancellationToken) ? FlashCardAccess.Allowed : FlashCardAccess.NotFound;
+
     private static async Task<bool> IsChild(UserId callerId, IGuardianLinkEventStore guardians, CancellationToken cancellationToken) =>
         (await guardians.ListForChildAsync(callerId, cancellationToken)).Count > 0;
 }

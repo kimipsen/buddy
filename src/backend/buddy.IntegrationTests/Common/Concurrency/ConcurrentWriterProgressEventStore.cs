@@ -27,7 +27,19 @@ public sealed class ConcurrentWriterProgressEventStore(MartenProgressEventStore 
     public static void InterleaveNextReads(Guid childId, int times, Func<int, ProgressEvent[]> concurrentEvents) =>
         Armed[childId] = new Arming(times, concurrentEvents);
 
-    public static void Disarm(Guid childId) => Armed.TryRemove(childId, out _);
+    public static void Disarm(Guid childId)
+    {
+        Armed.TryRemove(childId, out _);
+        Lookups.TryRemove(childId, out _);
+    }
+
+    // Counts FindFlashCardAwardAsync calls for a child, to assert a request used the scoped event
+    // query (and not a stream read) for the GameId lookup.
+    private static readonly ConcurrentDictionary<Guid, int> Lookups = new();
+
+    public static void RecordLookups(Guid childId) => Lookups[childId] = 0;
+
+    public static int LookupCount(Guid childId) => Lookups.GetValueOrDefault(childId);
 
     public async Task<IReadOnlyCollection<ProgressEvent>> ReadAsync(ProgressId id, CancellationToken cancellationToken)
     {
@@ -75,8 +87,15 @@ public sealed class ConcurrentWriterProgressEventStore(MartenProgressEventStore 
     public Task<IReadOnlyCollection<ProgressEvent>> CreateAsync(ProgressId id, IReadOnlyCollection<ProgressEvent> events, CancellationToken cancellationToken) =>
         inner.CreateAsync(id, events, cancellationToken);
 
-    public Task<FlashCardStarsAwarded?> FindFlashCardAwardAsync(ProgressId id, Guid gameId, CancellationToken cancellationToken) =>
-        inner.FindFlashCardAwardAsync(id, gameId, cancellationToken);
+    public Task<FlashCardStarsAwarded?> FindFlashCardAwardAsync(ProgressId id, Guid gameId, CancellationToken cancellationToken)
+    {
+        if (Lookups.ContainsKey(id.Value))
+        {
+            Lookups.AddOrUpdate(id.Value, 1, (_, count) => count + 1);
+        }
+
+        return inner.FindFlashCardAwardAsync(id, gameId, cancellationToken);
+    }
 
     public Task AppendAsync(ProgressId id, IReadOnlyCollection<ProgressEvent> events, CancellationToken cancellationToken) =>
         inner.AppendAsync(id, events, cancellationToken);

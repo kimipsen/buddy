@@ -13,6 +13,10 @@ public interface IFlashCardPracticeEventStore
     // StreamVersionTracker.ObserveVersion).
     Task<long?> ReadVersionAsync(FlashCardPracticeId id, CancellationToken cancellationToken);
 
+    // A finished game older than the snapshot's window, by a typed event query scoped to the child's
+    // stream (never a stream read). An untracked read.
+    Task<FlashCardGameFinished?> FindFinishedGameAsync(FlashCardPracticeId id, Guid gameId, CancellationToken cancellationToken);
+
     // A lost race on the id surfaces as JasperFx.ConcurrencyException.
     Task<IReadOnlyCollection<FlashCardPracticeEvent>> CreateAsync(FlashCardPracticeId id, IReadOnlyCollection<FlashCardPracticeEvent> events, CancellationToken cancellationToken);
 
