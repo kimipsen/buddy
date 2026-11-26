@@ -1703,6 +1703,23 @@ describe('ChildHome', () => {
       )!;
     }
 
+    async function settleFaked(fixture: { detectChanges: () => void }) {
+      for (let round = 0; round < 3; round++) {
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(0);
+      }
+      fixture.detectChanges();
+    }
+
+    // Fakes the timers the page schedules with, so a test can step the clock; the outer
+    // afterEach restores the real ones.
+    function useFakeClock(at: number) {
+      vi.useFakeTimers({
+        toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
+      });
+      vi.setSystemTime(at);
+    }
+
     beforeEach(() => {
       localStorage.clear();
       vi.useFakeTimers({ toFake: ['Date'] });
@@ -1759,22 +1776,11 @@ describe('ChildHome', () => {
     });
 
     describe('chime on home', () => {
-      async function settleFaked(fixture: { detectChanges: () => void }) {
-        for (let round = 0; round < 3; round++) {
-          fixture.detectChanges();
-          await vi.advanceTimersByTimeAsync(0);
-        }
-        fixture.detectChanges();
-      }
-
       async function runOutTheStep(chimeOnHome: boolean) {
         const play = vi
           .spyOn(TimeUpChimeService.prototype, 'play')
           .mockImplementation(() => undefined);
-        vi.useFakeTimers({
-          toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
-        });
-        vi.setSystemTime(NOW);
+        useFakeClock(NOW);
         const me = {
           ...currentUser,
           timerPreferences: { ...currentUser.timerPreferences, chimeOnHome, chimeSound: 'Gong' },
@@ -1895,6 +1901,76 @@ describe('ChildHome', () => {
       expect(rowText(disc())).toContain("Time's up");
       // Recalculating replaced the wake-up, so the old one is cleared.
       expect(clearTimeoutSpy).toHaveBeenCalledWith(wakeUpId);
+    });
+
+    describe('step timeout', () => {
+      async function openAt(at: number, calendars = morning()) {
+        useFakeClock(at);
+        const { fixture } = await setup({
+          calendars: { listTodayOccurrences: vi.fn(async () => calendars) },
+        });
+        await settleFaked(fixture);
+        const compiled = fixture.nativeElement as HTMLElement;
+        const disc = () => subtaskRow(compiled, 'Get dressed').querySelector('[role="timer"]')!;
+        return { fixture, compiled, disc };
+      }
+
+      it("flips to time's up exactly when the step ends, between minute ticks", async () => {
+        // 12:00:30: Get dressed ends 150 s from now, between the 120 s and 180 s refreshes.
+        const { fixture, disc } = await openAt(NOW + 30_000);
+        expect(disc().getAttribute('aria-label')).toBe('3 min left');
+
+        await vi.advanceTimersByTimeAsync(149_999);
+        fixture.detectChanges();
+        expect(disc().getAttribute('aria-label')).not.toBeNull();
+        expect(rowText(disc())).not.toContain("Time's up");
+
+        await vi.advanceTimersByTimeAsync(1);
+        fixture.detectChanges();
+        expect(rowText(disc())).toContain("Time's up");
+      });
+
+      it('has no pending wake-up once the page is gone', async () => {
+        const idle = await openAt(Date.parse(`${today}T15:00:00Z`));
+        idle.fixture.destroy();
+        const baseline = vi.getTimerCount();
+        TestBed.resetTestingModule();
+        vi.clearAllTimers();
+
+        const { fixture } = await openAt(NOW + 30_000);
+        fixture.destroy();
+
+        expect(vi.getTimerCount()).toBe(baseline);
+      });
+
+      it('replaces the wake-up instead of stacking one when the deadline moves', async () => {
+        const { fixture, compiled } = await openAt(NOW + 30_000);
+        const before = vi.getTimerCount();
+
+        // A child-started timer gives the step a new deadline.
+        findButtonByText(compiled, 'Start')!.click();
+        await settleFaked(fixture);
+
+        expect(vi.getTimerCount()).toBe(before);
+      });
+    });
+
+    it('keeps a stored child timer while the current user is still loading', async () => {
+      localStorage.setItem(
+        'buddy_child_timer',
+        JSON.stringify({
+          itemId: 'run-1',
+          date: today,
+          anchor: { subtaskKey: `run-1:sub-1:${today}`, startedAtMs: NOW, pausedAtMs: null },
+        }),
+      );
+      const { fixture } = await setup({
+        users: { ensureCurrentUser: vi.fn(() => new Promise<CurrentUser>(() => undefined)) },
+        calendars: { listTodayOccurrences: vi.fn(async () => morning()) },
+      });
+      await settle(fixture);
+
+      expect(localStorage.getItem('buddy_child_timer')).not.toBeNull();
     });
 
     it('reads the clock afresh on every timer button', async () => {
