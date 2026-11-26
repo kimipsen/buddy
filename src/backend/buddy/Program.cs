@@ -16,6 +16,7 @@ using buddy.Email;
 using buddy.Features.Babysitters;
 using buddy.Features.Calendars;
 using buddy.Features.Feelings;
+using buddy.Features.FlashCards;
 using buddy.Features.FirstThen;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
@@ -151,6 +152,9 @@ builder.Services.AddNightDutyFeature(builder.Configuration);
 // After Guardians, Groups, Calendars and WorkLocations: its write-time reference checks read their stores.
 builder.Services.AddPrintTemplatesFeature(builder.Configuration);
 builder.Services.AddProgressFeature(builder.Configuration);
+// After Progress: finishing a game awards stars through the Progress feature. Registered unconditionally
+// so the stores, event types and the privacy exporter/eraser exist with the FlashCards flag off.
+builder.Services.AddFlashCardsFeature(builder.Configuration);
 // After Users and Guardians: authorization reads IGuardianLinkEventStore, the shared view IUserEventStore.
 builder.Services.AddSleepDiariesFeature(builder.Configuration);
 // After Users and Guardians: authorization reads IGuardianLinkEventStore, the child's local clock and
@@ -285,6 +289,9 @@ if (features.Progress)
 {
     app.MapProgressFeature();
 }
+
+// No routes yet: the slices come in later steps, gated by the FlashCards feature flag.
+app.MapFlashCardsFeature();
 
 if (features.SleepDiary)
 {

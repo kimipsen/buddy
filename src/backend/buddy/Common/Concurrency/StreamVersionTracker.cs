@@ -48,6 +48,20 @@ public static class StreamVersionTracker
         }
     }
 
+    // For a caller that read only the stream's version (FetchStreamStateAsync) and decided on a
+    // snapshot, not on the events: the append that follows becomes an expected-version append against
+    // this version. Read the version BEFORE the snapshot, so the snapshot is at this version or
+    // newer; a newer snapshot then loses the append with a ConcurrencyException instead of being
+    // decided on stale data. Do not call it for a stream that does not exist (null state): a missing
+    // stream is a CreateAsync.
+    public static void ObserveVersion(this IQuerySession session, Guid streamId, long version)
+    {
+        if (Current.Value is { } tracked)
+        {
+            tracked[Key(session, streamId)] = version;
+        }
+    }
+
     // Drop-in for session.Events.StartStream: a later append in the same scope expects the
     // version this start produces.
     public static void StartTrackedStream(this IDocumentSession session, Guid streamId, object[] payloads)

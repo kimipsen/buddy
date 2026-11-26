@@ -1,0 +1,29 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000003",
+  "GameId": "00000000-0000-0000-0000-0000000000a3",
+  "SetId": "00000000-0000-0000-0000-0000000000a0",
+  "SetName": "Times table of 7",
+  "TierId": "00000000-0000-0000-0000-0000000000a2",
+  "FinishedOn": "2025-01-01",
+  "CardCount": 2,
+  "Results": [
+    {
+      "Slot": 0,
+      "CardKey": "mul:7x3",
+      "Question": "7 x 3",
+      "Answer": "21",
+      "KnewFirstTime": true,
+      "TimesShown": 1
+    },
+    {
+      "Slot": 1,
+      "CardKey": "mul:7x4",
+      "Question": "7 x 4",
+      "Answer": "28",
+      "KnewFirstTime": false,
+      "TimesShown": 2
+    }
+  ],
+  "Stars": 1,
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}
