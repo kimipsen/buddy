@@ -1,0 +1,22 @@
+using Marten.Events.Aggregation;
+
+namespace buddy.Features.FlashCards;
+
+public sealed record FlashCardPracticeSnapshot(Guid Id, FlashCardPractice FlashCardPractice);
+
+// Inline snapshot of FlashCardPractice in the shared "snapshots" schema. The per-card results of a
+// finished game are dropped by Advance, so the snapshot stays small as the history grows.
+public sealed class FlashCardPracticeSnapshotProjection : SingleStreamProjection<FlashCardPracticeSnapshot, Guid>
+{
+    public static FlashCardPracticeSnapshot Create(FlashCardPracticeStarted started) =>
+        new(started.Id.Value, FlashCardPractice.Start(FlashCardPracticeEvent.FromPayload(started)));
+
+    public FlashCardPracticeSnapshot Apply(FlashCardPracticeSnapshot current, FlashCardSetEnabled enabled) =>
+        current with { FlashCardPractice = FlashCardPractice.Advance(current.FlashCardPractice, FlashCardPracticeEvent.FromPayload(enabled)) };
+
+    public FlashCardPracticeSnapshot Apply(FlashCardPracticeSnapshot current, FlashCardSetDisabled disabled) =>
+        current with { FlashCardPractice = FlashCardPractice.Advance(current.FlashCardPractice, FlashCardPracticeEvent.FromPayload(disabled)) };
+
+    public FlashCardPracticeSnapshot Apply(FlashCardPracticeSnapshot current, FlashCardGameFinished finished) =>
+        current with { FlashCardPractice = FlashCardPractice.Advance(current.FlashCardPractice, FlashCardPracticeEvent.FromPayload(finished)) };
+}
