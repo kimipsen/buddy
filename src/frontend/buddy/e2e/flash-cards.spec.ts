@@ -217,7 +217,8 @@ test('a guardian switches on built-in clock and country sets, and the child play
   await expect(page.getByTestId('flash-cards-question')).not.toBeEmpty();
   await page.getByRole('button', { name: 'Show the answer' }).click();
   // Level 1 holds Danmark, Sverige, Tyskland...: whichever is drawn, the name is a non-empty Danish word.
-  await expect(page.getByTestId('flash-cards-answer')).toHaveText(/^\p{L}[\p{L} ]+$/u);
+  // The element's text keeps the template's surrounding whitespace, so the pattern allows it.
+  await expect(page.getByTestId('flash-cards-answer')).toHaveText(/^\s*\p{L}[\p{L} ]*\p{L}\s*$/u);
   await page.getByRole('button', { name: 'I knew it' }).click();
   for (let card = 1; card < 5; card += 1) {
     await answerCard(page, true);
