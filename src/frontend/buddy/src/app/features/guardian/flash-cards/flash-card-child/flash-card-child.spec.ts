@@ -37,6 +37,8 @@ function set(id: string, name: string, uniqueCardCount: number): FlashCardSet {
     math: { operation: 'Multiplication', limit: 7 },
     cards: [],
     uniqueCardCount,
+    builtInKey: null,
+    exampleCard: null,
   };
 }
 

@@ -22,7 +22,7 @@ public sealed class FlashCardAuthorizationTests(BuddyApiFixture fixture)
         var strangers = await CreateTextSetAsync(fixture, strangerToken, "Stranger's");
 
         var firstSees = (await GetAsync(fixture, family.FirstToken, "/flash-cards/sets")).ReadAsJson<List<FlashCardSetResponse>>().Select(s => s.Id).ToList();
-        var strangerSees = (await GetAsync(fixture, strangerToken, "/flash-cards/sets")).ReadAsJson<List<FlashCardSetResponse>>().Select(s => s.Id).ToList();
+        var strangerSees = OwnSets((await GetAsync(fixture, strangerToken, "/flash-cards/sets")).ReadAsJson<List<FlashCardSetResponse>>()).Select(s => s.Id).ToList();
 
         Assert.Contains(mine.Id, firstSees);
         Assert.Contains(theirs.Id, firstSees);

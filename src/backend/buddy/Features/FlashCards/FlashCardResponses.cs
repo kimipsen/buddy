@@ -4,25 +4,31 @@ namespace buddy.Features.FlashCards;
 
 public sealed record FlashCardResponse(Guid Id, string Question, string Answer);
 
-// Cards is empty for a Math set: its cards are generated from Math. UniqueCardCount is how many
-// different cards a game can draw from.
+// Cards is empty for a Math or built-in set: Math cards are generated from Math, built-in cards come
+// from the catalogue. UniqueCardCount is how many different cards a game can draw from. OwnerId is
+// null for a built-in set; ExampleCard is one catalogue card (null when a built-in set has none).
 public sealed record FlashCardSetResponse(
     Guid Id,
-    Guid OwnerId,
+    Guid? OwnerId,
     string Name,
     FlashCardSetKind Kind,
     MathRule? Math,
     IReadOnlyList<FlashCardResponse> Cards,
-    int UniqueCardCount)
+    int UniqueCardCount,
+    string? BuiltInKey,
+    DeckCard? ExampleCard)
 {
     public static FlashCardSetResponse FromSet(FlashCardSet set) => new(
         set.Id.Value,
-        set.OwnerId.Value,
+        // The reserved system owner of a built-in set never leaves the API.
+        set.BuiltIn is null ? set.OwnerId.Value : null,
         set.Name,
         set.Kind,
         set.Math,
         [.. set.Cards.Select(c => new FlashCardResponse(c.Id.Value, c.Question, c.Answer))],
-        set.UniqueCardCount);
+        set.UniqueCardCount,
+        set.BuiltIn?.Key,
+        set.BuiltIn?.Example is { } example ? DeckCard.From(example) : null);
 }
 
 public sealed record FlashCardTierResponse(Guid Id, int CardCount, int Stars);
@@ -63,20 +69,29 @@ public sealed record MyFlashCardSetResponse(
     string SetName,
     FlashCardSetKind Kind,
     int UniqueCardCount,
-    IReadOnlyList<FlashCardTierResponse> Tiers)
+    IReadOnlyList<FlashCardTierResponse> Tiers,
+    string? BuiltInKey)
 {
     public static MyFlashCardSetResponse From(PlayableFlashCardSet playable) => new(
         playable.Set.Id.Value,
         playable.Set.Name,
         playable.Set.Kind,
         playable.Set.UniqueCardCount,
-        [.. playable.Enabled.Tiers.Select(t => new FlashCardTierResponse(t.Id.Value, t.CardCount, t.Stars))]);
+        [.. playable.Enabled.Tiers.Select(t => new FlashCardTierResponse(t.Id.Value, t.CardCount, t.Stars))],
+        playable.Set.BuiltIn?.Key);
 }
 
 // Operands and operator next to the rendered question, so the UI never parses text.
 public sealed record DeckMathResponse(int Left, MathOperation Operation, int Right);
 
-public sealed record DeckCard(string Key, string Question, string Answer, DeckMathResponse? Math);
+// Hand positions of a clock card: Hour is 1-12, Minute 0-55. The front is drawn from these, so the
+// Question never holds the time words.
+public sealed record DeckClockResponse(int Hour, int Minute);
+
+public sealed record DeckCard(string Key, string Question, string Answer, DeckMathResponse? Math, DeckClockResponse? Clock = null)
+{
+    public static DeckCard From(BuiltInCard card) => new(card.Key, card.Question, card.Answer, null, card.Clock);
+}
 
 // Exactly tier.CardCount cards, repeats included. Nothing is persisted and there is no game id: the
 // client generates it when the game starts.

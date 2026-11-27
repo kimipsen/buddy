@@ -3,6 +3,7 @@ export const flashCards = {
   kind: {
     Math: 'Regning',
     Text: 'Tekst',
+    BuiltIn: 'Indbygget',
   },
   operation: {
     Addition: 'Plus',
@@ -113,6 +114,7 @@ export const flashCards = {
     finishRetry: 'Prøv igen',
     finishUnavailable: 'Dette spil kan ikke gemmes mere. Sættet er slået fra.',
     finishBusy: 'Gemmer stadig. Vent et øjeblik.',
+    sightCheck: 'Sig ordet højt. Læste du det rigtigt?',
     result: {
       title: 'Godt gået!',
       known: '{known} af {total} første gang',
@@ -122,5 +124,31 @@ export const flashCards = {
       playAgain: 'Spil igen',
       done: 'Færdig',
     },
+  },
+  builtIn: {
+    heading: 'Indbyggede sæt',
+    hint: 'Færdige sæt. De kan ikke ændres eller slettes, men du kan slå dem til for et barn.',
+    exampleLabel: 'Eksempelkort',
+    names: {
+      clock1: 'Klokken: hele timer',
+      clock2: 'Klokken: halve timer',
+      clock3: 'Klokken: kvarter',
+      clock4: 'Klokken: hver 5. minut',
+      sight1: 'Sight words: 0. klasse',
+      sight2: 'Sight words: 1. klasse',
+      sight3: 'Sight words: 2. klasse',
+      sight4: 'Sight words: svære ord',
+      letters1: 'Bogstaver: store',
+      letters2: 'Bogstaver: små',
+      english1: 'Engelsk: niveau 1',
+      english2: 'Engelsk: niveau 2',
+      english3: 'Engelsk: niveau 3',
+      countries1: 'Lande: Norden',
+      countries2: 'Lande: Europa',
+      countries3: 'Lande: Verden',
+    },
+  },
+  clock: {
+    ariaLabel: 'Urskive. Timeviseren peger på {hour}, minutviseren på {minute}.',
   },
 };

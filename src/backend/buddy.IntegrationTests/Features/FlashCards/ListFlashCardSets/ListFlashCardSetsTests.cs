@@ -21,7 +21,7 @@ public sealed class ListFlashCardSetsTests(BuddyApiFixture fixture)
         var first = await CreateTextSetAsync(fixture, token, "First");
         var second = await CreateMathSetAsync(fixture, token, "Second");
 
-        var sets = (await GetAsync(fixture, token, "/flash-cards/sets")).ReadAsJson<List<FlashCardSetResponse>>();
+        var sets = OwnSets((await GetAsync(fixture, token, "/flash-cards/sets")).ReadAsJson<List<FlashCardSetResponse>>());
 
         Assert.Equal([first.Id, second.Id], sets.Select(s => s.Id));
         Assert.Equal(FlashCardSetKind.Math, sets[1].Kind);
@@ -33,7 +33,7 @@ public sealed class ListFlashCardSetsTests(BuddyApiFixture fixture)
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
 
-        Assert.Empty((await GetAsync(fixture, token, "/flash-cards/sets")).ReadAsJson<List<FlashCardSetResponse>>());
+        Assert.Empty(OwnSets((await GetAsync(fixture, token, "/flash-cards/sets")).ReadAsJson<List<FlashCardSetResponse>>()));
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public sealed class ListFlashCardSetsTests(BuddyApiFixture fixture)
 
         await DeleteAsync(fixture, token, $"/flash-cards/sets/{gone.Id}");
 
-        var sets = (await GetAsync(fixture, token, "/flash-cards/sets")).ReadAsJson<List<FlashCardSetResponse>>();
+        var sets = OwnSets((await GetAsync(fixture, token, "/flash-cards/sets")).ReadAsJson<List<FlashCardSetResponse>>());
         Assert.Equal([kept.Id], sets.Select(s => s.Id));
     }
 }

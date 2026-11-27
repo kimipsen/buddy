@@ -57,4 +57,18 @@ public sealed class FlashCardSetSnapshotTests(BuddyApiFixture fixture)
         Assert.Equal(new MathRule(MathOperation.Division, 3), snapshot!.Math);
         Assert.Equal(FlashCardSetKind.Math, snapshot.Kind);
     }
+
+    // A stored set is never a built-in one, but the enum value is part of the wire and event JSON: the
+    // string must round-trip (and the BuiltIn init property is [JsonIgnore], so a snapshot keeps its shape).
+    [Fact]
+    public void The_built_in_kind_round_trips_as_its_name_and_the_built_in_reference_is_not_serialised()
+    {
+        var set = BuiltInCatalogue.Default.All[0];
+
+        var json = System.Text.Json.JsonSerializer.Serialize(set, new System.Text.Json.JsonSerializerOptions { Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() } });
+
+        Assert.Contains("\"Kind\":\"BuiltIn\"", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("BuiltIn\":", json, StringComparison.Ordinal);
+        Assert.Equal(FlashCardSetKind.BuiltIn, Enum.Parse<FlashCardSetKind>("BuiltIn"));
+    }
 }

@@ -26,6 +26,7 @@ public static class FinishFlashCardGameHandler
         IProgressEventStore progress,
         IGuardianLinkEventStore guardians,
         IUserEventStore users,
+        IBuiltInCatalogue catalogue,
         IMessageBus bus,
         TimeProvider time,
         FlashCardsMetrics metrics,
@@ -71,7 +72,8 @@ public static class FinishFlashCardGameHandler
             }
 
             const string replay = "replay";
-            metrics.Finished(FlashCardFinishOutcome.Replay);
+            // The replay branch loads no set: a catalogue id is built-in, anything else is unknown.
+            metrics.Finished(FlashCardFinishOutcome.Replay, catalogue.TryFind(command.SetId) is not null ? FlashCardSetKind.BuiltIn.Tag() : FlashCardKindTags.Unknown);
             logger.GameFinished(command.ChildId.Value, command.GameId, command.SetId.Value, command.TierId.Value, stored.Stars, replay);
 
             return new FinishFlashCardGameOutcome.Success(new FinishedFlashCardGame(stored.Stars, await TotalStarsAsync(progress, progressId, cancellationToken), stored));
@@ -106,7 +108,7 @@ public static class FinishFlashCardGameHandler
                 return new FinishFlashCardGameOutcome.GameNoLongerAvailable();
             }
 
-            if (BuildResults(command, set, out results) is { } resultsProblem)
+            if (BuildResults(command, set, catalogue, logger, out results) is { } resultsProblem)
             {
                 return new FinishFlashCardGameOutcome.Validation(resultsProblem);
             }
@@ -131,7 +133,7 @@ public static class FinishFlashCardGameHandler
                 return new FinishFlashCardGameOutcome.Validation(ValidationProblem.Of($"The tier has {tier.CardCount} cards; send one result for each."));
             }
 
-            if (BuildResults(command, set, out results) is { } resultsProblem)
+            if (BuildResults(command, set, catalogue, logger, out results) is { } resultsProblem)
             {
                 return new FinishFlashCardGameOutcome.Validation(resultsProblem);
             }
@@ -161,7 +163,7 @@ public static class FinishFlashCardGameHandler
         // Expected-version append (the version observed above).
         await practices.AppendAsync(id, [finished], cancellationToken);
 
-        metrics.Finished(outcome);
+        metrics.Finished(outcome, set.Kind.Tag());
 
         if (outcome == FlashCardFinishOutcome.Recovered)
         {
@@ -182,14 +184,21 @@ public static class FinishFlashCardGameHandler
 
     // Question and answer come from the server, by CardKey, never from the client. A card that no
     // longer exists (removed or a changed math rule) falls back to the echoed text for that slot;
-    // without an echo the key is unknown. Returns the problem, or null with the results set.
-    private static ValidationProblem? BuildResults(FinishFlashCardGame command, FlashCardSet set, out ImmutableArray<FlashCardResult> results)
+    // without an echo the key is unknown. A built-in set is stricter (D9): only a retired catalogue
+    // key may echo, a key the catalogue never had is rejected and logged. Returns the problem, or
+    // null with the results set.
+    private static ValidationProblem? BuildResults(
+        FinishFlashCardGame command,
+        FlashCardSet set,
+        IBuiltInCatalogue catalogue,
+        ILogger logger,
+        out ImmutableArray<FlashCardResult> results)
     {
         var built = ImmutableArray.CreateBuilder<FlashCardResult>(command.Results.Count);
 
         foreach (var result in command.Results.OrderBy(r => r.Slot))
         {
-            var text = Lookup(set, result.CardKey) ?? (result.Question is { } q && result.Answer is { } a ? (q, a) : null);
+            var text = Resolve(set, result, catalogue, logger);
 
             if (text is not var (question, answer))
             {
@@ -206,6 +215,31 @@ public static class FinishFlashCardGameHandler
         results = built.MoveToImmutable();
         return null;
     }
+
+    private static (string Question, string Answer)? Resolve(FlashCardSet set, FinishFlashCardGameResult result, IBuiltInCatalogue catalogue, ILogger logger)
+    {
+        // Checked first, so a key such as "clock:3:30" never reaches Guid.TryParse.
+        if (set.BuiltIn is { } builtIn)
+        {
+            var lookup = catalogue.TryGetCard(set, result.CardKey);
+
+            switch (lookup.Kind)
+            {
+                case BuiltInCardLookupKind.Found:
+                    return (lookup.Card!.Question, lookup.Card.Answer);
+                case BuiltInCardLookupKind.Retired:
+                    return Echo(result);
+                default:
+                    logger.BuiltInCardRejected(builtIn.Key, result.Slot);
+                    return null;
+            }
+        }
+
+        return Lookup(set, result.CardKey) ?? Echo(result);
+    }
+
+    private static (string Question, string Answer)? Echo(FinishFlashCardGameResult result) =>
+        result.Question is { } q && result.Answer is { } a ? (q, a) : null;
 
     private static (string Question, string Answer)? Lookup(FlashCardSet set, string cardKey)
     {

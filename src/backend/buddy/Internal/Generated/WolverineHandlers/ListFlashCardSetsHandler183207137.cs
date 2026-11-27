@@ -9,11 +9,13 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class ListFlashCardSetsHandler183207137 : Wolverine.Runtime.Handlers.MessageHandler
     {
+        private readonly buddy.Features.FlashCards.IBuiltInCatalogue _builtInCatalogue;
         private readonly buddy.Features.FlashCards.IFlashCardSetEventStore _flashCardSetEventStore;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
 
-        public ListFlashCardSetsHandler183207137(buddy.Features.FlashCards.IFlashCardSetEventStore flashCardSetEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore)
+        public ListFlashCardSetsHandler183207137(buddy.Features.FlashCards.IBuiltInCatalogue builtInCatalogue, buddy.Features.FlashCards.IFlashCardSetEventStore flashCardSetEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore)
         {
+            _builtInCatalogue = builtInCatalogue;
             _flashCardSetEventStore = flashCardSetEventStore;
             _guardianLinkEventStore = guardianLinkEventStore;
         }
@@ -30,7 +32,7 @@ namespace Internal.Generated.WolverineHandlers
                 Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.FlashCards.ListFlashCardSetsHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.FlashCards.ListFlashCardSetsHandler.Handle(listFlashCardSets, _flashCardSetEventStore, _guardianLinkEventStore, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.FlashCards.ListFlashCardSetsHandler.Handle(listFlashCardSets, _flashCardSetEventStore, _guardianLinkEventStore, _builtInCatalogue, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

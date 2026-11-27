@@ -156,3 +156,74 @@ test('a guardian sets up flash cards, the child plays, and stars are paid once p
   await expect(page.getByTestId('flash-cards-stars')).toHaveText(/You earned 2 stars/);
   await expect(page.getByTestId('flash-cards-total')).toHaveText(/You have 3 stars in all/);
 });
+
+// Built-in sets (docs/backend/analysis/flash-cards.md, "Built-in sets"): the catalogue ships with the
+// app, so there is nothing to create. The guardian switches two of them on for a child (the default
+// game length, 5 cards for 1 star), and the child plays one game of each: a clock face (its
+// accessible name describes the hands, the words are the back) and a flag whose back is the Danish
+// country name. A fresh set means a fresh "today", but the star payout is once per set and day, so the
+// stars are only asserted away from midnight, like the test above.
+test('a guardian switches on built-in clock and country sets, and the child plays both', async ({
+  page,
+  loginAs,
+  newGuardian,
+}) => {
+  const guardian = await newGuardian();
+  await loginAs(guardian);
+  const child = await createChild(page);
+
+  await page.goto('/guardian/flash-cards');
+  await expect(page.getByRole('heading', { name: 'Flash cards', level: 2 })).toBeVisible();
+  // The library lists the catalogue read-only, with an example card per set.
+  await expect(page.locator('[data-built-in-key="clock:1"]')).toBeVisible();
+  await expect(page.locator('[data-built-in-key="countries:1"]')).toBeVisible();
+
+  await page.getByRole('radio', { name: 'Per child' }).click();
+  for (const name of ['Clock: whole hours', 'Countries: the Nordics']) {
+    const available = page.locator('[data-available-set]').filter({ hasText: name });
+    await available.getByRole('button', { name: 'Switch on' }).click();
+    await expect(page.locator('[data-enabled-set]').filter({ hasText: name })).toBeVisible();
+  }
+
+  await loginAs(await makeChildLoginUsable(child.username));
+  await page.goto('/child/homework/flash-cards');
+
+  const sameDaySteps = !nearMidnight();
+
+  // The clock set: the face stands in for the question, the back is the answer.
+  await page.getByRole('button', { name: 'Clock: whole hours' }).click();
+  await page.getByRole('button', { name: '5 cards · 1 stars' }).click();
+  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  await expect(page.getByTestId('flash-cards-clock').getByRole('img')).toHaveAttribute(
+    'aria-label',
+    /hour hand.*minute hand/,
+  );
+  await page.getByRole('button', { name: 'Show the answer' }).click();
+  await expect(page.getByTestId('flash-cards-answer')).not.toBeEmpty();
+  await page.getByRole('button', { name: 'I knew it' }).click();
+  for (let card = 1; card < 5; card += 1) {
+    await answerCard(page, true);
+  }
+  await expect(page.getByTestId('flash-cards-known')).toHaveText(/5 of 5 first time/);
+  if (sameDaySteps) {
+    await expect(page.getByTestId('flash-cards-stars')).toHaveText(/You earned 1 stars/);
+  }
+
+  // The country set: a flag on the front, a Danish name on the back.
+  await page.getByRole('button', { name: 'Play again' }).click();
+  await page.getByRole('button', { name: 'Countries: the Nordics' }).click();
+  await page.getByRole('button', { name: '5 cards · 1 stars' }).click();
+  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  await expect(page.getByTestId('flash-cards-question')).not.toBeEmpty();
+  await page.getByRole('button', { name: 'Show the answer' }).click();
+  // Level 1 holds Danmark, Sverige, Tyskland...: whichever is drawn, the name is a non-empty Danish word.
+  await expect(page.getByTestId('flash-cards-answer')).toHaveText(/^\p{L}[\p{L} ]+$/u);
+  await page.getByRole('button', { name: 'I knew it' }).click();
+  for (let card = 1; card < 5; card += 1) {
+    await answerCard(page, true);
+  }
+  await expect(page.getByTestId('flash-cards-known')).toHaveText(/5 of 5 first time/);
+  if (sameDaySteps) {
+    await expect(page.getByTestId('flash-cards-total')).toHaveText(/You have 2 stars in all/);
+  }
+});

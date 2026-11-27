@@ -5,11 +5,13 @@ namespace buddy.Features.FlashCards;
 
 public static class ListFlashCardSetsHandler
 {
-    // The caller's own sets plus those of their co-guardians; soft-deleted sets are left out.
+    // The caller's own sets plus those of their co-guardians (soft-deleted sets are left out), then
+    // the built-in catalogue in its own order.
     public static async Task<Result<IReadOnlyCollection<FlashCardSet>>> Handle(
         ListFlashCardSets query,
         IFlashCardSetEventStore sets,
         IGuardianLinkEventStore guardians,
+        IBuiltInCatalogue catalogue,
         CancellationToken cancellationToken)
     {
         var access = await FlashCardAuthorization.CheckManageLibrary(query.UserId, guardians, cancellationToken);
@@ -32,8 +34,8 @@ public static class ListFlashCardSetsHandler
             }
         }
 
-        // UUIDv7 ids sort by creation time.
-        IReadOnlyCollection<FlashCardSet> ordered = [.. library.OrderBy(s => s.Id.Value)];
+        // UUIDv7 ids sort by creation time; the built-in ids are UUIDv5 and follow in catalogue order.
+        IReadOnlyCollection<FlashCardSet> ordered = [.. library.OrderBy(s => s.Id.Value), .. catalogue.All];
 
         return new Result<IReadOnlyCollection<FlashCardSet>>.Success(ordered);
     }

@@ -33,6 +33,8 @@ const SET: FlashCardSet = {
   math: { operation: 'Addition', limit: 20 },
   cards: [],
   uniqueCardCount: 231,
+  builtInKey: null,
+  exampleCard: null,
 };
 
 function setup(options: { childParam?: string; sets?: Promise<FlashCardSet[]> } = {}) {

@@ -3,6 +3,7 @@ export const flashCards = {
   kind: {
     Math: 'Maths',
     Text: 'Text',
+    BuiltIn: 'Built-in',
   },
   operation: {
     Addition: 'Addition',
@@ -112,6 +113,7 @@ export const flashCards = {
     finishRetry: 'Try again',
     finishUnavailable: 'This game can’t be saved any more. The set was switched off.',
     finishBusy: 'Still saving. Wait a moment.',
+    sightCheck: 'Say the word out loud. Did you read it right?',
     result: {
       title: 'Well done!',
       known: '{known} of {total} first time',
@@ -121,5 +123,31 @@ export const flashCards = {
       playAgain: 'Play again',
       done: 'Done',
     },
+  },
+  builtIn: {
+    heading: 'Built-in sets',
+    hint: 'Ready-made sets. They cannot be changed or deleted, but you can switch them on for a child.',
+    exampleLabel: 'Example card',
+    names: {
+      clock1: 'Clock: whole hours',
+      clock2: 'Clock: half hours',
+      clock3: 'Clock: quarters',
+      clock4: 'Clock: every 5 minutes',
+      sight1: 'Sight words: kindergarten',
+      sight2: 'Sight words: 1st grade',
+      sight3: 'Sight words: 2nd grade',
+      sight4: 'Sight words: tricky words',
+      letters1: 'Letters: capitals',
+      letters2: 'Letters: lowercase',
+      english1: 'English: level 1',
+      english2: 'English: level 2',
+      english3: 'English: level 3',
+      countries1: 'Countries: the Nordics',
+      countries2: 'Countries: Europe',
+      countries3: 'Countries: the world',
+    },
+  },
+  clock: {
+    ariaLabel: 'Clock face. The hour hand points to {hour}, the minute hand to {minute}.',
   },
 };

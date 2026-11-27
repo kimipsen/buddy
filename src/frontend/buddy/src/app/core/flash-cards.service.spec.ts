@@ -23,6 +23,8 @@ const set: FlashCardSet = {
   math: null,
   cards: [{ id: 'card-1', question: 'Cat', answer: 'Kat' }],
   uniqueCardCount: 1,
+  builtInKey: null,
+  exampleCard: null,
 };
 
 const finishRequest: FinishFlashCardGameRequest = {

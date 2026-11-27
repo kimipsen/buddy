@@ -16,17 +16,19 @@ namespace Internal.Generated.WolverineHandlers
         private readonly Microsoft.Extensions.Logging.ILogger<buddy.Features.FlashCards.FinishFlashCardGame> _loggerForMessage;
         private readonly System.TimeProvider _timeProvider;
         private readonly buddy.Features.FlashCards.FlashCardsMetrics _flashCardsMetrics;
+        private readonly buddy.Features.FlashCards.IBuiltInCatalogue _builtInCatalogue;
         private readonly buddy.Features.FlashCards.IFlashCardPracticeEventStore _flashCardPracticeEventStore;
         private readonly buddy.Features.FlashCards.IFlashCardSetEventStore _flashCardSetEventStore;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
         private readonly buddy.Features.Progress.IProgressEventStore _progressEventStore;
         private readonly buddy.Features.Users.IUserEventStore _userEventStore;
 
-        public FinishFlashCardGameHandler1500059627(Microsoft.Extensions.Logging.ILogger<buddy.Features.FlashCards.FinishFlashCardGame> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.FlashCards.FlashCardsMetrics flashCardsMetrics, buddy.Features.FlashCards.IFlashCardPracticeEventStore flashCardPracticeEventStore, buddy.Features.FlashCards.IFlashCardSetEventStore flashCardSetEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Progress.IProgressEventStore progressEventStore, buddy.Features.Users.IUserEventStore userEventStore)
+        public FinishFlashCardGameHandler1500059627(Microsoft.Extensions.Logging.ILogger<buddy.Features.FlashCards.FinishFlashCardGame> loggerForMessage, System.TimeProvider timeProvider, buddy.Features.FlashCards.FlashCardsMetrics flashCardsMetrics, buddy.Features.FlashCards.IBuiltInCatalogue builtInCatalogue, buddy.Features.FlashCards.IFlashCardPracticeEventStore flashCardPracticeEventStore, buddy.Features.FlashCards.IFlashCardSetEventStore flashCardSetEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore, buddy.Features.Progress.IProgressEventStore progressEventStore, buddy.Features.Users.IUserEventStore userEventStore)
         {
             _loggerForMessage = loggerForMessage;
             _timeProvider = timeProvider;
             _flashCardsMetrics = flashCardsMetrics;
+            _builtInCatalogue = builtInCatalogue;
             _flashCardPracticeEventStore = flashCardPracticeEventStore;
             _flashCardSetEventStore = flashCardSetEventStore;
             _guardianLinkEventStore = guardianLinkEventStore;
@@ -47,7 +49,7 @@ namespace Internal.Generated.WolverineHandlers
                 Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.FlashCards.FinishFlashCardGameHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.FlashCards.FinishFlashCardGameHandler.Handle(finishFlashCardGame, finishFlashCardGameValidator, _flashCardPracticeEventStore, _flashCardSetEventStore, _progressEventStore, _guardianLinkEventStore, _userEventStore, context, _timeProvider, _flashCardsMetrics, _loggerForMessage, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.FlashCards.FinishFlashCardGameHandler.Handle(finishFlashCardGame, finishFlashCardGameValidator, _flashCardPracticeEventStore, _flashCardSetEventStore, _progressEventStore, _guardianLinkEventStore, _userEventStore, _builtInCatalogue, context, _timeProvider, _flashCardsMetrics, _loggerForMessage, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

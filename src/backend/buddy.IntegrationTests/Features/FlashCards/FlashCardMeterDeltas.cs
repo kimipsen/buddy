@@ -12,6 +12,7 @@ internal sealed class FlashCardMeterDeltas : IDisposable
 {
     private readonly MeterListener _listener = new();
     private readonly ConcurrentDictionary<string, long> _finish = new();
+    private readonly ConcurrentDictionary<(string Outcome, string Kind), long> _finishByKind = new();
     private long _recovery;
 
     public FlashCardMeterDeltas()
@@ -32,12 +33,26 @@ internal sealed class FlashCardMeterDeltas : IDisposable
                 return;
             }
 
+            string? outcome = null;
+            string? kind = null;
+
             foreach (var tag in tags)
             {
-                if (tag.Key == FlashCardsMetrics.OutcomeTag && tag.Value is string outcome)
+                if (tag.Key == FlashCardsMetrics.OutcomeTag && tag.Value is string o)
                 {
-                    _finish.AddOrUpdate(outcome, measurement, (_, current) => current + measurement);
+                    outcome = o;
                 }
+                else if (tag.Key == FlashCardsMetrics.KindTag && tag.Value is string k)
+                {
+                    kind = k;
+                }
+            }
+
+            if (outcome is not null)
+            {
+                // The per-outcome total sums every kind, so assertions on an outcome ignore the kind.
+                _finish.AddOrUpdate(outcome, measurement, (_, current) => current + measurement);
+                _finishByKind.AddOrUpdate((outcome, kind ?? ""), measurement, (_, current) => current + measurement);
             }
         });
 
@@ -45,6 +60,8 @@ internal sealed class FlashCardMeterDeltas : IDisposable
     }
 
     public long Finish(FlashCardFinishOutcome outcome) => _finish.GetValueOrDefault(outcome.Tag());
+
+    public long Finish(FlashCardFinishOutcome outcome, string kind) => _finishByKind.GetValueOrDefault((outcome.Tag(), kind));
 
     public long Recovery => Interlocked.Read(ref _recovery);
 

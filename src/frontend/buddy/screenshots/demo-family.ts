@@ -443,6 +443,16 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         { cardCount: 10, stars: 2 },
       ],
     });
+    // The built-in catalogue needs no seeding (the library lists it for everyone); Emil gets the whole-hours
+    // clock set so the child page offers a clock card next to the maths set.
+    const catalogue =
+      await api.get<{ id: string; builtInKey: string | null }[]>('/flash-cards/sets');
+    const clockSet = catalogue.find((set) => set.builtInKey === 'clock:1');
+    if (clockSet) {
+      await api.put(`/flash-cards/children/${emil.id}/sets/${clockSet.id}`, {
+        tiers: [{ cardCount: 5, stars: 1 }],
+      });
+    }
     // Emil picked his own timer look and sound (/child/timer); Ida's sound is muted by Sara.
     try {
       const emilApi = await Api.as(DEMO_USERNAMES.child, DEMO_PASSWORD);

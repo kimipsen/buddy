@@ -16,6 +16,7 @@ describe('ChildFlashCards', () => {
     setName: 'Sums',
     kind: 'Math',
     uniqueCardCount: 20,
+    builtInKey: null,
     tiers: [
       { id: 'tier-3', cardCount: 3, stars: 1 },
       { id: 'tier-5', cardCount: 5, stars: 2 },
@@ -298,5 +299,88 @@ describe('ChildFlashCards', () => {
 
     expect(testId(fixture, 'flash-cards-finish-problem')?.textContent).toContain('Still saving');
     expect(button(fixture, 'Try again')).toBeDefined();
+  });
+
+  describe('built-in sets', () => {
+    const clockSet: MyFlashCardSet = {
+      ...sums,
+      setId: 'b-clock1',
+      setName: 'Klokken: hele timer',
+      kind: 'BuiltIn',
+      builtInKey: 'clock:1',
+    };
+    const clockCards = [
+      {
+        key: 'clock:3:30',
+        question: 'Hvad er klokken?',
+        answer: 'halv fire (3:30)',
+        math: null,
+        clock: { hour: 3, minute: 30 },
+      },
+      { key: 'flag:DE', question: '🇩🇪', answer: 'Tyskland', math: null, clock: null },
+      { key: 'sight:hund', question: 'hund', answer: 'hund', math: null, clock: null },
+      { key: 'sight:æble', question: 'æble', answer: 'ÆBLE', math: null, clock: null },
+    ];
+
+    async function play(cardList: typeof clockCards) {
+      service.listMySets.mockResolvedValue([clockSet]);
+      service.getDeck.mockResolvedValue({ cards: cardList });
+      const fixture = await setup();
+      await startGame(fixture);
+      return fixture;
+    }
+
+    it('shows the translated set name', async () => {
+      service.listMySets.mockResolvedValue([clockSet, sums]);
+      const fixture = await setup();
+
+      expect(button(fixture, 'Clock: whole hours')).toBeDefined();
+    });
+
+    it('draws the clock face on the front without the question text', async () => {
+      const fixture = await play(clockCards);
+
+      const face = testId(fixture, 'flash-cards-clock')!.querySelector('svg[role="img"]')!;
+      expect(face.getAttribute('aria-label')).toBe(
+        'Clock face. The hour hand points to 3, the minute hand to 6.',
+      );
+      expect(testId(fixture, 'flash-cards-question')).toBeNull();
+      expect(root(fixture).textContent).not.toContain('Hvad er klokken?');
+      expect(testId(fixture, 'flash-cards-answer')).toBeNull();
+
+      await click(fixture, 'Show the answer');
+      expect(testId(fixture, 'flash-cards-answer')?.textContent).toContain('halv fire (3:30)');
+      expect(button(fixture, 'I knew it')).toBeDefined();
+    });
+
+    it('shows plain text, such as a flag, when there is no clock', async () => {
+      const fixture = await play(clockCards.slice(1));
+
+      expect(testId(fixture, 'flash-cards-clock')).toBeNull();
+      expect(testId(fixture, 'flash-cards-question')?.textContent).toContain('🇩🇪');
+      await click(fixture, 'Show the answer');
+      expect(testId(fixture, 'flash-cards-answer')?.textContent).toContain('Tyskland');
+      expect(testId(fixture, 'flash-cards-self-check')).toBeNull();
+    });
+
+    it('shows a check hint instead of the answer for a sight word', async () => {
+      const fixture = await play(clockCards.slice(2));
+
+      expect(testId(fixture, 'flash-cards-question')?.textContent).toContain('hund');
+      await click(fixture, 'Show the answer');
+      expect(testId(fixture, 'flash-cards-self-check')?.textContent).toContain(
+        'Say the word out loud',
+      );
+      expect(testId(fixture, 'flash-cards-answer')).toBeNull();
+      expect(button(fixture, 'I knew it')).toBeDefined();
+      expect(button(fixture, 'Not yet')).toBeDefined();
+    });
+
+    it('treats an answer equal after case folding as a self-check card', async () => {
+      const fixture = await play(clockCards.slice(3));
+
+      await click(fixture, 'Show the answer');
+      expect(testId(fixture, 'flash-cards-self-check')).not.toBeNull();
+    });
   });
 });

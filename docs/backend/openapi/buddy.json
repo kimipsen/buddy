@@ -20880,6 +20880,19 @@
           "204": {
             "description": "No Content"
           },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
           "404": {
             "description": "Not Found"
           },
@@ -21182,6 +21195,19 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
           },
           "404": {
             "description": "Not Found"
@@ -29733,7 +29759,8 @@
           "key",
           "question",
           "answer",
-          "math"
+          "math",
+          "clock"
         ],
         "type": "object",
         "properties": {
@@ -29755,6 +29782,33 @@
                 "$ref": "#/components/schemas/DeckMathResponse"
               }
             ]
+          },
+          "clock": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DeckClockResponse"
+              }
+            ]
+          }
+        }
+      },
+      "DeckClockResponse": {
+        "required": [
+          "hour",
+          "minute"
+        ],
+        "type": "object",
+        "properties": {
+          "hour": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "minute": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -30619,7 +30673,8 @@
       "FlashCardSetKind": {
         "enum": [
           "Math",
-          "Text"
+          "Text",
+          "BuiltIn"
         ],
         "type": "string"
       },
@@ -30631,7 +30686,9 @@
           "kind",
           "math",
           "cards",
-          "uniqueCardCount"
+          "uniqueCardCount",
+          "builtInKey",
+          "exampleCard"
         ],
         "type": "object",
         "properties": {
@@ -30640,7 +30697,10 @@
             "format": "uuid"
           },
           "ownerId": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "uuid"
           },
           "name": {
@@ -30668,6 +30728,22 @@
           "uniqueCardCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "builtInKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exampleCard": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DeckCard"
+              }
+            ]
           }
         }
       },
@@ -32686,7 +32762,8 @@
           "setName",
           "kind",
           "uniqueCardCount",
-          "tiers"
+          "tiers",
+          "builtInKey"
         ],
         "type": "object",
         "properties": {
@@ -32709,6 +32786,12 @@
             "items": {
               "$ref": "#/components/schemas/FlashCardTierResponse"
             }
+          },
+          "builtInKey": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

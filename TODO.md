@@ -6,6 +6,18 @@
 
 ## Open
 
+### Built-in flash-card sets: human review (2026-11-27)
+
+Plan in [Flash cards](docs/backend/analysis/flash-cards.md#built-in-sets) (issue #133). The code and tests are
+done; these checks need a person.
+
+- [ ] **Read every Danish list** (clock words, sight words, letters, English words, country names).
+- [ ] **Clock wording:** the 20 and 40 minute rows (`tyve minutter over`, `ti minutter over halv`), `halv et` and
+      `halv tolv`.
+- [ ] **Alphabet extras:** Æ, Ø, Å and their example words.
+- [ ] **Clock face** on a tablet and in dark mode, and the flag emoji on the devices the child uses.
+- [ ] **Regenerate the screenshots** (`task docs:screenshots`) in the devcontainer and commit the library page images.
+
 ### MCP server follow-ups (2026-11-18)
 
 Plan in [MCP server](docs/backend/analysis/mcp-server.md). v1 is read-only.

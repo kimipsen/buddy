@@ -74,6 +74,9 @@ internal static class FlashCardTestHelpers
     public static async Task<FlashCardDeckResponse> GetDeckAsync(BuddyApiFixture fixture, string token, Guid setId, Guid tierId) =>
         (await GetAsync(fixture, token, $"/flash-cards/me/sets/{setId}/deck?tierId={tierId}")).ReadAsJson<FlashCardDeckResponse>();
 
+    // The guardian's own sets: the shared catalogue's built-in sets are listed after them.
+    public static List<FlashCardSetResponse> OwnSets(IEnumerable<FlashCardSetResponse> sets) => [.. sets.Where(s => s.BuiltInKey is null)];
+
     // One result per deck slot; the first knownCount slots are "I knew it" (all of them by default).
     public static object[] ResultsFor(FlashCardDeckResponse deck, int? knownCount = null) =>
         [.. deck.Cards.Select((card, slot) => new { Slot = slot, CardKey = card.Key, KnewFirstTime = slot < (knownCount ?? deck.Cards.Count) })];

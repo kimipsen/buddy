@@ -75,6 +75,10 @@ public static class FlashCardsFeature
         // Decks are shuffled with the shared thread-safe instance.
         services.AddSingleton<Random>(_ => Random.Shared);
 
+        // A lambda registration, like Random: a test host replaces the content, and the pre-generated
+        // handler code resolves it from DI.
+        services.AddSingleton<IBuiltInCatalogue>(_ => BuiltInCatalogue.Default);
+
         services.AddSingleton<IFlashCardSetEventStore, MartenFlashCardSetEventStore>();
         services.AddSingleton<IFlashCardPracticeEventStore, MartenFlashCardPracticeEventStore>();
 

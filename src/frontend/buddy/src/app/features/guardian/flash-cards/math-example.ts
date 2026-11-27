@@ -9,6 +9,7 @@ export const MATH_OPERATIONS: readonly MathOperation[] = [
   'Division',
 ];
 
+// The kinds a guardian can create. BuiltIn sets ship with the app and are never offered here.
 export const KINDS: readonly FlashCardSetKind[] = ['Math', 'Text'];
 
 // MathDeck.IsValidLimit on the backend: sums go up to 100, a table or divisor up to 12.
