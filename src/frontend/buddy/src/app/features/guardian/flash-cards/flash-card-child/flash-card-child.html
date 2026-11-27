@@ -1,0 +1,247 @@
+<ng-template #tierEditor let-set let-enabled="enabled">
+  @let rows = this.rows(set);
+  @let state = action.state();
+  <div class="mt-3">
+    <p class="mb-2 text-sm font-medium">{{ 'flashCards.guardian.child.tiersTitle' | translate }}</p>
+    <ul class="space-y-2">
+      @for (row of rows; track $index; let i = $index) {
+        <li>
+          <div class="flex flex-wrap items-end gap-3" [attr.data-tier-row]="i">
+            <div>
+              <label
+                class="mb-1 block text-xs font-medium"
+                [for]="'tierCards-' + set.id + '-' + i"
+                >{{ 'flashCards.guardian.child.tierCards' | translate }}</label
+              >
+              <input
+                [id]="'tierCards-' + set.id + '-' + i"
+                [name]="'tierCards-' + set.id + '-' + i"
+                type="number"
+                class="w-24 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                [attr.min]="limits.minCards"
+                [attr.max]="limits.maxCards"
+                [ngModel]="row.cardCount"
+                (ngModelChange)="patchRow(set, i, { cardCount: $event })"
+              />
+            </div>
+            <div>
+              <label
+                class="mb-1 block text-xs font-medium"
+                [for]="'tierStars-' + set.id + '-' + i"
+                >{{ 'flashCards.guardian.child.tierStars' | translate }}</label
+              >
+              <input
+                [id]="'tierStars-' + set.id + '-' + i"
+                [name]="'tierStars-' + set.id + '-' + i"
+                type="number"
+                class="w-24 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                [attr.min]="limits.minStars"
+                [attr.max]="limits.maxStars"
+                [ngModel]="row.stars"
+                (ngModelChange)="patchRow(set, i, { stars: $event })"
+              />
+            </div>
+            @if (rows.length > 1) {
+              <button
+                type="button"
+                class="text-sm font-medium text-red-600 hover:underline dark:text-red-400"
+                (click)="removeRow(set, i)"
+              >
+                {{ 'flashCards.guardian.child.removeTier' | translate }}
+              </button>
+            }
+          </div>
+          @if (repeats(set, row)) {
+            <p class="mt-1 text-xs text-amber-700 dark:text-amber-400" data-testid="repeat-hint">
+              {{
+                'flashCards.guardian.child.repeatHint' | translate: { count: set.uniqueCardCount }
+              }}
+            </p>
+          }
+        </li>
+      }
+    </ul>
+    <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+      {{
+        'flashCards.guardian.child.tierLimit'
+          | translate: { min: limits.minCards, max: limits.maxCards }
+      }}
+    </p>
+    @if (state.status === 'error' && state.id === set.id) {
+      <p class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
+        {{ state.message | translate: { min: limits.minCards, max: limits.maxCards } }}
+      </p>
+    }
+    <div class="mt-3 flex flex-wrap items-center gap-2">
+      @if (rows.length < 5) {
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:hover:bg-slate-800"
+          (click)="addRow(set)"
+        >
+          {{ 'flashCards.guardian.child.addTier' | translate }}
+        </button>
+      }
+      <button
+        type="button"
+        class="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+        [disabled]="action.isBusy(set.id)"
+        (click)="saveTiers(set)"
+      >
+        {{
+          (enabled ? 'flashCards.guardian.child.saveTiers' : 'flashCards.guardian.child.enable')
+            | translate
+        }}
+      </button>
+      @if (enabled) {
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 dark:border-slate-600 dark:hover:bg-slate-800"
+          [disabled]="action.isBusy(set.id)"
+          (click)="disable(set)"
+        >
+          {{ 'flashCards.guardian.child.disable' | translate }}
+        </button>
+      }
+      @if (savedSetId() === set.id) {
+        <span class="text-sm text-emerald-700 dark:text-emerald-400" role="status">{{
+          'flashCards.guardian.child.saved' | translate
+        }}</span>
+      }
+    </div>
+  </div>
+</ng-template>
+
+<app-card>
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <h3 class="text-lg font-semibold tracking-normal">
+      @if (child(); as selected) {
+        {{ 'flashCards.guardian.child.title' | translate: { name: selected.name.givenName } }}
+      } @else {
+        {{ 'flashCards.title' | translate }}
+      }
+    </h3>
+
+    @if (children().length > 1) {
+      <label class="sr-only" for="flashCardsChildId">{{
+        'common.selectChildLabel' | translate
+      }}</label>
+      <select
+        id="flashCardsChildId"
+        class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+        [ngModel]="childId()"
+        (ngModelChange)="selectChild($event)"
+      >
+        @for (candidate of children(); track candidate.id) {
+          <option [value]="candidate.id">{{ candidate.name.givenName }}</option>
+        }
+      </select>
+    }
+  </div>
+
+  @if (!child()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'flashCards.guardian.noChildren' | translate }}
+    </p>
+  } @else if (data.isLoading() && !loaded()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'flashCards.guardian.loading' | translate }}
+    </p>
+  } @else if (data.error() && !loaded()) {
+    <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+      {{ 'flashCards.guardian.loadError' | translate }}
+    </p>
+  } @else {
+    <p class="mb-5 text-sm text-slate-500 dark:text-slate-400">
+      {{ 'flashCards.guardian.child.intro' | translate: { name: child()!.name.givenName } }}
+    </p>
+
+    <h4 class="mb-2 text-sm font-semibold">
+      {{ 'flashCards.guardian.child.enabledTitle' | translate }}
+    </h4>
+    @if (enabledSets().length === 0) {
+      <p class="mb-5 text-sm text-slate-500 dark:text-slate-400">
+        {{ 'flashCards.guardian.child.noneEnabled' | translate }}
+      </p>
+    } @else {
+      <ul class="mb-5 space-y-3">
+        @for (set of enabledSets(); track set.id) {
+          <li
+            class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-3 dark:border-emerald-700 dark:bg-emerald-500/10"
+            [attr.data-enabled-set]="set.id"
+          >
+            <p class="font-medium">{{ set.name }}</p>
+            <ng-container
+              [ngTemplateOutlet]="tierEditor"
+              [ngTemplateOutletContext]="{ $implicit: set, enabled: true }"
+            />
+          </li>
+        }
+      </ul>
+    }
+
+    @if (availableSets().length > 0) {
+      <h4 class="mb-2 text-sm font-semibold">
+        {{ 'flashCards.guardian.child.availableTitle' | translate }}
+      </h4>
+      <ul class="mb-5 space-y-3">
+        @for (set of availableSets(); track set.id) {
+          <li
+            class="rounded-lg border border-slate-200 px-3 py-3 dark:border-slate-800"
+            [attr.data-available-set]="set.id"
+          >
+            <p class="font-medium">{{ set.name }}</p>
+            <ng-container
+              [ngTemplateOutlet]="tierEditor"
+              [ngTemplateOutletContext]="{ $implicit: set, enabled: false }"
+            />
+          </li>
+        }
+      </ul>
+    }
+
+    <h4 class="mb-2 text-sm font-semibold">
+      {{ 'flashCards.guardian.child.historyTitle' | translate }}
+    </h4>
+    @if (history().length === 0) {
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'flashCards.guardian.child.historyEmpty' | translate }}
+      </p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm" data-testid="history">
+          <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-800">
+              <th scope="col" class="py-1 pr-4 font-medium">
+                {{ 'flashCards.guardian.child.historyDate' | translate }}
+              </th>
+              <th scope="col" class="py-1 pr-4 font-medium">
+                {{ 'flashCards.guardian.child.historySet' | translate }}
+              </th>
+              <th scope="col" class="py-1 pr-4 font-medium">
+                {{ 'flashCards.guardian.child.historyCards' | translate }}
+              </th>
+              <th scope="col" class="py-1 pr-4 font-medium">
+                {{ 'flashCards.guardian.child.historyKnown' | translate }}
+              </th>
+              <th scope="col" class="py-1 font-medium">
+                {{ 'flashCards.guardian.child.historyStars' | translate }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (game of history(); track game.gameId) {
+              <tr class="border-b border-slate-100 dark:border-slate-800/60">
+                <td class="py-1 pr-4">{{ game.finishedOn }}</td>
+                <td class="py-1 pr-4">{{ game.setName }}</td>
+                <td class="py-1 pr-4">{{ game.cardCount }}</td>
+                <td class="py-1 pr-4">{{ game.knownCount }}</td>
+                <td class="py-1">{{ game.stars }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</app-card>

@@ -79,6 +79,11 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       },
       { link: '/guardian/first-then', label: 'shell.nav.items.firstThen', feature: 'firstThen' },
       { link: '/guardian/progress', label: 'shell.nav.items.progress', feature: 'progress' },
+      {
+        link: '/guardian/flash-cards',
+        label: 'shell.nav.items.flashCards',
+        feature: 'flashCards',
+      },
     ],
   },
   {

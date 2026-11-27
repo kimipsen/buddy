@@ -1,0 +1,298 @@
+@let state = action.state();
+<app-card>
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <h3 class="text-lg font-semibold tracking-normal">
+      {{ 'flashCards.guardian.library.title' | translate }}
+    </h3>
+    @if (!draft()) {
+      <button
+        type="button"
+        class="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        (click)="openNew()"
+      >
+        {{ 'flashCards.guardian.library.newSet' | translate }}
+      </button>
+    }
+  </div>
+
+  @if (state.status === 'error' && state.id !== 'set' && state.id !== 'card') {
+    <p class="mb-3 text-sm text-red-600 dark:text-red-400" role="alert">
+      {{ state.message | translate }}
+    </p>
+  }
+
+  @if (draft(); as d) {
+    <form
+      class="mb-6 space-y-4 rounded-lg border border-slate-200 p-4 dark:border-slate-800"
+      (ngSubmit)="save()"
+    >
+      <div>
+        <label class="mb-1 block text-sm font-medium" for="flashSetName">{{
+          'flashCards.guardian.set.nameLabel' | translate
+        }}</label>
+        <input
+          id="flashSetName"
+          name="flashSetName"
+          type="text"
+          maxlength="100"
+          class="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+          [ngModel]="d.name"
+          (ngModelChange)="patchDraft({ name: $event })"
+        />
+      </div>
+
+      @if (!d.id) {
+        <div>
+          <p class="mb-1 text-sm font-medium">
+            {{ 'flashCards.guardian.set.kindLabel' | translate }}
+          </p>
+          <app-segmented-control
+            [options]="kindOptions()"
+            [selected]="d.kind"
+            [ariaLabel]="'flashCards.guardian.set.kindLabel' | translate"
+            (selectedChange)="patchDraft({ kind: $event })"
+          />
+        </div>
+      }
+
+      @if (d.kind === 'Math') {
+        <div>
+          <p class="mb-1 text-sm font-medium">
+            {{ 'flashCards.guardian.set.operationLabel' | translate }}
+          </p>
+          <app-segmented-control
+            [options]="operationOptions()"
+            [selected]="d.operation"
+            [ariaLabel]="'flashCards.guardian.set.operationLabel' | translate"
+            [wrap]="true"
+            (selectedChange)="setOperation($event)"
+          />
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium" for="flashSetLimit">{{
+            limitLabelKey(d.operation) | translate
+          }}</label>
+          <input
+            id="flashSetLimit"
+            name="flashSetLimit"
+            type="number"
+            class="w-28 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            [attr.min]="limitBounds(d.operation).min"
+            [attr.max]="limitBounds(d.operation).max"
+            [ngModel]="d.limit"
+            (ngModelChange)="patchDraft({ limit: $event === null ? '' : '' + $event })"
+          />
+          @if (d.operation === 'Addition' || d.operation === 'Subtraction') {
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              {{ 'flashCards.guardian.set.limitHelp' | translate }}
+            </p>
+          }
+        </div>
+        @if (example(); as card) {
+          <p
+            class="rounded-lg bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800"
+            data-testid="math-example"
+          >
+            <span class="font-medium">{{
+              'flashCards.guardian.set.exampleLabel' | translate
+            }}</span>: {{ card.question }} = {{ card.answer }}
+          </p>
+        }
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          {{ 'flashCards.guardian.set.mathNote' | translate }}
+        </p>
+      }
+
+      @if (state.status === 'error' && state.id === 'set') {
+        <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+          {{ state.message | translate }}
+        </p>
+      }
+
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="submit"
+          class="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+          [disabled]="action.isBusy('set')"
+        >
+          {{ 'flashCards.guardian.set.save' | translate }}
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:hover:bg-slate-800"
+          (click)="cancel()"
+        >
+          {{ 'flashCards.guardian.set.cancel' | translate }}
+        </button>
+      </div>
+
+      @if (d.kind === 'Text' && editedSet(); as set) {
+        <div class="border-t border-slate-200 pt-4 dark:border-slate-800">
+          <h4 class="mb-2 text-sm font-semibold">
+            {{ 'flashCards.guardian.set.cardsTitle' | translate }}
+          </h4>
+          @if (set.cards.length === 0) {
+            <p class="mb-3 text-sm text-slate-500 dark:text-slate-400">
+              {{ 'flashCards.guardian.set.noCards' | translate }}
+            </p>
+          } @else {
+            <ul class="mb-3 space-y-2">
+              @for (card of set.cards; track card.id) {
+                <li
+                  class="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-800"
+                >
+                  <span class="min-w-0 flex-1 break-words"
+                    >{{ card.question }} → {{ card.answer }}</span
+                  >
+                  <button
+                    type="button"
+                    class="text-sm font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+                    (click)="editCard(card)"
+                  >
+                    {{ 'flashCards.guardian.set.editCard' | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="text-sm font-medium text-red-600 hover:underline disabled:opacity-50 dark:text-red-400"
+                    [disabled]="action.isBusy('remove:' + card.id)"
+                    (click)="removeCard(set, card.id)"
+                  >
+                    {{ 'flashCards.guardian.set.removeCard' | translate }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+
+          @if (cardDraft(); as card) {
+            <div class="space-y-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
+              <div>
+                <label class="mb-1 block text-sm font-medium" for="flashCardQuestion">{{
+                  'flashCards.guardian.set.questionLabel' | translate
+                }}</label>
+                <input
+                  id="flashCardQuestion"
+                  name="flashCardQuestion"
+                  type="text"
+                  maxlength="200"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  [ngModel]="card.question"
+                  (ngModelChange)="patchCard({ question: $event })"
+                />
+              </div>
+              <div>
+                <label class="mb-1 block text-sm font-medium" for="flashCardAnswer">{{
+                  'flashCards.guardian.set.answerLabel' | translate
+                }}</label>
+                <input
+                  id="flashCardAnswer"
+                  name="flashCardAnswer"
+                  type="text"
+                  maxlength="200"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  [ngModel]="card.answer"
+                  (ngModelChange)="patchCard({ answer: $event })"
+                />
+              </div>
+              @if (state.status === 'error' && state.id === 'card') {
+                <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+                  {{ state.message | translate }}
+                </p>
+              }
+              <div class="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  class="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+                  [disabled]="action.isBusy('card')"
+                  (click)="saveCard()"
+                >
+                  {{ 'flashCards.guardian.set.saveCard' | translate }}
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:hover:bg-slate-800"
+                  (click)="cancelCard()"
+                >
+                  {{ 'flashCards.guardian.set.cancel' | translate }}
+                </button>
+              </div>
+            </div>
+          } @else {
+            <button
+              type="button"
+              class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:hover:bg-slate-800"
+              (click)="newCard()"
+            >
+              {{ 'flashCards.guardian.set.addCard' | translate }}
+            </button>
+          }
+        </div>
+      }
+    </form>
+  }
+
+  @if (sets().length === 0) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'flashCards.guardian.library.empty' | translate }}
+    </p>
+  } @else {
+    <ul class="space-y-2">
+      @for (set of sets(); track set.id) {
+        @let info = summary(set);
+        <li
+          class="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800"
+          [attr.data-set-id]="set.id"
+        >
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="min-w-0 flex-1">
+              <p class="font-medium">{{ set.name }}</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                {{ info.key | translate: info.params }}
+              </p>
+            </div>
+            <button
+              type="button"
+              class="text-sm font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+              (click)="openEdit(set)"
+            >
+              {{ 'flashCards.guardian.library.editSet' | translate: { name: set.name } }}
+            </button>
+            <button
+              type="button"
+              class="text-sm font-medium text-red-600 hover:underline dark:text-red-400"
+              (click)="askDelete(set.id)"
+            >
+              {{ 'flashCards.guardian.library.deleteSet' | translate: { name: set.name } }}
+            </button>
+          </div>
+
+          @if (confirmingDelete() === set.id) {
+            <div
+              class="mt-2 flex flex-wrap items-center gap-3 rounded-lg bg-red-50 px-3 py-2 text-sm dark:bg-red-500/10"
+              role="alert"
+            >
+              <span class="min-w-0 flex-1">{{
+                'flashCards.guardian.library.deleteConfirm' | translate: { name: set.name }
+              }}</span>
+              <button
+                type="button"
+                class="rounded-lg bg-red-600 px-3 py-1 font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+                [disabled]="action.isBusy('delete:' + set.id)"
+                (click)="confirmDelete(set)"
+              >
+                {{ 'flashCards.guardian.library.deleteAction' | translate }}
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-slate-300 px-3 py-1 font-medium hover:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:hover:bg-slate-800"
+                (click)="cancelDelete()"
+              >
+                {{ 'flashCards.guardian.set.cancel' | translate }}
+              </button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</app-card>
