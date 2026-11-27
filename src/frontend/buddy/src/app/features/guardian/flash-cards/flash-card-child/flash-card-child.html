@@ -170,7 +170,7 @@
             class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-3 dark:border-emerald-700 dark:bg-emerald-500/10"
             [attr.data-enabled-set]="set.id"
           >
-            <p class="font-medium">{{ set.name }}</p>
+            <p class="font-medium">{{ displayName(set) }}</p>
             <ng-container
               [ngTemplateOutlet]="tierEditor"
               [ngTemplateOutletContext]="{ $implicit: set, enabled: true }"
@@ -190,7 +190,7 @@
             class="rounded-lg border border-slate-200 px-3 py-3 dark:border-slate-800"
             [attr.data-available-set]="set.id"
           >
-            <p class="font-medium">{{ set.name }}</p>
+            <p class="font-medium">{{ displayName(set) }}</p>
             <ng-container
               [ngTemplateOutlet]="tierEditor"
               [ngTemplateOutletContext]="{ $implicit: set, enabled: false }"

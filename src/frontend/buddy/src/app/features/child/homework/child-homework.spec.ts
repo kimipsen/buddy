@@ -572,6 +572,7 @@ describe('ChildHomework', () => {
       setName: 'Sums',
       kind: 'Math',
       uniqueCardCount: 20,
+      builtInKey: null,
       tiers: [{ id: 'tier-1', cardCount: 5, stars: 1 }],
     };
 

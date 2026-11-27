@@ -14,6 +14,7 @@ public static class GetFlashCardDeckHandler
         IFlashCardPracticeEventStore practices,
         IFlashCardSetEventStore sets,
         IGuardianLinkEventStore guardians,
+        IBuiltInCatalogue catalogue,
         Random random,
         CancellationToken cancellationToken)
     {
@@ -42,7 +43,9 @@ public static class GetFlashCardDeckHandler
             return new Result<IReadOnlyList<DeckCard>>.Validation(ValidationProblem.Of("The set has no cards to play."));
         }
 
-        IReadOnlyList<DeckCard> deck = set.Math is { } rule
+        IReadOnlyList<DeckCard> deck = set.BuiltIn is not null
+            ? [.. catalogue.Draw(set, tier.CardCount, random).Select(DeckCard.From)]
+            : set.Math is { } rule
             ? [.. MathDeck.Draw(rule, tier.CardCount, random).Select(c => new DeckCard(c.Key, c.Question, c.Answer, new DeckMathResponse(c.Left, c.Operation, c.Right)))]
             : [.. CardDeck.Draw(set.Cards, tier.CardCount, random).Select(c => new DeckCard(CardKey(c), c.Question, c.Answer, null))];
 

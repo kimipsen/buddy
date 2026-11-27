@@ -5,7 +5,7 @@ using Marten;
 
 namespace buddy.Features.FlashCards;
 
-public sealed class MartenFlashCardSetEventStore(IFlashCardsStore store) : IFlashCardSetEventStore
+public sealed class MartenFlashCardSetEventStore(IFlashCardsStore store, IBuiltInCatalogue catalogue) : IFlashCardSetEventStore
 {
     public async Task<IReadOnlyCollection<FlashCardSetEvent>> ReadAsync(FlashCardSetId id, CancellationToken cancellationToken)
     {
@@ -18,6 +18,12 @@ public sealed class MartenFlashCardSetEventStore(IFlashCardsStore store) : IFlas
 
     public async Task<FlashCardSet?> FindSnapshotAsync(FlashCardSetId id, CancellationToken cancellationToken)
     {
+        // A catalogue id is synthesised, never stored.
+        if (catalogue.TryFind(id) is { } builtIn)
+        {
+            return builtIn;
+        }
+
         await using var session = store.QuerySession();
         var snapshot = await session.LoadAsync<FlashCardSetSnapshot>(id.Value, cancellationToken);
 

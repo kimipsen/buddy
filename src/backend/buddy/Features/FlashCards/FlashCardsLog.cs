@@ -8,4 +8,8 @@ internal static partial class FlashCardsLog
 
     [LoggerMessage(EventId = 16002, Level = LogLevel.Warning, Message = "Flash-card game {GameId} of child {ChildId} was recovered: its stars were already awarded but the history entry was missing")]
     public static partial void GameRecovered(this ILogger logger, Guid childId, Guid gameId);
+
+    // The set's catalogue key and the slot only: the card key is client-supplied.
+    [LoggerMessage(EventId = 16003, Level = LogLevel.Warning, Message = "Rejected an unknown card key in slot {Slot} of a finished game on built-in set {BuiltInKey}")]
+    public static partial void BuiltInCardRejected(this ILogger logger, string builtInKey, int slot);
 }

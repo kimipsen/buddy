@@ -6,10 +6,12 @@ import {
   FlashCardSetKind,
   FlashCardsService,
 } from '../../../../core/flash-cards.service';
+import { builtInNameKey, clockAriaParams } from '../../../../core/flash-card-display';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 import { Card } from '../../../../shared/card/card';
+import { ClockFace } from '../../../../shared/clock-face/clock-face';
 import { SegmentedControl } from '../../../../shared/segmented-control/segmented-control';
 import {
   KINDS,
@@ -53,6 +55,7 @@ const OPERATION_KEYS: Record<MathOperation, string> = {
 const KIND_KEYS: Record<FlashCardSetKind, string> = {
   Math: 'flashCards.kind.Math',
   Text: 'flashCards.kind.Text',
+  BuiltIn: 'flashCards.kind.BuiltIn',
 };
 
 const SAVE_ERROR = 'flashCards.guardian.saveError';
@@ -61,7 +64,7 @@ const SAVE_ERROR = 'flashCards.guardian.saveError';
 // with a confirmation, and an inline cards editor for text sets. The page owns the list.
 @Component({
   selector: 'app-flash-card-library',
-  imports: [Card, FormsModule, SegmentedControl, TranslatePipe],
+  imports: [Card, ClockFace, FormsModule, SegmentedControl, TranslatePipe],
   templateUrl: './flash-card-library.html',
 })
 export class FlashCardLibrary {
@@ -77,6 +80,13 @@ export class FlashCardLibrary {
   protected readonly draft = signal<SetDraft | null>(null);
   protected readonly cardDraft = signal<CardDraft | null>(null);
   protected readonly confirmingDelete = signal<string | null>(null);
+
+  // Own sets first; the catalogue sets are a read-only group below. Any kind but Math and Text is
+  // read-only, so a kind this build does not know is never editable.
+  protected readonly ownSets = computed(() => this.sets().filter((set) => !this.isReadOnly(set)));
+  protected readonly readOnlySets = computed(() =>
+    this.sets().filter((set) => this.isReadOnly(set)),
+  );
 
   protected readonly kindOptions = computed(() =>
     KINDS.map((kind) => ({ value: kind, label: this.translation.translate(KIND_KEYS[kind]) })),
@@ -101,6 +111,23 @@ export class FlashCardLibrary {
       ? exampleCard(draft.operation, limit)
       : null;
   });
+
+  protected isReadOnly(set: FlashCardSet): boolean {
+    return set.kind !== 'Math' && set.kind !== 'Text';
+  }
+
+  protected kindKey(set: FlashCardSet): string {
+    return (KIND_KEYS as Partial<Record<string, string>>)[set.kind] ?? KIND_KEYS.BuiltIn;
+  }
+
+  protected displayName(set: FlashCardSet): string {
+    const key = builtInNameKey(set.builtInKey);
+    return key ? this.translation.translate(key) : set.name;
+  }
+
+  protected clockLabel(clock: { hour: number; minute: number }): string {
+    return this.translation.translate('flashCards.clock.ariaLabel', clockAriaParams(clock));
+  }
 
   protected operationLabel(operation: MathOperation): string {
     return OPERATION_KEYS[operation];

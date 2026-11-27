@@ -4042,6 +4042,13 @@ export interface components {
       question: string;
       answer: string;
       math: null | components['schemas']['DeckMathResponse'];
+      clock: null | components['schemas']['DeckClockResponse'];
+    };
+    DeckClockResponse: {
+      /** Format: int32 */
+      hour: number;
+      /** Format: int32 */
+      minute: number;
     };
     DeckMathResponse: {
       /** Format: int32 */
@@ -4315,18 +4322,20 @@ export interface components {
       answer: string;
     };
     /** @enum {string} */
-    FlashCardSetKind: 'Math' | 'Text';
+    FlashCardSetKind: 'Math' | 'Text' | 'BuiltIn';
     FlashCardSetResponse: {
       /** Format: uuid */
       id: string;
       /** Format: uuid */
-      ownerId: string;
+      ownerId: null | string;
       name: string;
       kind: components['schemas']['FlashCardSetKind'];
       math: null | components['schemas']['MathRule'];
       cards: components['schemas']['FlashCardResponse'][];
       /** Format: int32 */
       uniqueCardCount: number;
+      builtInKey: null | string;
+      exampleCard: null | components['schemas']['DeckCard'];
     };
     FlashCardTierRequest: {
       /** Format: int32 */
@@ -4897,6 +4906,7 @@ export interface components {
       /** Format: int32 */
       uniqueCardCount: number;
       tiers: components['schemas']['FlashCardTierResponse'][];
+      builtInKey: null | string;
     };
     MyTransitionWarningsResponse: {
       enabled: boolean;
@@ -18448,6 +18458,15 @@ export interface operations {
         };
         content?: never;
       };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
       401: components['responses']['Unauthorized'];
       /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */
       403: {
@@ -18629,6 +18648,15 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
       };
       401: components['responses']['Unauthorized'];
       /** @description Forbidden. ErrorEnvelope code: `not_a_buddy_member`, `user_not_provisioned`. */

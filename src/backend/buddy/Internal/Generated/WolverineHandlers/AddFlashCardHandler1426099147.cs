@@ -11,12 +11,14 @@ namespace Internal.Generated.WolverineHandlers
     public sealed class AddFlashCardHandler1426099147 : Wolverine.Runtime.Handlers.MessageHandler
     {
         private readonly System.TimeProvider _timeProvider;
+        private readonly buddy.Features.FlashCards.IBuiltInCatalogue _builtInCatalogue;
         private readonly buddy.Features.FlashCards.IFlashCardSetEventStore _flashCardSetEventStore;
         private readonly buddy.Features.Guardians.IGuardianLinkEventStore _guardianLinkEventStore;
 
-        public AddFlashCardHandler1426099147(System.TimeProvider timeProvider, buddy.Features.FlashCards.IFlashCardSetEventStore flashCardSetEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore)
+        public AddFlashCardHandler1426099147(System.TimeProvider timeProvider, buddy.Features.FlashCards.IBuiltInCatalogue builtInCatalogue, buddy.Features.FlashCards.IFlashCardSetEventStore flashCardSetEventStore, buddy.Features.Guardians.IGuardianLinkEventStore guardianLinkEventStore)
         {
             _timeProvider = timeProvider;
+            _builtInCatalogue = builtInCatalogue;
             _flashCardSetEventStore = flashCardSetEventStore;
             _guardianLinkEventStore = guardianLinkEventStore;
         }
@@ -34,7 +36,7 @@ namespace Internal.Generated.WolverineHandlers
                 Wolverine.Runtime.WolverineTracing.MessageActivity(context.Envelope)?.SetTag("handler.type", "buddy.Features.FlashCards.AddFlashCardHandler");
                 
                 // The actual message execution
-                var outgoing1 = await buddy.Features.FlashCards.AddFlashCardHandler.Handle(addFlashCard, addFlashCardValidator, _flashCardSetEventStore, _guardianLinkEventStore, _timeProvider, cancellation).ConfigureAwait(false);
+                var outgoing1 = await buddy.Features.FlashCards.AddFlashCardHandler.Handle(addFlashCard, addFlashCardValidator, _flashCardSetEventStore, _guardianLinkEventStore, _builtInCatalogue, _timeProvider, cancellation).ConfigureAwait(false);
 
                 
                 // Outgoing, cascaded message

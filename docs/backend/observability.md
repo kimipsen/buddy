@@ -45,12 +45,14 @@ The API collects traces, metrics and logs with OpenTelemetry (`Common/Observabil
 | Logs    | Every `ILogger` log, with scopes and the formatted message                                                                                                               |
 
 **Flash cards.** The `Buddy.FlashCards` meter (created through `IMeterFactory`, listed in `ObservabilityFeature`'s
-`Sources`) has `flashcards.finish`, tagged only by `outcome` (`awarded`, `zero`, `replay` or `recovered`; never by
+`Sources`) has `flashcards.finish`, tagged by `outcome` (`awarded`, `zero`, `replay` or `recovered`) and `kind` (`math`,
+`text`, `builtin` or `unknown`; a replay of a made set has no loaded set, so it is `unknown`; never by
 child, set or game id), and `flashcards.finish.recovery`, which counts finishes that wrote the history entry for stars
 an earlier attempt had already awarded. Finish writes the progress stream and then the practice stream without a
 transaction, so the recovery counter is the only signal of that two-write inconsistency: a sustained non-zero rate is
 the thing to investigate. A lost race is counted by the standard HTTP server metrics (`409`), not by a flash-card
-counter. Each finish also logs child, set, tier, stars and outcome (event ids 16001-16002, ids only, no card text).
+counter. Each finish also logs child, set, tier, stars and outcome (event ids 16001-16002, ids only, no card text). A finish with a card key that is not in the built-in
+catalogue is rejected and logs a warning (event id 16003: the set's built-in key and the slot, never the key).
 
 Every signal carries the resource `service.name=buddy-api`, `service.version` (the build version
 from `/version`) and `service.instance.id` (the container's host name).

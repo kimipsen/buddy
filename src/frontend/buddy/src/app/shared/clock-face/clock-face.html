@@ -1,0 +1,63 @@
+<svg role="img" viewBox="0 0 100 100" class="size-full" [attr.aria-label]="ariaLabel() || null">
+  <circle
+    data-part="face"
+    class="fill-white stroke-slate-400 dark:fill-slate-900 dark:stroke-slate-500"
+    stroke-width="2"
+    [attr.cx]="center"
+    [attr.cy]="center"
+    r="48"
+  />
+  @for (tick of ticks; track tick.angle) {
+    <line
+      data-part="tick"
+      class="stroke-slate-500 dark:stroke-slate-400"
+      stroke-width="1.5"
+      [attr.x1]="center"
+      [attr.y1]="center - tickOuter"
+      [attr.x2]="center"
+      [attr.y2]="center - tickOuter + tick.length"
+      [attr.transform]="'rotate(' + tick.angle + ' ' + center + ' ' + center + ')'"
+    />
+  }
+  @for (numeral of numerals; track numeral.value) {
+    <text
+      data-part="numeral"
+      class="fill-slate-700 dark:fill-slate-200"
+      font-size="9"
+      font-weight="600"
+      text-anchor="middle"
+      dominant-baseline="central"
+      [attr.x]="numeral.x"
+      [attr.y]="numeral.y"
+    >
+      {{ numeral.value }}
+    </text>
+  }
+  <line
+    data-part="hour-hand"
+    class="stroke-slate-800 dark:stroke-slate-100"
+    stroke-width="4"
+    stroke-linecap="round"
+    [attr.x1]="center"
+    [attr.y1]="center"
+    [attr.x2]="hourHand().x"
+    [attr.y2]="hourHand().y"
+  />
+  <line
+    data-part="minute-hand"
+    class="stroke-emerald-600 dark:stroke-emerald-400"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    [attr.x1]="center"
+    [attr.y1]="center"
+    [attr.x2]="minuteHand().x"
+    [attr.y2]="minuteHand().y"
+  />
+  <circle
+    data-part="hub"
+    class="fill-slate-800 dark:fill-slate-100"
+    [attr.cx]="center"
+    [attr.cy]="center"
+    r="2.5"
+  />
+</svg>

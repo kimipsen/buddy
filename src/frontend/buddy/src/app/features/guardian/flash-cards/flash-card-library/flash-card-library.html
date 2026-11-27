@@ -231,13 +231,13 @@
     </form>
   }
 
-  @if (sets().length === 0) {
+  @if (ownSets().length === 0) {
     <p class="text-sm text-slate-500 dark:text-slate-400">
       {{ 'flashCards.guardian.library.empty' | translate }}
     </p>
   } @else {
     <ul class="space-y-2">
-      @for (set of sets(); track set.id) {
+      @for (set of ownSets(); track set.id) {
         @let info = summary(set);
         <li
           class="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800"
@@ -294,5 +294,63 @@
         </li>
       }
     </ul>
+  }
+
+  @if (readOnlySets().length > 0) {
+    <section class="mt-6" aria-labelledby="flashBuiltInHeading" data-testid="built-in-sets">
+      <h4 id="flashBuiltInHeading" class="mb-1 text-base font-semibold">
+        {{ 'flashCards.builtIn.heading' | translate }}
+      </h4>
+      <p class="mb-3 text-sm text-slate-500 dark:text-slate-400">
+        {{ 'flashCards.builtIn.hint' | translate }}
+      </p>
+      <ul class="space-y-2">
+        @for (set of readOnlySets(); track set.id) {
+          <li
+            class="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800"
+            [attr.data-set-id]="set.id"
+            [attr.data-built-in-key]="set.builtInKey"
+          >
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="min-w-0 flex-1">
+                <p class="font-medium">{{ displayName(set) }}</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                  <span
+                    class="mr-1 rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    data-testid="kind-badge"
+                    >{{ kindKey(set) | translate }}</span
+                  >
+                  {{
+                    'flashCards.guardian.library.cardCount'
+                      | translate: { count: set.uniqueCardCount }
+                  }}
+                </p>
+              </div>
+              @if (set.exampleCard; as card) {
+                <div
+                  class="flex items-center gap-3 rounded-lg bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800"
+                  data-testid="built-in-example"
+                >
+                  <span class="font-medium">{{
+                    'flashCards.builtIn.exampleLabel' | translate
+                  }}</span>
+                  @if (card.clock; as clock) {
+                    <span class="size-16 shrink-0">
+                      <app-clock-face
+                        [hour]="clock.hour"
+                        [minute]="clock.minute"
+                        [ariaLabel]="clockLabel(clock)"
+                      />
+                    </span>
+                  } @else {
+                    <span>{{ card.question }}</span>
+                  }
+                </div>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
   }
 </app-card>

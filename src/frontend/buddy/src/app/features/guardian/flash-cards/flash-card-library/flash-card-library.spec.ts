@@ -21,6 +21,8 @@ function mathSet(overrides: Partial<FlashCardSet> = {}): FlashCardSet {
     math: { operation: 'Addition', limit: 20 },
     cards: [],
     uniqueCardCount: 231,
+    builtInKey: null,
+    exampleCard: null,
     ...overrides,
   };
 }
@@ -34,6 +36,8 @@ function textSet(overrides: Partial<FlashCardSet> = {}): FlashCardSet {
     math: null,
     cards: [],
     uniqueCardCount: 0,
+    builtInKey: null,
+    exampleCard: null,
     ...overrides,
   };
 }
@@ -320,5 +324,116 @@ describe('FlashCardLibrary', () => {
 
     expect(deleted).toEqual([]);
     expect(el.textContent).toContain('Could not save. Try again.');
+  });
+
+  describe('built-in sets', () => {
+    const clockCard = {
+      key: 'clock:3:30',
+      question: 'Hvad er klokken?',
+      answer: 'halv fire (3:30)',
+      math: null,
+      clock: { hour: 3, minute: 30 },
+    };
+    const builtIn = (overrides: Partial<FlashCardSet> = {}): FlashCardSet => ({
+      id: 'b-clock1',
+      ownerId: null,
+      name: 'Klokken: hele timer',
+      kind: 'BuiltIn',
+      math: null,
+      cards: [],
+      uniqueCardCount: 12,
+      builtInKey: 'clock:1',
+      exampleCard: clockCard,
+      ...overrides,
+    });
+
+    it('shows a read-only group below the own sets, with the name, badge and count', async () => {
+      const { fixture, el } = setup([builtIn(), mathSet()]);
+      await settle(fixture);
+
+      const group = el.querySelector<HTMLElement>('[data-testid="built-in-sets"]')!;
+      expect(group.textContent).toContain('Built-in sets');
+      expect(group.textContent).toContain('Clock: whole hours');
+      expect(group.textContent).toContain('12 cards');
+      expect(group.querySelector('[data-testid="kind-badge"]')?.textContent).toContain('Built-in');
+      expect(group.querySelectorAll('button')).toHaveLength(0);
+      expect(el.textContent!.indexOf('Plus up to 20')).toBeLessThan(
+        el.textContent!.indexOf('Built-in sets'),
+      );
+      expect(el.querySelectorAll('[data-set-id="set-math"] button')).toHaveLength(2);
+    });
+
+    it('shows the clock face for an example card with a clock, labelled by hand positions', async () => {
+      const { fixture, el } = setup([builtIn()]);
+      await settle(fixture);
+
+      const face = el.querySelector('[data-testid="built-in-example"] svg[role="img"]')!;
+      expect(face.getAttribute('aria-label')).toBe(
+        'Clock face. The hour hand points to 3, the minute hand to 6.',
+      );
+      expect(el.querySelector('[data-testid="built-in-example"]')?.textContent).not.toContain(
+        'Hvad er klokken?',
+      );
+    });
+
+    it('shows the example question as text when the card has no clock, and nothing for null', async () => {
+      const flag = { key: 'flag:DE', question: '🇩🇪', answer: 'Tyskland', math: null, clock: null };
+      const { fixture, el } = setup([
+        builtIn({ id: 'b-c', builtInKey: 'countries:2', exampleCard: flag }),
+        builtIn({ id: 'b-none', builtInKey: 'sight:1', exampleCard: null }),
+      ]);
+      await settle(fixture);
+
+      const examples = el.querySelectorAll('[data-testid="built-in-example"]');
+      expect(examples).toHaveLength(1);
+      expect(examples[0]!.textContent).toContain('🇩🇪');
+      expect(el.querySelector('[data-set-id="b-none"]')).not.toBeNull();
+    });
+
+    it('falls back to the stored name for an unknown built-in key', async () => {
+      const { fixture, el } = setup([builtIn({ builtInKey: 'future:1', name: 'Fremtid' })]);
+      await settle(fixture);
+
+      expect(el.textContent).toContain('Fremtid');
+    });
+
+    it('treats an unknown kind as read-only', async () => {
+      const { fixture, el } = setup([
+        builtIn({
+          id: 'x',
+          kind: 'Future' as FlashCardSet['kind'],
+          builtInKey: null,
+          name: 'Mystery',
+          exampleCard: null,
+        }),
+      ]);
+      await settle(fixture);
+
+      const item = el.querySelector('[data-set-id="x"]')!;
+      expect(item.closest('[data-testid="built-in-sets"]')).not.toBeNull();
+      expect(item.querySelectorAll('button')).toHaveLength(0);
+      expect(item.textContent).toContain('Built-in');
+    });
+
+    it('never offers Built-in when creating a set', async () => {
+      const { fixture, el } = setup([builtIn()]);
+      await settle(fixture);
+      button(el, 'New set').click();
+      await settle(fixture);
+
+      const radios = Array.from(el.querySelectorAll('[role="radio"]')).map((r) =>
+        r.textContent?.trim(),
+      );
+      expect(radios).toContain('Maths');
+      expect(radios).toContain('Text');
+      expect(radios).not.toContain('Built-in');
+    });
+
+    it("does not count built-in sets as the guardian's own", async () => {
+      const { fixture, el } = setup([builtIn()]);
+      await settle(fixture);
+
+      expect(el.textContent).toContain('No card sets yet.');
+    });
   });
 });

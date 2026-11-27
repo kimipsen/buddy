@@ -1,5 +1,7 @@
 using System.Collections.Immutable;
 
+using System.Text.Json.Serialization;
+
 using buddy.Common.Aggregates;
 using buddy.Features.Users;
 
@@ -22,7 +24,12 @@ public sealed record FlashCardSet(
     public ImmutableList<FlashCard> Cards { get; init; } = Cards ?? [];
 
     // How many different cards a game can draw from. A set with none cannot be enabled or played.
-    public int UniqueCardCount => Math is { } rule ? MathDeck.UniqueCount(rule) : Cards.Count;
+    public int UniqueCardCount => BuiltIn?.UniqueCardCount ?? (Math is { } rule ? MathDeck.UniqueCount(rule) : Cards.Count);
+
+    // Set only on a synthesised built-in set (IBuiltInCatalogue). Never serialised, so stored
+    // guardian snapshots keep their shape.
+    [JsonIgnore]
+    public BuiltInSetRef? BuiltIn { get; init; }
 
     public static FlashCardSet? Rehydrate(IEnumerable<FlashCardSetEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 

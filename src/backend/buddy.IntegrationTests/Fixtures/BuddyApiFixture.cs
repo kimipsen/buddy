@@ -8,6 +8,7 @@ using buddy.Features.FlashCards;
 using buddy.Features.Progress;
 using buddy.Features.Users;
 using buddy.IntegrationTests.Common.Concurrency;
+using buddy.IntegrationTests.Features.FlashCards;
 
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
@@ -156,6 +157,9 @@ public sealed class BuddyApiFixture : IAsyncLifetime
                 services.AddSingleton<MartenFlashCardPracticeEventStore>();
                 services.AddSingleton<TestFlashCardPracticeEventStore>();
                 services.Replace(ServiceDescriptor.Singleton<IFlashCardPracticeEventStore>(sp => sp.GetRequiredService<TestFlashCardPracticeEventStore>()));
+
+                // The built-in catalogue is fixture content, not the shipped sets -- see FixtureBuiltInCatalogue.
+                services.Replace(ServiceDescriptor.Singleton<IBuiltInCatalogue>(FixtureBuiltInCatalogue.Instance));
             });
         })
             .WithConfiguration(_configOverrides);

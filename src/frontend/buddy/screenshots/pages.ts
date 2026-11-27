@@ -124,7 +124,7 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     name: 'guardian-flash-cards',
     title: 'Flash cards',
     description:
-      'The library of card sets (maths rules such as addition up to 20, or text sets with questions and answers) and, per child, which sets they can play, the game lengths (cards and stars) and the finished games.',
+      'The library of card sets (maths rules such as addition up to 20, or text sets with questions and answers), the built-in sets (clock, sight words, letters, English words and countries, each with an example card, the clock face included) and, per child, which sets they can play, the game lengths (cards and stars) and the finished games.',
     as: 'guardian',
     route: '/guardian/flash-cards',
     waitFor: 'Plus up to 20',

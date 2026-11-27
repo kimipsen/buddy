@@ -18,8 +18,10 @@ import {
   FlashCardTierRequest,
   FlashCardsService,
 } from '../../../../core/flash-cards.service';
+import { builtInNameKey } from '../../../../core/flash-card-display';
 import { ChildSummary } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 import { Card } from '../../../../shared/card/card';
 
@@ -68,12 +70,19 @@ export function tiersValid(rows: TierRow[]): boolean {
 })
 export class FlashCardChild {
   private readonly flashCards = inject(FlashCardsService);
+  private readonly translation = inject(TranslationService);
 
   readonly children = input.required<ChildSummary[]>();
   readonly childId = input<string | undefined>();
   // Every set in the library.
   readonly sets = input.required<FlashCardSet[]>();
   readonly childIdChange = output<string>();
+
+  // A built-in set's name is translated by its key; any other set shows its own name.
+  protected displayName(set: FlashCardSet): string {
+    const key = builtInNameKey(set.builtInKey);
+    return key ? this.translation.translate(key) : set.name;
+  }
 
   protected readonly limits = {
     minCards: MIN_TIER_CARDS,

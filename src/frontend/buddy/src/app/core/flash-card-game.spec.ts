@@ -13,9 +13,9 @@ import {
 } from './flash-card-game';
 
 const cards: DeckCard[] = [
-  { key: 'a', question: '1 + 1', answer: '2', math: null },
-  { key: 'b', question: '2 + 2', answer: '4', math: null },
-  { key: 'c', question: '3 + 3', answer: '6', math: null },
+  { key: 'a', question: '1 + 1', answer: '2', math: null, clock: null },
+  { key: 'b', question: '2 + 2', answer: '4', math: null, clock: null },
+  { key: 'c', question: '3 + 3', answer: '6', math: null, clock: null },
 ];
 
 const start = () => createGame('game-1', 'set-1', 'tier-1', cards);

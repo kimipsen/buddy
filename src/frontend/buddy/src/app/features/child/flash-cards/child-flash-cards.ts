@@ -18,7 +18,14 @@ import {
   MyFlashCardSet,
   isConflict,
 } from '../../../core/flash-cards.service';
+import {
+  builtInNameKey,
+  clockAriaParams,
+  sameAfterNormalising,
+} from '../../../core/flash-card-display';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { ClockFace } from '../../../shared/clock-face/clock-face';
 import { ChildPage } from '../child-page/child-page';
 
 function errorCode(error: unknown): string | undefined {
@@ -35,11 +42,12 @@ type FinishProblem = 'error' | 'unavailable' | 'busy';
 // of saving it.
 @Component({
   selector: 'app-child-flash-cards',
-  imports: [TranslatePipe, ChildPage],
+  imports: [ClockFace, TranslatePipe, ChildPage],
   templateUrl: './child-flash-cards.html',
 })
 export class ChildFlashCards {
   private readonly service = inject(FlashCardsService);
+  private readonly translation = inject(TranslationService);
 
   protected readonly sets = resource({ loader: () => this.service.listMySets() });
 
@@ -71,6 +79,20 @@ export class ChildFlashCards {
 
     return set?.tiers.find((tier) => tier.id === id) ?? null;
   });
+
+  protected setLabel(set: MyFlashCardSet): string {
+    const key = builtInNameKey(set.builtInKey);
+    return key ? this.translation.translate(key) : set.setName;
+  }
+
+  protected clockLabel(clock: { hour: number; minute: number }): string {
+    return this.translation.translate('flashCards.clock.ariaLabel', clockAriaParams(clock));
+  }
+
+  // A sight word has no back: the answer is the word itself, so the back shows a hint instead.
+  protected isSelfCheck(card: { question: string; answer: string }): boolean {
+    return sameAfterNormalising(card.question, card.answer);
+  }
 
   protected readonly now = computed(() => {
     const game = this.game();

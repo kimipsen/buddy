@@ -51,6 +51,13 @@ public static class FlashCardAuthorization
             return FlashCardAccess.NotFound;
         }
 
+        // A built-in set has no real owner: any guardian may hand it out (enable). The mutating
+        // handlers reject a catalogue id before they get here.
+        if (set.BuiltIn is not null)
+        {
+            return FlashCardAccess.Allowed;
+        }
+
         if (set.OwnerId == callerId)
         {
             return FlashCardAccess.Allowed;

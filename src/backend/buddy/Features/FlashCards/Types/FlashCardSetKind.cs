@@ -5,5 +5,7 @@ namespace buddy.Features.FlashCards;
 public enum FlashCardSetKind
 {
     Math,
-    Text
+    Text,
+    // A shipped set from IBuiltInCatalogue: never stored, never created through the API.
+    BuiltIn
 }

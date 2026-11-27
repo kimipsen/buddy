@@ -13,12 +13,27 @@ public static class UpdateFlashCardSetHandler
         IValidator<UpdateFlashCardSet> validator,
         IFlashCardSetEventStore sets,
         IGuardianLinkEventStore guardians,
+        IBuiltInCatalogue catalogue,
         TimeProvider time,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
             return new Result<FlashCardSet>.Validation(problem);
+        }
+
+        // Order: validator, library access (a child is Forbidden), the catalogue check, then the read,
+        // which finds no stream for a catalogue id.
+        var libraryAccess = await FlashCardAuthorization.CheckManageLibrary(command.UserId, guardians, cancellationToken);
+
+        if (libraryAccess != FlashCardAccess.Allowed)
+        {
+            return libraryAccess.ToDeniedResult<FlashCardSet>();
+        }
+
+        if (catalogue.TryFind(command.SetId) is not null)
+        {
+            return new Result<FlashCardSet>.Validation(ValidationProblem.Of("Built-in sets are read-only."));
         }
 
         var set = FlashCardSet.Rehydrate(await sets.ReadAsync(command.SetId, cancellationToken));
