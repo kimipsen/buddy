@@ -2,9 +2,9 @@ namespace buddy.Common.FeatureFlags;
 
 // Which optional features this installation offers, bound from "Features:*" -- the family's
 // operator turns one off with an environment variable (Features__Medicines=false). Every flag
-// defaults to on, so an installation without the section behaves as before -- except Mcp and
-// FlashCards, which are off until the operator opts in (docs/backend/analysis/mcp-server.md). Off hides a feature's
-// endpoints and screens only: its registrations, data and GDPR coverage stay.
+// defaults to on, so an installation without the section behaves as before -- except Mcp, which is
+// off until the operator opts in (docs/backend/analysis/mcp-server.md). Off hides a feature's endpoints
+// and screens only: its registrations, data and GDPR coverage stay.
 // See docs/backend/analysis/feature-flags.md.
 public sealed class FeatureOptions
 {
@@ -35,10 +35,10 @@ public sealed class FeatureOptions
     public bool Printing { get; set; } = true;
     public bool Progress { get; set; } = true;
 
-    // Off by default, the second exception after Mcp: flash cards are new, so each installation opts
-    // in. Needs Progress (the stars they pay out), so Effective() = FlashCards && Progress. Read
-    // through the effective flags only. Off hides the routes and screens; data and GDPR coverage stay.
-    public bool FlashCards { get; set; }
+    // On by default like every flag. Needs Progress (the stars they pay out), so Effective() =
+    // FlashCards && Progress. Read through the effective flags only. Off hides the routes and screens;
+    // data and GDPR coverage stay.
+    public bool FlashCards { get; set; } = true;
     public bool TaskLibrary { get; set; } = true;
     public bool TransitionWarnings { get; set; } = true;
     public bool Feelings { get; set; } = true;

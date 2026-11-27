@@ -48,15 +48,14 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
             ["Features:VisitSummaries"] = "false",
             ["Features:Homework"] = "false",
             ["Features:Help"] = "false"
-            // FlashCards stays on from the suite's host: with Progress off it follows Progress.
+            // FlashCards uses its on default: with Progress off it follows Progress.
         });
 
-    // The suite's host turns FlashCards on; a null value leaves the key unset, so this host runs the
-    // real default (off).
-    private Task<IAlbaHost> FlashCardsDefaultAsync() =>
-        fixture.SharedHostAsync($"{nameof(FeatureFlagsTests)}.FlashCardsDefault", new Dictionary<string, string?>
+    // FlashCards is on by default; this host proves an operator can still turn it off.
+    private Task<IAlbaHost> FlashCardsOffAsync() =>
+        fixture.SharedHostAsync($"{nameof(FeatureFlagsTests)}.FlashCardsOff", new Dictionary<string, string?>
         {
-            ["Features:FlashCards"] = null
+            ["Features:FlashCards"] = "false"
         });
 
     private Task<IAlbaHost> MealplanExtrasOffAsync() =>
@@ -148,13 +147,21 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
     }
 
     [Fact]
-    public async Task Flash_cards_are_off_by_default_and_their_routes_are_unmapped()
+    public async Task Flash_cards_are_on_by_default()
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
-        var host = await FlashCardsDefaultAsync();
+
+        Assert.True((await GetFeaturesAsync(fixture.Host)).FlashCards);
+        await GetAsync(fixture.Host, "/flash-cards/sets", token, 200);
+    }
+
+    [Fact]
+    public async Task Flash_cards_off_hides_their_routes()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var host = await FlashCardsOffAsync();
 
         Assert.False((await GetFeaturesAsync(host)).FlashCards);
-        Assert.True((await GetFeaturesAsync(fixture.Host)).FlashCards);
         await GetAsync(host, "/flash-cards/sets", token, 404);
     }
 

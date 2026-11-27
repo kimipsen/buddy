@@ -13,7 +13,7 @@ namespace buddy.IntegrationTests.Common.FeatureFlags;
 public sealed class FeatureOptionsTests
 {
     [Fact]
-    public void No_features_section_turns_every_feature_on_except_flash_cards()
+    public void No_features_section_turns_every_listed_feature_on()
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection([]).Build();
         var services = new ServiceCollection();
@@ -22,7 +22,7 @@ public sealed class FeatureOptionsTests
         using var provider = services.BuildServiceProvider();
 
         Assert.Equal(
-            new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false),
+            new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true),
             provider.GetRequiredService<IOptions<FeatureOptions>>().Value.Effective());
     }
 
@@ -38,13 +38,13 @@ public sealed class FeatureOptionsTests
     }
 
     [Fact]
-    public void Flash_cards_are_off_by_default_and_need_progress()
+    public void Flash_cards_are_on_by_default_and_need_progress()
     {
-        Assert.False(new FeatureOptions().FlashCards);
-        Assert.False(new FeatureOptions().Effective().FlashCards);
-        Assert.True(new FeatureOptions { FlashCards = true }.Effective().FlashCards);
-        Assert.False(new FeatureOptions { FlashCards = true, Progress = false }.Effective().FlashCards);
-        Assert.Equal(["FlashCards"], new FeatureOptions { FlashCards = true, Progress = false }.SubFlagsOverriddenByParent());
+        Assert.True(new FeatureOptions().FlashCards);
+        Assert.True(new FeatureOptions().Effective().FlashCards);
+        Assert.False(new FeatureOptions { Progress = false }.Effective().FlashCards);
+        Assert.Equal(["FlashCards"], new FeatureOptions { Progress = false }.SubFlagsOverriddenByParent());
+        Assert.False(new FeatureOptions { FlashCards = false }.Effective().FlashCards);
         Assert.Empty(new FeatureOptions { FlashCards = false, Progress = false }.SubFlagsOverriddenByParent());
     }
 

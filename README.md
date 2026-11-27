@@ -144,7 +144,7 @@ in real time.
 - [x] Flash cards: a guardian makes text sets or maths sets (generated from a rule) and switches
       them on per child with game lengths (cards and stars); the child flips cards, answers "I
       knew it" or "Not yet", sees missed cards once more, and earns stars once per set and day
-      (off by default, `Features__FlashCards`; issue #132) — see
+      (on by default, `Features__FlashCards=false` turns it off; issue #132) — see
       [Flash cards](docs/backend/analysis/flash-cards.md)
 - [x] Built-in flash-card sets: 16 ready-made, read-only sets (clock with an SVG clock face and
       Danish time words, sight words, letters, English words, countries with flags) a guardian

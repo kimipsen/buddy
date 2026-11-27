@@ -25,9 +25,8 @@ export default async function globalSetup(): Promise<void> {
   config.keycloak.authority = process.env['CI'] ? 'http://localhost:9080' : 'http://keycloak:8080';
   writeFileSync(RUNTIME_CONFIG_PATH, `${JSON.stringify(config, null, 2)}\n`);
 
-  // The flash card specs need Features__FlashCards, which is off by default and which
-  // playwright.config.ts sets only for the API it starts. A reused dev API without it would fail
-  // every one of them with a 404, so stop here with the reason instead.
+  // Flash cards are on by default. A reused dev API can explicitly turn them off, which would make
+  // every flash card spec fail with a 404, so stop here with the reason instead.
   await assertFlashCardsOn();
 
   // On a fresh database the seeded guardians have no groups or children either, so the app would
@@ -48,7 +47,7 @@ async function assertFlashCardsOn(): Promise<void> {
 
     if (features.flashCards !== true) {
       throw new Error(
-        `The API at ${apiBaseUrl} has flash cards off. Restart it with Features__FlashCards=true.`,
+        `The API at ${apiBaseUrl} has flash cards off. Remove Features__FlashCards=false and restart it.`,
       );
     }
   } finally {

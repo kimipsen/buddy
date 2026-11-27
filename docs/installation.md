@@ -184,12 +184,13 @@ no effect; change the compose file instead.
 
 ### Feature flags
 
-Every feature is on by default, except `FlashCards`, which is off until you turn it on with
-`Features__FlashCards=true` (and needs `Progress`). Turn off one this family won't use with `Features__<Name>=false`
-in `deploy/.env` (on Azure: `FEATURES=Medicines=false,SleepDiary=false`) and restart the API. The
+Every feature is on by default, except `Mcp`. Turn off one this family won't use with
+`Features__<Name>=false` in `deploy/.env` (on Azure: `FEATURES=Medicines=false,SleepDiary=false`) and restart the API. The
 API stops serving the feature and the app hides its pages, cards and links, without a rebuild. The
 feature's data is kept, and comes back when you set the flag to `true` again. Turning off health
 features is also the first step of [setting up privacy](privacy-setup.md#2-turn-off-what-you-dont-use).
+Existing installations get flash cards on after upgrading; opt out with `Features__FlashCards=false`
+(`FEATURES=FlashCards=false` on Azure). Flash cards also follow `Progress`.
 
 | Name                  | Turns off                                                                                  |
 | --------------------- | ------------------------------------------------------------------------------------------ |
@@ -212,7 +213,7 @@ features is also the first step of [setting up privacy](privacy-setup.md#2-turn-
 | `FirstThen`           | First–Then boards                                                                          |
 | `Homework`            | The homework splitter                                                                      |
 | `Help`                | The in-app help panel and help pages                                                       |
-| `FlashCards`          | Flash card sets and games. Off by default; also off when `Progress` is off                 |
+| `FlashCards`          | Flash card sets and games. Also off when `Progress` is off                                 |
 
 [feature-flags.md](backend/analysis/feature-flags.md) has what each flag hides in detail.
 

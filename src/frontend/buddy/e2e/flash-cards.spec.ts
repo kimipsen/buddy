@@ -5,7 +5,7 @@ import { createChild, uniqueName } from './support/guardian-data';
 import { makeChildLoginUsable } from './support/keycloak-admin-client';
 
 // Flash cards end to end (docs/backend/analysis/flash-cards.md), against the real API, Keycloak and
-// Postgres (the API runs with Features__FlashCards=true, see playwright.config.ts): a guardian makes
+// Postgres (flash cards are on by default): a guardian makes
 // a text set and a maths set and switches the maths one on for the child with two game lengths; the
 // child plays through Homework, answers one card "Not yet", sees it once more at the end and gets
 // stars; the guardian sees the finished game; playing the same length again earns nothing, and a

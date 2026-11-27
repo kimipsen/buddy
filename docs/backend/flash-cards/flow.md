@@ -33,7 +33,7 @@ sequenceDiagram
 
 ## Endpoints
 
-All routes are mapped only when `Features:FlashCards` is on (`404` otherwise).
+All routes are mapped only when `Features:FlashCards` is on (the default; `404` otherwise).
 
 | Method   | Route                                          | Who      | Behavior                                        |
 | -------- | ---------------------------------------------- | -------- | ----------------------------------------------- |

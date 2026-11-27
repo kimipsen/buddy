@@ -35,8 +35,6 @@ const ciBackendEnv = {
 // error. Production keeps its limits; only the API this config starts gets a larger anonymous
 // budget. A dev API that is already running (reuseExistingServer) keeps whatever limits it has.
 const e2eBackendEnv = {
-  // Off by default in the API (like Mcp); the flash card specs need it on.
-  Features__FlashCards: 'true',
   RateLimiting__Anonymous__TokenLimit: '1000',
   RateLimiting__Anonymous__TokensPerPeriod: '100',
   // The test Mealie (e2e/support/mealie-client.ts) is on the private network over plain http,
