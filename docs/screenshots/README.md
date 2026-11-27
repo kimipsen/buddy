@@ -78,6 +78,16 @@ Completed tasks earn stars. The guardian answers reward requests, keeps the rewa
 
 <img src="mobile/guardian-progress.png" alt="Progress on a phone" width="320">
 
+## Flash cards
+
+The library of card sets (maths rules such as addition up to 20, or text sets with questions and answers) and, per child, which sets they can play, the game lengths (cards and stars) and the finished games.
+
+![Flash cards](guardian-flash-cards.png)
+
+<img src="tablet/guardian-flash-cards.png" alt="Flash cards on a tablet" width="384">
+
+<img src="mobile/guardian-flash-cards.png" alt="Flash cards on a phone" width="320">
+
 ## Meal plan
 
 The week's meals per slot, picked from the child's meal library.
@@ -367,6 +377,16 @@ The homework splitter: the child writes down tonight's homework and Buddy splits
 <img src="tablet/child-homework.png" alt="Child: homework on a tablet" width="384">
 
 <img src="mobile/child-homework.png" alt="Child: homework on a phone" width="320">
+
+## Child: flash cards
+
+The flash-card game: the child picks a set and a game length (cards and stars), flips each card and answers "I knew it" or "Not yet". Cards answered "Not yet" come back once at the end, and a finished game shows the stars earned. No timer.
+
+![Child: flash cards](child-flash-cards.png)
+
+<img src="tablet/child-flash-cards.png" alt="Child: flash cards on a tablet" width="384">
+
+<img src="mobile/child-flash-cards.png" alt="Child: flash cards on a phone" width="320">
 
 ## Child: meal plan
 
