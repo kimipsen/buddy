@@ -4529,6 +4529,7 @@ export interface components {
       visitSummaries: boolean;
       homework: boolean;
       help: boolean;
+      flashCards: boolean;
     };
     InviteGuardianRequest: {
       email: string;

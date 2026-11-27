@@ -56,7 +56,8 @@ so a typo stops the deploy instead of crash-looping the API) and passes each pai
 to the API as `Features__<Name>`. To turn a
 feature back on, change its pair to `Name=true` rather than deleting it, because
 a redeploy keeps the env vars it doesn't mention. A disabled feature's data is
-kept, and the app hides its pages. See
+kept, and the app hides its pages. `FlashCards` is the exception: it is off until
+you set `FEATURES=FlashCards=true` (it also needs `Progress`). See
 [docs/backend/analysis/feature-flags.md](../docs/backend/analysis/feature-flags.md).
 
 ## 3. Deploy

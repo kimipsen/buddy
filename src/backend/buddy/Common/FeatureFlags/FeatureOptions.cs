@@ -2,8 +2,8 @@ namespace buddy.Common.FeatureFlags;
 
 // Which optional features this installation offers, bound from "Features:*" -- the family's
 // operator turns one off with an environment variable (Features__Medicines=false). Every flag
-// defaults to on, so an installation without the section behaves as before -- except Mcp, which
-// is off until the operator opts in (docs/backend/analysis/mcp-server.md). Off hides a feature's
+// defaults to on, so an installation without the section behaves as before -- except Mcp and
+// FlashCards, which are off until the operator opts in (docs/backend/analysis/mcp-server.md). Off hides a feature's
 // endpoints and screens only: its registrations, data and GDPR coverage stay.
 // See docs/backend/analysis/feature-flags.md.
 public sealed class FeatureOptions
@@ -34,6 +34,11 @@ public sealed class FeatureOptions
     public bool NightDuty { get; set; } = true;
     public bool Printing { get; set; } = true;
     public bool Progress { get; set; } = true;
+
+    // Off by default, the second exception after Mcp: flash cards are new, so each installation opts
+    // in. Needs Progress (the stars they pay out), so Effective() = FlashCards && Progress. Read
+    // through the effective flags only. Off hides the routes and screens; data and GDPR coverage stay.
+    public bool FlashCards { get; set; }
     public bool TaskLibrary { get; set; } = true;
     public bool TransitionWarnings { get; set; } = true;
     public bool Feelings { get; set; } = true;
@@ -71,7 +76,8 @@ public sealed class FeatureOptions
         FirstThen,
         VisitSummaries && (SleepDiary || Medicines || Feelings),
         Homework,
-        Help);
+        Help,
+        FlashCards && Progress);
 
     public IReadOnlyList<string> SubFlagsOverriddenByParent()
     {
@@ -90,6 +96,11 @@ public sealed class FeatureOptions
         if (!Mealplans && MealplanMealie)
         {
             overridden.Add(nameof(MealplanMealie));
+        }
+
+        if (FlashCards && !Progress)
+        {
+            overridden.Add(nameof(FlashCards));
         }
 
         if (VisitSummaries && !(SleepDiary || Medicines || Feelings))
@@ -122,4 +133,6 @@ public sealed record InstallationFeatures(
     bool FirstThen,
     bool VisitSummaries,
     bool Homework,
-    bool Help);
+    bool Help,
+    // Appended last: the order is the JSON order of GET /features.
+    bool FlashCards);

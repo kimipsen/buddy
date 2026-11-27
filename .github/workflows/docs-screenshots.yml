@@ -40,6 +40,7 @@ jobs:
       Cors__AllowedOrigins__0: http://localhost:4300
       Mail__Host: localhost
       Mail__Port: '2025'
+      Features__FlashCards: 'true'
       # The screenshot tooling (screenshots/demo-family.ts) reaches the same services from the runner.
       KEYCLOAK_URL: http://localhost:9080
       MAILPIT_BASE_URL: http://localhost:9025

@@ -22,11 +22,14 @@ public sealed class ProgressPersonalDataExporter(IProgressEventStore progress) :
             children.Add(new ExportedProgress(
                 childId.Value,
                 ProgressSummary.From(current),
-                [.. current.RewardRequests.Select(RewardRequestResponse.From)]));
+                [.. current.RewardRequests.Select(RewardRequestResponse.From)],
+                [.. current.FlashCardStarsByDay]));
         }
 
         return children;
     }
 }
 
-public sealed record ExportedProgress(Guid ChildId, ProgressSummary Progress, IReadOnlyList<RewardRequestResponse> AllRewardRequests);
+public sealed record ExportedProgress(Guid ChildId, ProgressSummary Progress, IReadOnlyList<RewardRequestResponse> AllRewardRequests,
+    // What each flash card set paid out per day; only the retained window (ChildProgress.FlashCardDayRetention).
+    IReadOnlyList<FlashCardDayStars> FlashCardStarsByDay);

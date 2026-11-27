@@ -78,6 +78,9 @@ time (`grep -E '^RESOURCE_GROUP=' deploy/azure/.env | cut -d= -f2-`). Things to 
   README step 5, Azure README step 4). The API deploys, but its Keycloak admin calls (creating
   child accounts) won't work. The checker can't tell whether a non-placeholder value is the
   _current_ secret.
+- `FlashCards` is the one feature that is off until the operator opts in (`Features__FlashCards=true`
+  in `deploy/.env`, `FEATURES=FlashCards=true` in `deploy/azure/.env`; it also needs `Progress`).
+  A deploy without it is correct, not a missed setting: say so rather than flag it.
 - Azure, blank `BREVO_SMTP_*` or `MAIL_FROM_ADDRESS`: the deploy works but sends no email (verification, invites,
   Keycloak password resets).
 

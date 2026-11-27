@@ -31258,7 +31258,8 @@
           "firstThen",
           "visitSummaries",
           "homework",
-          "help"
+          "help",
+          "flashCards"
         ],
         "type": "object",
         "properties": {
@@ -31320,6 +31321,9 @@
             "type": "boolean"
           },
           "help": {
+            "type": "boolean"
+          },
+          "flashCards": {
             "type": "boolean"
           }
         }

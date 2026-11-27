@@ -115,6 +115,7 @@ jobs:
           Authentication__KeycloakAdmin__ClientSecret: buddy-admin-cli-dev-secret
           Mail__Host: localhost
           Mail__Port: "2025"
+          Features__FlashCards: "true"
         run: |
           nohup dotnet run --project src/backend/buddy > api.log 2>&1 &
           timeout 180 bash -c 'until curl -sf http://localhost:5193/health/ready >/dev/null; do sleep 2; done'
