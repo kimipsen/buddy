@@ -1,8 +1,8 @@
 # Flash Cards
 
 Status: Implemented (issue #132). Two aggregates (`FlashCardSet` and `FlashCardPractice`), the
-star award in `Progress`, privacy export and erasure, the `Features:FlashCards` flag (off by
-default, and off when `Progress` is off), the guardian page `/guardian/flash-cards`, the child game
+star award in `Progress`, privacy export and erasure, the `Features:FlashCards` flag (on by default
+since #144, and off when `Progress` is off), the guardian page `/guardian/flash-cards`, the child game
 `/child/homework/flash-cards`, an e2e spec and screenshots. See
 [flash-cards/flow.md](../flash-cards/flow.md).
 

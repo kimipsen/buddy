@@ -108,9 +108,6 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             // On for the whole suite, so every existing test runs through the MCP-aware pipeline; the
             // flag-off tests build their own host (see RestAuthenticationRegressionTests).
             ["Features:Mcp"] = "true",
-            // Off by default like Mcp, on for the whole suite so the flash card tests reach their routes;
-            // FeatureFlagsTests pins the default on its own host.
-            ["Features:FlashCards"] = "true",
             ["Authentication:KeycloakAdmin:Realm"] = RealmName,
             ["Authentication:KeycloakAdmin:TokenEndpoint"] = $"{keycloakBaseUrl}/realms/master/protocol/openid-connect/token",
             ["Authentication:KeycloakAdmin:AdminBaseUrl"] = $"{keycloakBaseUrl}/admin/realms/{RealmName}",
