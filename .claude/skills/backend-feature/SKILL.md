@@ -93,7 +93,7 @@ New domain only:
 - [ ] `<Domain>Feature.cs` with `OpenApiDocumentName`, `EventTypes`, `AddMartenStore<I<Domain>Store>` (`DatabaseSchemaName = "<domain>"`, `StreamIdentity.AsGuid`, `AddEventTypes`), plus `Add<Domain>Feature`/`Map<Domain>Feature`. Every `MapGroup(...)` chain ends with `.WithETag()`; `Meta/ETagCoverageTests` fails on a GET without it.
 - [ ] `Program.cs`: add `Add<Domain>Feature(builder.Configuration)` **after** every feature it depends on (Guardians before anything that uses `IGuardianLinkEventStore`), and add `app.Map<Domain>Feature()`.
 - [ ] `taskfile.dist.yml`: add the schema to `MARTEN_SCHEMAS`.
-- [ ] Create `docs/backend/<domain>/flow.md` and link it in `docs/backend/README.md`.
+- [ ] Create `docs/backend/<domain>/flow.md` and link it in `docs/backend/README.md`. It must have a `## Validation` table from the start (same shape as `docs/backend/feelings/flow.md`, see section 5): the backend CI job runs `node scripts/check-validation-docs.mjs` and fails when a domain's operations, validators or error codes have no rows.
 
 ## 4. Tests: `src/backend/buddy.IntegrationTests/Features/<Domain>/<UseCase>/<UseCase>Tests.cs`
 
@@ -131,6 +131,7 @@ task test:backend                                                               
 - [ ] `[CoversEndpoint]` present, and tests cover success plus every failure status
 - [ ] `.http` entry added (domains that have a `.http` file); flow doc, status-code table and glossary updated
 - [ ] `dotnet build` is clean, and the EventShapeTests, the slice tests, `EndpointCoverageTests` and the SnapshotTests pass
+- [ ] The backend CI job's static checks pass locally: `task docs:validation` (every 400 `validation_error` operation, endpoint-specific error code and `*Validator` has a row in its domain's `flow.md` `## Validation` table) and `task codegen:backend` leaves no diff. Passing tests don't cover these; a missing validation row fails CI before the tests even run.
 - [ ] Mutation-tested: run the **`mutation-fix-backend`** skill scoped to the new or changed slice files (e.g. `Features/<Domain>/<UseCase>/**/*.cs`, plus any changed aggregate/event/snapshot files) and kill the relevant survivors
 - [ ] Run the **`backend-aware-review`** skill on the diff and fix its findings. Don't commit unless the user asks.
 
