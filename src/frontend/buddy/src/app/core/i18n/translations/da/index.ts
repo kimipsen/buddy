@@ -7,6 +7,7 @@ import { common } from './common';
 import { dashboard } from './dashboard';
 import { feelings } from './feelings';
 import { firstThen } from './first-then';
+import { flashCards } from './flash-cards';
 import { help } from './help';
 import { homework } from './homework';
 import { houseRules } from './house-rules';
@@ -40,6 +41,7 @@ export const da = {
   dashboard,
   feelings,
   firstThen,
+  flashCards,
   help,
   homework,
   houseRules,
