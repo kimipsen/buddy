@@ -30,6 +30,7 @@ const ALL_ON: InstallationFeatures = {
   visitSummaries: true,
   homework: true,
   help: true,
+  flashCards: true,
 };
 
 export const FEATURES_LOAD_TIMEOUT_MS = 3000;

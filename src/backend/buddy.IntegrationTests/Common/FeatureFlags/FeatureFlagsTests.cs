@@ -48,6 +48,15 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
             ["Features:VisitSummaries"] = "false",
             ["Features:Homework"] = "false",
             ["Features:Help"] = "false"
+            // FlashCards stays on from the suite's host: with Progress off it follows Progress.
+        });
+
+    // The suite's host turns FlashCards on; a null value leaves the key unset, so this host runs the
+    // real default (off).
+    private Task<IAlbaHost> FlashCardsDefaultAsync() =>
+        fixture.SharedHostAsync($"{nameof(FeatureFlagsTests)}.FlashCardsDefault", new Dictionary<string, string?>
+        {
+            ["Features:FlashCards"] = null
         });
 
     private Task<IAlbaHost> MealplanExtrasOffAsync() =>
@@ -64,7 +73,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
     {
         var flags = await GetFeaturesAsync(fixture.Host);
 
-        Assert.Equal(new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true), flags);
+        Assert.Equal(new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true), flags);
     }
 
     [Fact]
@@ -72,9 +81,9 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
     {
         var flags = await GetFeaturesAsync(await AllOffAsync());
 
-        Assert.Equal(new InstallationFeatures(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false), flags);
+        Assert.Equal(new InstallationFeatures(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false), flags);
         Assert.Equal(
-            new InstallationFeatures(true, false, false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true),
+            new InstallationFeatures(true, false, false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true),
             await GetFeaturesAsync(await MealplanExtrasOffAsync()));
     }
 
@@ -97,6 +106,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
         Assert.True(json.RootElement.GetProperty("visitSummaries").GetBoolean());
         Assert.True(json.RootElement.GetProperty("homework").GetBoolean());
         Assert.True(json.RootElement.GetProperty("nightDuty").GetBoolean());
+        Assert.True(json.RootElement.GetProperty("flashCards").GetBoolean());
     }
 
     [Fact]
@@ -123,7 +133,8 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
             $"/transition-warnings/children/{child.Id}",
             $"/feelings/children/{child.Id}/share-links",
             $"/first-then/children/{child.Id}",
-            $"/visit-summaries/children/{child.Id}"
+            $"/visit-summaries/children/{child.Id}",
+            "/flash-cards/sets"
         ];
 
         foreach (var url in disabled)
@@ -134,6 +145,17 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
 
         await GetAsync(await AllOffAsync(), "/calendars", token, 200);
         await GetAsync(await AllOffAsync(), "/users/me", token, 200);
+    }
+
+    [Fact]
+    public async Task Flash_cards_are_off_by_default_and_their_routes_are_unmapped()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var host = await FlashCardsDefaultAsync();
+
+        Assert.False((await GetFeaturesAsync(host)).FlashCards);
+        Assert.True((await GetFeaturesAsync(fixture.Host)).FlashCards);
+        await GetAsync(host, "/flash-cards/sets", token, 404);
     }
 
     [Fact]

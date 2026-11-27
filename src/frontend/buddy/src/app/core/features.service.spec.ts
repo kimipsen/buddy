@@ -34,6 +34,7 @@ describe('FeaturesService', () => {
     visitSummaries: true,
     homework: true,
     help: true,
+    flashCards: true,
   };
 
   const names = Object.keys(allOn) as FeatureName[];

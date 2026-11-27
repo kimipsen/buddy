@@ -1,7 +1,9 @@
+import { request } from '@playwright/test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { deferOnboarding } from './onboarding-api';
+import { readRuntimeConfig } from './runtime-config';
 import { SEEDED_GUARDIANS } from './seeded-users';
 
 const RUNTIME_CONFIG_PATH = join(__dirname, '../../public/config/runtime-config.json');
@@ -23,10 +25,33 @@ export default async function globalSetup(): Promise<void> {
   config.keycloak.authority = process.env['CI'] ? 'http://localhost:9080' : 'http://keycloak:8080';
   writeFileSync(RUNTIME_CONFIG_PATH, `${JSON.stringify(config, null, 2)}\n`);
 
+  // The flash card specs need Features__FlashCards, which is off by default and which
+  // playwright.config.ts sets only for the API it starts. A reused dev API without it would fail
+  // every one of them with a 404, so stop here with the reason instead.
+  await assertFlashCardsOn();
+
   // On a fresh database the seeded guardians have no groups or children either, so the app would
   // send them into the guided setup; every spec using them expects the dashboard (runs after the
   // webServer entries have started, so the API is up).
   for (const guardian of SEEDED_GUARDIANS) {
     await deferOnboarding(guardian);
+  }
+}
+
+async function assertFlashCardsOn(): Promise<void> {
+  const { apiBaseUrl } = readRuntimeConfig();
+  // The dev API's HTTPS certificate is self-signed, which Node's fetch would refuse.
+  const api = await request.newContext({ baseURL: apiBaseUrl, ignoreHTTPSErrors: true });
+
+  try {
+    const features = (await (await api.get('/features')).json()) as { flashCards?: boolean };
+
+    if (features.flashCards !== true) {
+      throw new Error(
+        `The API at ${apiBaseUrl} has flash cards off. Restart it with Features__FlashCards=true.`,
+      );
+    }
+  } finally {
+    await api.dispose();
   }
 }

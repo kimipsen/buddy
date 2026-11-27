@@ -290,8 +290,10 @@ if (features.Progress)
     app.MapProgressFeature();
 }
 
-// No routes yet: the slices come in later steps, gated by the FlashCards feature flag.
-app.MapFlashCardsFeature();
+if (features.FlashCards)
+{
+    app.MapFlashCardsFeature();
+}
 
 if (features.SleepDiary)
 {

@@ -77,6 +77,8 @@ export default defineConfig({
       env: {
         // The server clock of the demo day (development-only override, Common/Time/DemoClock.cs).
         Demo__Now: DEMO_NOW.toISOString(),
+        // Off by default in the API; the flash card pages are in the screenshots.
+        Features__FlashCards: 'true',
         RateLimiting__Authenticated__TokenLimit: '5000',
         RateLimiting__Authenticated__TokensPerPeriod: '500',
         // The demo family's Mealie (screenshots/demo-family.ts) is local and plain http.

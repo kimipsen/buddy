@@ -13,7 +13,7 @@ namespace buddy.IntegrationTests.Common.FeatureFlags;
 public sealed class FeatureOptionsTests
 {
     [Fact]
-    public void No_features_section_turns_every_feature_on()
+    public void No_features_section_turns_every_feature_on_except_flash_cards()
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection([]).Build();
         var services = new ServiceCollection();
@@ -22,7 +22,7 @@ public sealed class FeatureOptionsTests
         using var provider = services.BuildServiceProvider();
 
         Assert.Equal(
-            new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true),
+            new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false),
             provider.GetRequiredService<IOptions<FeatureOptions>>().Value.Effective());
     }
 
@@ -35,6 +35,17 @@ public sealed class FeatureOptionsTests
         Assert.Empty(new FeatureOptions { MealplanAiAssistant = false }.SubFlagsOverriddenByParent());
         Assert.Equal(["VisitSummaries"], new FeatureOptions { SleepDiary = false, Medicines = false, Feelings = false }.SubFlagsOverriddenByParent());
         Assert.Empty(new FeatureOptions { SleepDiary = false, Medicines = false }.SubFlagsOverriddenByParent());
+    }
+
+    [Fact]
+    public void Flash_cards_are_off_by_default_and_need_progress()
+    {
+        Assert.False(new FeatureOptions().FlashCards);
+        Assert.False(new FeatureOptions().Effective().FlashCards);
+        Assert.True(new FeatureOptions { FlashCards = true }.Effective().FlashCards);
+        Assert.False(new FeatureOptions { FlashCards = true, Progress = false }.Effective().FlashCards);
+        Assert.Equal(["FlashCards"], new FeatureOptions { FlashCards = true, Progress = false }.SubFlagsOverriddenByParent());
+        Assert.Empty(new FeatureOptions { FlashCards = false, Progress = false }.SubFlagsOverriddenByParent());
     }
 
     [Fact]
