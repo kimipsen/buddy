@@ -157,6 +157,12 @@ This runs the backend and then the frontend tests. It's slow, so run it in the b
 a log file and wait for the notification. If anything fails, fix it before going on. Don't call
 the feature done with red tests.
 
+`task test` doesn't run the CI-only static checks. Run them too, because CI fails on them before
+any test runs: `task docs:validation` (the `## Validation` table in every
+`docs/backend/<feature>/flow.md` covers each 400 `validation_error` operation, endpoint-specific
+error code and `*Validator`), and `task codegen:backend` plus `task docs:openapi` with no diff left
+behind.
+
 ## 8. Review
 
 Load `backend-aware-review` and run it on the whole change (staged, or the working tree diff
