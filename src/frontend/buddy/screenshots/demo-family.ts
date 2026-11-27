@@ -430,6 +430,19 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       focusMinutes: 10,
       breakMinutes: 3,
     });
+    // A maths flash-card set Emil can play (/child/homework/flash-cards and the entry card on
+    // /child/homework).
+    const flashSet = await api.post<Named>('/flash-cards/sets', {
+      name: 'Plus up to 20',
+      kind: 'Math',
+      math: { operation: 'Addition', limit: 20 },
+    });
+    await api.put(`/flash-cards/children/${emil.id}/sets/${flashSet.id}`, {
+      tiers: [
+        { cardCount: 5, stars: 1 },
+        { cardCount: 10, stars: 2 },
+      ],
+    });
     // Emil picked his own timer look and sound (/child/timer); Ida's sound is muted by Sara.
     try {
       const emilApi = await Api.as(DEMO_USERNAMES.child, DEMO_PASSWORD);

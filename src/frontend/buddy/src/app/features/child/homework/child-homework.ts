@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { ChildClockService } from '../../../core/child-clock.service';
+import { FlashCardsService } from '../../../core/flash-cards.service';
 import { keepAwakeWhile } from '../../../core/keep-awake';
 import {
   DEFAULT_HOMEWORK_CHUNKS,
@@ -92,8 +93,19 @@ export class ChildHomework implements OnInit, OnDestroy {
   private readonly users = inject(UsersService);
   private readonly clock = inject(ChildClockService);
   private readonly translation = inject(TranslationService);
+  private readonly flashCards = inject(FlashCardsService);
 
   private readonly me = resource({ loader: () => this.users.ensureCurrentUser() });
+
+  // The flash-cards entry card shows only when a guardian switched on a set the child can play; a
+  // failed load just leaves the card out.
+  private readonly flashCardSets = resource({
+    loader: () => this.flashCards.listMySets().catch(() => []),
+  });
+  protected readonly hasFlashCards = computed(
+    () =>
+      this.flashCardSets.hasValue() && this.flashCardSets.value().some((s) => s.tiers.length > 0),
+  );
 
   // The guardian's lengths; the defaults until (or unless) the user loads.
   protected readonly chunks = computed<HomeworkChunks>(() =>

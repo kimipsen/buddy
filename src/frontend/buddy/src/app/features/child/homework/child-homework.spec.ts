@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { todayIsoDate } from '../../../core/date-utils';
+import { FlashCardsService, MyFlashCardSet } from '../../../core/flash-cards.service';
 import { ScreenWakeLockService } from '../../../core/screen-wake-lock.service';
 import { createSession, next, start } from '../../../core/homework-session';
 import { readHomeworkSession, writeHomeworkSession } from '../../../core/homework-storage';
@@ -50,11 +51,26 @@ describe('ChildHomework', () => {
     localStorage.clear();
   });
 
-  async function setup(user: CurrentUser | Error = me(), settleWith = settle) {
+  async function setup(
+    user: CurrentUser | Error = me(),
+    settleWith = settle,
+    flashCardSets: MyFlashCardSet[] | Error = [],
+  ) {
     await TestBed.configureTestingModule({
       imports: [ChildHomework],
       providers: [
         provideRouter([]),
+        {
+          provide: FlashCardsService,
+          useValue: {
+            listMySets: vi.fn(async () => {
+              if (flashCardSets instanceof Error) {
+                throw flashCardSets;
+              }
+              return flashCardSets;
+            }),
+          },
+        },
         {
           provide: UsersService,
           useValue: {
@@ -548,5 +564,36 @@ describe('ChildHomework', () => {
     expect(el(fixture).querySelector('[role="timer"]')).toBeNull();
     expect(hasButton(fixture, 'Pause')).toBe(true);
     expect(hasButton(fixture, 'Done with Maths')).toBe(true);
+  });
+
+  describe('flash cards entry card', () => {
+    const playable: MyFlashCardSet = {
+      setId: 'set-1',
+      setName: 'Sums',
+      kind: 'Math',
+      uniqueCardCount: 20,
+      tiers: [{ id: 'tier-1', cardCount: 5, stars: 1 }],
+    };
+
+    const card = (fixture: ComponentFixture<unknown>) =>
+      el(fixture).querySelector<HTMLAnchorElement>('[data-testid="homework-flash-cards"]');
+
+    it('links to the flash cards when a set can be played', async () => {
+      const fixture = await setup(me(), settle, [playable]);
+
+      expect(card(fixture)?.getAttribute('href')).toBe('/child/homework/flash-cards');
+    });
+
+    it('is left out when there is no set', async () => {
+      expect(card(await setup(me(), settle, []))).toBeNull();
+    });
+
+    it('is left out when no tier can be played', async () => {
+      expect(card(await setup(me(), settle, [{ ...playable, tiers: [] }]))).toBeNull();
+    });
+
+    it('is left out when the load fails', async () => {
+      expect(card(await setup(me(), settle, new Error('offline')))).toBeNull();
+    });
   });
 });

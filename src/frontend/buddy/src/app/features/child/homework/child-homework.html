@@ -2,6 +2,16 @@
   <p class="sr-only" aria-live="polite" data-testid="homework-announcement">{{ announcement() }}</p>
 
   @if (session() === null) {
+    @if (hasFlashCards()) {
+      <a
+        routerLink="/child/homework/flash-cards"
+        class="mb-5 flex min-h-14 items-center gap-3 rounded-3xl border-4 border-amber-200 bg-amber-50 px-5 py-3 text-xl font-bold text-amber-900 transition hover:bg-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-300 dark:border-amber-800 dark:bg-amber-500/10 dark:text-amber-100 dark:hover:bg-amber-500/20 dark:focus:ring-amber-700"
+        data-testid="homework-flash-cards"
+      >
+        <span aria-hidden="true">🃏</span>
+        {{ 'flashCards.child.homeLink' | translate }}
+      </a>
+    }
     <form
       class="space-y-5 rounded-3xl border-4 border-emerald-200 bg-white p-5 shadow-sm dark:border-emerald-800 dark:bg-slate-900 sm:p-8"
       (ngSubmit)="startSession()"

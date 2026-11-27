@@ -420,6 +420,15 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     }),
   },
   {
+    name: 'child-flash-cards',
+    title: 'Child: flash cards',
+    description:
+      'The flash-card game: the child picks a set and a game length (cards and stars), flips each card and answers "I knew it" or "Not yet". Cards answered "Not yet" come back once at the end, and a finished game shows the stars earned. No timer.',
+    as: 'child',
+    route: '/child/homework/flash-cards',
+    waitFor: 'Start',
+  },
+  {
     name: 'child-mealplan',
     title: 'Child: meal plan',
     description: "The child's view of the week's meals.",

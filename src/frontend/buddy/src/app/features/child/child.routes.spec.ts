@@ -7,6 +7,7 @@ import { ChildHome } from './home/home';
 import { ChildHomework } from './homework/child-homework';
 import { ChildMealplan } from './mealplan/child-mealplan';
 import { ChildRewards } from './rewards/child-rewards';
+import { ChildFlashCards } from './flash-cards/child-flash-cards';
 import { ChildFirstThen } from './first-then/child-first-then';
 import { ChildRules } from './rules/child-rules';
 import { ChildTimerPage } from './timer/child-timer-page';
@@ -21,6 +22,11 @@ describe('child routes', () => {
       { path: 'mealplan', component: ChildMealplan, canActivate: [expect.any(Function)] },
       { path: 'calendar', component: ChildCalendar },
       { path: 'homework', component: ChildHomework, canActivate: [expect.any(Function)] },
+      {
+        path: 'homework/flash-cards',
+        component: ChildFlashCards,
+        canActivate: [expect.any(Function), expect.any(Function)],
+      },
       { path: 'rewards', component: ChildRewards, canActivate: [expect.any(Function)] },
       { path: 'rules', component: ChildRules, canActivate: [expect.any(Function)] },
       { path: 'first-then', component: ChildFirstThen, canActivate: [expect.any(Function)] },

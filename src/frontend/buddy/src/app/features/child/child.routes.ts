@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 import { featureGuard } from '../../core/feature.guard';
 import { ChildCalendar } from './calendar/child-calendar';
+import { ChildFlashCards } from './flash-cards/child-flash-cards';
 import { ChildFirstThen } from './first-then/child-first-then';
 import { ChildFocus } from './focus/child-focus';
 import { ChildHome } from './home/home';
@@ -30,6 +31,11 @@ export const CHILD_ROUTES: Routes = [
     path: 'homework',
     component: ChildHomework,
     canActivate: [featureGuard('homework')],
+  },
+  {
+    path: 'homework/flash-cards',
+    component: ChildFlashCards,
+    canActivate: [featureGuard('homework'), featureGuard('flashCards')],
   },
   {
     path: 'rewards',
