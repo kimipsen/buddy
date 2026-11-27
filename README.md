@@ -141,6 +141,11 @@ in real time.
       or off, a chime and which sound) and starts a timer of their own on "My timer"; a
       guardian sees the choices and can mute the sound (issue #50) — see
       [Child timer preferences](docs/frontend/analysis/child-timer-preferences.md)
+- [x] Flash cards: a guardian makes text sets or maths sets (generated from a rule) and switches
+      them on per child with game lengths (cards and stars); the child flips cards, answers "I
+      knew it" or "Not yet", sees missed cards once more, and earns stars once per set and day
+      (off by default, `Features__FlashCards`; issue #132) — see
+      [Flash cards](docs/backend/analysis/flash-cards.md)
 
 ### Platform
 
