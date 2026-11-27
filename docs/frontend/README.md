@@ -176,6 +176,11 @@ The guardian routes currently include:
 - `/guardian/progress` — per child: answer reward requests (approve/decline), keep the reward
   list, and set the goal posts; the children overview on the dashboard links here with
   "Rewards waiting: N" ([design](../backend/analysis/reward-redemption.md))
+- `/guardian/flash-cards` — behind the `flashCards` feature. A "Card sets" tab (list, create a
+  maths set from a rule with a live example card or a text set, edit, delete with confirmation,
+  inline cards editor for text sets) and a "Per child" tab (`?child=<id>` preselects): switch sets
+  on and off, edit the game lengths (cards and stars, 1–5 rows; a hint when a game is longer than
+  the set has different cards) and see the finished games, newest first
 - `/guardian/admin` — profile, child, calendar, group, AI provider, data export, and account administration
 - `/guardian/help` — every in-app help topic on one page; `?topic=<id>` scrolls to one. Every other
   guardian page (except onboarding) names its topic in its route's `data.helpTopic`, and the shell
