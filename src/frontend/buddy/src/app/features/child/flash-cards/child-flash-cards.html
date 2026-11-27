@@ -1,0 +1,245 @@
+<app-child-page
+  [title]="'flashCards.child.title' | translate"
+  [backLabel]="'flashCards.child.back' | translate"
+>
+  @if (result(); as result) {
+    <div
+      class="space-y-5 rounded-3xl border-4 border-amber-200 bg-white p-6 text-center shadow-sm dark:border-amber-800 dark:bg-slate-900 sm:p-8"
+      data-testid="flash-cards-result"
+    >
+      <p class="text-5xl" aria-hidden="true">{{ result.stars > 0 ? '⭐' : '💪' }}</p>
+      <h2 class="text-2xl font-bold">{{ 'flashCards.child.result.title' | translate }}</h2>
+      <p class="text-lg" data-testid="flash-cards-known">
+        {{
+          'flashCards.child.result.known'
+            | translate: { known: result.game.knownCount, total: result.game.cardCount }
+        }}
+      </p>
+      @if (result.stars > 0) {
+        <p class="text-xl font-bold" data-testid="flash-cards-stars">
+          {{ 'flashCards.child.result.stars' | translate: { count: result.stars } }}
+        </p>
+      } @else {
+        <p class="text-xl font-semibold" data-testid="flash-cards-no-stars">
+          {{ 'flashCards.child.result.noStars' | translate }}
+        </p>
+      }
+      <p class="text-lg text-slate-600 dark:text-slate-300" data-testid="flash-cards-total">
+        {{ 'flashCards.child.result.totalStars' | translate: { count: result.totalStars } }}
+      </p>
+      <div class="flex flex-wrap justify-center gap-3">
+        <button
+          type="button"
+          class="min-h-14 min-w-14 rounded-2xl bg-amber-500 px-6 text-xl font-bold text-white transition hover:bg-amber-600 focus:outline-none focus:ring-4 focus:ring-amber-300 dark:focus:ring-amber-700"
+          (click)="playAgain()"
+        >
+          {{ 'flashCards.child.result.playAgain' | translate }}
+        </button>
+      </div>
+    </div>
+  } @else if (game(); as game) {
+    @if (now(); as now) {
+      <div
+        class="space-y-5 rounded-3xl border-4 border-amber-200 bg-white p-5 text-center shadow-sm dark:border-amber-800 dark:bg-slate-900 sm:p-8"
+      >
+        <p
+          class="flex flex-wrap items-center justify-center gap-2 text-lg font-semibold text-slate-600 dark:text-slate-300"
+          data-testid="flash-cards-progress"
+        >
+          @if (progress(); as progress) {
+            <span>
+              {{
+                'flashCards.child.progress'
+                  | translate: { position: progress.position, total: progress.total }
+              }}
+            </span>
+          }
+          @if (now.pass === 'repeat') {
+            <span
+              class="rounded-full bg-amber-100 px-3 py-1 text-base text-amber-900 dark:bg-amber-500/20 dark:text-amber-100"
+              data-testid="flash-cards-repeat"
+            >
+              {{ 'flashCards.child.repeatBadge' | translate }}
+            </span>
+          }
+        </p>
+
+        <div
+          class="space-y-3 rounded-3xl bg-amber-50 px-4 py-8 dark:bg-amber-500/10"
+          aria-live="polite"
+        >
+          <p class="text-base font-semibold uppercase text-slate-500 dark:text-slate-400">
+            {{ 'flashCards.child.question' | translate }}
+          </p>
+          <p class="text-4xl font-bold" data-testid="flash-cards-question">
+            {{ now.card.question }}
+          </p>
+          @if (now.revealed) {
+            <p class="pt-3 text-base font-semibold uppercase text-slate-500 dark:text-slate-400">
+              {{ 'flashCards.child.answer' | translate }}
+            </p>
+            <p
+              class="text-4xl font-bold text-amber-700 dark:text-amber-300"
+              data-testid="flash-cards-answer"
+            >
+              {{ now.card.answer }}
+            </p>
+          }
+        </div>
+
+        @if (finishing()) {
+          <p class="text-lg font-semibold" role="status">
+            {{ 'flashCards.child.finishing' | translate }}
+          </p>
+        } @else if (now.revealed) {
+          <div class="grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              class="min-h-16 rounded-2xl bg-emerald-500 px-6 text-2xl font-bold text-white transition hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:focus:ring-emerald-700"
+              (click)="answer(true)"
+            >
+              {{ 'flashCards.child.knewIt' | translate }}
+            </button>
+            <button
+              type="button"
+              class="min-h-16 rounded-2xl border-2 border-slate-300 bg-white px-6 text-2xl font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-amber-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-amber-700"
+              (click)="answer(false)"
+            >
+              {{ 'flashCards.child.notYet' | translate }}
+            </button>
+          </div>
+        } @else {
+          <button
+            type="button"
+            class="min-h-16 w-full rounded-2xl bg-amber-500 px-6 text-2xl font-bold text-white transition hover:bg-amber-600 focus:outline-none focus:ring-4 focus:ring-amber-300 dark:focus:ring-amber-700"
+            (click)="flip()"
+          >
+            {{ 'flashCards.child.flip' | translate }}
+          </button>
+        }
+      </div>
+    } @else {
+      <!-- Every card is answered; the game is being saved (or saving failed). -->
+      <div
+        class="space-y-4 rounded-3xl border-4 border-amber-200 bg-white p-6 text-center shadow-sm dark:border-amber-800 dark:bg-slate-900"
+      >
+        @if (finishing()) {
+          <p class="text-xl font-semibold" role="status">
+            {{ 'flashCards.child.finishing' | translate }}
+          </p>
+        } @else if (finishProblem(); as problem) {
+          <p class="text-xl font-semibold" role="alert" data-testid="flash-cards-finish-problem">
+            @switch (problem) {
+              @case ('unavailable') {
+                {{ 'flashCards.child.finishUnavailable' | translate }}
+              }
+              @case ('busy') {
+                {{ 'flashCards.child.finishBusy' | translate }}
+              }
+              @default {
+                {{ 'flashCards.child.finishError' | translate }}
+              }
+            }
+          </p>
+          <div class="flex flex-wrap justify-center gap-3">
+            @if (problem !== 'unavailable') {
+              <button
+                type="button"
+                class="min-h-14 min-w-14 rounded-2xl bg-amber-500 px-6 text-xl font-bold text-white transition hover:bg-amber-600 focus:outline-none focus:ring-4 focus:ring-amber-300 dark:focus:ring-amber-700"
+                (click)="finish()"
+              >
+                {{ 'flashCards.child.finishRetry' | translate }}
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="min-h-14 min-w-14 rounded-2xl bg-amber-500 px-6 text-xl font-bold text-white transition hover:bg-amber-600 focus:outline-none focus:ring-4 focus:ring-amber-300 dark:focus:ring-amber-700"
+                (click)="playAgain()"
+              >
+                {{ 'flashCards.child.result.playAgain' | translate }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+  } @else if (sets.isLoading()) {
+    <p class="text-lg" role="status">{{ 'flashCards.child.loading' | translate }}</p>
+  } @else if (sets.error()) {
+    <p class="text-lg font-semibold" role="alert">{{ 'flashCards.child.loadError' | translate }}</p>
+  } @else if (playable().length === 0) {
+    <p class="text-lg" data-testid="flash-cards-none">{{ 'flashCards.child.none' | translate }}</p>
+  } @else {
+    <div
+      class="space-y-6 rounded-3xl border-4 border-amber-200 bg-white p-5 shadow-sm dark:border-amber-800 dark:bg-slate-900 sm:p-8"
+    >
+      @if (playable().length > 1) {
+        <section class="space-y-3" aria-labelledby="flash-cards-choose-set">
+          <h2 id="flash-cards-choose-set" class="text-xl font-bold">
+            {{ 'flashCards.child.chooseSet' | translate }}
+          </h2>
+          <div class="grid gap-3 sm:grid-cols-2">
+            @for (set of playable(); track set.setId) {
+              <button
+                type="button"
+                class="min-h-14 rounded-2xl border-2 px-5 text-xl font-semibold transition focus:outline-none focus:ring-4 focus:ring-amber-300 dark:focus:ring-amber-700"
+                [class]="
+                  selectedSet()?.setId === set.setId
+                    ? 'border-amber-500 bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-100'
+                    : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+                "
+                [attr.aria-pressed]="selectedSet()?.setId === set.setId"
+                (click)="selectSet(set.setId)"
+              >
+                {{ set.setName }}
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      @if (selectedSet(); as set) {
+        <section class="space-y-3" aria-labelledby="flash-cards-choose-length">
+          <h2 id="flash-cards-choose-length" class="text-xl font-bold">
+            {{ 'flashCards.child.chooseLength' | translate }}
+          </h2>
+          <div class="grid gap-3 sm:grid-cols-2">
+            @for (tier of set.tiers; track tier.id) {
+              <button
+                type="button"
+                class="min-h-14 rounded-2xl border-2 px-5 text-xl font-semibold transition focus:outline-none focus:ring-4 focus:ring-amber-300 dark:focus:ring-amber-700"
+                [class]="
+                  selectedTier()?.id === tier.id
+                    ? 'border-amber-500 bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-100'
+                    : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+                "
+                [attr.aria-pressed]="selectedTier()?.id === tier.id"
+                (click)="selectTier(tier.id)"
+              >
+                {{
+                  'flashCards.child.tierOption'
+                    | translate: { cards: tier.cardCount, stars: tier.stars }
+                }}
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      @if (deckError()) {
+        <p class="text-lg font-semibold" role="alert">
+          {{ 'flashCards.child.deckError' | translate }}
+        </p>
+      }
+
+      <button
+        type="button"
+        class="min-h-14 w-full rounded-2xl bg-amber-500 px-6 text-xl font-bold text-white transition hover:bg-amber-600 focus:outline-none focus:ring-4 focus:ring-amber-300 disabled:opacity-50 dark:focus:ring-amber-700"
+        [disabled]="selectedTier() === null || starting()"
+        (click)="start()"
+      >
+        {{ 'flashCards.child.start' | translate }}
+      </button>
+    </div>
+  }
+</app-child-page>

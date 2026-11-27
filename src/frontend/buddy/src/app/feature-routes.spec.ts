@@ -70,6 +70,18 @@ describe('feature routes', () => {
     expect(run(canActivate, [feature])).toBeInstanceOf(UrlTree);
   });
 
+  it('child route homework/flash-cards needs both homework and flashCards', () => {
+    const route = CHILD_ROUTES.find((r) => r.path === 'homework/flash-cards');
+    const guards = route?.canActivate as CanActivateFn[];
+
+    expect(guards).toHaveLength(2);
+    expect(guards.map((g) => run(g, []))).toEqual([true, true]);
+    expect(run(guards[0]!, ['homework'])).toBeInstanceOf(UrlTree);
+    expect(run(guards[0]!, ['flashCards'])).toBe(true);
+    expect(run(guards[1]!, ['flashCards'])).toBeInstanceOf(UrlTree);
+    expect(run(guards[1]!, ['homework'])).toBe(true);
+  });
+
   it.each([
     ['guardian', guardianChildren, 'calendar'],
     ['guardian', guardianChildren, 'admin'],

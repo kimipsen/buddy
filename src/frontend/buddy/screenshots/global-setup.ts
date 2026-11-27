@@ -12,7 +12,9 @@ export default async function globalSetup(): Promise<void> {
   await api.dispose();
 
   if (features.flashCards !== true) {
-    throw new Error(`The API at ${API_URL} has flash cards off. Restart it with Features__FlashCards=true.`);
+    throw new Error(
+      `The API at ${API_URL} has flash cards off. Restart it with Features__FlashCards=true.`,
+    );
   }
 
   const demo = await seedDemoFamily();
