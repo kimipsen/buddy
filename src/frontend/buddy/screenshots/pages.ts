@@ -121,6 +121,15 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     waitFor: 'Choose Friday’s dinner',
   },
   {
+    name: 'guardian-flash-cards',
+    title: 'Flash cards',
+    description:
+      'The library of card sets (maths rules such as addition up to 20, or text sets with questions and answers) and, per child, which sets they can play, the game lengths (cards and stars) and the finished games.',
+    as: 'guardian',
+    route: '/guardian/flash-cards',
+    waitFor: 'Plus up to 20',
+  },
+  {
     name: 'guardian-mealplan',
     title: 'Meal plan',
     description: "The week's meals per slot, picked from the child's meal library.",

@@ -114,6 +114,12 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     related: ['calendar', 'taskLibrary'],
   },
   {
+    id: 'flashCards',
+    feature: 'flashCards',
+    sections: [{ id: 'makeSets', steps: 4 }, { id: 'chooseForChild', steps: 4 }, { id: 'history' }],
+    related: ['progress', 'taskLibrary'],
+  },
+  {
     id: 'transitionWarnings',
     feature: 'transitionWarnings',
     sections: [{ id: 'turnOn', steps: 3 }, { id: 'exceptions' }, { id: 'quietHours' }],

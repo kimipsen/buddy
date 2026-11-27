@@ -36,6 +36,7 @@ describe('feature routes', () => {
     ['guardian', guardianChildren, 'transition-warnings', 'transitionWarnings'],
     ['guardian', guardianChildren, 'house-rules', 'houseRules'],
     ['guardian', guardianChildren, 'progress', 'progress'],
+    ['guardian', guardianChildren, 'flash-cards', 'flashCards'],
     ['guardian', guardianChildren, 'pickup', 'pickups'],
     ['guardian', guardianChildren, 'babysitters', 'babysitters'],
     ['guardian', guardianChildren, 'work-locations', 'workLocations'],

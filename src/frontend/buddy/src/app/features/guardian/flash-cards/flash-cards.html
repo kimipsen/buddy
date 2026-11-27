@@ -1,0 +1,49 @@
+<app-page backLink="/guardian" [backLabel]="'flashCards.guardian.backLink' | translate">
+  <div class="mb-8">
+    <p
+      class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400"
+    >
+      {{ 'flashCards.guardian.eyebrow' | translate }}
+    </p>
+    <h2 class="mt-2 text-3xl font-semibold tracking-normal">
+      {{ 'flashCards.title' | translate }}
+    </h2>
+    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+      {{ 'flashCards.guardian.intro' | translate }}
+    </p>
+  </div>
+
+  @if (loading()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'flashCards.guardian.loading' | translate }}
+    </p>
+  } @else if (failed()) {
+    <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+      {{ 'flashCards.guardian.loadError' | translate }}
+    </p>
+  } @else {
+    <div class="mb-6">
+      <app-segmented-control
+        [options]="tabOptions()"
+        [selected]="tab()"
+        [ariaLabel]="'flashCards.title' | translate"
+        (selectedChange)="tab.set($event)"
+      />
+    </div>
+
+    @if (tab() === 'library') {
+      <app-flash-card-library
+        [sets]="sets()"
+        (setSaved)="onSetSaved($event)"
+        (setDeleted)="onSetDeleted($event)"
+      />
+    } @else {
+      <app-flash-card-child
+        [children]="children()"
+        [childId]="selectedChildId()"
+        [sets]="sets()"
+        (childIdChange)="selectedChildId.set($event)"
+      />
+    }
+  }
+</app-page>

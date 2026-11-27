@@ -19,6 +19,7 @@ import { GuardianPickup } from './pickup/pickup';
 import { PrintTemplateEditor } from './print/editor/print-template-editor';
 import { GuardianPrint } from './print/print';
 import { WeekPlanPrintPage } from './print/sheet/week-plan-print-page';
+import { GuardianFlashCards } from './flash-cards/flash-cards';
 import { GuardianProgress } from './progress/progress';
 import { GuardianShell } from './shell/guardian-shell';
 import { GuardianSleepDiary } from './sleep-diary/sleep-diary';
@@ -157,6 +158,12 @@ export const GUARDIAN_ROUTES: Routes = [
         canActivate: [featureGuard('progress')],
         component: GuardianProgress,
         data: { helpTopic: 'progress' },
+      },
+      {
+        path: 'flash-cards',
+        canActivate: [featureGuard('flashCards')],
+        component: GuardianFlashCards,
+        data: { helpTopic: 'flashCards' },
       },
       {
         path: 'pickup',

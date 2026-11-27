@@ -387,6 +387,35 @@ export const help = {
         },
       },
     },
+    flashCards: {
+      title: 'Flashcards',
+      sections: {
+        makeSets: {
+          title: 'Lav et sæt kort',
+          body: 'Et sæt er en bunke flashcards. Et regnesæt laver sine kort ud fra en regel, som plus op til 20 eller 7-tabellen. Et tekstsæt har de spørgsmål og svar, du selv skriver, op til 200 kort.',
+          steps: {
+            s1: 'Åbn fanen "Kortsæt" og tryk på "Nyt sæt".',
+            s2: 'Vælg slags sæt og giv det et navn. Til et regnesæt vælger du slags regnestykke og tallet; eksempelkortet viser, hvordan et kort ser ud.',
+            s3: 'Tryk på "Gem sæt".',
+            s4: 'Til et tekstsæt tilføjer du hvert kort med et spørgsmål og et svar.',
+          },
+        },
+        chooseForChild: {
+          title: 'Vælg, hvad et barn må spille',
+          body: 'Et barn ser kun de sæt, du slår til for dem. Hvert sæt har spillængder: hvor mange kort et spil har, og hvor mange stjerner det giver. Hvis et spil har flere kort, end sættet har forskellige kort, gentages kortene, og Buddy fortæller dig det.',
+          steps: {
+            s1: 'Åbn fanen "Pr. barn" og vælg barnet, hvis du har flere.',
+            s2: 'Under "Tilgængelige sæt" angiver du de spillængder, du vil have.',
+            s3: 'Tryk på "Slå til".',
+            s4: 'For at ændre spillængderne senere retter du dem og trykker på "Gem spillængder". Tryk på "Slå fra" for at fjerne sættet.',
+          },
+        },
+        history: {
+          title: 'Færdige spil',
+          body: 'Listen nederst på fanen "Pr. barn" viser de spil, dit barn har gjort færdige, nyeste først, med hvor mange kort de kunne første gang, og de optjente stjerner.',
+        },
+      },
+    },
     pickup: {
       title: 'Afhentning og aflevering',
       sections: {

@@ -34,6 +34,7 @@ export const shell = {
       transitionWarnings: 'Heads-up before changes',
       firstThen: 'First – Then',
       progress: 'Progress goals',
+      flashCards: 'Flash cards',
       babysitters: 'Babysitters',
       nightDuty: 'Night duty',
       workLocations: 'Work locations',

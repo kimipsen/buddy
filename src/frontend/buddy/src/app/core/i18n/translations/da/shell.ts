@@ -34,6 +34,7 @@ export const shell = {
       transitionWarnings: 'Varsel før skift',
       firstThen: 'Først – Så',
       progress: 'Mål',
+      flashCards: 'Flashcards',
       babysitters: 'Babysittere',
       nightDuty: 'Nattevagt',
       workLocations: 'Arbejdssteder',

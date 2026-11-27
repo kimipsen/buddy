@@ -87,6 +87,7 @@ describe('NavMenu', () => {
           'Heads-up before changes',
           'First – Then',
           'Progress goals',
+          'Flash cards',
         ],
       },
       {

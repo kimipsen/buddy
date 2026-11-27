@@ -386,6 +386,35 @@ export const help = {
         },
       },
     },
+    flashCards: {
+      title: 'Flash cards',
+      sections: {
+        makeSets: {
+          title: 'Make a set of cards',
+          body: 'A set is a pile of flash cards. A maths set makes its cards from a rule, like addition up to 20 or the 7 times table. A text set has the questions and answers you write yourself, up to 200 cards.',
+          steps: {
+            s1: 'Open the "Card sets" tab and press "New set".',
+            s2: 'Choose the kind of set and give it a name. For a maths set, choose the kind of sum and the number; the example card shows what a card will look like.',
+            s3: 'Press "Save set".',
+            s4: 'For a text set, add each card with a question and an answer.',
+          },
+        },
+        chooseForChild: {
+          title: 'Choose what a child can play',
+          body: 'A child only sees the sets you switch on for them. Each set has game lengths: how many cards a game has and how many stars it earns. If a game has more cards than the set has different cards, the cards repeat, and Buddy tells you.',
+          steps: {
+            s1: 'Open the "Per child" tab and choose the child, if you have more than one.',
+            s2: 'Under "Available sets", set the game lengths you want.',
+            s3: 'Press "Switch on".',
+            s4: 'To change the game lengths later, edit them and press "Save game lengths". Press "Switch off" to take the set away.',
+          },
+        },
+        history: {
+          title: 'Finished games',
+          body: 'The list at the bottom of the "Per child" tab shows the games your child has finished, newest first, with how many cards they knew the first time and the stars earned.',
+        },
+      },
+    },
     pickup: {
       title: 'Pickup and drop-off',
       sections: {
