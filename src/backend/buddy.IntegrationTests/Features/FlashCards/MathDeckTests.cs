@@ -179,4 +179,111 @@ public sealed class MathDeckTests
     {
         Assert.Throws<ArgumentException>(() => CardDeck.Draw(Array.Empty<int>(), 3, new Random(1)));
     }
+
+    [Fact]
+    public void Equal_weights_use_exactly_the_uniform_draw_for_the_same_seed()
+    {
+        var pool = Enumerable.Range(0, 20).ToArray();
+
+        Assert.Equal(
+            CardDeck.Draw(pool, 50, new Random(42)),
+            CardDeck.Draw(pool, 50, new Random(42), _ => 4));
+    }
+
+    [Theory]
+    [InlineData(1, 50)]
+    [InlineData(2, 50)]
+    [InlineData(3, 50)]
+    [InlineData(10, 50)]
+    [InlineData(50, 50)]
+    public void Weighted_draw_returns_the_exact_count_without_adjacent_repeats(int poolSize, int count)
+    {
+        var pool = Enumerable.Range(0, poolSize).ToArray();
+        var deck = CardDeck.Draw(pool, count, new Random(17), card => card % 3 + 1);
+
+        Assert.Equal(count, deck.Count);
+
+        if (poolSize > 1)
+        {
+            Assert.All(deck.Zip(deck.Skip(1)), pair => Assert.NotEqual(pair.First, pair.Second));
+        }
+    }
+
+    [Fact]
+    public void Weighted_draw_is_deterministic_for_the_same_seed_and_weights()
+    {
+        var pool = Enumerable.Range(0, 20).ToArray();
+
+        Assert.Equal(
+            CardDeck.Draw(pool, 50, new Random(42), card => card + 1),
+            CardDeck.Draw(pool, 50, new Random(42), card => card + 1));
+    }
+
+    [Fact]
+    public void A_full_weighted_round_contains_every_card_once()
+    {
+        var pool = Enumerable.Range(0, 20).ToArray();
+
+        var deck = CardDeck.Draw(pool, pool.Length, new Random(42), card => card + 1);
+
+        Assert.Equal(pool.Order(), deck.Order());
+    }
+
+    [Fact]
+    public void A_partial_second_round_repeats_the_heavy_cards()
+    {
+        var pool = Enumerable.Range(0, 10).ToArray();
+
+        var deck = CardDeck.Draw(pool, 15, new Random(1), card => card < 5 ? 16 : 1);
+
+        Assert.Equal(pool, deck.Distinct().Order());
+        Assert.Equal(
+            Enumerable.Range(0, 5),
+            deck.GroupBy(card => card).Where(group => group.Count() == 2).Select(group => group.Key).Order());
+    }
+
+    [Fact]
+    public void Higher_weight_cards_are_drawn_earlier_but_lower_weight_cards_still_appear()
+    {
+        var pool = Enumerable.Range(0, 20).ToArray();
+        var random = new Random(42);
+        var appearances = pool.ToDictionary(card => card, _ => 0);
+
+        for (var i = 0; i < 3_000; i++)
+        {
+            foreach (var card in CardDeck.Draw(pool, 5, random, card => card == 0 ? 16 : 1))
+            {
+                appearances[card]++;
+            }
+        }
+
+        var averageLightAppearances = appearances.Where(pair => pair.Key != 0).Average(pair => pair.Value);
+        var heavyToLightRatio = appearances[0] / averageLightAppearances;
+
+        // The final partial round samples without replacement, so the inclusion ratio is intentionally
+        // below the raw 16:1 weight ratio. These wide bounds catch ignored or inverted weights without
+        // making the fixed-seed statistical test brittle.
+        Assert.InRange(heavyToLightRatio, 3.0, 6.0);
+        Assert.All(appearances.Where(pair => pair.Key != 0), pair => Assert.True(pair.Value > 0));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void A_weight_below_one_throws(int weight)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            CardDeck.Draw([1, 2, 3], 3, new Random(1), card => card == 2 ? weight : 1));
+    }
+
+    [Fact]
+    public void Math_deck_accepts_a_weight_selector()
+    {
+        var rule = new MathRule(MathOperation.Multiplication, 7);
+
+        var deck = MathDeck.Draw(rule, 5, new Random(42), card => card.Right == 10 ? 16 : 1);
+
+        Assert.Equal(5, deck.Count);
+        Assert.Contains(deck, card => card.Right == 10);
+    }
 }

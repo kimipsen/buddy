@@ -4,7 +4,8 @@ using buddy.Features.Users;
 namespace buddy.Features.FlashCards;
 
 // A child's practice (enabled sets, tiers, every finished game with its per-card results) is theirs
-// alone, keyed by their UserId: erasing the child deletes it. See gdpr-data-protection.md.
+// alone, keyed by their UserId: erasing the child deletes its stream and snapshot, including the
+// derived per-card weights held in that snapshot. See gdpr-data-protection.md.
 //
 // Sets are the library of the guardian who created them. IPersonalDataEraser gives a guardian no
 // heir, so an erased guardian's sets are soft-deleted: they leave every list and can no longer be

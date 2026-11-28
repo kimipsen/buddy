@@ -4,7 +4,8 @@ namespace buddy.Features.FlashCards;
 
 // The "flashCards" section: each child's enabled sets with tiers, and every finished game with its
 // per-card results. Read from the stream, not the snapshot: the snapshot caps the games at
-// FlashCardPractice.MaxGames and keeps no per-card results.
+// FlashCardPractice.MaxGames. The snapshot's compact weights are derived from these first-pass
+// results and are not exported as a separate copy of the same information.
 public sealed class FlashCardsPersonalDataExporter(IFlashCardPracticeEventStore practices) : IPersonalDataExporter
 {
     public Type Store => typeof(IFlashCardsStore);

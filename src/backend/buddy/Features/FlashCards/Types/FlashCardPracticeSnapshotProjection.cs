@@ -4,8 +4,8 @@ namespace buddy.Features.FlashCards;
 
 public sealed record FlashCardPracticeSnapshot(Guid Id, FlashCardPractice FlashCardPractice);
 
-// Inline snapshot of FlashCardPractice in the shared "snapshots" schema. The per-card results of a
-// finished game are dropped by Advance, so the snapshot stays small as the history grows.
+// Inline snapshot of FlashCardPractice in the shared "snapshots" schema. Detailed per-card results
+// stay in events; Advance retains only bounded compact weights, so the snapshot stays small.
 public sealed class FlashCardPracticeSnapshotProjection : SingleStreamProjection<FlashCardPracticeSnapshot, Guid>
 {
     public static FlashCardPracticeSnapshot Create(FlashCardPracticeStarted started) =>

@@ -12,7 +12,8 @@ public sealed record EnabledFlashCardSet(FlashCardSetId SetId, string SetName, I
     public FlashCardTier? FindTier(FlashCardTierId tierId) => Tiers.FirstOrDefault(t => t.Id == tierId);
 }
 
-// One finished game as the history shows it. The per-card results stay in the event only.
+// One finished game as the history shows it. The detailed per-card results stay in the event; the
+// compact current weights are kept separately on FlashCardPractice.
 public sealed record FlashCardGameSummary(
     Guid GameId,
     DateOnly FinishedOn,
@@ -41,7 +42,8 @@ public sealed record FlashCardPractice(
     UserId ChildId,
     ImmutableList<EnabledFlashCardSet> EnabledSets,
     // Oldest first, capped at MaxGames. The events keep the full history.
-    ImmutableList<FlashCardGameSummary> Games)
+    ImmutableList<FlashCardGameSummary> Games,
+    ImmutableList<CardWeight> CardWeights)
 {
     public const int MaxGames = 100;
 
@@ -50,6 +52,8 @@ public sealed record FlashCardPractice(
 
     public ImmutableList<FlashCardGameSummary> Games { get; init; } = Games ?? [];
 
+    public ImmutableList<CardWeight> CardWeights { get; init; } = CardWeights ?? [];
+
     public static FlashCardPractice? Rehydrate(IEnumerable<FlashCardPracticeEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
     public static FlashCardPractice Replay(IEnumerable<FlashCardPracticeEvent> events) => EventReplay.Replay(events, Start, Advance);
@@ -57,7 +61,7 @@ public sealed record FlashCardPractice(
     // Not named Apply/Create/Evolve: JasperFx's projection generator scans those names.
     public static FlashCardPractice Start(FlashCardPracticeEvent @event) => @event switch
     {
-        FlashCardPracticeStarted started => new FlashCardPractice(started.Id, started.ChildId, [], []),
+        FlashCardPracticeStarted started => new FlashCardPractice(started.Id, started.ChildId, [], [], []),
         _ => throw EventReplay.NotAStartEvent(nameof(FlashCardPractice), @event.EventType)
     };
 
@@ -68,7 +72,11 @@ public sealed record FlashCardPractice(
         {
             EnabledSets = practice.EnabledSets.RemoveAll(s => s.SetId == disabled.SetId)
         },
-        FlashCardGameFinished finished => practice with { Games = AddGame(practice.Games, finished) },
+        FlashCardGameFinished finished => practice with
+        {
+            Games = AddGame(practice.Games, finished),
+            CardWeights = CardWeighting.Apply(practice.CardWeights, finished.SetId, finished.Results)
+        },
         FlashCardPracticeStarted => throw EventReplay.AlreadyStarted(nameof(FlashCardPractice), @event.EventType)
     };
 

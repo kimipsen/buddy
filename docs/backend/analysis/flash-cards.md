@@ -33,7 +33,29 @@ on the homework page that pays stars.
 - The child opens flash cards from Homework, picks a set (when there is more than one) and a game
   length, flips each card and answers _I knew it_ or _Not yet_. The result shows how many were known
   first time, the stars earned and the total.
+- Cards the child marks _Not yet_ come up more often in later games; cards they know come up less often.
 - Playing the same length again the same day earns nothing; a longer one earns the difference.
+
+## Adaptive draw
+
+Each child has a compact weight per set and card key in the existing `FlashCardPractice` snapshot.
+An unseen card starts at 4. A first-pass _Not yet_ adds 4, capped at 16; _I knew it_ halves the
+weight, floored at 1. Only first-pass results count, and the event stream remains authoritative:
+the weights are derived by replaying `FlashCardGameFinished` events into the inline snapshot.
+
+Each stored weight includes a stable hash of the card's question and answer. If a guardian edits a
+card, the hash no longer matches and the card immediately draws at the unseen weight for every
+child; its next result starts a new history for the edited text. Retired or otherwise unknown card
+keys are harmless because the draw only asks for weights of cards still in the current pool.
+
+The draw remains round-based. Within each round it uses a weighted random permutation, so every
+card appears before a repeat when the pool fits the game and immediate repeats stay impossible.
+When the pool is smaller than the requested game, extra slots favour harder cards. When pool and
+game sizes are equal, every card still appears once and weights affect only their order.
+
+Existing finished games are already sufficient to reconstruct weights. After deployment,
+`task db:snapshots:rebuild` can optionally rebuild the flash-card snapshot while the API is stopped;
+without that rebuild, weights accumulate from the next finished game.
 
 ## Built-in sets
 
@@ -65,8 +87,9 @@ event store, so nothing is created, owned or erased per family and the catalogue
 
 ## Testing
 
-Backend integration tests per slice, golden-file event shape tests, snapshot tests, the award rule
-and the finish replay and recovery paths; frontend unit specs for the game state machine, service,
+Backend integration tests per slice, golden-file event shape tests, snapshot tests, weighted draw
+distribution and isolation, edit reset, retired keys, the award rule and finish replay and recovery
+paths; frontend unit specs for the game state machine, service,
 child page and guardian components; `e2e/flash-cards.spec.ts` (a guardian makes a text and a maths
 set and switches one on with two lengths; the child plays, misses a card, sees it again, gets
 stars; the history row; same length again pays 0, a longer one the difference) and a second test where a guardian

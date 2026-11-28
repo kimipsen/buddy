@@ -140,8 +140,17 @@ public static class MathDeck
     }
 
     // A game's deck: exactly count cards drawn from the rule's unique cards (see CardDeck).
-    public static IReadOnlyList<MathCard> Draw(MathRule rule, int count, Random random) =>
-        CardDeck.Draw([.. Cards(rule)], count, random);
+    public static IReadOnlyList<MathCard> Draw(
+        MathRule rule,
+        int count,
+        Random random,
+        Func<MathCard, int>? weightOf = null)
+    {
+        MathCard[] cards = [.. Cards(rule)];
+        return weightOf is null
+            ? CardDeck.Draw(cards, count, random)
+            : CardDeck.Draw(cards, count, random, weightOf);
+    }
 
     private static MathCard Make(MathOperation operation, int left, int right)
     {

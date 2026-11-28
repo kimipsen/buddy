@@ -35,21 +35,21 @@ sequenceDiagram
 
 All routes are mapped only when `Features:FlashCards` is on (the default; `404` otherwise).
 
-| Method   | Route                                          | Who      | Behavior                                        |
-| -------- | ---------------------------------------------- | -------- | ----------------------------------------------- |
-| `GET`    | `/flash-cards/sets`                            | Guardian | The sets the guardian owns or shares            |
-| `POST`   | `/flash-cards/sets`                            | Guardian | Create a text or math set                       |
-| `PUT`    | `/flash-cards/sets/{setId}`                    | Guardian | Rename or change the math rule                  |
-| `DELETE` | `/flash-cards/sets/{setId}`                    | Guardian | Soft delete                                     |
-| `POST`   | `/flash-cards/sets/{setId}/cards`              | Guardian | Add a card to a text set                        |
-| `PUT`    | `/flash-cards/sets/{setId}/cards/{cardId}`     | Guardian | Change a card                                   |
-| `DELETE` | `/flash-cards/sets/{setId}/cards/{cardId}`     | Guardian | Remove a card                                   |
-| `GET`    | `/flash-cards/children/{childId}`              | Guardian | What the child can practise, and finished games |
-| `PUT`    | `/flash-cards/children/{childId}/sets/{setId}` | Guardian | Switch a set on with tiers (replaces the tiers) |
-| `DELETE` | `/flash-cards/children/{childId}/sets/{setId}` | Guardian | Switch a set off                                |
-| `GET`    | `/flash-cards/me/sets`                         | Child    | The sets the child can play                     |
-| `GET`    | `/flash-cards/me/sets/{setId}/deck?tierId=`    | Child    | A deck of exactly the tier's card count         |
-| `POST`   | `/flash-cards/me/games`                        | Child    | Finish a game; idempotent by `gameId`           |
+| Method   | Route                                          | Who      | Behavior                                                                           |
+| -------- | ---------------------------------------------- | -------- | ---------------------------------------------------------------------------------- |
+| `GET`    | `/flash-cards/sets`                            | Guardian | The sets the guardian owns or shares                                               |
+| `POST`   | `/flash-cards/sets`                            | Guardian | Create a text or math set                                                          |
+| `PUT`    | `/flash-cards/sets/{setId}`                    | Guardian | Rename or change the math rule                                                     |
+| `DELETE` | `/flash-cards/sets/{setId}`                    | Guardian | Soft delete                                                                        |
+| `POST`   | `/flash-cards/sets/{setId}/cards`              | Guardian | Add a card to a text set                                                           |
+| `PUT`    | `/flash-cards/sets/{setId}/cards/{cardId}`     | Guardian | Change a card                                                                      |
+| `DELETE` | `/flash-cards/sets/{setId}/cards/{cardId}`     | Guardian | Remove a card                                                                      |
+| `GET`    | `/flash-cards/children/{childId}`              | Guardian | What the child can practise, and finished games                                    |
+| `PUT`    | `/flash-cards/children/{childId}/sets/{setId}` | Guardian | Switch a set on with tiers (replaces the tiers)                                    |
+| `DELETE` | `/flash-cards/children/{childId}/sets/{setId}` | Guardian | Switch a set off                                                                   |
+| `GET`    | `/flash-cards/me/sets`                         | Child    | The sets the child can play                                                        |
+| `GET`    | `/flash-cards/me/sets/{setId}/deck?tierId=`    | Child    | A deck of exactly the tier's card count, drawn using that child's practice weights |
+| `POST`   | `/flash-cards/me/games`                        | Child    | Finish a game; idempotent by `gameId`                                              |
 
 Finishing returns `422` `game_id_reused` when a `gameId` belongs to another set or tier, and
 `422` `game_no_longer_available` when the set or tier was switched off before any stars were paid.
