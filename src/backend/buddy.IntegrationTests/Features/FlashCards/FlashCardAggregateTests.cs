@@ -160,11 +160,12 @@ public sealed class FlashCardAggregateTests
     [Fact]
     public void A_practice_deserialised_without_lists_reads_them_as_empty()
     {
-        var practice = new FlashCardPractice(PracticeId, Child, null!, null!);
+        var practice = new FlashCardPractice(PracticeId, Child, null!, null!, null!);
         var enabled = new EnabledFlashCardSet(FlashCardSetId.New(), "x", null!);
 
         Assert.Empty(practice.EnabledSets);
         Assert.Empty(practice.Games);
+        Assert.Empty(practice.CardWeights);
         Assert.Empty(enabled.Tiers);
     }
 

@@ -144,11 +144,15 @@ public sealed class FinishFlashCardGameTests(BuddyApiFixture fixture) : IAsyncLi
 
         var first = (await FinishAsync(fixture, childToken, gameId, set.Id, enabled.Tiers[0].Id, ResultsFor(deck), idempotencyKey: "k1"))
             .ReadAsJson<FinishFlashCardGameResponse>();
+        var practiceId = FlashCardPracticeId.ForChild(new UserId(childId));
+        var weightsAfterFirstFinish = (await Practices.FindSnapshotAsync(practiceId, CancellationToken.None))!.CardWeights;
         // New key, same game, and results that differ: the stored game decides.
         var second = (await FinishAsync(fixture, childToken, gameId, set.Id, enabled.Tiers[0].Id, ResultsFor(deck, knownCount: 0), idempotencyKey: "k2"))
             .ReadAsJson<FinishFlashCardGameResponse>();
+        var weightsAfterReplay = (await Practices.FindSnapshotAsync(practiceId, CancellationToken.None))!.CardWeights;
 
         Assert.Equal(first, second);
+        Assert.Equal(weightsAfterFirstFinish, weightsAfterReplay);
         Assert.Equal(1, await TotalStarsAsync(fixture, childToken));
         Assert.Single((await GetChildAsync(fixture, guardianToken, childId)).Games);
     }

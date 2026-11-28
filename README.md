@@ -150,6 +150,8 @@ in real time.
       Danish time words, sight words, letters, English words, countries with flags) a guardian
       switches on for a child like any set (issue #133) — see
       [Flash cards](docs/backend/analysis/flash-cards.md#built-in-sets)
+- [x] Flash cards come up more often when a child struggles with them (issue #134) — see
+      [Adaptive draw](docs/backend/analysis/flash-cards.md#adaptive-draw)
 
 ### Platform
 

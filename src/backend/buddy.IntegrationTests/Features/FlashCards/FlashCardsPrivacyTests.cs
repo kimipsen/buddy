@@ -36,6 +36,8 @@ public sealed class FlashCardsPrivacyTests(BuddyApiFixture fixture)
 
         var practice = Assert.Single(sections.GetProperty("flashCards").EnumerateArray());
         Assert.Equal(child.Id, practice.GetProperty("childId").GetGuid());
+        Assert.Equal(["childId", "enabledSets", "games"], practice.EnumerateObject().Select(property => property.Name).Order());
+        Assert.False(practice.TryGetProperty("cardWeights", out _));
         Assert.Equal($"Rivers{n}", Assert.Single(practice.GetProperty("enabledSets").EnumerateArray()).GetProperty("setName").GetString());
         var game = Assert.Single(practice.GetProperty("games").EnumerateArray());
         Assert.Equal($"Rivers{n}", game.GetProperty("setName").GetString());

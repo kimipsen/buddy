@@ -20,7 +20,7 @@ public static class GetChildFlashCardsHandler
         }
 
         var id = FlashCardPracticeId.ForChild(query.ChildId);
-        var practice = await practices.FindSnapshotAsync(id, cancellationToken) ?? new FlashCardPractice(id, query.ChildId, [], []);
+        var practice = await practices.FindSnapshotAsync(id, cancellationToken) ?? new FlashCardPractice(id, query.ChildId, [], [], []);
 
         return new Result<FlashCardPractice>.Success(practice);
     }

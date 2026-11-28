@@ -17,7 +17,11 @@ public interface IBuiltInCatalogue
     BuiltInCardLookup TryGetCard(FlashCardSet set, string cardKey);
 
     // Exactly count cards, repeats allowed when the set is smaller (CardDeck.Draw).
-    IReadOnlyList<BuiltInCard> Draw(FlashCardSet set, int count, Random random);
+    IReadOnlyList<BuiltInCard> Draw(
+        FlashCardSet set,
+        int count,
+        Random random,
+        Func<BuiltInCard, int>? weightOf = null);
 }
 
 // A built-in set before synthesis. The id is a literal: .NET has no UUIDv5, so the ids were
@@ -73,8 +77,17 @@ public sealed class BuiltInCatalogue : IBuiltInCatalogue
         return new BuiltInCardLookup(_retired.Contains(cardKey) ? BuiltInCardLookupKind.Retired : BuiltInCardLookupKind.Unknown, null);
     }
 
-    public IReadOnlyList<BuiltInCard> Draw(FlashCardSet set, int count, Random random) =>
-        CardDeck.Draw(_byId[set.Id.Value].Cards, count, random);
+    public IReadOnlyList<BuiltInCard> Draw(
+        FlashCardSet set,
+        int count,
+        Random random,
+        Func<BuiltInCard, int>? weightOf = null)
+    {
+        var cards = _byId[set.Id.Value].Cards;
+        return weightOf is null
+            ? CardDeck.Draw(cards, count, random)
+            : CardDeck.Draw(cards, count, random, weightOf);
+    }
 
     // The one place a built-in FlashCardSet is built: All, TryFind and the event store all share it.
     private static FlashCardSet Synthesize(BuiltInSetDescriptor descriptor) => new(

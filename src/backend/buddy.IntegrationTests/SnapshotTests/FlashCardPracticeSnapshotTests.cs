@@ -1,3 +1,6 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
+
 using buddy.Features.FlashCards;
 using buddy.Features.Users;
 using buddy.IntegrationTests.Fixtures;
@@ -43,5 +46,22 @@ public sealed class FlashCardPracticeSnapshotTests(BuddyApiFixture fixture)
         Assert.Equivalent(replayed, snapshot, strict: true);
         Assert.Equal([setA], snapshot.EnabledSets.Select(s => s.SetId));
         Assert.Equal(1, Assert.Single(snapshot.Games).KnownCount);
+        Assert.Equal(2, snapshot.CardWeights.Count);
+        Assert.Equal(CardWeighting.Floor + 1, snapshot.CardWeights.Single(weight => weight.CardKey == "mul:7x3").Weight);
+        Assert.Equal(CardWeighting.BaseWeight + CardWeighting.Boost, snapshot.CardWeights.Single(weight => weight.CardKey == "mul:7x4").Weight);
+    }
+
+    [Fact]
+    public void A_snapshot_without_card_weights_deserialises_with_an_empty_list()
+    {
+        var child = new UserId(Guid.CreateVersion7());
+        var practice = new FlashCardPractice(FlashCardPracticeId.ForChild(child), child, [], [], []);
+        var json = JsonNode.Parse(JsonSerializer.Serialize(practice))!.AsObject();
+        Assert.True(json.Remove(nameof(FlashCardPractice.CardWeights)));
+
+        var deserialised = JsonSerializer.Deserialize<FlashCardPractice>(json);
+
+        Assert.NotNull(deserialised);
+        Assert.Empty(deserialised.CardWeights);
     }
 }

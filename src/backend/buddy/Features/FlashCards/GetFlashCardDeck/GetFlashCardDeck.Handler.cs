@@ -7,8 +7,8 @@ namespace buddy.Features.FlashCards;
 public static class GetFlashCardDeckHandler
 {
     // Builds a deck of exactly tier.CardCount cards (repeats when the set has fewer unique cards)
-    // from the child's enabled config. Reads the snapshot only and persists nothing: an abandoned
-    // game leaves no trace.
+    // from the child's enabled config and per-card practice weights. Reads the snapshot only and
+    // persists nothing: an abandoned game leaves no trace.
     public static async Task<Result<IReadOnlyList<DeckCard>>> Handle(
         GetFlashCardDeck query,
         IFlashCardPracticeEventStore practices,
@@ -43,11 +43,13 @@ public static class GetFlashCardDeckHandler
             return new Result<IReadOnlyList<DeckCard>>.Validation(ValidationProblem.Of("The set has no cards to play."));
         }
 
+        var weightOf = CardWeighting.WeightOf(practice!, set.Id);
+
         IReadOnlyList<DeckCard> deck = set.BuiltIn is not null
-            ? [.. catalogue.Draw(set, tier.CardCount, random).Select(DeckCard.From)]
+            ? [.. catalogue.Draw(set, tier.CardCount, random, c => weightOf(c.Key, c.Question, c.Answer)).Select(DeckCard.From)]
             : set.Math is { } rule
-            ? [.. MathDeck.Draw(rule, tier.CardCount, random).Select(c => new DeckCard(c.Key, c.Question, c.Answer, new DeckMathResponse(c.Left, c.Operation, c.Right)))]
-            : [.. CardDeck.Draw(set.Cards, tier.CardCount, random).Select(c => new DeckCard(CardKey(c), c.Question, c.Answer, null))];
+            ? [.. MathDeck.Draw(rule, tier.CardCount, random, c => weightOf(c.Key, c.Question, c.Answer)).Select(c => new DeckCard(c.Key, c.Question, c.Answer, new DeckMathResponse(c.Left, c.Operation, c.Right)))]
+            : [.. CardDeck.Draw(set.Cards, tier.CardCount, random, c => weightOf(CardKey(c), c.Question, c.Answer)).Select(c => new DeckCard(CardKey(c), c.Question, c.Answer, null))];
 
         return new Result<IReadOnlyList<DeckCard>>.Success(deck);
     }
